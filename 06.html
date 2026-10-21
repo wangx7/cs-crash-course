@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>06 寄存器和内存 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.demo-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.demo-grid .card{margin:0}
+@media (max-width:760px){.demo-grid{grid-template-columns:1fr}}
+.box rect{fill:var(--panel);stroke:var(--ink);stroke-width:2;transition:all .2s}
+.box.on rect{fill:var(--on-soft);stroke:var(--on)}
+.box-title{font-size:12px;font-weight:700;fill:var(--ink);text-anchor:middle}
+.cellb{fill:var(--panel);stroke:var(--line);stroke-width:1;transition:fill .2s}
+.cellb.one{fill:var(--ink)}
+.cellb.sel{stroke:var(--on);stroke-width:3}
+.rowline,.colline{stroke:var(--wire);stroke-width:1;transition:stroke .2s}
+.rowline.on,.colline.on{stroke:var(--on);stroke-width:2.5}
+.mux{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.addr-ctl{display:flex;flex-wrap:wrap;gap:14px;align-items:center;margin-top:12px;font-size:14px}
+.addr-ctl .bitset{display:inline-flex;gap:3px}
+.addr-ctl .bitset button{width:30px;height:34px;border-radius:7px;border:2px solid var(--line);background:var(--panel);font:700 15px var(--mono);color:var(--muted);cursor:pointer}
+.addr-ctl .bitset button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.mem{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;margin-top:12px;font:11px var(--mono)}
+.mem div{text-align:center;padding:4px 0;border-radius:3px;background:var(--bg);color:var(--muted);cursor:pointer}
+.mem div.nz{color:var(--ink);background:var(--accent-soft)}
+.mem div.sel{background:var(--on);color:#fff;font-weight:700}
+.inp{font:15px var(--mono);width:80px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+table.wires td,table.wires th{padding:6px 14px}
+</style>
+</head>
+<body data-ep="6">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=7" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 6 集</div>
+  <h1>寄存器和内存</h1>
+  <p class="en">Registers and RAM</p>
+  <p class="lead">算出来的结果总得有地方放。这一集从"把输出接回输入"开始，做出能记住 1 位的锁存器，再一层层打包成寄存器、256 位矩阵、256 字节的内存——这就是 RAM。</p>
+  <div class="road">
+    <span>回环电路</span><i>→</i><span>AND-OR 锁存器</span><i>→</i><span>门锁</span><i>→</i><span>寄存器</span><i>→</i><span>矩阵 + 多路复用器</span><i>→</i><span>可寻址内存</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 为什么需要内存</a></li>
+    <li><a href="#ch1">1 · 把输出接回输入</a></li>
+    <li><a href="#ch2">2 · AND-OR 锁存器</a></li>
+    <li><a href="#ch3">3 · 门锁</a></li>
+    <li><a href="#ch4">4 · 寄存器</a></li>
+    <li><a href="#ch5">5 · 矩阵与地址</a></li>
+    <li><a href="#ch6">6 · 256 字节内存</a></li>
+    <li><a href="#ch7">7 · 真实的内存条</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>为什么需要内存</h2>
+  <p>上一集，我们只用逻辑门做了一个简单的 ALU，它能做算术（Arithmetic）和逻辑（Logic）运算，ALU 里的 A 和 L 就是这么来的。但是，算出一个结果然后直接扔掉，当然没什么意义——最好能把这个值存起来，也许还能连续做好几次运算。这就要用到计算机的<b>内存</b>了！</p>
+  <p>如果你曾经在游戏机上打一场很长的角色扮演游戏，或者在电脑上苦战一局高难度扫雷，这时你家的狗跑过来，被电源线绊了一下，把插头从墙上扯了出来——你一定懂那种失去所有进度的痛苦。节哀。</p>
+  <p>你损失进度的原因是，游戏机、笔记本和电脑用的是<b>随机存取存储器</b>，简称 <b>RAM</b>，它只能在通电时存东西，比如游戏状态。另一种存储叫<b>持久存储</b>，断电也不会丢数据，它用来存别的东西，我们以后再讲存储的持久性。</p>
+  <p>今天我们从小处开始——真的很小：做一个只能存储<b>一个……位</b>信息的电路。之后再扩大规模，做出我们自己的内存模块；下次再把它和 ALU 结合起来，终于做出我们自己的 CPU！</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>把输出接回输入</h2>
+  <p>到目前为止，我们讲过的所有逻辑电路都是单向的，信号总是往前流，比如上一集的 8 位行波进位加法器。但我们也可以做出<b>绕回自己</b>的电路。</p>
+  <p>我们拿一个普通的 OR 门试试，把它的输出接回到它的一个输入上，看看会发生什么。首先把两个输入都设为 0：0 OR 0 是 0，所以这个电路一直输出 0。如果把输入 A 变成 1，1 OR 0 是 1，OR 门的输出变成 1。一转眼的功夫，这个 1 绕回到了输入 B，OR 门看到两个输入现在都是 1。1 OR 1 仍然是 1，所以输出不变。如果再把输入 A 变回 0，OR 门依然输出 1。现在我们有了一个能替我们记住"1"的电路。</p>
+  <p>只是有个小小的问题：这个变化是<b>永久</b>的！不管怎么折腾，都没办法让它从 1 变回 0。</p>
+  <p>再看同样的电路，但换成 AND 门。开始时输入 A 和 B 都是 1，1 AND 1 会一直输出 1。但如果把输入 A 变成 0，因为是 AND 门，输出会变成 0。所以这个电路记住了一个 0，和刚才那个正好相反。和之前一样，之后不管给 A 什么输入，这个电路都会一直输出 0。</p>
+
+  <div class="demo-grid">
+    <div class="card">
+      <h3>OR 回环：记住 1</h3>
+      <svg class="diagram" id="orloop" viewBox="0 0 340 150" role="img" aria-label="OR 门回环"></svg>
+      <div class="step-text" id="orloop-cap"></div>
+      <div class="btns"><button class="btn" id="orloop-reset">断电重来</button></div>
+    </div>
+    <div class="card">
+      <h3>AND 回环：记住 0</h3>
+      <svg class="diagram" id="andloop" viewBox="0 0 340 150" role="img" aria-label="AND 门回环"></svg>
+      <div class="step-text" id="andloop-cap"></div>
+      <div class="btns"><button class="btn" id="andloop-reset">断电重来</button></div>
+    </div>
+  </div>
+  <p class="hint">点每张图里的输入 A，来回切换几次，看输出还变不变</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>AND-OR 锁存器：记住 1 位</h2>
+  <p>现在我们有了能记住 0 的电路和能记住 1 的电路。要把它变成真正有用的存储，关键是把这两个电路结合起来，做成所谓的 <b>AND-OR 锁存器</b>。</p>
+  <p>它有两个输入：一个<b>"置位"</b>（set）输入，把输出变成 1；一个<b>"复位"</b>（reset）输入，把输出变成 0。如果置位和复位都是 0，电路就输出最后一次放进去的值。换句话说，<b>它记住了 1 位信息</b>！这就是存储！</p>
+  <p>它之所以叫"锁存器"（latch），是因为它"锁住"了一个值并保持不变。把数据放进存储的动作叫<b>写入</b>，把数据取出来叫<b>读取</b>。</p>
+
+  <div class="card">
+    <h3>动手：AND-OR 锁存器</h3>
+    <div class="scroll-x"><svg class="diagram" id="latch" viewBox="0 0 460 210" role="img" aria-label="AND-OR 锁存器"></svg></div>
+    <div class="step-text" id="latch-cap"></div>
+    <p class="hint">按顺序试：置位点一下（开再关）→ 输出保持 1；复位点一下 → 输出保持 0</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>门锁：一根数据线 + 一根"允许写入线"</h2>
+  <p>好了，我们有办法存一个位了！太棒了！麻烦的是，用置位和复位两根线来输入，有点让人糊涂。为了更好用，我们希望只用<b>一根线输入数据</b>，把它设成 0 或 1 就能存下这个值。另外，我们还需要一根线来决定存储是允许写入，还是被"锁定"——这根线叫<b>"允许写入线"</b>（write enable）。</p>
+  <p>再加几个逻辑门，就能做出这个电路。它叫<b>门锁</b>（Gated Latch），因为这扇"门"可以打开，也可以关上。</p>
+
+  <div class="card">
+    <h3>动手：门锁</h3>
+    <div class="scroll-x"><svg class="diagram" id="gated" viewBox="0 0 600 230" role="img" aria-label="门锁电路"></svg></div>
+    <div class="step-text" id="gated-cap"></div>
+    <p class="hint">课程里的测试顺序：先拨数据线（输出不变）→ 打开允许写入 → 数据设 1 → 关掉允许写入 → 再拨数据线（输出仍不变）</p>
+  </div>
+  <div class="extra">
+    <span class="t">左半边那几个门在干什么</span>
+    置位 = 数据 AND 允许写入；复位 = (NOT 数据) AND 允许写入。所以允许写入关着时，置位和复位都是 0，锁存器什么都不改；打开时，数据是 1 就置位、是 0 就复位。视频里画的门的具体连法可能和这张图不同，但功能一样。
+  </div>
+  <p>这个电路开始有点复杂了。我们不想再跟一个个逻辑门打交道……所以和之前一样，提升一层抽象，把整个门锁电路装进一个盒子——一个<b>能存 1 位的盒子</b>。</p>
+  <p>来测一下这个新组件！一切从 0 开始。如果把数据线从 0 拨到 1、再从 1 拨到 0，什么也不会发生，输出一直是 0，因为允许写入线是关的，阻止了对存储的任何改动。所以我们要把允许写入线设为 1，"打开"这扇门。现在往数据线上放 1，就能把 1 存进锁存器，注意输出现在变成 1 了，成功！我们可以关掉允许写入线，输出会保持 1。这时不管怎么拨数据线，输出都不变，值已经存进存储了。现在再打开允许写入线，用数据线把锁存器设成 0。完成。关掉允许写入线，输出是 0。成功了！</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>寄存器：8 个锁存器并排</h2>
+  <p>当然，只能存 1 位信息的内存没多大用，肯定玩不了《青蛙过河》，其实什么都干不了。但我们并没有限制只能用一个锁存器。如果把 8 个锁存器并排放，就能存 8 位信息，比如一个 8 位数。像这样一起工作的一组锁存器叫<b>寄存器</b>（register），它能存一个数，寄存器里有多少位，叫它的<b>位宽</b>（width）。早期的计算机用 8 位寄存器，后来是 16 位、32 位，今天很多计算机的寄存器是 64 位宽的。</p>
+  <p>要写入寄存器，首先得启用里面所有的锁存器。我们可以用一根线连到所有锁存器的允许写入输入上，把它设为 1；然后用 8 根数据线把数据送进去，再把允许写入设回 0，这个 8 位的值就存起来了。</p>
+
+  <div class="card">
+    <h3>动手：8 位寄存器</h3>
+    <div class="scroll-x"><svg class="diagram" id="reg" viewBox="0 0 700 230" role="img" aria-label="8 位寄存器"></svg></div>
+    <div class="step-text" id="reg-cap"></div>
+    <div class="btns"><button class="btn" id="reg-42">数据线放上 42</button><button class="btn" id="reg-clear">数据线清零</button></div>
+  </div>
+
+  <p>锁存器并排放，在位数不多的时候还行。但一个 64 位寄存器需要 64 根线连到数据输入，64 根线连到输出。幸好启用所有锁存器只要 1 根线，但加起来还是有 129 根线。如果要存 256 位，就得用 513 根线！</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>矩阵、地址和多路复用器</h2>
+  <p>解决方法是<b>矩阵</b>！在矩阵里，我们不再把锁存器排成一排，而是排成网格。存 256 位，需要一个 16×16 的锁存器网格，配 16 行、16 列的线。要启用其中任意一个锁存器，就打开它对应的<b>行线和列线</b>。</p>
+  <p>放大看看是怎么做到的。我们只想让两根被打开的线交叉处的那个锁存器被启用，其他锁存器都保持关闭。为此，可以用我们信赖的 <b>AND 门</b>！只有行线和列线都是 1，AND 门才输出 1，所以可以用这个信号唯一地选中一个锁存器。</p>
+  <p>这种行列结构让所有锁存器共用一根允许写入线。一个锁存器要被允许写入，它的行线、列线和允许写入线都必须是 1，而在任何时刻，这只会对一个锁存器成立。这意味着我们可以让所有锁存器<b>共用一根数据线</b>：因为只有一个锁存器会被允许写入，所以只有它会存下数据，其他锁存器没被允许写入，就直接忽略数据线上的值。我们也可以用同样的技巧，加一根<b>"允许读取线"</b>，之后从某个指定的锁存器里把数据读出来。</p>
+  <p>这样算下来，256 位的存储一共只需要 <b>35 根线</b>：1 根数据线、1 根允许写入线、1 根允许读取线，再加 16 根行线和 16 根列线用来选择。省了好多线！</p>
+
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static wires">
+      <thead><tr><th>位数</th><th>锁存器排成一排<br><span class="muted">n 进 + n 出 + 1 允许写入</span></th><th>排成正方形矩阵<br><span class="muted">√n 行 + √n 列 + 3</span></th></tr></thead>
+      <tbody>
+        <tr><td class="num">64</td><td class="num">129</td><td class="num">19</td></tr>
+        <tr><td class="num">256</td><td class="num">513</td><td class="num"><b>35</b></td></tr>
+        <tr><td class="num">4,096</td><td class="num">8,193</td><td class="num">131</td></tr>
+        <tr><td class="num">65,536</td><td class="num">131,073</td><td class="num">515</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">256 位的两个数字来自课程，其余按同样的公式算出（补充）。位数越多，矩阵省得越多。</p>
+  </div>
+
+  <p>但我们还需要一种方法来<b>唯一指定</b>每个交叉点。可以把它想象成一座城市：你也许想和别人在第 12 大道和第 8 街的路口碰面，这就是一个确定交叉点的<b>地址</b>。我们刚才存那 1 位的锁存器，地址是第 12 行、第 8 列。因为最多 16 行，所以行地址用一个 4 位数就能存下：12 的二进制是 1100。列地址也一样：8 的二进制是 1000。所以我们刚才用的那个锁存器的地址可以写成 <b>11001000</b>。</p>
+  <p>要把地址转换成"选中正确的行或列"，需要一个特殊的部件，叫<b>多路复用器</b>（multiplexer）——至少和 ALU 比起来，这名字挺酷的。多路复用器有各种大小，因为我们有 16 行，所以需要一个 1 到 16 的多路复用器。它是这样工作的：给它一个 4 位数，它就把输入线连到对应的那根输出线上。输入 0000，它选中第一列；输入 0001，选中下一列，以此类推。我们需要一个多路复用器管行，另一个管列。</p>
+
+  <div class="card">
+    <h3>动手：16×16 矩阵，按地址读写 1 位</h3>
+    <div class="scroll-x"><svg class="diagram" id="matrix" viewBox="0 0 560 470" role="img" aria-label="16×16 存储矩阵"></svg></div>
+    <div class="addr-ctl">
+      <span>行地址 <span class="bitset" id="row-bits"></span></span>
+      <span>列地址 <span class="bitset" id="col-bits"></span></span>
+    </div>
+    <div class="btns"><button class="btn primary" id="mx-w1">写入 1</button><button class="btn" id="mx-w0">写入 0</button><button class="btn" id="mx-r">读取</button></div>
+    <div class="step-text" id="mx-cap"></div>
+    <p class="hint">也可以直接点网格里的格子来选地址。默认就是课程里的第 12 行、第 8 列</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>256 字节的可寻址内存</h2>
+  <p>好吧，又开始变复杂了，那就把这个 256 位的存储做成一个独立组件——又一层新的抽象！它的输入是一个 8 位地址：4 位表示列，4 位表示行。我们还需要允许写入线和允许读取线。最后只需要一根数据线，用来读或写数据。</p>
+  <p>不幸的是，256 位的存储还是干不了什么事，所以要继续扩大规模！我们把它们排成一排，就像寄存器那样。排 8 个，就能存一个 8 位数，也就是一个字节。为此，我们把<b>完全相同的地址同时送进这 8 个 256 位存储组件</b>，每个组件存这个数的一位。也就是说，我们刚做的这个组件能在 256 个不同的地址上，存 256 个字节。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="bank8" viewBox="0 0 680 220" role="img" aria-label="8 个 256 位存储组成一个字节宽的内存"></svg>
+      </div>
+      <figcaption>图 1　同一个地址同时送进 8 个 256 位存储，每个存这个字节的一位。</figcaption>
+    </figure>
+  </div>
+
+  <p>同样，为了简单，我们把内部的复杂性抛在脑后：不再把它看作一堆单独的存储模块和电路，而是看作一整块<b>可寻址的内存</b>。我们有 256 个地址，每个地址上能读或写一个 8 位的值。下一集做 CPU 时就会用到这个内存组件。</p>
+
+  <div class="card">
+    <h3>动手：256 个地址，每个存 1 个字节</h3>
+    <div class="addr-ctl">
+      <label>地址 <input class="inp" type="number" id="mem-addr" min="0" max="255" value="200"></label>
+      <label>值 <input class="inp" type="number" id="mem-val" min="0" max="255" value="42"></label>
+      <button class="btn primary" id="mem-w">写入</button>
+      <button class="btn" id="mem-r">读取</button>
+    </div>
+    <div class="readout" id="mem-out" style="font-size:14px"></div>
+    <div class="mem" id="mem"></div>
+    <p class="hint">每个格子是一个地址（从左上 0 到右下 255），里面是十六进制显示的值。点格子也能选地址</p>
+  </div>
+
+  <p>现代计算机把内存扩展到兆字节、吉字节的方式，和我们这里做的完全一样：<b>不断把小块内存打包成越来越大的结构</b>。随着内存位置越来越多，地址也必须跟着变长。8 位能提供的地址只够 256 个字节的内存用，仅此而已。要给 1 GB——也就是十亿字节——的内存寻址，就需要 32 位的地址。</p>
+  <p>这种内存有一个重要特性：我们可以<b>在任何时候、以任意顺序访问任何一个位置</b>。所以它叫"随机存取存储器"，也就是 RAM。当你听到别人说一台电脑有多少 RAM，指的就是它的内存。RAM 就像人的短期记忆，或者说工作记忆，记录着眼下正在发生的事情，比如你吃没吃午饭，交没交电话费。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>真实的内存条</h2>
+  <p>这是一条真的内存条，板子上焊着 8 个内存模块。如果小心地打开其中一个模块再放大，首先会看到 32 个存储方块。放大其中一个方块，可以看到它由 4 个更小的块组成。再放大，就到了一个个位组成的矩阵：这是一个 128 × 64 位的矩阵，一共 8192 位。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="zoom" viewBox="0 0 700 250" role="img" aria-label="内存条逐级放大"></svg>
+      </div>
+      <figcaption>图 2　一条 1980 年代的内存条，逐级放大到存储矩阵（示意图，格子数量按比例画少了）。</figcaption>
+    </figure>
+  </div>
+
+  <p>32 个方块每个有 4 个矩阵，所以每个方块有 32,768 位。一共 32 个方块，所以每个芯片大约存 100 万位。这条内存有 8 个这样的芯片，所以总共能存 800 万位，也就是 <b>1 兆字节</b>。如今这不算多——这是一条 1980 年代的内存条。今天你能买到 1 GB 甚至更大的内存，那可是数十亿字节。</p>
+  <p>今天我们用锁存器做的，是一块 <b>SRAM</b>（静态随机存取存储器）。还有其他类型的 RAM，比如 DRAM、闪存和 NVRAM。它们在功能上和 SRAM 很像，只是用不同的电路来存单个位，比如用不同的逻辑门、电容、电荷陷阱或忆阻器。但从根本上说，这些技术都是把存储单元排成<b>层层嵌套的巨大矩阵</b>来存信息的。</p>
+  <div class="extra">
+    <span class="t">你电脑里的"内存"是哪种</span>
+    电脑和手机的主内存一般是 <b>DRAM</b>：每一位用一个小电容存电荷，比锁存器省晶体管、密度高，但电荷会慢慢漏掉，需要不停地"刷新"。SRAM 更快但更占地方，所以用在 CPU 内部的缓存里。U 盘和固态硬盘用的是闪存，断电不丢——这就是开头说的"持久存储"。
+  </div>
+  <p>就像计算机里的很多东西一样，最底层的操作其实相对简单，令人惊叹的是那一层又一层的抽象——就像一个越来越小、越来越小的俄罗斯套娃。下周见！</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <div class="road" style="margin:8px 0 18px">
+    <span>OR / AND 回环</span><i>→</i><span>AND-OR 锁存器（1 位）</span><i>→</i><span>门锁（数据 + 允许写入）</span><i>→</i><span>寄存器（8 个并排）</span><i>→</i><span>16×16 矩阵（256 位）</span><i>→</i><span>8 个矩阵 = 256 字节 RAM</span>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    把输出接回输入，电路就能"记住"东西；锁存器存 1 位，并排成寄存器存一个数，排成矩阵再配上地址和多路复用器，就成了能按地址随意读写的 RAM。更大的内存只是同样的东西一层层套起来。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么把 OR 门的输出接回输入，它就能"记住 1"？它有什么缺陷？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">输入 A 一旦变 1，输出变 1 并绕回输入 B；之后哪怕 A 变回 0，B 仍是 1，1 OR 0 = 1，输出一直保持。缺陷是变成 1 以后再也回不到 0。AND 回环正好相反，只能记住 0。两者合起来才是能写 0 也能写 1 的锁存器。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 门锁里的"允许写入线"是做什么的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它是"门"：为 1 时，数据线上的值会被写进锁存器；为 0 时锁存器被锁定，数据线怎么变输出都不变。这样一根数据线就够了，还能控制什么时候写。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 256 位的存储，为什么排成 16×16 矩阵只要 35 根线？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">16 根行线 + 16 根列线用来选择一个格子（行和列都为 1 的交叉点由 AND 门选中），再加 1 根数据线、1 根允许写入线、1 根允许读取线，所有锁存器共用。16 + 16 + 3 = 35。排成一排则要 256 进 + 256 出 + 1 = 513 根。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 地址 11001000 选中的是哪个锁存器？多路复用器在这里做什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">前 4 位 1100 = 12，后 4 位 1000 = 8，所以是第 12 行第 8 列。多路复用器把一个 4 位数"翻译"成 16 根线里的某一根：行地址经一个多路复用器打开第 12 行线，列地址经另一个打开第 8 列线。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="05.html"><small>← 上一集</small>05 算术逻辑单元</a>
+    <a class="next" href="07.html"><small>下一集 →</small>07 中央处理器</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 6 集 Registers and RAM（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+function box(svg, x, y, w, h, title, sig) {
+  const g = el('g', { class: 'box', 'data-sig': sig || '' }, svg);
+  el('rect', { x, y, width: w, height: h, rx: 8 }, g);
+  if (title) txt(g, x + w / 2, y + h / 2 + 4, title, 'box-title');
+  return g;
+}
+
+/* ---------- OR / AND 回环 ---------- */
+function loopDemo(id, type, initA, initQ, explain) {
+  const svg = $('#' + id);
+  const st = { A: initA, Q: initQ };
+  wire(svg, 'M55,62 H150', 'A');
+  gate(svg, type, 150, 50, 'Q', type);
+  wire(svg, 'M200,70 H275', 'Q');
+  wire(svg, 'M240,70 V125 H120 V78 H150', 'Q');
+  dot(svg, 240, 70, 'Q');
+  txt(svg, 180, 140, '输出接回输入 B', 't-sub mid');
+  inNode(svg, 40, 62, 'A', 'A', () => { st.A ^= 1; step(); });
+  lampNode(svg, 292, 70, 'Q', '输出');
+  function step() {
+    st.Q = type === 'OR' ? (st.A | st.Q) : (st.A & st.Q);
+    setSignals(svg, { A: st.A, Q: st.Q });
+    $(`#${id}-cap`).innerHTML = explain(st);
+  }
+  $(`#${id}-reset`).onclick = () => { st.A = initA; st.Q = initQ; step(); };
+  step();
+}
+loopDemo('orloop', 'OR', 0, 0, s => s.Q
+  ? (s.A ? 'A = 1，输出 1，绕回 B 也是 1。现在把 A 改回 0 试试。' : 'A 已经是 0，但 B 是绕回来的 1：0 OR 1 = 1，<b>输出锁在 1</b>，再也回不去了。')
+  : 'A = 0，B = 0，输出 0。把 A 改成 1。');
+loopDemo('andloop', 'AND', 1, 1, s => s.Q
+  ? 'A = 1，B 绕回来也是 1，输出 1。把 A 改成 0。'
+  : (s.A ? 'A 又是 1 了，可 B 是绕回来的 0：1 AND 0 = 0，<b>输出锁在 0</b>。' : 'A = 0 → 输出 0，绕回 B 也变成 0。再把 A 改回 1 试试。'));
+
+/* ---------- AND-OR 锁存器 ---------- */
+(function () {
+  const svg = $('#latch');
+  const st = { S: 0, R: 0, Q: 0 };
+  wire(svg, 'M55,52 H140', 'S');
+  gate(svg, 'OR', 140, 40, 'O', 'OR');
+  wire(svg, 'M190,60 H225 V72 H260', 'O');
+  wire(svg, 'M55,150 H150', 'R');
+  gate(svg, 'NOT', 150, 130, 'NR', 'NOT');
+  wire(svg, 'M198,150 H230 V88 H260', 'NR');
+  gate(svg, 'AND', 260, 60, 'Q', 'AND');
+  wire(svg, 'M310,80 H385', 'Q');
+  wire(svg, 'M345,80 V18 H118 V68 H140', 'Q');
+  dot(svg, 345, 80, 'Q');
+  inNode(svg, 40, 52, 'S', '置位 set', () => { st.S ^= 1; step(); });
+  inNode(svg, 40, 150, 'R', '复位 reset', () => { st.R ^= 1; step(); });
+  lampNode(svg, 402, 80, 'Q', '输出');
+  function step() {
+    st.Q = (st.S | st.Q) & (1 - st.R);
+    setSignals(svg, { S: st.S, R: st.R, O: st.S | st.Q, NR: 1 - st.R, Q: st.Q });
+    let s;
+    if (st.S && st.R) s = '置位和复位同时为 1：复位赢了，输出 0。实际使用时不会这样用。';
+    else if (st.S) s = '<b>置位 = 1</b> → OR 输出 1 → AND（复位没开，NOT 后是 1）输出 1 → 输出变成 1，并绕回 OR。现在把置位关掉。';
+    else if (st.R) s = '<b>复位 = 1</b> → NOT 后变 0 → AND 输出 0 → 输出变成 0。现在把复位关掉。';
+    else s = `置位、复位都是 0：电路<b>保持</b>上一次的值 —— 现在记着 <b>${st.Q}</b>。这就是存储。`;
+    $('#latch-cap').innerHTML = s;
+  }
+  step();
+})();
+
+/* ---------- 门锁 ---------- */
+(function () {
+  const svg = $('#gated');
+  const st = { D: 0, W: 0, Q: 0 };
+  wire(svg, 'M55,60 H130 V52 H160', 'D');
+  wire(svg, 'M70,60 V120 H90', 'D'); dot(svg, 70, 60, 'D');
+  gate(svg, 'NOT', 90, 100, 'ND', '');
+  wire(svg, 'M138,120 H170 V122 H200', 'ND');
+  wire(svg, 'M55,170 H150 V128 A6,6 0 0 0 150,116 V68 H160', 'W');
+  wire(svg, 'M150,138 H200', 'W'); dot(svg, 150, 138, 'W');
+  gate(svg, 'AND', 160, 40, 'S', 'AND');
+  gate(svg, 'AND', 200, 110, 'R', 'AND');
+  wire(svg, 'M210,60 H255 V42 H300', 'S');
+  wire(svg, 'M250,130 H275 V140 H300', 'R');
+  txt(svg, 262, 36, '置位', 't-sub'); txt(svg, 262, 156, '复位', 't-sub');
+  el('rect', { x: 284, y: 6, width: 214, height: 170, rx: 10, class: 's-dash' }, svg);
+  txt(svg, 390, 196, 'AND-OR 锁存器（上一节那个）', 't-sub mid');
+  gate(svg, 'OR', 300, 30, 'O', 'OR');
+  gate(svg, 'NOT', 300, 120, 'NR', '');
+  wire(svg, 'M350,50 H375 V72 H400', 'O');
+  wire(svg, 'M348,140 H375 V88 H400', 'NR');
+  gate(svg, 'AND', 400, 60, 'Q', 'AND');
+  wire(svg, 'M450,80 H525', 'Q');
+  wire(svg, 'M480,80 V16 H290 V58 H300', 'Q'); dot(svg, 480, 80, 'Q');
+  inNode(svg, 40, 60, 'D', '数据', () => { st.D ^= 1; step(); });
+  inNode(svg, 40, 170, 'W', '允许写入', () => { st.W ^= 1; step(); });
+  lampNode(svg, 542, 80, 'Q', '输出');
+  function step() {
+    const S = st.D & st.W, R = (1 - st.D) & st.W;
+    st.Q = (S | st.Q) & (1 - R);
+    setSignals(svg, { D: st.D, W: st.W, ND: 1 - st.D, S, R, O: S | st.Q, NR: 1 - R, Q: st.Q });
+    $('#gated-cap').innerHTML = st.W
+      ? `允许写入<b>打开</b>：数据线上的 ${st.D} 被写进去，输出 = <b>${st.Q}</b>。`
+      : `允许写入<b>关着</b>：数据线现在是 ${st.D}，但门是锁着的，输出保持 <b>${st.Q}</b>。`;
+  }
+  step();
+})();
+
+/* ---------- 寄存器 ---------- */
+(function () {
+  const svg = $('#reg');
+  const st = { W: 0, D: Array(8).fill(0), Q: Array(8).fill(0) };
+  const X = i => 100 + i * 72;
+  wire(svg, `M55,66 H${X(7) + 50}`, 'W');
+  for (let i = 0; i < 8; i++) {
+    const x = X(i), bit = 7 - i;
+    wire(svg, `M${x + 24},44 V60 A6,6 0 0 1 ${x + 24},72 V82`, 'd' + bit);
+    wire(svg, `M${x + 44},66 V82`, 'W');
+    box(svg, x, 82, 56, 52, '锁存器', 'q' + bit);
+    wire(svg, `M${x + 28},134 V170`, 'q' + bit);
+    lampNode(svg, x + 28, 186, 'q' + bit, '', true);
+    const n = inNode(svg, x + 24, 30, 'd' + bit, '', () => { st.D[bit] ^= 1; step(); });
+    $$('circle', n).forEach(c => c.setAttribute('r', 12));
+    txt(svg, x + 28, 222, '×' + (1 << bit), 't-sub mid');
+  }
+  txt(svg, 30, 18, '数据线（8 根）', 't-sub');
+  inNode(svg, 40, 66, 'W', '', () => { st.W ^= 1; step(); });
+  txt(svg, 40, 100, '允许写入', 't-sub mid');
+  txt(svg, 40, 114, '（共用 1 根）', 't-sub mid');
+  const val = a => a.reduce((s, b, i) => s + (b << i), 0);
+  function step() {
+    if (st.W) st.Q = st.D.slice();
+    const sig = { W: st.W };
+    for (let b = 0; b < 8; b++) { sig['d' + b] = st.D[b]; sig['q' + b] = st.Q[b]; }
+    setSignals(svg, sig);
+    $('#reg-cap').innerHTML = `数据线上：${val(st.D)}　寄存器里存着：<b>${val(st.Q)}</b>　（允许写入${st.W ? '<b>开</b>，数据线的值会直接写进去' : '关，数据线怎么变都不影响'}）`;
+  }
+  $('#reg-42').onclick = () => { st.D = [0, 1, 0, 1, 0, 1, 0, 0]; step(); };
+  $('#reg-clear').onclick = () => { st.D = Array(8).fill(0); step(); };
+  step();
+})();
+
+/* ---------- 16×16 矩阵 ---------- */
+(function () {
+  const svg = $('#matrix');
+  const O = { x: 130, y: 90 }, C = 22;
+  const mem = Array.from({ length: 16 }, () => Array(16).fill(0));
+  let r = 12, c = 8;
+  el('rect', { x: 18, y: O.y, width: 76, height: 16 * C, rx: 8, class: 'mux' }, svg);
+  el('rect', { x: O.x, y: 18, width: 16 * C, height: 52, rx: 8, class: 'mux' }, svg);
+  txt(svg, 56, O.y - 12, '行多路复用器', 't-sub mid t-acc');
+  txt(svg, O.x + 8 * C, 38, '列多路复用器', 't-sub mid t-acc');
+  const rowIn = txt(svg, 56, O.y + 8 * C, '', 't-mono mid');
+  const colIn = txt(svg, O.x + 8 * C, 60, '', 't-mono mid');
+  const rows = [], cols = [], cells = [];
+  for (let i = 0; i < 16; i++) {
+    rows[i] = el('line', { x1: 94, y1: O.y + i * C + C / 2, x2: O.x + 16 * C, y2: O.y + i * C + C / 2, class: 'rowline' }, svg);
+    cols[i] = el('line', { x1: O.x + i * C + C / 2, y1: 70, x2: O.x + i * C + C / 2, y2: O.y + 16 * C, class: 'colline' }, svg);
+    txt(svg, 112, O.y + i * C + C / 2 + 4, String(i), 't-sub mid');
+    txt(svg, O.x + i * C + C / 2, 84, String(i), 't-sub mid');
+  }
+  for (let i = 0; i < 16; i++) {
+    cells[i] = [];
+    for (let j = 0; j < 16; j++) {
+      const rc = el('rect', { x: O.x + j * C + 4, y: O.y + i * C + 4, width: C - 8, height: C - 8, rx: 2, class: 'cellb' }, svg);
+      rc.style.cursor = 'pointer';
+      rc.addEventListener('click', () => { r = i; c = j; paint(); say(`选中第 ${r} 行、第 ${c} 列。`); });
+      cells[i][j] = rc;
+    }
+  }
+  txt(svg, O.x + 8 * C, O.y + 16 * C + 22, '黑色格子 = 存着 1；橙色框 = 行线和列线都为 1 的那个（AND 门选中）', 't-sub mid');
+  const bitset = (host, get, set) => {
+    const bs = [3, 2, 1, 0].map(k => { const b = document.createElement('button'); b.onclick = () => { set(get() ^ (1 << k)); paint(); }; host.appendChild(b); return [b, k]; });
+    return () => bs.forEach(([b, k]) => { const on = (get() >> k) & 1; b.textContent = on; b.classList.toggle('on', !!on); });
+  };
+  const pr = bitset($('#row-bits'), () => r, v => r = v);
+  const pc = bitset($('#col-bits'), () => c, v => c = v);
+  const b4 = n => n.toString(2).padStart(4, '0');
+  function paint() {
+    rows.forEach((l, i) => l.classList.toggle('on', i === r));
+    cols.forEach((l, i) => l.classList.toggle('on', i === c));
+    cells.forEach((row, i) => row.forEach((cell, j) => cell.setAttribute('class', 'cellb' + (mem[i][j] ? ' one' : '') + (i === r && j === c ? ' sel' : ''))));
+    rowIn.textContent = b4(r) + '→' + r; colIn.textContent = `${b4(c)} → 第 ${c} 列`;
+    pr(); pc();
+  }
+  const say = s => { $('#mx-cap').innerHTML = `地址 <b>${b4(r)} ${b4(c)}</b>（第 ${r} 行、第 ${c} 列）　` + s; };
+  $('#mx-w1').onclick = () => { mem[r][c] = 1; paint(); say('行线、列线、允许写入线都为 1 → 只有这个锁存器存下了数据线上的 <b>1</b>，其他 255 个忽略它。'); };
+  $('#mx-w0').onclick = () => { mem[r][c] = 0; paint(); say('写入 <b>0</b>。'); };
+  $('#mx-r').onclick = () => { say(`允许读取线为 1 → 这个锁存器把它存的值送上数据线：读到 <b>${mem[r][c]}</b>。`); };
+  paint(); say('点"写入 1"。');
+})();
+
+/* ---------- 8 个矩阵组成字节 ---------- */
+(function () {
+  const svg = $('#bank8');
+  const X = i => 70 + i * 74;
+  el('path', { d: `M20,40 H${X(7) + 52}`, class: 'wire on' }, svg);
+  txt(svg, 20, 28, '同一个 8 位地址，例如 11001000', 't-sub t-acc');
+  const byte = [0, 1, 0, 1, 0, 1, 0, 0];
+  for (let i = 0; i < 8; i++) {
+    const x = X(i);
+    el('path', { d: `M${x + 26},40 V64`, class: 'wire on' }, svg);
+    el('rect', { x, y: 64, width: 52, height: 52, rx: 6, class: 's-panel' }, svg);
+    for (let a = 0; a < 4; a++) for (let b = 0; b < 4; b++) el('rect', { x: x + 6 + b * 11, y: 70 + a * 11, width: 7, height: 7, rx: 1, style: `fill:${a === 2 && b === 1 ? 'var(--on)' : 'var(--line)'}` }, svg);
+    txt(svg, x + 26, 132, '256 位', 't-sub mid');
+    el('path', { d: `M${x + 26},138 V160`, class: 'wire' + (byte[i] ? ' on' : '') }, svg);
+    el('rect', { x: x + 12, y: 160, width: 28, height: 28, rx: 5, class: byte[i] ? 's-on' : 's-soft' }, svg);
+    txt(svg, x + 26, 179, String(byte[i]), 't-mono mid');
+  }
+  txt(svg, X(7) + 70, 179, '= 一个字节', 't-main');
+  txt(svg, X(7) + 70, 199, '00101010 = 42', 't-mono t-on');
+})();
+
+/* ---------- 256 字节内存 ---------- */
+(function () {
+  const mem = new Uint8Array(256);
+  mem[200] = 42; mem[0] = 7; mem[1] = 255;
+  const grid = $('#mem');
+  const cells = [];
+  for (let i = 0; i < 256; i++) {
+    const d = document.createElement('div');
+    d.title = '地址 ' + i;
+    d.onclick = () => { $('#mem-addr').value = i; paint(); };
+    grid.appendChild(d); cells.push(d);
+  }
+  const clamp = v => Math.max(0, Math.min(255, v | 0));
+  function paint(msg) {
+    const a = clamp(+$('#mem-addr').value);
+    cells.forEach((d, i) => { d.textContent = mem[i].toString(16).toUpperCase().padStart(2, '0'); d.className = (mem[i] ? 'nz' : '') + (i === a ? ' sel' : ''); });
+    $('#mem-out').innerHTML = `地址 ${a}（二进制 ${a.toString(2).padStart(8, '0')}）` + (msg ? '　' + msg : '');
+  }
+  $('#mem-addr').oninput = () => paint();
+  $('#mem-w').onclick = () => { const a = clamp(+$('#mem-addr').value), v = clamp(+$('#mem-val').value); mem[a] = v; paint(`写入 <b>${v}</b>（${v.toString(2).padStart(8, '0')}）：8 个矩阵在同一地址各存一位。`); };
+  $('#mem-r').onclick = () => { const a = clamp(+$('#mem-addr').value); paint(`读出 <span class="big">${mem[a]}</span>`); };
+  paint();
+})();
+
+/* ---------- 内存条放大 ---------- */
+(function () {
+  const svg = $('#zoom');
+  // 1. 内存条
+  el('rect', { x: 10, y: 70, width: 150, height: 56, rx: 4, style: 'fill:var(--ok-soft);stroke:var(--ok);stroke-width:2' }, svg);
+  for (let i = 0; i < 8; i++) el('rect', { x: 16 + i * 18, y: 80, width: 14, height: 30, rx: 1, style: `fill:${i === 2 ? 'var(--on)' : 'var(--ink)'}` }, svg);
+  for (let i = 0; i < 14; i++) el('rect', { x: 18 + i * 10, y: 120, width: 6, height: 6, style: 'fill:var(--brass)' }, svg);
+  txt(svg, 85, 150, '内存条：8 个芯片', 't-main mid');
+  // 2. 芯片
+  el('path', { d: 'M52,80 L190,40 M52,110 L190,170', class: 's-dash' }, svg);
+  el('rect', { x: 190, y: 40, width: 130, height: 130, rx: 4, class: 's-panel' }, svg);
+  for (let a = 0; a < 4; a++) for (let b = 0; b < 8; b++) el('rect', { x: 196 + b * 15.5, y: 46 + a * 30.5, width: 12, height: 26, rx: 1, style: `fill:${a === 1 && b === 5 ? 'var(--on-soft)' : 'var(--bg)'};stroke:${a === 1 && b === 5 ? 'var(--on)' : 'var(--line)'}` }, svg);
+  txt(svg, 255, 192, '芯片：32 个方块', 't-main mid');
+  // 3. 方块
+  el('path', { d: 'M273,77 L360,50 M273,103 L360,160', class: 's-dash' }, svg);
+  el('rect', { x: 360, y: 50, width: 110, height: 110, rx: 4, class: 's-panel' }, svg);
+  for (let a = 0; a < 2; a++) for (let b = 0; b < 2; b++) el('rect', { x: 366 + b * 52, y: 56 + a * 52, width: 46, height: 46, rx: 2, style: `fill:${a === 0 && b === 1 ? 'var(--on-soft)' : 'var(--bg)'};stroke:${a === 0 && b === 1 ? 'var(--on)' : 'var(--line)'}` }, svg);
+  txt(svg, 415, 182, '方块：4 个小块', 't-main mid');
+  // 4. 矩阵
+  el('path', { d: 'M464,56 L520,40 M464,102 L520,180', class: 's-dash' }, svg);
+  el('rect', { x: 520, y: 40, width: 170, height: 140, rx: 4, class: 's-panel' }, svg);
+  for (let a = 0; a < 12; a++) for (let b = 0; b < 16; b++) el('rect', { x: 526 + b * 10, y: 46 + a * 11, width: 7, height: 8, rx: 1, style: `fill:${(a * 7 + b * 3) % 5 === 0 ? 'var(--ink)' : 'var(--line)'}` }, svg);
+  txt(svg, 605, 200, '矩阵：128 × 64 = 8192 位', 't-main mid');
+  txt(svg, 350, 236, '8192 × 4 × 32 ≈ 100 万位 / 芯片　×8 个芯片 ≈ 800 万位 = 1 MB', 't-mono mid t-on');
+})();
+</script>
+</body>
+</html>

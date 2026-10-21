@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>07 中央处理器 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.cpu-box rect{fill:var(--panel);stroke:var(--ink);stroke-width:2;transition:all .25s}
+.cpu-box.src rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3}
+.cpu-box.dst rect{fill:var(--on-soft);stroke:var(--on);stroke-width:3}
+.cpu-box .nm{font-size:12px;fill:var(--muted)}
+.cpu-box .big{font-family:var(--mono);font-size:14px;font-weight:700;fill:var(--ink)}
+.cpu-box .reg{font-size:20px;font-weight:700;fill:var(--ink)}
+.alu-shape{fill:var(--panel);stroke:var(--ink);stroke-width:2;transition:all .25s}
+.alu-shape.src{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3}
+.bus{fill:none;stroke:var(--wire);stroke-width:3;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s}
+.bus.on{stroke:var(--on);stroke-width:4;filter:drop-shadow(0 0 3px var(--on-glow))}
+.ramrow rect{fill:var(--panel);stroke:var(--line);stroke-width:1;transition:all .2s}
+.ramrow.r rect{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.ramrow.w rect{fill:var(--on-soft);stroke:var(--on);stroke-width:2}
+.ramrow.ptr rect{stroke:var(--ink);stroke-width:2}
+.ramrow text{font-family:var(--mono);font-size:12px;fill:var(--ink)}
+.ramrow .ad{fill:var(--muted)}
+.phases{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 0}
+.phases span{padding:4px 14px;border-radius:999px;background:var(--bg);color:var(--muted);font-size:14px;border:1px solid var(--line)}
+.phases span.on{background:var(--on);color:#fff;border-color:var(--on);font-weight:700}
+.clock-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--line);margin-right:6px;vertical-align:0}
+.clock-dot.tick{background:var(--on);box-shadow:0 0 8px var(--on-glow)}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;font-size:14px}
+table.tt.isa td,table.tt.isa th{padding:6px 12px}
+table.tt.isa tr.cur td{background:var(--on-soft);font-weight:700}
+</style>
+</head>
+<body data-ep="7">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=8" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 7 集</div>
+  <h1>中央处理器 CPU</h1>
+  <p class="en">The Central Processing Unit (CPU)</p>
+  <p class="lead">把 ALU、寄存器和 RAM 拼在一起，就是计算机的心脏。这一集亲手跑一遍一个 4 条指令的程序，看 CPU 怎样一遍遍"取指令 → 解码 → 执行"。这可能是整个系列最难的一集——弄懂它，你就很厉害了。</p>
+  <div class="road">
+    <span>指令与操作码</span><i>→</i><span>取指令</span><i>→</i><span>解码</span><i>→</i><span>执行</span><i>→</i><span>控制单元</span><i>→</i><span>时钟</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · CPU 做什么</a></li>
+    <li><a href="#ch1">1 · 零件与指令</a></li>
+    <li><a href="#ch2">2 · 跑一个程序</a></li>
+    <li><a href="#ch3">3 · 控制单元</a></li>
+    <li><a href="#ch4">4 · 时钟</a></li>
+    <li><a href="#ch5">5 · 打包成 CPU</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>CPU 做什么</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！今天我们讲处理器。先提醒一下：这可能是整个系列里最复杂的一集。所以一旦你弄懂了，你就厉害了。</p>
+  <p>我们已经做了一个算术逻辑单元（ALU），输入二进制数，它会执行计算。我们还做了两种计算机内存：<b>寄存器</b>——很小的一块线性内存，适合存一个值；然后我们扩大规模，做出了 <b>RAM</b>——一大块内存，能在不同的地址上存很多数字。</p>
+  <p>现在是时候把这些拼在一起，造出任何一台计算机的心脏了——只不过它没有人类心脏那些情感包袱。计算机的心脏是<b>中央处理单元</b>，最常见的叫法是 <b>CPU</b>。</p>
+  <p>CPU 的工作是<b>执行程序</b>。程序，比如 Microsoft Office、Safari 浏览器，或者你心爱的《半条命 2》，是由一系列单独的操作组成的，这些操作叫<b>指令</b>（instruction），因为它们"指示"计算机该做什么。如果是数学指令，比如加或减，CPU 会让 ALU 去做这个数学运算；如果是内存指令，CPU 会和内存通信，读写数值。</p>
+  <p>CPU 里有很多部件，所以我们一块一块地搭，边搭边讲。我们关注功能模块，而不是画出每一根线。当我们用一条线连接两个组件时，这条线代表所有必要线路的一个抽象。这种高层次的视角叫<b>微体系结构</b>（microarchitecture）。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>零件清单与指令</h2>
+  <p>好，首先我们需要一些内存，把上一集做的 RAM 模块拿过来就行。为了简单，假设它只有 16 个位置，每个位置存 8 位。再给处理器 4 个 8 位的寄存器，叫 <b>A、B、C、D</b>，用来临时存储和操作数据。</p>
+  <p>我们已经知道，数据可以以二进制的形式存在内存里，<b>程序也可以存在内存里</b>。我们可以给 CPU 支持的每一条指令分配一个 ID。在这个假想的例子里，我们用<b>前 4 位存"操作码"</b>（operation code，简称 opcode），<b>后 4 位说明这个操作的数据从哪里来</b>——可以是寄存器，也可以是内存地址。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 640 130" role="img" aria-label="8 位指令的格式">
+        <g class="t-mono" style="font-size:22px">
+          <rect x="120" y="30" width="200" height="50" rx="8" class="s-on"/>
+          <rect x="320" y="30" width="200" height="50" rx="8" class="s-acc"/>
+          <text x="220" y="63" class="t-mono mid" style="font-size:24px;letter-spacing:8px">0010</text>
+          <text x="420" y="63" class="t-mono mid" style="font-size:24px;letter-spacing:8px">1110</text>
+        </g>
+        <text x="220" y="20" class="t-main mid">操作码（4 位）：做什么</text>
+        <text x="420" y="20" class="t-main mid">地址或寄存器（4 位）：对谁做</text>
+        <text x="220" y="104" class="t-sub mid">0010 = LOAD_A</text>
+        <text x="420" y="104" class="t-sub mid">1110 = 内存地址 14</text>
+        <text x="320" y="124" class="t-sub mid">合起来：把内存地址 14 里的值，读进寄存器 A</text>
+      </svg>
+      </div>
+      <figcaption>图 1　一条 8 位指令 = 4 位操作码 + 4 位操作对象。</figcaption>
+    </figure>
+  </div>
+
+  <div class="card" style="overflow-x:auto">
+    <h3>这台 CPU 认识的指令</h3>
+    <table class="tt isa" id="isa">
+      <thead><tr><th>指令</th><th>描述</th><th>4 位操作码</th><th>后 4 位</th></tr></thead>
+      <tbody>
+        <tr data-op="2"><td>LOAD_A</td><td>把 RAM 里的值读进寄存器 A</td><td class="num">0010</td><td>4 位 RAM 地址</td></tr>
+        <tr data-op="1"><td>LOAD_B</td><td>把 RAM 里的值读进寄存器 B</td><td class="num">0001</td><td>4 位 RAM 地址</td></tr>
+        <tr data-op="4"><td>STORE_A</td><td>把寄存器 A 的值写进 RAM</td><td class="num">0100</td><td>4 位 RAM 地址</td></tr>
+        <tr data-op="8"><td>ADD</td><td>把两个寄存器相加，结果存进第二个</td><td class="num">1000</td><td>2 位寄存器 + 2 位寄存器</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>要把 CPU 补全，还需要两个寄存器。第一，需要一个寄存器记录<b>程序运行到哪里了</b>，我们用<b>指令地址寄存器</b>，顾名思义，它存着当前指令的内存地址。第二，需要另一个寄存器存<b>当前的指令</b>，我们叫它<b>指令寄存器</b>。</p>
+  <p>计算机刚启动时，所有寄存器都从 0 开始。为了举例，我们已经在 RAM 里放好了一个简单的程序，今天就把它从头走一遍。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>动手：一个阶段一个阶段地跑程序</h2>
+  <p class="muted" style="font-size:15px">先用下面的模拟器跟着走一遍，再读后面的文字——文字就是这台模拟器每一步在做的事。</p>
+
+  <div class="card">
+    <div class="scroll-x"><svg class="diagram" id="cpu" viewBox="0 0 760 450" role="img" aria-label="CPU 模拟器"></svg></div>
+    <div class="phases" id="phases"><span data-p="fetch">① 取指令 fetch</span><span data-p="decode">② 解码 decode</span><span data-p="exec">③ 执行 execute</span></div>
+    <div class="step-text" id="cpu-step"></div>
+    <div class="ctl">
+      <button class="btn primary" id="cpu-next">下一阶段 →</button>
+      <button class="btn" id="cpu-run">▶ 让时钟来推</button>
+      <label><span class="clock-dot" id="clock-dot"></span>时钟 <input type="range" id="cpu-hz" min="1" max="8" value="2"> <span id="cpu-hz-v"></span></label>
+      <button class="btn" id="cpu-reset">重置</button>
+    </div>
+    <p class="hint">蓝色 = 数据从这里出来，橙色 = 数据写到这里；右边 RAM 里黑框是指令地址寄存器指着的那一格</p>
+  </div>
+
+  <h3>取指令（fetch）</h3>
+  <p>CPU 运行的第一个阶段叫<b>取指令阶段</b>，负责拿到第一条指令。首先，把指令地址寄存器连到 RAM。寄存器的值是 0，所以 RAM 返回地址 0 里存的值，这里是 <code>0010 1110</code>。然后这个值被复制进指令寄存器。</p>
+  <h3>解码（decode）</h3>
+  <p>现在指令已经从内存里取出来了，我们得弄清楚这是什么指令，才能执行（execute）它——是运行它，不是"处决"它。这叫<b>解码阶段</b>。这里操作码，也就是前 4 位，是 0010，对应 <b>LOAD_A</b> 指令：把 RAM 里的一个值读进寄存器 A。RAM 地址是这条指令的后 4 位，1110，也就是十进制的 14。</p>
+  <p>指令由<b>控制单元</b>（Control Unit）来解码和解释。和我们造过的其他所有东西一样，它也是由逻辑门构成的。比如为了识别 LOAD_A 指令，需要一个检查操作码是否等于 0010 的电路，用几个逻辑门就能做到。</p>
+
+  <div class="card">
+    <h3>动手：识别 LOAD_A 的电路</h3>
+    <div class="scroll-x"><svg class="diagram" id="dec" viewBox="0 0 560 220" role="img" aria-label="识别 LOAD_A 指令的电路"></svg></div>
+    <div class="btns"><button class="btn" data-op="0010">0010 LOAD_A</button><button class="btn" data-op="0001">0001 LOAD_B</button><button class="btn" data-op="1000">1000 ADD</button></div>
+    <div class="step-text" id="dec-cap"></div>
+  </div>
+  <div class="extra">
+    <span class="t">这个电路怎么来的</span>
+    0010 的意思是"第 3 位是 0、第 2 位是 0、第 1 位是 1、第 0 位是 0"。把应该是 0 的位先过一个 NOT，于是"完全匹配"就变成了"四个信号全是 1"——这正是 AND 的工作。每条指令都有一个这样的小电路，它们合起来就是控制单元里的解码部分。
+  </div>
+
+  <h3>执行（execute）</h3>
+  <p>知道了是哪条指令，就可以执行它了，这是<b>执行阶段</b>的开始！用"LOAD_A 检查电路"的输出，打开 RAM 的允许读取线，并把地址 14 送过去。RAM 取出这个地址上的值，<code>00000011</code>，也就是十进制的 3。因为这是 LOAD_A 指令，我们只想把这个值存进寄存器 A，其他寄存器都不受影响。所以，把 RAM 的数据线连到 4 个数据寄存器上，再用 LOAD_A 检查电路<b>只打开寄存器 A 的允许写入线</b>。这就成功了——我们把 RAM 地址 14 的值读进了寄存器 A。</p>
+  <p>这条指令完成了，可以关掉所有线路，准备去内存里取下一条指令。为此，把指令地址寄存器加 1，执行阶段到此结束。</p>
+  <p>LOAD_A 只是这台 CPU 能执行的几条指令之一。不同的指令由不同的逻辑电路解码，这些电路会配置 CPU 的各个部件去执行相应的操作。一个个去看这些解码电路细节太多了，既然已经看过一个例子，我们就把它们统统打包成一个<b>控制单元</b>，保持简洁。没错，又一层新抽象。控制单元就像管弦乐队的<b>指挥</b>，指挥着 CPU 的所有部件。</p>
+
+  <h3>第二轮：LOAD_B</h3>
+  <p>完成了一整轮"取指令 → 解码 → 执行"，就可以从取指令开始，再来一遍。指令地址寄存器现在是 1，所以 RAM 给出地址 1 里的值：<code>0001 1111</code>。到解码阶段！0001 是 <b>LOAD_B</b> 指令，把 RAM 里的一个值读进寄存器 B，这次的内存地址是 1111，也就是 15。到执行阶段！控制单元让 RAM 读地址 15，并让寄存器 B 接收数据。成功，我们把 <code>00001110</code>，也就是十进制的 14，存进了寄存器 B。最后把指令地址寄存器加 1，又完成了一轮。</p>
+
+  <h3>第三轮：ADD</h3>
+  <p>下一条指令有点不同，来取它：<code>1000 0100</code>。操作码 1000 是 <b>ADD</b> 指令。这次后 4 位不是一个 4 位 RAM 地址，而是<b>两组 2 位</b>。2 位能表示 4 个值，所以 2 位足够选出 4 个寄存器中的任意一个。第一组 2 位是 01，这里代表寄存器 B；第二组是 00，代表寄存器 A。所以 <code>1000 01 00</code> 这条指令的意思是：把寄存器 B 的值加到寄存器 A 里。</p>
+  <p>为了执行这条指令，我们需要把第 5 集做的 ALU 整合进 CPU。控制单元负责选出正确的寄存器作为输入，并配置 ALU 做正确的运算。对于这条 ADD 指令，控制单元启用寄存器 B，把它的值送进 ALU 的第一个输入；也启用寄存器 A，送进 ALU 的第二个输入。前面说过，ALU 本身能做好几种运算，所以控制单元必须把 ADD 的操作码传给它，让它做加法。</p>
+  <p>最后，结果应该存进寄存器 A。但<b>不能直接写进去</b>，因为新值会绕回 ALU，然后不停地和自己相加。所以控制单元用一个<b>内部寄存器</b>暂存输出，关掉 ALU，再把值写进正确的目标寄存器。这里输入是 3 和 14，所以和是 17，二进制 <code>00010001</code>，现在存进了寄存器 A。和之前一样，最后把指令地址加 1，又完成一轮。</p>
+
+  <h3>第四轮：STORE_A</h3>
+  <p>好，来取最后一条指令：<code>0100 1101</code>。解码后发现 0100 是 <b>STORE_A</b> 指令，RAM 地址是 13。和平常一样，把地址送给 RAM 模块，但这次不是允许读取，而是<b>允许写入</b>。同时，打开寄存器 A 的允许读取，这样就能用数据线把寄存器 A 里的值送进去。</p>
+  <p>恭喜，我们刚刚运行了第一个计算机程序！它从内存里读出两个值，把它们加起来，再把和存回内存。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>控制单元：乐队的指挥</h2>
+  <p>回顾一下控制单元在每一轮里做的事：它看指令寄存器里的操作码，决定这一轮该打开哪些线——RAM 是读还是写、哪个寄存器允许写入、ALU 做什么运算——最后让指令地址寄存器加 1。CPU 里的其他部件都不"知道"自己在执行什么程序，它们只是在控制单元打开的那几根线上传数据。</p>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>指令</th><th>RAM</th><th>寄存器</th><th>ALU</th></tr></thead>
+      <tbody>
+        <tr><td>LOAD_A 14</td><td>读地址 14</td><td>只允许 A 写入</td><td>不用</td></tr>
+        <tr><td>LOAD_B 15</td><td>读地址 15</td><td>只允许 B 写入</td><td>不用</td></tr>
+        <tr><td>ADD B, A</td><td>不用</td><td>读 B、读 A；结果经临时寄存器写回 A</td><td>做加法</td></tr>
+        <tr><td>STORE_A 13</td><td>写地址 13</td><td>读 A，送上数据线</td><td>不用</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">这张表是把上面四轮整理在一起（补充）。</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>时钟</h2>
+  <p>当然，刚才是我一步一步讲给你听的，我在手动地把 CPU 从取指令推进到解码、再到执行。但不是每台计算机里都住着一个迷你 Carrie Anne。所以让 CPU 一拍一拍走下去的责任，落在了一个叫<b>时钟</b>的部件上。</p>
+  <p>顾名思义，时钟以精确、规律的间隔触发电信号。控制单元用这个信号推进 CPU 的内部操作，让一切按步骤同步进行——就像罗马战船船头那个有节奏地击鼓的人，让所有划桨手保持同步……或者像一个节拍器。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="clk" viewBox="0 0 680 150" role="img" aria-label="时钟信号推动 CPU 的阶段"></svg>
+      </div>
+      <figcaption>图 2　时钟每"嘀嗒"一次，控制单元就把 CPU 推进一步（示意：真实 CPU 一个阶段可能占好几个时钟周期）。</figcaption>
+    </figure>
+  </div>
+
+  <p>当然，节奏不能太快，因为就连电，在导线里传过去、让信号稳定下来，也需要一点时间。CPU 执行"取指令 → 解码 → 执行"每一步的速度，叫<b>时钟速度</b>（clock speed），单位是<b>赫兹</b>——一个表示频率的单位，1 赫兹就是每秒 1 个周期。</p>
+  <p>我花了大约 6 分钟给你讲完 4 条指令——读取、读取、相加、存储——所以我的等效时钟速度大约是 0.03 赫兹。我承认我不是一台好计算机，但就算是心算很快的人，大概也只能一秒算一次，也就是 1 赫兹。</p>
+  <p>第一款单芯片 CPU 是<b>英特尔 4004</b>，一款 1971 年发布的 4 位 CPU。它的微体系结构其实和我们的示例 CPU 很像。虽然它是同类中的第一款处理器，但它的时钟速度已经达到了惊人的 740 千赫兹——每秒 74 万个周期。你可能觉得这很快了，但和我们今天用的处理器比起来不值一提。1 兆赫兹是每秒一百万个时钟周期，而你现在看视频用的电脑甚至手机，毫无疑问有好几吉赫兹——那可是<b>每秒几十亿</b>个 CPU 周期。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="hz" viewBox="0 0 730 220" role="img" aria-label="时钟速度对比"></svg>
+      </div>
+      <figcaption>图 3　时钟速度对比（对数刻度，每往右一格是 100 倍）。</figcaption>
+    </figure>
+  </div>
+
+  <p>你可能还听说过有人给电脑<b>超频</b>。意思是修改时钟，加快 CPU 的节奏——就像罗马战船要去撞另一艘船时，鼓手会加快击鼓。芯片厂商在设计 CPU 时通常会留出足够的余量，能承受一点超频；但超得太多，要么让 CPU 过热，要么因为信号跟不上时钟而算出一堆乱七八糟的结果。</p>
+  <p>你很少听说<b>降频</b>，但它其实超级有用。有时候没必要让处理器全速运行，也许用户走开了，或者正在跑的程序要求不高。把 CPU 放慢，可以省很多电，这对靠电池供电的设备很重要，比如笔记本和智能手机。为了满足这种需求，很多现代处理器能根据需要提高或降低时钟速度，这叫<b>动态频率调节</b>（dynamic frequency scaling）。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>打包成一个 CPU</h2>
+  <p>加上时钟，我们的 CPU 就完整了。现在可以给它套个盒子，变成一个独立组件。没错，又一层新的抽象！</p>
+  <p>RAM 就像上一集给你看的那样，是 CPU 外面的一个独立组件，它们之间用<b>地址线、数据线和允许读 / 写线</b>通信。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 640 210" role="img" aria-label="CPU 和 RAM 之间的连线">
+        <defs><marker id="ah" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink)"/></marker></defs>
+        <rect x="30" y="30" width="220" height="150" rx="14" class="s-on"/>
+        <text x="140" y="64" class="t-main mid" style="font-size:18px">CPU</text>
+        <text x="140" y="92" class="t-sub mid">控制单元 · ALU · 寄存器 A B C D</text>
+        <text x="140" y="112" class="t-sub mid">指令地址寄存器 · 指令寄存器</text>
+        <text x="140" y="140" class="t-sub mid">时钟</text>
+        <rect x="430" y="30" width="180" height="150" rx="14" class="s-acc"/>
+        <text x="520" y="100" class="t-main mid" style="font-size:18px">RAM</text>
+        <text x="520" y="124" class="t-sub mid">程序和数据都在这里</text>
+        <path d="M252,66 H426" class="s-line" marker-end="url(#ah)"/>
+        <text x="340" y="58" class="t-sub mid">地址线：要哪一格</text>
+        <path d="M256,106 H426" class="s-line" marker-start="url(#ah)" marker-end="url(#ah)"/>
+        <text x="340" y="98" class="t-sub mid">数据线：值（双向）</text>
+        <path d="M252,146 H426" class="s-line" marker-end="url(#ah)"/>
+        <text x="340" y="138" class="t-sub mid">允许读 / 允许写</text>
+      </svg>
+      </div>
+      <figcaption>图 4　CPU 是一个盒子，RAM 是另一个盒子，三组线把它们连起来。</figcaption>
+    </figure>
+  </div>
+
+  <p>虽然我们今天设计的 CPU 是一个简化的例子，但我们讲到的很多基本机制，现代处理器里依然存在。下一集，我们会加强这台 CPU，给它扩展更多指令，同时迈出走向软件的第一步。下周见！</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <div class="road" style="margin:8px 0 18px">
+    <span>① 取指令：按指令地址寄存器去 RAM 取指令，放进指令寄存器</span><i>→</i><span>② 解码：控制单元看操作码</span><i>→</i><span>③ 执行：打开相应的线，最后指令地址 +1</span><i>↺</i>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    程序就是存在 RAM 里的一串指令；CPU 在时钟的节拍下不停地"取指令 → 解码 → 执行"，控制单元像指挥一样决定每一拍打开哪些线。我们的 4 条指令程序：从地址 14、15 读出 3 和 14，相加得 17，写回地址 13。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 指令地址寄存器和指令寄存器分别存什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">指令地址寄存器存<b>当前指令在 RAM 里的地址</b>（程序走到哪了）；指令寄存器存<b>取回来的那条指令本身</b>（8 位的操作码 + 操作对象）。每执行完一条，指令地址寄存器 +1。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 0001 1111 和 1000 0100 分别是什么意思？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">0001 1111：操作码 0001 = LOAD_B，地址 1111 = 15，把 RAM 地址 15 的值读进寄存器 B。1000 0100：操作码 1000 = ADD，后 4 位拆成 01（B）和 00（A），把 B 加到 A 里。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. ADD 的结果为什么不能直接写回寄存器 A？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">A 同时是 ALU 的输入。如果结果直接写进 A，新值马上又流进 ALU，再和 B 相加，再写回……不停地自己加自己。所以控制单元先把结果存进内部的临时寄存器，关掉 ALU，再写回 A。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 时钟速度 3 GHz 是什么意思？超频和降频各有什么用？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">每秒 30 亿个时钟周期，控制单元每个周期推进 CPU 一步。超频让节奏更快，但太快会过热或因信号跟不上而算错；降频让节奏变慢，省电，对笔记本和手机很重要。现代 CPU 会按需自动调节，叫动态频率调节。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="06.html"><small>← 上一集</small>06 寄存器和内存</a>
+    <a class="next" href="08.html"><small>下一集 →</small>08 指令和程序</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 7 集 The Central Processing Unit（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const b8 = n => n.toString(2).padStart(8, '0');
+const b4 = n => n.toString(2).padStart(4, '0');
+const sp8 = n => b8(n).slice(0, 4) + ' ' + b8(n).slice(4);
+
+/* ---------- CPU 模拟器 ---------- */
+(function () {
+  const svg = $('#cpu');
+  const OPS = { 2: 'LOAD_A', 1: 'LOAD_B', 4: 'STORE_A', 8: 'ADD' };
+  const RN = ['A', 'B', 'C', 'D'];
+  const PROG = { 0: 0b00101110, 1: 0b00011111, 2: 0b10000100, 3: 0b01001101, 14: 3, 15: 14 };
+  let st;
+  const B = {}, W = {}, rows = [];
+
+  // CPU 边框
+  el('rect', { x: 10, y: 10, width: 476, height: 430, rx: 14, class: 's-dash' }, svg);
+  txt(svg, 24, 432, 'CPU', 't-main');
+  const mk = (key, x, y, w, h, name, reg) => {
+    const g = el('g', { class: 'cpu-box' }, svg);
+    el('rect', { x, y, width: w, height: h, rx: 8 }, g);
+    if (reg) { txt(g, x + 14, y + h / 2 + 7, name, 'reg'); }
+    else txt(g, x + 10, y + 15, name, 'nm');
+    const v = txt(g, reg ? x + w - 10 : x + w - 10, reg ? y + h / 2 + 5 : y + h - 9, '', 'big');
+    v.setAttribute('text-anchor', 'end');
+    B[key] = { g, v };
+  };
+  mk('cu', 30, 40, 190, 82, '控制单元');
+  B.cu.v.setAttribute('text-anchor', 'middle'); B.cu.v.setAttribute('x', 125); B.cu.v.setAttribute('y', 90);
+  B.cu.v.style.fontSize = '14px';
+  const cuSub = txt(B.cu.g, 125, 110, '', 't-sub mid');
+  mk('iar', 250, 40, 210, 40, '指令地址寄存器');
+  mk('ir', 250, 86, 210, 40, '指令寄存器');
+  RN.forEach((r, i) => mk(r, 30, 160 + i * 52, 170, 42, r, true));
+  const aluG = el('path', { d: 'M260,230 H350 L360,248 L370,230 H460 L410,318 H310 Z', class: 'alu-shape' }, svg);
+  txt(svg, 360, 284, 'ALU', 'box-title');
+  const aluOp = txt(svg, 360, 302, '', 't-sub mid');
+  mk('temp', 290, 348, 150, 40, '内部临时寄存器');
+  // 内部连线
+  W.aAlu = el('path', { d: 'M200,181 H415 V230', class: 'bus' }, svg);
+  W.bAlu = el('path', { d: 'M200,233 H228 V214 H305 V230', class: 'bus' }, svg);
+  W.aluTemp = el('path', { d: 'M360,318 V348', class: 'bus' }, svg);
+  W.tempA = el('path', { d: 'M290,368 H216 V239 A6,6 0 0 0 216,227 V196 H200', class: 'bus' }, svg);
+  // CPU ↔ RAM
+  W.addrIAR = el('path', { d: 'M460,60 H520', class: 'bus' }, svg);
+  W.addrIR = el('path', { d: 'M460,96 H520', class: 'bus' }, svg);
+  W.dataIR = el('path', { d: 'M520,116 H460', class: 'bus' }, svg);
+  W.dataA = el('path', { d: 'M520,146 H208 V181 H200', class: 'bus' }, svg);
+  W.dataB = el('path', { d: 'M520,146 H208 V175 A6,6 0 0 0 208,187 V233 H200', class: 'bus' }, svg);
+  W.en = el('path', { d: 'M125,40 V22 H630 V28', class: 'bus' }, svg);
+  txt(svg, 494, 54, '地址', 't-sub mid'); txt(svg, 494, 90, '地址', 't-sub mid'); txt(svg, 494, 132, '数据', 't-sub mid'); txt(svg, 470, 162, '数据', 't-sub');
+  const enT = txt(svg, 300, 17, '允许读 / 写', 't-sub mid');
+  // RAM
+  txt(svg, 630, 448, 'RAM（16 × 8 位）', 't-main mid');
+  for (let i = 0; i < 16; i++) {
+    const g = el('g', { class: 'ramrow' }, svg);
+    el('rect', { x: 520, y: 30 + i * 25, width: 220, height: 23, rx: 3 }, g);
+    txt(g, 528, 46 + i * 25, `${b4(i)} ${String(i).padStart(2)}`, 'ad');
+    const v = txt(g, 732, 46 + i * 25, '', '');
+    v.setAttribute('text-anchor', 'end');
+    rows.push({ g, v });
+  }
+
+  function reset() {
+    st = { ram: Array.from({ length: 16 }, (_, i) => PROG[i] || 0), reg: [0, 0, 0, 0], iar: 0, ir: 0, temp: null, phase: 'fetch' };
+    draw({ text: '所有寄存器都是 0。程序已经放在 RAM 里：地址 0~3 是 4 条指令，14、15 是两个数据。点"下一阶段"。' });
+  }
+  function draw(h) {
+    h = Object.assign({ src: [], dst: [], wires: [], row: null, mode: null, op: null, phase: null, alu: '' }, h);
+    Object.entries(B).forEach(([k, o]) => { o.g.classList.toggle('src', h.src.includes(k)); o.g.classList.toggle('dst', h.dst.includes(k)); });
+    aluG.classList.toggle('src', h.src.includes('alu'));
+    aluOp.textContent = h.alu;
+    Object.entries(W).forEach(([k, p]) => p.classList.toggle('on', h.wires.includes(k)));
+    enT.textContent = h.mode === 'r' ? '允许读取 = 1' : h.mode === 'w' ? '允许写入 = 1' : '允许读 / 写';
+    B.iar.v.textContent = `${b4(st.iar)}（${st.iar}）`;
+    B.ir.v.textContent = sp8(st.ir);
+    RN.forEach((r, i) => B[r].v.textContent = `${b8(st.reg[i])} = ${st.reg[i]}`);
+    B.temp.v.textContent = st.temp == null ? '—' : `${b8(st.temp)} = ${st.temp}`;
+    B.cu.v.textContent = h.op != null ? (OPS[h.op] || '不认识的指令') : '';
+    cuSub.textContent = h.phase ? { fetch: '取指令', decode: '解码', exec: '执行' }[h.phase] : '';
+    rows.forEach((r, i) => {
+      r.v.textContent = sp8(st.ram[i]) + (i < 4 && OPS[st.ram[i] >> 4] ? '  ' + OPS[st.ram[i] >> 4] : '');
+      r.g.setAttribute('class', 'ramrow' + (i === h.row ? ' ' + h.mode : '') + (i === st.iar ? ' ptr' : ''));
+    });
+    $$('#phases span').forEach(s => s.classList.toggle('on', s.dataset.p === h.phase));
+    $$('#isa tbody tr').forEach(tr => tr.classList.toggle('cur', h.op != null && +tr.dataset.op === h.op));
+    $('#cpu-step').innerHTML = h.text;
+  }
+  function step() {
+    const s = st;
+    if (s.phase === 'halt') { draw({ text: '程序已经跑完了。点"重置"再来一遍。' }); return false; }
+    if (s.phase === 'fetch') {
+      const a = s.iar;
+      s.ir = s.ram[a];
+      s.phase = 'decode';
+      draw({ phase: 'fetch', src: ['iar'], dst: ['ir'], wires: ['addrIAR', 'dataIR', 'en'], row: a, mode: 'r',
+        text: `<b>取指令</b>：指令地址寄存器是 ${a}，把它送到 RAM → RAM 返回地址 ${a} 的值 <code>${sp8(s.ir)}</code> → 复制进指令寄存器。` });
+      return true;
+    }
+    if (s.phase === 'decode') {
+      const op = s.ir >> 4, lo = s.ir & 15;
+      if (!OPS[op]) {
+        s.phase = 'halt';
+        draw({ phase: 'decode', src: ['ir'], dst: ['cu'], op, text: `<b>解码</b>：操作码 <code>${b4(op)}</code> 不是这台 CPU 认识的指令——课程里的程序到这里就结束了。（下一集会加一条 HALT 指令，专门让程序停下来。）` });
+        return false;
+      }
+      s.phase = 'exec';
+      const what = op === 8 ? `后 4 位拆成两组：<code>${b4(lo).slice(0, 2)}</code> = 寄存器 ${RN[lo >> 2]}，<code>${b4(lo).slice(2)}</code> = 寄存器 ${RN[lo & 3]}` : `后 4 位 <code>${b4(lo)}</code> = 内存地址 ${lo}`;
+      draw({ phase: 'decode', src: ['ir'], dst: ['cu'], op, text: `<b>解码</b>：控制单元看前 4 位 <code>${b4(op)}</code> → 是 <b>${OPS[op]}</b>；${what}。` });
+      return true;
+    }
+    if (s.phase === 'exec') {
+      const op = s.ir >> 4, lo = s.ir & 15;
+      if (op === 2 || op === 1) {
+        const r = op === 2 ? 0 : 1;
+        s.reg[r] = s.ram[lo]; s.iar++; s.phase = 'fetch';
+        draw({ phase: 'exec', op, src: ['cu'], dst: [RN[r]], wires: ['addrIR', 'en', op === 2 ? 'dataA' : 'dataB'], row: lo, mode: 'r',
+          text: `<b>执行</b>：打开 RAM 的允许读取，送入地址 ${lo} → 读出 <code>${b8(s.reg[r])}</code>（${s.reg[r]}）→ 只打开寄存器 ${RN[r]} 的允许写入，存进去。最后指令地址 +1 → ${s.iar}。` });
+      } else if (op === 8) {
+        const src = lo >> 2, dst = lo & 3;
+        s.temp = (s.reg[src] + s.reg[dst]) & 255; s.phase = 'exec2';
+        draw({ phase: 'exec', op, src: [RN[src], RN[dst], 'alu'], dst: ['temp'], wires: ['aAlu', 'bAlu', 'aluTemp'], alu: '做加法（ADD 操作码）',
+          text: `<b>执行（上）</b>：启用寄存器 ${RN[src]}（${s.reg[src]}）→ ALU 输入 1；启用寄存器 ${RN[dst]}（${s.reg[dst]}）→ ALU 输入 2；告诉 ALU 做加法 → ${s.reg[src]} + ${s.reg[dst]} = ${s.temp}。<br>结果<b>先存进内部临时寄存器</b>，不直接写回 ${RN[dst]}——否则新值会绕回 ALU，不停地自己加自己。` });
+      } else if (op === 4) {
+        s.ram[lo] = s.reg[0]; s.iar++; s.phase = 'fetch';
+        draw({ phase: 'exec', op, src: ['A'], dst: [], wires: ['addrIR', 'en', 'dataA'], row: lo, mode: 'w',
+          text: `<b>执行</b>：把地址 ${lo} 送给 RAM，这次打开的是<b>允许写入</b>；同时打开寄存器 A 的允许读取 → A 的值 ${s.reg[0]} 顺着数据线写进地址 ${lo}。指令地址 +1 → ${s.iar}。<br>🎉 程序跑完了一遍：读出 3 和 14，相加得 17，写回了内存地址 13。` });
+      }
+      return true;
+    }
+    if (s.phase === 'exec2') {
+      const dst = s.ir & 3;
+      s.reg[dst] = s.temp; s.iar++; s.phase = 'fetch';
+      draw({ phase: 'exec', op: 8, src: ['temp'], dst: [RN[dst]], wires: ['tempA'],
+        text: `<b>执行（下）</b>：关掉 ALU，把临时寄存器里的 ${s.temp}（<code>${b8(s.temp)}</code>）写进寄存器 ${RN[dst]}。指令地址 +1 → ${s.iar}。` });
+      return true;
+    }
+  }
+  let timer = null;
+  const hz = () => +$('#cpu-hz').value / 2;
+  const stop = () => { clearInterval(timer); timer = null; $('#cpu-run').textContent = '▶ 让时钟来推'; };
+  $('#cpu-hz').oninput = () => { $('#cpu-hz-v').textContent = hz() + ' Hz'; if (timer) { stop(); start(); } };
+  function start() {
+    $('#cpu-run').textContent = '⏸ 停下时钟';
+    timer = setInterval(() => {
+      const d = $('#clock-dot'); d.classList.add('tick'); setTimeout(() => d.classList.remove('tick'), 150);
+      if (!step()) stop();
+    }, 1000 / hz());
+  }
+  $('#cpu-run').onclick = () => timer ? stop() : start();
+  $('#cpu-next').onclick = () => { stop(); step(); };
+  $('#cpu-reset').onclick = () => { stop(); reset(); };
+  $('#cpu-hz-v').textContent = hz() + ' Hz';
+  reset();
+})();
+
+/* ---------- LOAD_A 识别电路 ---------- */
+(function () {
+  const svg = $('#dec');
+  const bits = [0, 0, 1, 0]; // b3 b2 b1 b0
+  const Y = [30, 80, 130, 180];
+  wire(svg, 'M55,30 H100', 'b3'); gate(svg, 'NOT', 100, 10, 'n3', ''); wire(svg, 'M148,30 H190 V47 H220', 'n3');
+  wire(svg, 'M55,80 H100', 'b2'); gate(svg, 'NOT', 100, 60, 'n2', ''); wire(svg, 'M148,80 H190 V63 H220', 'n2');
+  wire(svg, 'M55,130 H190 V147 H220', 'b1');
+  wire(svg, 'M55,180 H100', 'b0'); gate(svg, 'NOT', 100, 160, 'n0', ''); wire(svg, 'M148,180 H190 V163 H220', 'n0');
+  gate(svg, 'AND', 220, 35, 'g1', 'AND'); gate(svg, 'AND', 220, 135, 'g2', 'AND');
+  wire(svg, 'M270,55 H300 V97 H330', 'g1'); wire(svg, 'M270,155 H300 V113 H330', 'g2');
+  gate(svg, 'AND', 330, 85, 'y', 'AND');
+  wire(svg, 'M380,105 H435', 'y');
+  lampNode(svg, 452, 105, 'y', '是 LOAD_A？', true);
+  ['第 3 位', '第 2 位', '第 1 位', '第 0 位'].forEach((nm, i) => {
+    inNode(svg, 40, Y[i], 'b' + (3 - i), '', () => { bits[i] ^= 1; render(); });
+    txt(svg, 12, Y[i] + 4, nm.slice(2, 3), 't-sub end');
+  });
+  txt(svg, 40, 212, '操作码', 't-sub mid');
+  function render() {
+    const [b3, b2, b1, b0] = bits;
+    const n3 = 1 - b3, n2 = 1 - b2, n0 = 1 - b0, g1 = n3 & n2, g2 = b1 & n0, y = g1 & g2;
+    setSignals(svg, { b3, b2, b1, b0, n3, n2, n0, g1, g2, y });
+    $('#dec-cap').innerHTML = `操作码 <code>${bits.join('')}</code> → ${y ? '<b>是 LOAD_A</b>：输出 1，控制单元会打开 RAM 的允许读取和寄存器 A 的允许写入。' : '不是 LOAD_A，输出 0。'}`;
+  }
+  $$('#ch2 [data-op]').forEach(b => { if (b.tagName === 'BUTTON') b.onclick = () => { b.dataset.op.split('').forEach((c, i) => bits[i] = +c); render(); }; });
+  render();
+})();
+
+/* ---------- 时钟信号 ---------- */
+(function () {
+  const svg = $('#clk');
+  const P = ['取指令', '解码', '执行', '取指令', '解码', '执行', '取指令', '解码'];
+  let d = 'M20,70';
+  for (let i = 0; i < 8; i++) { const x = 40 + i * 78; d += ` H${x} V30 H${x + 39} V70`; }
+  d += ' H660';
+  el('path', { d, class: 's-line', style: 'stroke:var(--on);stroke-width:2.5' }, svg);
+  txt(svg, 20, 20, '时钟信号', 't-sub');
+  for (let i = 0; i < 8; i++) {
+    const x = 40 + i * 78;
+    el('path', { d: `M${x},76 V92`, class: 's-thin' }, svg);
+    el('rect', { x: x - 4, y: 96, width: 72, height: 28, rx: 6, class: i % 3 === 2 ? 's-on' : 's-soft' }, svg);
+    txt(svg, x + 32, 115, P[i], 't-sub mid');
+  }
+  txt(svg, 20, 144, '每个上升沿 ↑ = 推进一步', 't-sub');
+})();
+
+/* ---------- 时钟速度 ---------- */
+(function () {
+  const svg = $('#hz');
+  const X0 = 200, X1 = 670, LO = -2, HI = 10;
+  const xOf = v => X0 + (Math.log10(v) - LO) / (HI - LO) * (X1 - X0);
+  for (let e = LO; e <= HI; e += 2) {
+    const x = xOf(10 ** e);
+    el('line', { x1: x, y1: 14, x2: x, y2: 180, style: 'stroke:var(--line);stroke-width:1' }, svg);
+    txt(svg, x, 198, { '-2': '0.01', 0: '1 Hz', 2: '100', 4: '1万', 6: '1 MHz', 8: '1亿', 10: '100 亿' }[e], 't-sub mid');
+  }
+  [['讲课的 Carrie Anne', 0.03, '≈0.03 Hz'], ['心算很快的人', 1, '≈1 Hz'], ['英特尔 4004（1971）', 740e3, '740 kHz'], ['今天的电脑 / 手机', 3e9, '几 GHz']].forEach(([n, v, l], i) => {
+    const y = 24 + i * 40;
+    txt(svg, X0 - 10, y + 16, n, 't-main end');
+    el('rect', { x: X0, y, width: Math.max(4, xOf(v) - X0), height: 22, rx: 4, class: i === 3 ? 's-on' : 's-acc' }, svg);
+    txt(svg, Math.max(X0 + 4, xOf(v)) + 8, y + 16, l, 't-mono');
+  });
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>13 算法入门 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.bars{display:flex;align-items:flex-end;gap:8px;height:190px;padding:10px 4px 0;border-bottom:2px solid var(--ink)}
+.bar{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;min-width:0}
+.bar i{display:block;width:100%;max-width:56px;border-radius:6px 6px 0 0;background:var(--accent-soft);border:2px solid var(--accent);transition:height .3s,background .2s}
+.bar b{font:700 13px var(--mono)}
+.bar.done i{background:var(--ok-soft);border-color:var(--ok)}
+.bar.scan i{background:var(--bg);border-color:var(--ink);border-style:dashed}
+.bar.min i{background:var(--on);border-color:var(--on)}
+.bar.pos i{box-shadow:0 0 0 3px var(--on-soft)}
+.bar small{font:11px var(--mono);color:var(--muted)}
+.ms-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.ms-grp{display:flex;gap:2px;padding:3px;border:2px solid var(--line);border-radius:8px;background:var(--panel)}
+.ms-grp span{font:700 13px var(--mono);padding:4px 6px;border-radius:4px;background:var(--bg)}
+.ms-row.cur .ms-grp{border-color:var(--on)}
+.ms-row .lab{width:100%;text-align:center;font-size:12px;color:var(--muted)}
+.cx-ctl{display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:14px;margin-top:8px}
+.cx-ctl input{width:260px}
+.node circle{fill:var(--panel);stroke:var(--ink);stroke-width:2;transition:all .25s}
+.node.cur circle{fill:var(--on-soft);stroke:var(--on);stroke-width:3}
+.node.done circle{fill:var(--ok-soft);stroke:var(--ok)}
+.node .cost{font:700 15px var(--mono);text-anchor:middle;fill:var(--ink)}
+.node .nm{font-size:13px;text-anchor:middle;fill:var(--ink);font-weight:600}
+.edge{stroke:var(--wire);stroke-width:3;transition:all .2s}
+.edge.try{stroke:var(--accent);stroke-width:4}
+.edge.path{stroke:var(--on);stroke-width:6}
+.ew{font:700 13px var(--mono);fill:var(--muted);text-anchor:middle}
+.ew-bg{fill:var(--panel)}
+</style>
+</head>
+<body data-ep="13">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=14" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 13 集</div>
+  <h1>算法入门</h1>
+  <p class="en">Intro to Algorithms</p>
+  <p class="lead">同一个结果，可以用不同的步骤算出来——这些步骤就是算法。这一集用两个最经典的问题来体会"好算法"和"差算法"的区别：排序，以及在地图上找最快的路。</p>
+  <div class="road">
+    <span>什么是算法</span><i>→</i><span>选择排序 O(n²)</span><i>→</i><span>大 O 表示法</span><i>→</i><span>归并排序 O(n log n)</span><i>→</i><span>图搜索</span><i>→</i><span>Dijkstra 算法</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 什么是算法</a></li>
+    <li><a href="#ch1">1 · 选择排序</a></li>
+    <li><a href="#ch2">2 · 大 O 表示法</a></li>
+    <li><a href="#ch3">3 · 归并排序</a></li>
+    <li><a href="#ch4">4 · 图和蛮力法</a></li>
+    <li><a href="#ch5">5 · Dijkstra 算法</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>什么是算法</h2>
+  <p>前两集，我们第一次尝到了用 Python 或 Java 这样的高级语言编程的滋味。我们讲了不同类型的编程语言语句——赋值、if、循环——以及把语句放进函数里来完成某项计算，比如算指数。</p>
+  <p>重要的是，我们写的那个指数函数只是<b>一种</b>可能的解法。还有其他写法——用不同的语句、按不同的顺序——能得到完全相同的数值结果。它们之间的区别就是<b>算法</b>（algorithm），也就是完成计算所用的具体步骤。即使结果相同，有些算法也比另一些更好。一般来说，计算所需的步骤越少越好，不过有时我们也会在意别的因素，比如它占用多少内存。</p>
+  <p>"算法"这个词来自波斯博学家<b>穆罕默德·本·穆萨·花拉子密</b>，他是一千多年前代数学的奠基人之一。设计高效算法——一个早在现代计算机出现之前就存在的问题——催生了一整门围绕计算的科学，后来发展成一门现代学科，你猜对了：<b>计算机科学</b>！</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>排序与选择排序</h2>
+  <p>整个计算机科学里最有故事的算法问题之一是<b>排序</b>，比如给名字排序、给数字排序。计算机无时无刻不在排序：找最便宜的机票、按最近发送时间排列邮件、按姓氏滚动联系人列表——这些都需要排序。你可能会想："排序没那么难吧，能有几种算法？"答案是：非常多。计算机科学家花了几十年发明排序算法，还起了很酷的名字，比如冒泡排序（Bubble Sort）和意面排序（Spaghetti Sort）。</p>
+  <p>我们来试试排序！假设我们有一组飞往印第安纳波利斯的机票价格。这类数据在内存里怎么表示，我们下周再讲，现在先知道：像这样的一串数据叫<b>数组</b>（array）。</p>
+  <p>先从一个简单的算法开始。首先，从上往下扫描数组，找出最小的数。从最上面的 307 开始，它是我们看到的唯一一个数，所以也是最小的。下一个是 239，比 307 小，所以成为新的最小数。再下一个是 214，新的最小数。250 不是，384、299、223、312 也都不是。所以扫描完所有数字，214 最小。为了按升序排列，把 214 和最上面位置的数<b>交换</b>。太好了！我们排好了一个数！</p>
+  <p>现在重复同样的过程，但不从最上面开始，而是从下面一格开始。先看到 239，记为新的最小数。扫描数组剩下的部分，发现 223 是下一个最小的，所以把它和第二个位置的数交换。再重复一遍，从第三个数开始，这次把 239 和 307 交换。这个过程一直持续到最后一个数，瞧，数组排好了，可以订去印第安纳波利斯的机票了！</p>
+
+  <div class="card">
+    <h3>动手：选择排序</h3>
+    <div class="bars" id="sel-bars"></div>
+    <div class="step-text" id="sel-cap"></div>
+    <div class="btns"><button class="btn primary" id="sel-next">下一步</button><button class="btn" id="sel-pass">跑完这一轮</button><button class="btn" id="sel-reset">重来</button></div>
+    <p class="hint">虚线 = 正在比较；橙色 = 这一轮目前找到的最小数；绿色 = 已经排好的</p>
+  </div>
+
+  <p>我们刚走的这个过程，就是给数组排序的一种方法——或者说一种算法。它叫<b>选择排序</b>（Selection Sort），非常基础。这是它的伪代码：</p>
+  <pre style="font:14px/1.7 var(--mono);background:var(--code);padding:12px 16px;border-radius:10px;overflow-x:auto">FUNCTION selectionSort(array)
+    FOR i = 0 TO length(array) - 1
+        smallest = i
+        FOR j = i + 1 TO length(array) - 1      ← 循环里面还有一个循环
+            IF array[j] &lt; array[smallest] THEN smallest = j
+        NEXT
+        swap array[i] 和 array[smallest]
+    NEXT
+    RETURN array</pre>
+  <p>这个函数能给 8 个、80 个或 8000 万个数排序，函数写好以后可以一遍遍重复使用。用这个排序算法，我们要从上到下遍历数组的每一个位置，而对每个位置，又要再遍历数组找出最小的数来交换。你可以在代码里看到这一点：一个 FOR 循环嵌套在另一个 FOR 循环里。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>复杂度与大 O 表示法</h2>
+  <p>这意味着，粗略地说，如果要给 N 个东西排序，外层要循环 N 次，每一次里面又要循环 N 次，总共大约 N × N 次，也就是 <b>N²</b>。算法的<b>输入规模</b>和<b>运行所需步骤数</b>之间的这种关系，刻画了选择排序算法的<b>复杂度</b>（complexity），它能让你大致估计一个算法会有多快或多慢。计算机科学家用一种叫——没开玩笑——<b>"大 O 表示法"</b>（big O notation）的方式来写这种增长量级。</p>
+  <p>N² 的效率不算高。我们的示例数组有 n = 8 个元素，8² 是 64。如果把数组从 8 个元素增加到 80 个，运行时间就变成 80²，也就是 6400。所以虽然数组只增大了 10 倍——从 8 到 80——运行时间却增加了 100 倍——从 64 到 6400！数组越大，这种效应越明显。这对谷歌这样要给几百万、几十亿条数据排序的公司来说可是大问题。所以，作为一名新晋计算机科学家，你可能会问：有没有更高效的排序算法？</p>
+
+  <div class="card">
+    <h3>动手：规模变大时，步骤数怎么涨</h3>
+    <div class="scroll-x"><svg class="diagram" id="cx" viewBox="0 0 680 260" role="img" aria-label="复杂度增长曲线"></svg></div>
+    <div class="cx-ctl"><label>元素个数 N <input type="range" id="cx-n" min="2" max="64" value="8"></label><b id="cx-v" style="font-family:var(--mono)"></b></div>
+    <div class="readout" id="cx-read" style="font-size:14px"></div>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>归并排序</h2>
+  <p>回到那个没排序的旧数组，试试另一个算法：<b>归并排序</b>（Merge Sort）。归并排序做的第一件事，是检查数组的大小是否大于 1。如果是，就把数组<b>分成两半</b>。我们的数组大小是 8，所以被分成两个大小为 4 的数组。它们仍然大于 1，所以再分，变成大小为 2 的数组，最后分成 8 个数组，每个只有 1 个元素。</p>
+  <p>现在可以<b>归并</b>（merge）了，"归并排序"就是因此得名。从前两个数组开始，读出它们里面的第一个——也是唯一一个——值，这里是 307 和 239。239 更小，所以先取它；剩下的唯一一个数是 307，放第二个。我们成功归并了两个数组。对剩下的几对重复这个过程，把它们各自排好序。</p>
+  <p>然后再重复归并过程。还是取前两个数组，比较它们的第一个数：这次是 239 和 214。214 最小，先取它。再看两个数组现在的第一个数：239 和 250。239 更小，接着取它。再看下两个数：307 和 250。250 更小，取它。最后只剩下 307，放到最后。每一次，我们都从两个各自已经排好序的数组开始，把它们归并成一个更大的有序数组。对剩下两个大小为 2 的数组也做完全相同的归并。现在我们有了两个大小为 4 的有序数组。和之前一样归并：比较两个数组各自的第一个数，取较小的那个，重复直到所有数字都归并完，数组就又排好序了！</p>
+  <p>坏消息是：不管把这些数排多少次，去印第安纳波利斯你还是得付 214 美元。</p>
+
+  <div class="card">
+    <h3>动手：归并排序：先拆，再一层层合</h3>
+    <div id="ms"></div>
+    <div class="step-text" id="ms-cap"></div>
+    <div class="btns"><button class="btn primary" id="ms-next">下一步</button><button class="btn" id="ms-reset">重来</button></div>
+  </div>
+
+  <p>总之，归并排序的"大 O"计算复杂度是 <b>N × log N</b>。N 来自需要比较和归并元素的次数，和数组里元素的个数成正比。log N 来自归并的层数：在我们的例子里，把 8 个元素的数组拆成 4 个、再拆成 2 个、最后拆成 1 个，一共拆了 3 次。像这样反复对半拆分，拆分次数和元素个数之间是<b>对数关系</b>——相信我！以 2 为底 8 的对数等于 3。如果把数组翻倍到 16——要排的东西多了一倍——拆分次数只增加 1，因为以 2 为底 16 的对数是 4。即使把数组扩大一千多倍，从 8 个到 8000 个，拆分次数也仍然很少：以 2 为底 8000 的对数大约是 13。比 3 多，但多得不多——大约 4 倍——而要排的数却多得多。所以归并排序比选择排序高效得多。这下我可以快得多地给我收藏的陶瓷猫按名字排序了！</p>
+  <div class="extra">
+    <span class="t">和你写的 JS 有关</span>
+    <code>array.sort()</code> 用的就不是选择排序。V8 引擎（Chrome、Node.js）用的是 TimSort，一种结合了归并排序和插入排序的算法，复杂度同样是 n log n。给 10 万条数据排序时，n² 和 n log n 的差别是 100 亿步和约 170 万步。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>图搜索和蛮力法</h2>
+  <p>我们能讲的排序算法真有好几十种，不过我想转向另一类我最喜欢的经典算法问题：<b>图搜索</b>（graph search）！"图"是由线连起来的<b>节点</b>组成的网络。你可以把它想成一张地图，城市之间有道路相连。城市之间的路线要花的时间各不相同，我们可以在每条线上标一个数，叫<b>成本</b>（cost）或<b>权重</b>（weight），这里表示要走几个星期。</p>
+  <p>假设我们想给驻扎在高庭（Highgarden）的军队，找一条去临冬城（Winterfell）城堡的最快路线。最简单的办法是把每一条路径都试一遍，算出每条的总成本。这是<b>蛮力法</b>（brute force）。</p>
+  <p>排序其实也可以用蛮力法：系统地尝试数组的每一种排列，检查它是不是排好了序。那样的复杂度是 <b>N 的阶乘</b>（N!）——N，乘以 N−1，再乘以 N−2，以此类推一直乘到 1——比 N² 还糟糕得多。但我们可以聪明得多！</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>Dijkstra 算法</h2>
+  <p>这个图问题的经典算法解法，由计算机科学实践和理论领域最伟大的头脑之一 <b>艾兹赫尔·戴克斯特拉</b>（Edsger Dijkstra）发明，所以理所当然地叫 <b>Dijkstra 算法</b>。</p>
+
+  <div class="card">
+    <h3>动手：从高庭到临冬城</h3>
+    <div class="scroll-x"><svg class="diagram" id="map" viewBox="0 0 660 420" role="img" aria-label="Dijkstra 算法地图"></svg></div>
+    <div class="step-text" id="dj-cap"></div>
+    <div class="btns"><button class="btn primary" id="dj-next">下一步</button><button class="btn" id="dj-reset">重来</button></div>
+    <p class="hint">圆圈里的数字 = 目前已知从高庭到这里的最低成本（周）；橙色 = 正在处理的城市；绿色 = 已经处理完的</p>
+  </div>
+
+  <p>我们从高庭出发，成本为 0，把它标在节点里。其他城市暂时都标上问号——我们还不知道到达它们的成本。Dijkstra 算法总是从<b>成本最低</b>的节点开始。现在它只知道一个节点，高庭，所以从这里开始。它沿着从这个节点出发的所有路径，走到一步之遥的所有相连节点，记录到达每个节点的成本。这样就完成了一轮算法。</p>
+  <p>我们还没遇到临冬城，所以再循环一遍。高庭已经检查过了，下一个成本最低的节点是君临城（King's Landing）。和之前一样，沿着每条没走过的线走到相连的城市。到三叉戟河（The Trident）的线成本是 5，但我们要记录的是从高庭出发的<b>累计</b>成本，所以到三叉戟河的总成本是 8 加 5，也就是 13 周。再沿着那条越野小路到奔流城（Riverrun），成本高达 25，总共 33。但我们看到，奔流城里已经记着一条成本只有 10 的路。所以我们无视这条新路，保留之前更好的那条。君临城出发的线都走遍了，没找到临冬城，于是继续。</p>
+  <p>下一个成本最低的节点是奔流城，10 周。先看去三叉戟河的路，总成本 10 加 2，也就是 12，比之前找到的那条成本 13 的路稍好一点，所以更新三叉戟河的路径和成本。奔流城到派克城（Pyke）还有一条线，成本 3：10 加 3 等于 13，比之前的 14 好，所以也更新派克城的路径和成本。奔流城的路都检查完了，所以，你猜对了，Dijkstra 算法再循环一遍。</p>
+  <p>下一个成本最低的节点是三叉戟河，从三叉戟河出发、唯一还没检查的线，就是通往临冬城的！它的成本是 10，再加上到三叉戟河要花的 12，总成本是 22。我们再检查最后一条路，从派克城到临冬城，总共是 31。现在我们知道了最低的总成本，也知道了军队最快到达那里的路线——它避开了君临城！</p>
+
+  <p>Dijkstra 最初的算法构思于 1956 年，复杂度是图中节点数的平方。前面说过，平方从来都不太好，因为这意味着算法没法扩展到大问题，比如整个美国的道路地图。幸运的是，几年后 Dijkstra 算法被改进成了"节点数乘以节点数的对数，再加上线的条数"。虽然看起来更复杂，但实际上快得多。代入我们的示例图——6 个城市、9 条线——就能证明这一点：算法从 36 次循环降到了大约 14 次。</p>
+  <div class="extra">
+    <span class="t">36 和 14 怎么来的</span>
+    6² = 36；6 × log₂6 + 9 ≈ 6 × 2.58 + 9 ≈ 24.5——课程说"大约 14"，可能用的是以 10 为底的对数（6 × 0.78 + 9 ≈ 13.7）。大 O 本来就只关心增长的量级、不在乎具体常数和底数，所以两种算法都对：重点是节点一多，n log n + l 会比 n² 小得多。
+  </div>
+  <p>和排序一样，图搜索算法也有数不清的种类，各有优缺点。每次你用谷歌地图这类服务查路线时，服务器上都在运行一个很像 Dijkstra 的算法，为你算出最佳路线。算法无处不在，没有它们就没有现代世界。这一集我们只碰到了算法冰山的一角，但成为计算机科学家的核心之一，就是善用已有的算法，并在需要时写出新的算法。希望这一点小小的品尝能让你继续<b>搜索</b>下去。下周见！</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>算法</th><th>思路</th><th>复杂度</th><th>N = 8</th><th>N = 8000</th></tr></thead>
+      <tbody>
+        <tr><td>蛮力排序</td><td>试每一种排列</td><td>N!</td><td class="num">40,320</td><td>天文数字</td></tr>
+        <tr><td>选择排序</td><td>每轮找最小的，换到前面</td><td>N²</td><td class="num">64</td><td class="num">64,000,000</td></tr>
+        <tr><td>归并排序</td><td>对半拆到 1 个，再两两有序地合并</td><td>N log N</td><td class="num">24</td><td class="num">≈ 104,000</td></tr>
+        <tr><td>Dijkstra</td><td>每次处理当前成本最低的节点，更新邻居</td><td>N² → N log N + L</td><td colspan="2">导航软件找路线的基础</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    算法是解决问题的具体步骤；同样的结果，步骤数可以差出几个数量级。大 O 表示法描述"输入变大时步骤数怎么涨"：N² 翻 10 倍规模要多 100 倍时间，N log N 几乎只是线性增长——规模越大，好算法越重要。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么说选择排序是 O(N²)？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">外层循环走遍 N 个位置，每个位置又要扫一遍剩下的元素找最小值，循环套循环，大约 N × N 步。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 数据从 8 个变成 80 个，选择排序和归并排序的步骤数各大约变成多少倍？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">选择排序：64 → 6400，100 倍。归并排序：8 × 3 = 24 → 80 × log₂80 ≈ 80 × 6.3 ≈ 506，约 21 倍。规模越大差距越悬殊。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 归并排序里的 log N 是怎么来的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">反复对半拆分，直到每组只剩 1 个：8 → 4 → 2 → 1 要拆 3 次（log₂8 = 3），16 个要 4 次，8000 个只要约 13 次。每一层归并总共要处理 N 个元素，所以是 N × log N。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. Dijkstra 算法每一轮做什么？什么情况下会更新一个城市的成本？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">每轮挑出还没处理过的、当前成本最低的城市，沿它所有没走过的路，算出到邻居的累计成本。如果新算出的成本比邻居身上记的更低，就更新（比如三叉戟河从 13 更新为 12）；更高就保留原来的。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="12.html"><small>← 上一集</small>12 编程原理：语句和函数</a>
+    <a class="next" href="14.html"><small>下一集 →</small>14 数据结构</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 13 集 Intro to Algorithms（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const PRICES = [307, 239, 214, 250, 384, 299, 223, 312];
+
+/* ---------- 选择排序 ---------- */
+(function () {
+  let a, gen, done, view;
+  function* run() {
+    for (let i = 0; i < a.length - 1; i++) {
+      let m = i;
+      view = { i, j: i, m, sorted: i };
+      yield `第 ${i + 1} 轮：从位置 ${i} 开始，先把 ${a[i]} 当作最小数。`;
+      for (let j = i + 1; j < a.length; j++) {
+        view = { i, j, m, sorted: i };
+        if (a[j] < a[m]) { m = j; view.m = m; yield `${a[j]} 比当前最小数小 → 新的最小数是 <b>${a[j]}</b>。`; }
+        else yield `${a[j]} 不比 ${a[m]} 小，跳过。`;
+      }
+      view = { i, j: -1, m, sorted: i };
+      if (m !== i) { [a[i], a[m]] = [a[m], a[i]]; view.m = i; yield `扫完了，最小的是 <b>${a[i]}</b> → 和位置 ${i} 的 ${a[m]} 交换。`; }
+      else yield `扫完了，最小的就是位置 ${i} 上的 ${a[i]}，不用换。`;
+    }
+    view = { i: -1, j: -1, m: -1, sorted: a.length };
+    yield '全部排好！最便宜的机票是 <b>214</b> 美元。';
+  }
+  function paint(msg) {
+    const max = 400;
+    $('#sel-bars').innerHTML = a.map((v, k) => {
+      let cls = '';
+      if (k < view.sorted) cls = 'done';
+      if (k === view.j) cls = 'scan';
+      if (k === view.m) cls = 'min';
+      if (k === view.i && cls !== 'min') cls += ' pos';
+      return `<div class="bar ${cls}"><b>${v}</b><i style="height:${v / max * 150}px"></i><small>${k}</small></div>`;
+    }).join('');
+    $('#sel-cap').innerHTML = msg;
+  }
+  function reset() { a = PRICES.slice(); view = { i: -1, j: -1, m: -1, sorted: 0 }; gen = run(); done = false; paint('8 个机票价格。点"下一步"开始找最小的那个。'); $('#sel-next').disabled = $('#sel-pass').disabled = false; }
+  function step() { if (done) return; const r = gen.next(); if (r.done) { done = true; return; } paint(r.value); if (view.sorted === a.length) { done = true; $('#sel-next').disabled = $('#sel-pass').disabled = true; } }
+  $('#sel-next').onclick = step;
+  $('#sel-pass').onclick = () => { let k = 0; do { step(); } while (!done && view.j !== -1 && k++ < 30); };
+  $('#sel-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 复杂度 ---------- */
+(function () {
+  const svg = $('#cx');
+  const X0 = 60, X1 = 640, Y0 = 220, Y1 = 20, NMAX = 64, YMAX = 4096;
+  const sx = n => X0 + (n / NMAX) * (X1 - X0), sy = v => Y0 - Math.min(v, YMAX) / YMAX * (Y0 - Y1);
+  el('line', { x1: X0, y1: Y0, x2: X1, y2: Y0, class: 's-line' }, svg);
+  el('line', { x1: X0, y1: Y0, x2: X0, y2: Y1, class: 's-line' }, svg);
+  txt(svg, X1, Y0 + 30, '元素个数 N →', 't-sub end');
+  txt(svg, X0 + 6, Y1 + 4, '步骤数', 't-sub');
+  [0, 16, 32, 48, 64].forEach(n => txt(svg, sx(n), Y0 + 16, String(n), 't-sub mid'));
+  [1024, 2048, 3072, 4096].forEach(v => { el('line', { x1: X0, y1: sy(v), x2: X1, y2: sy(v), style: 'stroke:var(--line)' }, svg); txt(svg, X0 - 6, sy(v) + 4, String(v), 't-sub end'); });
+  const curve = (f, cls, label) => {
+    let d = '';
+    for (let n = 1; n <= NMAX; n++) d += (n === 1 ? 'M' : 'L') + sx(n) + ',' + sy(f(n));
+    el('path', { d, style: `fill:none;stroke-width:3;stroke:${cls}` }, svg);
+  };
+  curve(n => n * n, 'var(--bad)'); curve(n => n * Math.log2(n), 'var(--ok)'); curve(n => n, 'var(--muted)');
+  txt(svg, sx(62), sy(4096) + 16, 'N²（选择排序）', 't-sub end'); txt(svg, sx(62), sy(64 * 6) - 8, 'N log N（归并排序）', 't-sub end'); txt(svg, sx(62), sy(64) - 6, 'N', 't-sub end');
+  const mk = el('line', { x1: 0, y1: Y1, x2: 0, y2: Y0, class: 's-dash' }, svg);
+  const p1 = el('circle', { r: 5, style: 'fill:var(--bad)' }, svg), p2 = el('circle', { r: 5, style: 'fill:var(--ok)' }, svg);
+  function upd() {
+    const n = +$('#cx-n').value, a = n * n, b = n * Math.log2(n);
+    mk.setAttribute('x1', sx(n)); mk.setAttribute('x2', sx(n));
+    p1.setAttribute('cx', sx(n)); p1.setAttribute('cy', sy(a)); p2.setAttribute('cx', sx(n)); p2.setAttribute('cy', sy(b));
+    $('#cx-v').textContent = n;
+    const fact = n <= 20 ? [...Array(n).keys()].reduce((s, k) => s * (k + 1), 1).toLocaleString() : '超过 2×10¹⁸';
+    $('#cx-read').innerHTML = `N = ${n}：选择排序约 <b style="color:var(--bad)">${a.toLocaleString()}</b> 步，归并排序约 <b style="color:var(--ok)">${Math.round(b).toLocaleString()}</b> 步，蛮力试所有排列 N! = ${fact} 步。`;
+  }
+  $('#cx-n').oninput = upd; upd();
+})();
+
+/* ---------- 归并排序 ---------- */
+(function () {
+  const host = $('#ms');
+  // 预先算好每一层
+  const stages = [];
+  let groups = [PRICES.slice()];
+  stages.push({ groups: groups.map(g => g.slice()), lab: '原始数组（8 个）', note: '大小 8 > 1，对半拆。' });
+  while (groups.some(g => g.length > 1)) {
+    groups = groups.flatMap(g => g.length > 1 ? [g.slice(0, g.length / 2), g.slice(g.length / 2)] : [g]);
+    stages.push({ groups: groups.map(g => g.slice()), lab: `拆成每组 ${groups[0].length} 个`, note: groups[0].length > 1 ? '还大于 1，继续拆。' : '每组只剩 1 个了：一个元素的数组天然是有序的。开始归并！' });
+  }
+  const merge = (x, y) => { const r = [], log = []; let i = 0, j = 0; while (i < x.length && j < y.length) { if (x[i] <= y[j]) { log.push(`${x[i]} vs ${y[j]} → 取 ${x[i]}`); r.push(x[i++]); } else { log.push(`${x[i]} vs ${y[j]} → 取 ${y[j]}`); r.push(y[j++]); } } return { r: r.concat(x.slice(i), y.slice(j)), log }; };
+  while (groups.length > 1) {
+    const next = [], logs = [];
+    for (let k = 0; k < groups.length; k += 2) { const m = merge(groups[k], groups[k + 1]); next.push(m.r); if (k === 0) logs.push(...m.log); }
+    groups = next;
+    stages.push({ groups: groups.map(g => g.slice()), lab: `归并成每组 ${groups[0].length} 个（有序）`, note: `每次比较两组的第一个数，取较小的。比如第一对：${logs.join('；')}。` });
+  }
+  let k;
+  function paint() {
+    host.innerHTML = stages.slice(0, k + 1).map((s, i) => `<div class="ms-row ${i === k ? 'cur' : ''}"><div class="lab">${s.lab}</div>${s.groups.map(g => `<div class="ms-grp">${g.map(v => `<span>${v}</span>`).join('')}</div>`).join('')}</div>`).join('');
+    $('#ms-cap').innerHTML = stages[k].note + (k === stages.length - 1 ? '<br>拆了 3 层（log₂8 = 3），又合了 3 层，排好了。' : '');
+    $('#ms-next').disabled = k === stages.length - 1;
+  }
+  $('#ms-next').onclick = () => { k++; paint(); };
+  $('#ms-reset').onclick = () => { k = 0; paint(); };
+  k = 0; paint();
+})();
+
+/* ---------- Dijkstra ---------- */
+(function () {
+  const svg = $('#map');
+  const N = {
+    HG: ['高庭 Highgarden', 170, 360], KL: ["君临 King's Landing", 500, 320], RR: ['奔流城 Riverrun', 260, 210],
+    TR: ['三叉戟河 Trident', 440, 180], PY: ['派克城 Pyke', 90, 150], WF: ['临冬城 Winterfell', 360, 50],
+  };
+  const E = [['HG', 'KL', 8], ['HG', 'RR', 10], ['HG', 'PY', 14], ['KL', 'TR', 5], ['KL', 'RR', 25], ['RR', 'TR', 2], ['RR', 'PY', 3], ['TR', 'WF', 10], ['PY', 'WF', 18]];
+  const edgeEl = {}, nodeEl = {};
+  E.forEach(([a, b, w]) => {
+    const [, x1, y1] = N[a], [, x2, y2] = N[b];
+    edgeEl[a + b] = el('line', { x1, y1, x2, y2, class: 'edge' }, svg);
+    const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+    el('circle', { cx: mx, cy: my, r: 12, class: 'ew-bg' }, svg);
+    txt(svg, mx, my + 5, String(w), 'ew');
+  });
+  Object.entries(N).forEach(([k, [nm, x, y]]) => {
+    el('circle', { cx: x, cy: y, r: 24, style: 'fill:var(--panel)' }, svg);
+    const g = el('g', { class: 'node' }, svg);
+    el('circle', { cx: x, cy: y, r: 24 }, g);
+    const c = txt(g, x, y + 5, '?', 'cost');
+    txt(g, x, y + 44, nm, 'nm');
+    nodeEl[k] = { g, c };
+  });
+  const ek = (a, b) => edgeEl[a + b] || edgeEl[b + a];
+  let steps, k;
+  function build() {
+    // 按课程的顺序生成每一步
+    const cost = { HG: 0 }, prev = {}, done = new Set();
+    const S = [];
+    const snap = (cur, tries, text) => S.push({ cost: { ...cost }, done: new Set(done), cur, tries, text, prev: { ...prev } });
+    snap(null, [], '从高庭出发，成本 0；其他城市都还是问号。点"下一步"。');
+    while (true) {
+      const cand = Object.keys(cost).filter(n => !done.has(n)).sort((a, b) => cost[a] - cost[b]);
+      if (!cand.length) break;
+      const u = cand[0];
+      if (u === 'WF') { done.add(u); snap(u, [], ''); break; }
+      const lines = [];
+      const nb = E.filter(([a, b]) => a === u || b === u).map(([a, b, w]) => [a === u ? b : a, w]).filter(([v]) => !done.has(v));
+      snap(u, [], `下一个成本最低、还没处理的城市是 <b>${N[u][0]}</b>（${cost[u]} 周），沿它所有没走过的路往外看。`);
+      nb.forEach(([v, w]) => {
+        const nc = cost[u] + w;
+        let t;
+        if (cost[v] === undefined) { cost[v] = nc; prev[v] = u; t = `→ ${N[v][0]}：${cost[u]} + ${w} = <b>${nc}</b>，第一次到这里，记下。`; }
+        else if (nc < cost[v]) { t = `→ ${N[v][0]}：${cost[u]} + ${w} = <b>${nc}</b>，比原来记的 ${cost[v]} 更低 → <b>更新</b>。`; cost[v] = nc; prev[v] = u; }
+        else t = `→ ${N[v][0]}：${cost[u]} + ${w} = ${nc}，不比原来的 ${cost[v]} 低，保留原来那条路。`;
+        snap(u, [u + v], t);
+      });
+      done.add(u);
+    }
+    // 最后一步：亮出路线
+    const path = []; let x = 'WF'; while (prev[x]) { path.push(prev[x] + x); x = prev[x]; }
+    const last = S[S.length - 1];
+    S.push({ ...last, cur: null, tries: [], path, text: `临冬城是成本最低的未处理城市，结束。最快路线：高庭 → 奔流城 → 三叉戟河 → 临冬城，共 <b>${last.cost.WF}</b> 周——绕开了君临城！` });
+    return S;
+  }
+  function paint() {
+    const s = steps[k];
+    Object.entries(nodeEl).forEach(([n, o]) => {
+      o.c.textContent = s.cost[n] === undefined ? '?' : s.cost[n];
+      o.g.setAttribute('class', 'node' + (n === s.cur ? ' cur' : s.done.has(n) ? ' done' : ''));
+    });
+    Object.values(edgeEl).forEach(e => e.setAttribute('class', 'edge'));
+    s.tries.forEach(t => ek(t.slice(0, 2), t.slice(2)).setAttribute('class', 'edge try'));
+    (s.path || []).forEach(t => ek(t.slice(0, 2), t.slice(2)).setAttribute('class', 'edge path'));
+    $('#dj-cap').innerHTML = s.text;
+    $('#dj-next').disabled = k === steps.length - 1;
+  }
+  $('#dj-next').onclick = () => { k++; paint(); };
+  $('#dj-reset').onclick = () => { k = 0; paint(); };
+  steps = build(); k = 0; paint();
+})();
+</script>
+</body>
+</html>

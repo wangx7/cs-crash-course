@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>12 编程原理：语句和函数 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.stepper{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.stepper{grid-template-columns:1fr}}
+.src{font:13.5px/1.75 var(--mono);background:var(--code);border-radius:10px;padding:8px 0;overflow-x:auto;margin:0}
+.src div{padding:0 12px 0 8px;white-space:pre;border-left:3px solid transparent}
+.src div .ln{display:inline-block;width:22px;color:var(--muted);user-select:none}
+.src div.cur{background:var(--on-soft);border-left-color:var(--on)}
+.src .kw{color:var(--accent);font-weight:700}
+.frames{display:flex;flex-direction:column-reverse;gap:8px}
+.frame{border:2px solid var(--line);border-radius:10px;background:var(--panel);overflow:hidden}
+.frame.top{border-color:var(--on)}
+.frame .fh{font:700 13px var(--mono);padding:4px 10px;background:var(--bg)}
+.frame.top .fh{background:var(--on-soft)}
+.frame table{width:100%;border-collapse:collapse;font:13px var(--mono)}
+.frame td{padding:3px 10px;border-top:1px solid var(--line)}
+.frame td:first-child{color:var(--muted);width:45%}
+.frame tr.chg td{background:var(--accent-soft);font-weight:700}
+.stack-label{font-size:12px;color:var(--muted);margin:0 0 4px}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;font-size:14px}
+.btn.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.langs{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (max-width:700px){.langs{grid-template-columns:1fr}}
+.langs div{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.langs b{display:block;font-size:13px;padding:4px 10px;background:var(--bg)}
+.langs pre{margin:0;padding:8px 12px;font:13px/1.6 var(--mono)}
+</style>
+</head>
+<body data-ep="12">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=13" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 12 集</div>
+  <h1>编程原理：语句和函数</h1>
+  <p class="en">Programming Basics: Statements &amp; Functions</p>
+  <p class="lead">几乎所有编程语言都有的几块积木：语句、变量赋值、if、while、for，以及把代码打包起来的函数。我们用一个"葛丽丝·霍普抓虫子"的小游戏，把它们一块块拼起来。</p>
+  <div class="road">
+    <span>语句与语法</span><i>→</i><span>赋值</span><i>→</i><span>if / else</span><i>→</i><span>while 循环</span><i>→</i><span>for 循环</span><i>→</i><span>函数</span><i>→</i><span>库</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 语句和语法</a></li>
+    <li><a href="#ch1">1 · 变量和赋值</a></li>
+    <li><a href="#ch2">2 · if 语句</a></li>
+    <li><a href="#ch3">3 · while 循环</a></li>
+    <li><a href="#ch4">4 · for 循环</a></li>
+    <li><a href="#ch5">5 · 函数</a></li>
+    <li><a href="#ch6">6 · 函数调函数</a></li>
+    <li><a href="#ch7">7 · 模块化与库</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>语句和语法</h2>
+  <p>上一集讲到，用原生机器码写程序、还得应付那么多底层细节，是编写复杂程序的巨大障碍。为了把这些底层细节抽象掉，人们开发了编程语言，让程序员专注于用计算解决问题，而少操心那些琐碎的硬件细节。今天我们接着这个话题，介绍几乎所有编程语言都提供的一些基本积木。</p>
+  <p>就像口头语言一样，编程语言也有<b>语句</b>（statement）。语句是一个个完整的意思，比如"我想要茶"或者"在下雨"。换用不同的词，可以改变意思，比如把"我想要茶"改成"我想要独角兽"。但我们不能把"我想要茶"改成"我想要在下雨"——这在语法上讲不通。规定一门语言中语句结构和组成方式的那套规则，叫<b>语法</b>（syntax）。英语有语法，所有编程语言也都有。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>变量和赋值语句</h2>
+  <p><code>a = 5</code> 是一条编程语言语句，意思是一个名叫 a 的变量里存着数字 5。这叫<b>赋值语句</b>，因为我们在把一个值赋给一个变量。</p>
+  <p>要表达更复杂的东西，就需要一串语句，比如"a 是 5，b 是 10，c 等于 a 加 b"。这个程序告诉计算机：把变量 a 设为 5，变量 b 设为 10，最后把 a 和 b 加起来，结果 15 放进——你猜到了——变量 c。</p>
+  <p>注意，变量想叫什么都行。不叫 a、b、c，也可以叫 apples、pears、fruits。计算机不在乎，只要变量名不重复就行。不过最好起有意义的名字，以防别人想读懂你的代码。</p>
+  <p>程序是一列指令，有点像菜谱：烧水、下面、等 10 分钟、捞出来、开吃。程序也一样，从第一条语句开始，一次运行一条，往下一直走到结尾。</p>
+
+  <div class="card">
+    <h3>动手：逐行执行</h3>
+    <div class="stepper" id="st1"></div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>初始化变量和 if 语句</h2>
+  <p>到目前为止，我们只是把两个数加了起来。无聊。我们来做个电子游戏吧！当然，现在想写一整个游戏还太早了，所以我们用这个例子写一些小代码片段，涵盖一些编程基础。</p>
+  <p>想象我们在做一款老派街机游戏：葛丽丝·霍普要在虫子钻进哈佛马克一号、把计算机搞崩溃之前抓住它们！每一关的虫子都会变多，葛丽丝得在它们磨坏机器里的继电器之前抓住它们。幸运的是，她有几个备用继电器可以用来修理。</p>
+  <p>开始之前，我们需要记录一堆对游戏很重要的值，比如玩家在第几关、得分、还剩几只虫子，以及葛丽丝手里还有几个备用继电器。所以我们要<b>初始化</b>变量，也就是设置它们的初始值："关卡等于 1，分数等于 0，虫子数等于 5，备用继电器等于 4，玩家名字等于 "Andre"。"</p>
+  <p>要做出可以交互的游戏，我们需要控制程序的流程，而不只是从上往下跑。为此我们使用<b>控制流语句</b>。它有好几种，最常见的是 <b>if 语句</b>。你可以把它理解成"如果 X 为真，就做 Y"。用日常语言举例："如果我累了，就去拿茶。"如果"我累了"为真，我就去拿茶；如果为假，我就不去。</p>
+  <p>if 语句就像路上的岔路口，走哪条路取决于表达式是真还是假，所以这些表达式叫<b>条件语句</b>。在大多数编程语言里，if 语句大概长这样："IF 表达式 THEN 一些代码，然后结束 if 语句"。比如，如果 level 是 1，就把分数设为 0，因为玩家才刚开始；同时把虫子数设为 1，先让游戏简单些。注意，依赖这个 if 条件的那几行代码，被嵌套在 IF 和 END IF 之间。</p>
+  <p>当然，我们可以把条件表达式改成任何想测试的东西，比如"分数大于 10"或"虫子数小于 1"。if 语句还可以和 <b>ELSE</b> 语句组合，表达式为假时由它兜底：如果 level 不是 1，就执行 ELSE 块里的代码，把葛丽丝要对付的虫子数设为关卡数的 3 倍。所以第 2 关有 6 只虫子，第 3 关有 9 只，以此类推。ELSE 块里没有修改分数，所以葛丽丝能保留已经挣到的分数。</p>
+
+  <div class="card">
+    <h3>动手：if / else</h3>
+    <div class="ctl"><span>先选开局的关卡：</span><button class="btn sel" data-lv="1">level = 1</button><button class="btn" data-lv="2">level = 2</button><button class="btn" data-lv="3">level = 3</button></div>
+    <div class="stepper" id="st2" style="margin-top:10px"></div>
+  </div>
+
+  <p>这里是几种流行编程语言里 if-then-else 语句的例子——你会看到语法略有不同，但底层结构大致相同。</p>
+  <div class="langs">
+    <div><b>Python</b><pre>if level == 1:
+    score = 0
+    bugs = 1
+else:
+    bugs = 3 * level</pre></div>
+    <div><b>JavaScript</b><pre>if (level === 1) {
+  score = 0;
+  bugs = 1;
+} else {
+  bugs = 3 * level;
+}</pre></div>
+    <div><b>C / Java</b><pre>if (level == 1) {
+    score = 0;
+    bugs = 1;
+} else {
+    bugs = 3 * level;
+}</pre></div>
+    <div><b>Visual Basic</b><pre>If level = 1 Then
+    score = 0
+    bugs = 1
+Else
+    bugs = 3 * level
+End If</pre></div>
+  </div>
+  <p class="muted" style="font-size:13px">代码例子按课程的游戏改写（补充）。JavaScript 一栏是给前端读者的。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>while 循环</h2>
+  <p>if 语句只执行一次：选好一条条件路径，程序就继续往下走。要让一些语句重复执行很多次，需要创建<b>条件循环</b>。一种方式是 while 语句，也叫 <b>while 循环</b>。你可能猜到了，它在条件为真的"期间"（while）反复执行一段代码。不管哪种编程语言，它们大概都长这样。</p>
+  <p>在我们的游戏里，假设到了某些时候，一位友善的同事会给葛丽丝补充继电器！好耶！要把他补货、直到补满 4 个的过程做成动画，可以用一个 while 循环。我们来走一遍这段代码。</p>
+  <p>首先假设同事进场时葛丽丝只剩 1 个继电器。进入 while 循环时，计算机做的第一件事是测试条件……继电器少于 4 个吗？继电器现在是 1，所以是的。现在进入循环！接着遇到这一行代码："relays 等于 relays 加 1"。这有点让人困惑，因为这个变量在赋值语句里用到了它自己，我们来拆开看。你总是先算等号<b>右边</b>：relays 加 1 等于多少？relays 现在是 1，1 加 1 等于 2。然后这个结果被存回变量 relays，覆盖旧值，所以 relays 现在存着 2。</p>
+  <p>到了 while 循环的末尾，程序跳回上面。和之前一样，测试条件看是否进入循环：relays 少于 4 吗？是的，relays 现在是 2，所以再次进入循环！2 加 1 等于 3，3 存进 relays。再循环：3 小于 4 吗？是的！再进入循环：3 加 1 等于 4，4 存进 relays。再循环：4 小于 4 吗？……不！条件现在为假，于是退出循环，继续执行后面的代码。这就是 while 循环的工作方式！</p>
+
+  <div class="card">
+    <h3>动手：while 循环补继电器</h3>
+    <div class="stepper" id="st3"></div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>for 循环</h2>
+  <p>还有常见的 <b>for 循环</b>。while 是由条件控制的循环，可以一直重复下去，直到条件为假；而 for 循环是<b>由次数控制</b>的，重复特定的次数。它们大概长这样。放一些实际的值进去：这个例子会循环 10 次，因为我们指定了变量 i 从 1 开始，一直到 10。for 循环的独特之处在于，每次遇到 NEXT，就给 i 加 1。当 i 等于 10 时，计算机知道已经循环了 10 次，于是退出循环。这个数想设成多少都行——10、42、十亿——由我们决定。</p>
+  <p>假设我们想在每一关结束时，根据玩家剩下的继电器数量给一笔奖励分。随着游戏越来越难，留下没用的继电器需要更高的技术，所以我们希望奖励分随关卡数呈<b>指数级</b>增长。我们需要写一段计算指数的代码——也就是把一个数自己乘自己特定的次数。循环正适合干这个！</p>
+  <p>首先初始化一个叫 bonus 的新变量，设为 1。然后创建一个 for 循环，从 1 循环到关卡数。在循环里，把 bonus 乘以继电器数，再把新值存回 bonus。比如 relays 等于 2，level 等于 3，for 循环就会循环三次，也就是 bonus 会乘以 relays……乘以 relays……再乘以 relays。在这个例子里就是乘 2、乘 2、再乘 2，奖励分是 8！也就是 2 的 3 次方！</p>
+
+  <div class="card">
+    <h3>动手：for 循环算指数</h3>
+    <div class="ctl"><span>继电器剩</span><button class="btn sel" data-r="2">2 个</button><button class="btn" data-r="3">3 个</button><span style="margin-left:10px">关卡</span><button class="btn sel" data-l="3">3</button><button class="btn" data-l="4">4</button></div>
+    <div class="stepper" id="st4" style="margin-top:10px"></div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>函数：把代码打包起来</h2>
+  <p>这段指数代码很有用，我们可能想在代码的其他地方也用它。到处复制粘贴、每次还得改变量名，会很烦。而且如果发现了 bug，就得到处找、把每个用到它的地方都改一遍。它还会让代码看起来更乱。少即是多！</p>
+  <p>我们想要的，是一种把指数代码打包起来的方式：可以使用它、拿到结果，却不必看到里面所有的复杂细节。我们又一次往上爬了一层抽象！为了把复杂性分隔、隐藏起来，编程语言可以把一段代码打包成有名字的<b>函数</b>（function），在不同的编程语言里也叫<b>方法</b>（method）或<b>子程序</b>（subroutine）。程序的其他任何部分，只要叫出它的名字，就能使用这个函数。</p>
+  <p>我们把指数代码变成函数！首先得给它起名字。叫什么都行，比如 HappyUnicorn（快乐独角兽），但既然这段代码是算指数的，就叫它 Exponent 吧。另外，不再使用 relays、level 这样特定的变量名，而是用 Base（底数）和 Exp（指数）这样通用的变量名，它们的初始值会从程序的其他部分"传"进函数。其余代码和之前一样，只是被收进了函数里、换了新的变量名。最后，我们需要把指数代码的结果送回给请求它的那部分程序。为此我们用 <b>RETURN</b> 语句，指明返回 result 里的值。</p>
+  <p>现在，只要叫出函数名、传进两个数，就可以在程序的任何地方使用这个函数。比如想算 2 的 44 次方，只要调用 <code>Exponent(2, 44)</code>，大约 18 万亿就返回来了。在幕后，2 和 44 被存进函数里的变量 Base 和 Exp，函数按需跑完所有循环，然后带着结果返回。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>函数调用函数</h2>
+  <p>用我们新做的函数来计算奖励分。首先把 bonus 初始化为 0，然后用 if 语句检查玩家还有没有剩下的继电器。如果有，就调用 Exponent 函数，传进 relays 和 level，它算出 relays 的 level 次方并返回结果，我们把结果存进 bonus。</p>
+  <p>这段计算奖励分的代码之后可能也有用，所以我们把它也包装成一个函数——CalcBonus！没错，一个调用函数的函数！然后，注意了……我们还能把这个函数用在一个更复杂的函数里。我们来写一个每次玩家打完一关都会调用的函数，叫 LevelFinished（关卡结束）。它需要知道剩下几个继电器、这是第几关，以及当前分数，这些值都得传进去。在函数里，我们用 CalcBonus 函数算出奖励分，加到累计分数上。另外，如果当前分数比游戏的最高分还高，就把新的最高分和玩家名字存起来。</p>
+  <p>现在变得相当花哨了：函数调用函数，再调用函数！当我们只写一行这样的代码时，复杂性都被隐藏了。我们看不到里面所有的循环和变量，只看到结果像变魔术一样返回来……总分 53。但这不是魔术，这是<b>抽象的力量</b>！</p>
+
+  <div class="card">
+    <h3>动手：看函数一层层调用、返回</h3>
+    <div class="stepper" id="st5"></div>
+    <p class="hint">右边是"调用栈"：每调用一个函数就压上一层（橙框是正在执行的那层），它有自己的一套变量；RETURN 时这一层弹出，结果交回给下面那层</p>
+  </div>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="calls" viewBox="0 0 680 160" role="img" aria-label="函数调用关系"></svg></div>
+      <figcaption>图 1　一行 <code>LevelFinished(2, 3, 45)</code> 背后的调用关系：每一层只关心下一层的名字和返回值。</figcaption>
+    </figure>
+  </div>
+  <div class="extra">
+    <span class="t">"调用栈"这个词</span>
+    课程没有用这个词，但右边那列框就是它：函数被调用时，计算机给它分配一块空间放参数和局部变量，压在"栈"顶；返回时弹出。你在浏览器 DevTools 里打断点时看到的 Call Stack 面板，就是这个东西。第 14 集讲数据结构时会正式介绍"栈"。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>模块化与库</h2>
+  <p>如果你理解了这个例子，你就理解了函数的力量，以及现代编程的全部精髓。比如，把一个网页浏览器写成一长串巨大的语句是不可行的：那会有几百万行，没人能看懂！所以，软件是由成千上万个更小的函数组成的，每个负责不同的功能。在现代编程中，很少见到超过 100 行左右的函数，因为到了那个长度，很可能有些东西应该抽出来做成自己的函数。</p>
+  <p>把程序<b>模块化</b>成函数，不仅让一个程序员能独自写出整个 App，也让团队能高效地合作开发更大的程序：不同的程序员写不同的函数，只要每个人都确保自己的代码正确，拼在一起时整个程序也应该能正常工作！</p>
+  <p>而在现实中，程序员不会浪费时间去写指数这种东西。现代编程语言自带大量预先写好的函数，叫<b>库</b>（library）。它们由专家编写，经过优化和严格测试，然后提供给所有人使用。几乎什么都有库，包括网络、图形和声音——这些主题我们以后会讲。但在此之前，我们得先讲讲<b>算法</b>。好奇吗？你应该好奇！下周见。</p>
+  <div class="extra">
+    <span class="t">在 JavaScript 里</span>
+    算指数你只会写 <code>2 ** 44</code> 或 <code>Math.pow(2, 44)</code>——<code>Math</code> 就是语言自带的库。你用的 Vue、npm 上的各种包，也是"别人写好、测好、拿来就用"的函数集合。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>积木</th><th>做什么</th><th>游戏里的例子</th></tr></thead>
+      <tbody>
+        <tr><td>赋值语句</td><td>把值存进变量（先算等号右边）</td><td><code>relays = relays + 1</code></td></tr>
+        <tr><td>if / else</td><td>按条件选一条路，只走一次</td><td>第 1 关虫子 1 只，否则 3 × 关卡数</td></tr>
+        <tr><td>while 循环</td><td>条件为真就一直重复</td><td>同事把继电器补到 4 个</td></tr>
+        <tr><td>for 循环</td><td>重复指定的次数</td><td>奖励分 = 继电器数的关卡数次方</td></tr>
+        <tr><td>函数</td><td>把代码打包、起名字、传参数、RETURN 结果</td><td>Exponent → CalcBonus → LevelFinished</td></tr>
+        <tr><td>库</td><td>别人写好、测好的函数集合</td><td>网络、图形、声音……</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    语句按顺序执行，控制流语句（if、while、for）改变执行的路线；函数把一段代码打包成有名字的积木，调用者只关心"传什么进去、拿什么回来"。现代软件就是成千上万个这样的函数一层层拼起来的。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. <code>relays = relays + 1</code> 为什么不矛盾？relays 原来是 3，执行后是多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">"=" 是赋值，不是数学里的"相等"。先算右边：3 + 1 = 4，再把 4 存回 relays，覆盖旧值。执行后是 4。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. while 循环和 for 循环有什么区别？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">while 由<b>条件</b>控制：每次先测条件，为真就再来一遍，可能一直重复下去。for 由<b>次数</b>控制：计数变量从起点走到终点，每次 NEXT 加 1，到了就停。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 把指数代码做成函数有什么好处？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不用到处复制粘贴、改变量名；发现 bug 只改一处；调用的地方只写一行 Exponent(2, 44)，看不到里面的循环，代码更好懂。这是又一层抽象。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 调用 <code>LevelFinished(2, 3, 45)</code> 时，函数是按什么顺序被调用和返回的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">LevelFinished 调用 CalcBonus，CalcBonus 调用 Exponent；Exponent 先返回（2³ = 8），CalcBonus 拿到 8 返回，LevelFinished 把 45 + 8 = 53 返回。后调用的先返回——这正是"栈"的特点。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="11.html"><small>← 上一集</small>11 编程语言发展史</a>
+    <a class="next" href="13.html"><small>下一集 →</small>13 算法入门</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 12 集 Programming Basics: Statements &amp; Functions（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 通用逐行执行器 ----------
+   lines：源代码行；run(S)：生成器，yield [行号, 说明]，通过 S.push / S.pop / S.set 改变量 */
+function stepper(host, lines, run) {
+  host.innerHTML = `<div><pre class="src"></pre><div class="ctl"><button class="btn primary">下一步 →</button><button class="btn">一口气跑完</button><button class="btn">重来</button></div></div>
+    <div><p class="stack-label">变量${lines.some(l => /FUNCTION/.test(l)) ? '（调用栈，最上面是正在执行的函数）' : ''}</p><div class="frames"></div><div class="step-text" style="margin-top:8px"></div></div>`;
+  const src = $('.src', host), frames = $('.frames', host), note = $('.step-text', host);
+  const [bNext, bAll, bReset] = $$('button', host);
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const KW = /\b(IF|THEN|ELSE|END IF|END WHILE|END FUNCTION|WHILE|FOR|TO|NEXT|FUNCTION|RETURN)\b/g;
+  src.innerHTML = lines.map((l, i) => `<div><span class="ln">${i + 1}</span>${esc(l).replace(KW, '<span class="kw">$1</span>')}</div>`).join('');
+  let S, gen, done, cur;
+  function reset() {
+    S = { stack: [{ name: '全局', vars: {} }], changed: null,
+      push(name, vars) { const f = { name, vars: Object.assign({}, vars) }; this.stack.push(f); this.changed = null; return f; },
+      pop() { this.stack.pop(); },
+      top() { return this.stack[this.stack.length - 1]; },
+      set(k, v, f) { (f || this.top()).vars[k] = v; this.changed = [f || this.top(), k]; } };
+    gen = run(S); done = false; cur = -1;
+    paint('点"下一步"，从第 1 行开始。');
+  }
+  function fmt(v) { return typeof v === 'string' ? `"${v}"` : typeof v === 'boolean' ? (v ? '真' : '假') : String(v); }
+  function paint(msg) {
+    $$('div', src).forEach((d, i) => d.classList.toggle('cur', i === cur));
+    frames.innerHTML = S.stack.map((f, i) => `<div class="frame ${i === S.stack.length - 1 ? 'top' : ''}"><div class="fh">${f.name}</div><table>${Object.keys(f.vars).length ? Object.entries(f.vars).map(([k, v]) => `<tr class="${S.changed && S.changed[0] === f && S.changed[1] === k ? 'chg' : ''}"><td>${k}</td><td>${fmt(v)}</td></tr>`).join('') : '<tr><td colspan="2">（还没有变量）</td></tr>'}</table></div>`).join('');
+    note.innerHTML = msg;
+    bNext.disabled = bAll.disabled = done;
+  }
+  function step() {
+    if (done) return;
+    S.changed = null;
+    const r = gen.next();
+    if (r.done) { done = true; cur = -1; paint('程序跑完了。'); return; }
+    cur = r.value[0]; paint(r.value[1] || '');
+    const cl = $$('div', src)[cur]; if (cl) cl.scrollIntoView({ block: 'nearest' });
+  }
+  bNext.onclick = step;
+  bAll.onclick = () => { let k = 0; while (!done && k++ < 500) step(); };
+  bReset.onclick = reset;
+  reset();
+  return { reset };
+}
+
+/* ---------- 1. 语句 ---------- */
+stepper($('#st1'), ['a = 5', 'b = 10', 'c = a + b'], function* (S) {
+  S.set('a', 5); yield [0, '赋值：把 5 存进变量 a。'];
+  S.set('b', 10); yield [1, '把 10 存进 b。'];
+  const g = S.top().vars; S.set('c', g.a + g.b); yield [2, `先算右边：a + b = 5 + 10 = 15，再存进 c。`];
+});
+
+/* ---------- 2. if / else ---------- */
+let LV = 1;
+const st2Lines = () => [`level = ${LV}`, 'score = 0', 'bugs = 5', 'relays = 4', 'playerName = "Andre"', 'IF level == 1 THEN', '    score = 0', '    bugs = 1', 'ELSE', '    bugs = 3 * level', 'END IF'];
+function makeSt2() {
+  stepper($('#st2'), st2Lines(), function* (S) {
+    const v = () => S.top().vars;
+    S.set('level', LV); yield [0, '初始化：设置各个变量的初始值。'];
+    S.set('score', 0); yield [1, ''];
+    S.set('bugs', 5); yield [2, ''];
+    S.set('relays', 4); yield [3, ''];
+    S.set('playerName', 'Andre'); yield [4, ''];
+    const c = v().level === 1;
+    yield [5, `测试条件 level == 1：level 是 ${v().level}，所以条件为<b>${c ? '真' : '假'}</b> → ${c ? '进入 IF 块' : '跳到 ELSE 块'}。`];
+    if (c) {
+      S.set('score', 0); yield [6, '刚开始游戏，分数清零。'];
+      S.set('bugs', 1); yield [7, '先简单点：只有 1 只虫子。'];
+      yield [10, 'IF 块执行完，跳过 ELSE，来到 END IF。'];
+    } else {
+      yield [8, '条件为假，来到 ELSE。'];
+      S.set('bugs', 3 * v().level); yield [9, `bugs = 3 × ${v().level} = ${3 * v().level}。分数没改，玩家保留之前的分。`];
+      yield [10, 'END IF，if 语句结束。'];
+    }
+  });
+}
+$$('[data-lv]').forEach(b => b.onclick = () => { LV = +b.dataset.lv; $$('[data-lv]').forEach(x => x.classList.toggle('sel', x === b)); makeSt2(); });
+makeSt2();
+
+/* ---------- 3. while ---------- */
+stepper($('#st3'), ['relays = 1', 'WHILE relays < 4', '    relays = relays + 1', 'END WHILE', '同事离场'], function* (S) {
+  const v = () => S.top().vars;
+  S.set('relays', 1); yield [0, '同事进场时，葛丽丝只剩 1 个继电器。'];
+  while (true) {
+    const r = v().relays, c = r < 4;
+    yield [1, `测试条件 relays &lt; 4：${r} &lt; 4 为<b>${c ? '真' : '假'}</b>${c ? ' → 进入循环。' : ' → 退出循环。'}`];
+    if (!c) break;
+    S.set('relays', r + 1); yield [2, `先算右边：relays + 1 = ${r} + 1 = ${r + 1}，再存回 relays，覆盖旧值。`];
+    yield [3, '到了循环末尾，跳回 WHILE 那一行重新测试条件。'];
+  }
+  yield [4, '继电器补满了，继续执行循环后面的代码。'];
+});
+
+/* ---------- 4. for ---------- */
+let R4 = 2, L4 = 3;
+function makeSt4() {
+  stepper($('#st4'), [`relays = ${R4}`, `level = ${L4}`, 'bonus = 1', 'FOR i = 1 TO level', '    bonus = bonus * relays', 'NEXT'], function* (S) {
+    const v = () => S.top().vars;
+    S.set('relays', R4); yield [0, ''];
+    S.set('level', L4); yield [1, ''];
+    S.set('bonus', 1); yield [2, '奖励分从 1 开始乘。'];
+    for (let i = 1; ; i++) {
+      S.set('i', i);
+      if (i > L4) { yield [3, `i = ${i}，已经超过 level（${L4}）：循环了 ${L4} 次，退出。奖励分 = ${R4}<sup>${L4}</sup> = <b>${v().bonus}</b>。`]; break; }
+      yield [3, `i = ${i}（从 1 数到 ${L4}），进入第 ${i} 次循环。`];
+      const b = v().bonus; S.set('bonus', b * R4); yield [4, `bonus = ${b} × ${R4} = ${b * R4}`];
+      yield [5, 'NEXT：i 加 1，回到 FOR 那一行。'];
+    }
+  });
+}
+$$('[data-r]').forEach(b => b.onclick = () => { R4 = +b.dataset.r; $$('[data-r]').forEach(x => x.classList.toggle('sel', x === b)); makeSt4(); });
+$$('[data-l]').forEach(b => b.onclick = () => { L4 = +b.dataset.l; $$('[data-l]').forEach(x => x.classList.toggle('sel', x === b)); makeSt4(); });
+makeSt4();
+
+/* ---------- 5. 函数 ---------- */
+(function () {
+  const L = [
+    'FUNCTION Exponent(Base, Exp)',          // 0
+    '    result = 1',                         // 1
+    '    FOR i = 1 TO Exp',                   // 2
+    '        result = result * Base',         // 3
+    '    NEXT',                               // 4
+    '    RETURN result',                      // 5
+    'END FUNCTION',                           // 6
+    '',                                       // 7
+    'FUNCTION CalcBonus(relays, level)',      // 8
+    '    bonus = 0',                          // 9
+    '    IF relays > 0 THEN',                 // 10
+    '        bonus = Exponent(relays, level)',// 11
+    '    END IF',                             // 12
+    '    RETURN bonus',                       // 13
+    'END FUNCTION',                           // 14
+    '',                                       // 15
+    'FUNCTION LevelFinished(relays, level, score)', // 16
+    '    bonus = CalcBonus(relays, level)',   // 17
+    '    score = score + bonus',              // 18
+    '    IF score > highScore THEN',          // 19
+    '        highScore = score',              // 20
+    '        highScoreName = playerName',     // 21
+    '    END IF',                             // 22
+    '    RETURN score',                       // 23
+    'END FUNCTION',                           // 24
+    '',                                       // 25
+    'highScore = 50',                         // 26
+    'playerName = "Andre"',                   // 27
+    'total = LevelFinished(2, 3, 45)',        // 28
+  ];
+  function* Exponent(S, Base, Exp) {
+    const f = S.push('Exponent', { Base, Exp });
+    yield [0, `调用 Exponent：参数 Base = ${Base}、Exp = ${Exp} 被"传"进来，成了这一层自己的变量。`];
+    S.set('result', 1, f); yield [1, ''];
+    for (let i = 1; ; i++) {
+      S.set('i', i, f);
+      if (i > Exp) { yield [2, `i = ${i} 超过 Exp，循环结束。`]; break; }
+      yield [2, `第 ${i} 次循环。`];
+      const r = f.vars.result; S.set('result', r * Base, f); yield [3, `result = ${r} × ${Base} = ${r * Base}`];
+      yield [4, ''];
+    }
+    yield [5, `RETURN ${f.vars.result}：把结果交回给调用它的 CalcBonus，Exponent 这一层弹出。`];
+    const res = f.vars.result; S.pop(); return res;
+  }
+  function* CalcBonus(S, relays, level) {
+    const f = S.push('CalcBonus', { relays, level });
+    yield [8, `调用 CalcBonus(relays = ${relays}, level = ${level})。`];
+    S.set('bonus', 0, f); yield [9, ''];
+    const c = relays > 0;
+    yield [10, `relays > 0？${relays} > 0 为${c ? '真' : '假'}。`];
+    if (c) {
+      yield [11, '要算 Exponent(relays, level)：先去调用 Exponent，这一行等它返回。'];
+      const r = yield* Exponent(S, relays, level);
+      S.set('bonus', r, f); yield [11, `Exponent 返回了 ${r}，存进 bonus。`];
+    }
+    yield [12, ''];
+    yield [13, `RETURN ${f.vars.bonus}：交回给 LevelFinished，CalcBonus 这一层弹出。`];
+    const res = f.vars.bonus; S.pop(); return res;
+  }
+  function* LevelFinished(S, relays, level, score) {
+    const f = S.push('LevelFinished', { relays, level, score });
+    yield [16, `调用 LevelFinished(${relays}, ${level}, ${score})。`];
+    yield [17, '先去调用 CalcBonus，这一行等它返回。'];
+    const b = yield* CalcBonus(S, relays, level);
+    S.set('bonus', b, f); yield [17, `CalcBonus 返回了 ${b}，存进 bonus。`];
+    S.set('score', f.vars.score + b, f); yield [18, `score = ${score} + ${b} = ${f.vars.score}`];
+    const g = S.stack[0].vars;
+    const c = f.vars.score > g.highScore;
+    yield [19, `${f.vars.score} > highScore（${g.highScore}）？${c ? '是，破纪录了！' : '没有。'}`];
+    if (c) {
+      S.set('highScore', f.vars.score, S.stack[0]); yield [20, '更新全局变量 highScore。'];
+      S.set('highScoreName', g.playerName, S.stack[0]); yield [21, '记下玩家名字。'];
+    }
+    yield [22, ''];
+    yield [23, `RETURN ${f.vars.score}：LevelFinished 这一层弹出。`];
+    const res = f.vars.score; S.pop(); return res;
+  }
+  stepper($('#st5'), L, function* (S) {
+    S.set('highScore', 50); yield [26, '程序从这里开始：上面三个 FUNCTION 只是"定义"，不会自己执行。'];
+    S.set('playerName', 'Andre'); yield [27, ''];
+    yield [28, '调用 LevelFinished，传进 2 个继电器、第 3 关、当前 45 分。'];
+    const t = yield* LevelFinished(S, 2, 3, 45);
+    S.set('total', t); yield [28, `一行代码，拿回总分 <b>${t}</b>。里面三层函数、两个循环，调用者都看不见——这就是抽象。`];
+  });
+})();
+
+/* ---------- 调用关系图 ---------- */
+(function () {
+  const svg = $('#calls');
+  const B = [['total = LevelFinished(2, 3, 45)', 's-soft', '→ 53'], ['LevelFinished', 's-on', '→ 53'], ['CalcBonus', 's-acc', '→ 8'], ['Exponent', 's-panel', '→ 8']];
+  B.forEach(([t, cls, r], i) => {
+    const x = i ? 200 + (i - 1) * 165 : 4, w = i ? 140 : 176;
+    el('rect', { x, y: 50, width: w, height: 46, rx: 10, class: cls }, svg);
+    txt(svg, x + w / 2, 78, t, i ? 't-mono mid' : 't-sub mid');
+    if (i) {
+      const px = i === 1 ? 180 : x - 25;
+      el('path', { d: `M${px},62 H${x - 2}`, class: 's-line' }, svg);
+      el('path', { d: `M${x - 2},86 H${px}`, class: 's-dash' }, svg);
+      txt(svg, (px + x) / 2, 114, r, 't-mono mid t-on');
+    }
+  });
+  txt(svg, 340, 30, '调用 →（参数往右传）', 't-sub mid');
+  txt(svg, 340, 140, '← 返回（结果往左交回）', 't-sub mid');
+})();
+</script>
+</body>
+</html>

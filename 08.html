@@ -1,0 +1,461 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>08 指令和程序 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+table.tt.isa td,table.tt.isa th{padding:5px 12px}
+table.tt.isa tr.cur td{background:var(--on-soft);font-weight:700}
+.sim{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+@media (max-width:760px){.sim{grid-template-columns:1fr}}
+.memlist{font:13px var(--mono);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.memlist div{display:grid;grid-template-columns:22px 34px 90px 1fr;gap:6px;padding:3px 10px;border-bottom:1px solid var(--line);align-items:center}
+.memlist div:last-child{border-bottom:0}
+.memlist .ad{color:var(--muted)}
+.memlist .bn{color:var(--muted)}
+.memlist .mn{font-weight:700}
+.memlist .data .mn{font-weight:400;color:var(--accent)}
+.memlist .ptr{background:var(--on-soft)}
+.memlist .ptr .ar{color:var(--on)}
+.memlist .wr{background:var(--accent-soft)}
+.memlist input{width:56px;font:13px var(--mono);padding:1px 4px;border:1px solid var(--line);border-radius:5px;background:var(--bg);color:var(--ink)}
+.regs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.regs div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.regs small{display:block;font-size:12px;color:var(--muted)}
+.regs b{font:700 18px var(--mono)}
+.regs .flag.on{background:var(--on);border-color:var(--on);color:#fff}
+.regs .flag.on small{color:#fff}
+.regs .chg{animation:flash .6s}
+@keyframes flash{from{background:var(--on-soft)}to{background:var(--panel)}}
+.trace{max-height:240px;overflow:auto;margin-top:10px;border:1px solid var(--line);border-radius:10px}
+.trace table{width:100%;border-collapse:collapse;font:12px var(--mono)}
+.trace th,.trace td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left}
+.trace th{position:sticky;top:0;background:var(--bg);font-family:inherit}
+.trace tr.jump td{color:var(--on);font-weight:700}
+.progs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.btn.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.crash{color:var(--bad);font-weight:700}
+</style>
+</head>
+<body data-ep="8">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=9" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 8 集</div>
+  <h1>指令和程序</h1>
+  <p class="en">Instructions &amp; Programs</p>
+  <p class="lead">CPU 强大，是因为它可编程：换一串指令，它就做另一件事。这一集给 CPU 加上跳转和停机指令，写出循环，甚至用程序做出了硬件本来不会的除法。</p>
+  <div class="road">
+    <span>汇编写法</span><i>→</i><span>SUB / JUMP / HALT</span><i>→</i><span>无限循环</span><i>→</i><span>条件跳转</span><i>→</i><span>求余数</span><i>→</i><span>指令长度</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 硬件被软件控制</a></li>
+    <li><a href="#ch1">1 · 新指令</a></li>
+    <li><a href="#ch2">2 · 程序模拟器</a></li>
+    <li><a href="#ch3">3 · 无限循环</a></li>
+    <li><a href="#ch4">4 · 条件跳转</a></li>
+    <li><a href="#ch5">5 · 指令长度</a></li>
+    <li><a href="#ch6">6 · 真实的 CPU</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>硬件，被容易修改的软件控制</h2>
+  <p>上一集，我们把 ALU、控制单元、一些内存和时钟组合在一起，做出了一个基础但能用的中央处理单元，也就是 CPU——计算机那颗嘀嗒跳动的心脏。我们已经完成了从电路开始搭出这些部件的所有苦活，现在是时候给 CPU 一些真正的指令去处理了！</p>
+  <p>CPU 之所以强大，是因为它是<b>可编程的</b>：写一串不同的指令，CPU 就会完成不同的任务。所以 CPU 是一块<b>由容易修改的软件控制的硬件</b>！</p>
+  <p>我们快速回顾一下上一集一步步走过的那个简单程序。计算机内存是这样的，每个地址存 8 位数据。对于我们假想的 CPU，前 4 位是操作码，后 4 位指定一个内存地址或寄存器。内存地址 0 里是 <code>0010 1110</code>，前 4 位是操作码，对应 LOAD_A 指令：从后 4 位指定的内存位置读取数据，存进寄存器 A，这里是 1110，也就是 14。</p>
+  <p>所以，我们别把内存地址 0 看成"0010 1110"，而是看成指令 <b>"LOAD_A 14"</b>。这样读起来、理解起来容易多了——我说起来也容易！内存里其余的数据也可以这样转换。这个程序只有 4 条指令，我们还在内存里放了两个数字 3 和 14。</p>
+  <p>现在一步步走一遍：先是 LOAD_A 14，把地址 14 里的值（数字 3）存进寄存器 A。然后是 LOAD_B 15，把地址 15 里的值（数字 14）存进寄存器 B。好，挺简单。接下来是一条 ADD 指令，告诉处理器用 ALU 把两个寄存器加起来，这里指定的是 B 和 A。<b>顺序很重要</b>，因为结果会存进指定的<b>第二个</b>寄存器，所以这里结果存进寄存器 A。最后一条指令是 STORE_A 13，让 CPU 把寄存器 A 里的值写进内存地址 13。耶！我们的程序把两个数加起来了。只有 4 条指令可用的时候，也就只能玩到这么刺激了。所以，再加一些指令吧！</p>
+  <div class="extra">
+    <span class="t">"汇编"的雏形</span>
+    把 <code>0010 1110</code> 写成 <code>LOAD_A 14</code>，就是<b>汇编语言</b>的思路：一条助记符对应一条机器指令，只是给人看的写法。第 11 集会讲到真正的汇编器怎么把这种写法自动翻译成二进制。
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>新指令：SUB、JUMP、JUMP_NEGATIVE、HALT</h2>
+  <p>现在有了一个减法功能 <b>SUB</b>，和 ADD 一样，要指定两个寄存器来操作。</p>
+  <p>我们还加了一条新奇的指令叫 <b>JUMP</b>（跳转）。顾名思义，它让程序"跳"到一个新位置。如果我们想改变指令的顺序，或者跳过一些指令，它就很有用。比如 JUMP 0 能让程序回到开头。在底层，它的实现方式是：<b>把指令后 4 位指定的值写进指令地址寄存器，覆盖掉当前的值</b>。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 640 140" role="img" aria-label="JUMP 怎样改写指令地址寄存器">
+        <defs><marker id="aj" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--on)"/></marker></defs>
+        <rect x="20" y="40" width="170" height="56" rx="10" class="s-acc"/>
+        <text x="105" y="62" class="t-sub mid">指令寄存器</text>
+        <text x="105" y="84" class="t-mono mid" style="font-size:16px">1010 0010</text>
+        <text x="105" y="118" class="t-sub mid">JUMP 2</text>
+        <path d="M192,68 H300" class="s-line" style="stroke:var(--on);stroke-width:2.5" marker-end="url(#aj)"/>
+        <text x="246" y="58" class="t-sub mid">后 4 位 0010</text>
+        <rect x="310" y="40" width="200" height="56" rx="10" class="s-on"/>
+        <text x="410" y="62" class="t-sub mid">指令地址寄存器</text>
+        <text x="410" y="86" class="t-mono mid" style="font-size:16px"><tspan style="text-decoration:line-through;fill:var(--muted)">0100（4）</tspan>  →  0010（2）</text>
+        <text x="410" y="118" class="t-sub mid">被直接覆盖：下一次取指令去地址 2</text>
+        <text x="530" y="74" class="t-sub">普通指令：+1</text>
+        <text x="530" y="92" class="t-sub t-on">JUMP：改写</text>
+      </svg>
+      </div>
+      <figcaption>图 1　JUMP 不做运算，只是改写"下一条去哪取"。</figcaption>
+    </figure>
+  </div>
+
+  <p>我们还加了一个特别版的 JUMP，叫 <b>JUMP_NEGATIVE</b>：<b>只有当 ALU 的负标志为真时</b>，它才让程序跳转。第 5 集讲过，只有算术运算的结果是负数时，负标志才会被设置；如果结果是零或正数，负标志就不会被设置，于是 JUMP_NEGATIVE 哪儿也不跳，CPU 直接继续执行下一条指令。</p>
+  <p>我们之前的程序，其实应该写成下面这样才算正确：在最后加一条 <b>HALT</b>（停机）。否则 CPU 执行完 STORE 指令后会继续往下走，去处理后面那一堆 0。可是并没有操作码为 0 的指令，所以计算机会崩溃！</p>
+  <p>这里有必要指出一点：我们把<b>指令和数据存在同一个内存里</b>。它们在根本上没有任何区别——都只是二进制数。所以 HALT 指令非常重要，因为它让我们能把两者分开。</p>
+
+  <div class="card" style="overflow-x:auto">
+    <h3>扩展后的指令表</h3>
+    <table class="tt isa" id="isa">
+      <thead><tr><th>指令</th><th>描述</th><th>操作码</th><th>后 4 位</th></tr></thead>
+      <tbody>
+        <tr data-op="2"><td>LOAD_A</td><td>RAM → 寄存器 A</td><td class="num">0010</td><td>RAM 地址</td></tr>
+        <tr data-op="1"><td>LOAD_B</td><td>RAM → 寄存器 B</td><td class="num">0001</td><td>RAM 地址</td></tr>
+        <tr data-op="4"><td>STORE_A</td><td>寄存器 A → RAM</td><td class="num">0100</td><td>RAM 地址</td></tr>
+        <tr data-op="8"><td>ADD</td><td>两个寄存器相加，结果存进第二个</td><td class="num">1000</td><td>寄存器 + 寄存器</td></tr>
+        <tr data-op="12"><td>SUB</td><td>第二个寄存器减第一个，结果存进第二个</td><td class="num">1100</td><td>寄存器 + 寄存器</td></tr>
+        <tr data-op="10"><td>JUMP</td><td>跳到指定地址</td><td class="num">1010</td><td>RAM 地址</td></tr>
+        <tr data-op="11"><td>JUMP_NEG</td><td>负标志为真才跳</td><td class="num">1011</td><td>RAM 地址</td></tr>
+        <tr data-op="15"><td>HALT</td><td>停机</td><td class="num">1111</td><td>不用</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">新加的 4 条指令的操作码按视频画面里的指令表填写。</p>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>动手：程序模拟器</h2>
+  <p class="muted" style="font-size:15px">下面四个程序就是这一集讲的四个版本。每点一次"执行一条"，CPU 就完整地走一轮取指令、解码、执行。</p>
+  <div class="card">
+    <div class="progs" id="progs">
+      <button class="btn" data-p="old">① 上集的程序（没有 HALT）</button>
+      <button class="btn" data-p="halt">② 加上 HALT</button>
+      <button class="btn" data-p="loop">③ 无限循环</button>
+      <button class="btn" data-p="mod">④ 求余数</button>
+    </div>
+    <div class="sim">
+      <div class="memlist" id="memlist"></div>
+      <div>
+        <div class="regs">
+          <div id="r-iar"><small>指令地址寄存器</small><b></b></div>
+          <div id="r-n" class="flag"><small>负标志</small><b></b></div>
+          <div id="r-a"><small>寄存器 A</small><b></b></div>
+          <div id="r-b"><small>寄存器 B</small><b></b></div>
+          <div id="r-cnt"><small>已执行指令数</small><b></b></div>
+          <div id="r-st"><small>状态</small><b></b></div>
+        </div>
+        <div class="btns">
+          <button class="btn primary" id="sim-step">执行一条 →</button>
+          <button class="btn" id="sim-run">▶ 连续运行</button>
+          <button class="btn" id="sim-reset">重置</button>
+        </div>
+      </div>
+    </div>
+    <div class="step-text" id="sim-cap"></div>
+    <div class="trace"><table><thead><tr><th>#</th><th>地址</th><th>指令</th><th>A</th><th>B</th><th>负</th><th>下一条</th></tr></thead><tbody id="trace"></tbody></table></div>
+    <p class="hint">"求余数"程序里，地址 14、15 的数据可以直接改，试试 81 和 7、54 和 18</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>无限循环（程序 ③）</h2>
+  <p>好，现在加一条 JUMP，让程序更有趣一点。我们还把内存里两个初始值改成 1 和 1。像 CPU 那样一步步走一遍：首先，LOAD_A 14 把 1 读进寄存器 A；接着 LOAD_B 15 把 1 读进寄存器 B；和之前一样，ADD 把寄存器 B 和 A 相加，和存进寄存器 A。1 + 1 = 2，所以寄存器 A 现在是 2（当然是以二进制存的）。然后 STORE 指令把它存进内存地址 13。</p>
+  <p>现在遇到一条 "JUMP 2" 指令。它让处理器把指令地址寄存器里的值——现在是 4——覆盖成新的值 2。于是在处理器的下一次取指令中，取到的不是 HALT，而是内存地址 2 里的指令，也就是 ADD B A。我们跳转了！寄存器 A 里是 2，寄存器 B 里是 1，1 + 2 = 3，所以寄存器 A 变成 3，存进内存。又遇到 JUMP，回到 ADD B A，1 + 3 = 4，寄存器 A 现在是 4。</p>
+  <p>发现了吗？每循环一次就加 1，它在<b>数数</b>！酷。但注意，它永远也逃不出去：我们永远……永远……到不了那条 HALT，因为总会先碰到那条 JUMP。这叫<b>无限循环</b>——一个永远运行下去……下去……下去……的程序。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>条件跳转：用减法求余数（程序 ④）</h2>
+  <p>要打破循环，需要<b>条件跳转</b>：只有满足某个条件时才跳。我们的 JUMP_NEGATIVE 就是一种条件跳转，计算机还有其他类型，比如 JUMP IF EQUAL（相等就跳）和 JUMP IF GREATER（更大就跳）。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="flow" viewBox="0 0 640 330" role="img" aria-label="求余数程序的流程图"></svg>
+      </div>
+      <figcaption>图 2　程序 ④ 的流程：不停地减 B，直到减成负数，再加回一个 B，剩下的就是余数。</figcaption>
+    </figure>
+  </div>
+
+  <p>我们把代码弄得花哨一点，再走一遍。和之前一样，程序先把内存里的值读进寄存器 A 和 B，这个例子里，11 读进寄存器 A，5 读进寄存器 B。现在用寄存器 A 减去寄存器 B，11 − 5 = 6，6 存进寄存器 A。</p>
+  <p>现在遇到 JUMP_NEGATIVE。上一次 ALU 的结果是 6，是正数，所以负标志是假，处理器不跳转，继续下一条指令……也就是 JUMP 2。这一条没有条件，无论如何都跳到指令 2。好，又回到"寄存器 A 减寄存器 B"：6 − 5 = 1，1 存进寄存器 A。下一条，又是 JUMP_NEGATIVE。1 也是正数，所以 CPU 继续执行 JUMP 2，又绕回减法指令。</p>
+  <p>不过这次不一样了：1 − 5 = −4，ALU <b>第一次</b>把负标志设为真。所以执行到下一条 JUMP_NEGATIVE 5 时，CPU 跳到了内存地址 5。我们跳出了无限循环！现在是 ADD B A，−4 + 5 = 1，存进寄存器 A。接着 STORE 指令把寄存器 A 存进内存地址 13。最后遇到 HALT，计算机休息了。</p>
+  <p>所以，虽然这个程序只有 7 条指令，CPU 最终却执行了 13 条，因为它在内部循环了两次。这段代码算的是 11 除以 5 的<b>余数</b>，也就是 1。再加几行代码，我们还能记录循环了多少次，这个次数就是 11 里有几个 5……我们循环了两次，所以 11 除以 5 商 2，余 1。</p>
+  <p>当然，这段代码对任意两个数都管用，只要把内存里的数改成我们想要的：7 和 81、18 和 54，都无所谓——<b>这就是软件的力量</b>！软件还让我们做到了硬件做不到的事。记得吗，我们的 ALU 没有除法功能，是我们写的程序给了它这个功能。然后，其他程序还可以用我们的除法程序去做更花哨的事。你知道这意味着什么——又一层新的抽象！</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>指令长度与立即值</h2>
+  <p>我们假想的 CPU 非常基础：所有指令都是 8 位长，操作码只占前 4 位。所以就算把 4 位的每种组合都用上，这台 CPU 最多也只能支持 16 种不同的指令。而且，好几条指令用后 4 位指定内存地址，可 4 位同样只能表示 16 个不同的值，也就是说我们最多只能访问 16 个内存位置——可用的不多。比如，我们甚至没法 JUMP 到地址 17，因为 4 位根本装不下 17 这个数。</p>
+  <p>因此，真实的现代 CPU 用两种策略。最直接的办法是让指令更长、位数更多，比如 32 位或 64 位，这叫<b>指令长度</b>。不出所料。</p>
+  <p>第二种办法是<b>可变长度指令</b>。比如，想象一个用 8 位操作码的 CPU。当 CPU 看到一条不需要额外值的指令，比如 HALT，就可以立刻执行它。但如果看到的是 JUMP 这样的指令，它就知道还得再去取要跳转到的地址，这个地址就存在内存里紧挨着 JUMP 指令的后面。合情合理，这叫<b>立即值</b>（immediate value）。在这种处理器设计里，指令可以是任意多个字节长，这让 CPU 的取指令阶段稍微复杂了一点。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="varlen" viewBox="0 0 680 170" role="img" aria-label="可变长度指令"></svg>
+      </div>
+      <figcaption>图 3　可变长度指令：ADD、HALT 只占 1 个字节；LOAD_A、JUMP 后面紧跟着 1 个字节的立即值，取指令时要多读一格（示意）。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>真实的 CPU：从 4004 到酷睿 i7</h2>
+  <p>需要说明的是，我们的示例 CPU 和指令集是假想的，目的是展示关键的工作原理。所以最后给你看一个真实 CPU 的例子。</p>
+  <p>1971 年，英特尔发布了 <b>4004</b> 处理器。它是第一个把整个 CPU 装进一颗芯片的处理器，为我们今天熟知和喜爱的英特尔处理器铺平了道路。它支持 46 条指令，足够做出一台完整能用的计算机。它用到了很多我们讲过的指令，比如 JUMP、ADD、SUBTRACT 和 LOAD。它也像我们刚讲的那样，用 8 位的立即值来做 JUMP 之类的操作，以便访问更多内存。</p>
+  <p>从 1971 年到现在，处理器已经走了很远。一个现代计算机处理器，比如英特尔酷睿 i7，有<b>上千种</b>不同的指令和指令变体，长度从 1 到 15 个字节不等。比如光是 ADD 的变体就有十几种不同的操作码！指令集规模这么大的增长，很大程度上是因为处理器设计里随着时间加入了越来越多花样，我们下一集讲。下周见！</p>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th></th><th>我们的假想 CPU</th><th>英特尔 4004（1971）</th><th>英特尔酷睿 i7</th></tr></thead>
+      <tbody>
+        <tr><th>指令数</th><td>8（最多 16）</td><td>46</td><td>上千种（含变体）</td></tr>
+        <tr><th>指令长度</th><td>固定 8 位</td><td>用 8 位立即值扩展</td><td>1 ~ 15 字节</td></tr>
+        <tr><th>能访问的内存</th><td>16 个位置</td><td>更多（靠立即值）</td><td>以 GB 计</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    指令和数据都是内存里的二进制数，HALT 把它们分开；JUMP 通过改写指令地址寄存器改变执行顺序，条件跳转根据 ALU 标志决定跳不跳——有了它们就能写出循环。硬件不会除法，软件可以：这就是软件的力量，也是又一层抽象。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. JUMP 2 在底层做了什么？它和普通指令执行完后的"指令地址 +1"有什么不同？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它把后 4 位的值（2）直接写进指令地址寄存器，覆盖掉原来的值。普通指令执行完是 +1，去取紧挨着的下一条；JUMP 是改写，下一次取指令去地址 2。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 上集的程序没有 HALT，为什么会崩溃？为什么说 HALT 能把指令和数据分开？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">STORE_A 之后 CPU 会继续取地址 4、5……里的 0，而 0000 不是任何指令。指令和数据在内存里没有区别，都是二进制数，CPU 只会傻傻地往下取；HALT 告诉它"指令到此为止，后面的是数据"。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 求余数程序只有 7 条指令，算 11 ÷ 5 时为什么执行了 13 条？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">两次 LOAD（2 条）+ 三轮"SUB、JUMP_NEG"（6 条）+ 前两轮各一条 JUMP 2（2 条）+ ADD、STORE、HALT（3 条）= 13。中间那段循环跑了好几遍。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 4 位操作码 + 4 位地址有什么限制？现代 CPU 怎么解决？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">最多 16 种指令，最多访问 16 个内存位置（连 JUMP 17 都做不到）。解决办法：一是加大指令长度（32、64 位）；二是可变长度指令，需要地址的指令后面紧跟"立即值"。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="07.html"><small>← 上一集</small>07 中央处理器</a>
+    <a class="next" href="09.html"><small>下一集 →</small>09 高级 CPU 设计</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 8 集 Instructions &amp; Programs（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const b8 = n => (n & 255).toString(2).padStart(8, '0');
+const b4 = n => n.toString(2).padStart(4, '0');
+const OPS = { 2: 'LOAD_A', 1: 'LOAD_B', 4: 'STORE_A', 8: 'ADD', 12: 'SUB', 10: 'JUMP', 11: 'JUMP_NEG', 15: 'HALT' };
+const RN = ['A', 'B', 'C', 'D'];
+const enc = (op, lo) => (op << 4) | (lo || 0);
+const REGOP = (s, d) => (s << 2) | d;
+const PROGS = {
+  old: { code: [enc(2, 14), enc(1, 15), enc(8, REGOP(1, 0)), enc(4, 13)], data: { 14: 3, 15: 14 }, codeLen: 4 },
+  halt: { code: [enc(2, 14), enc(1, 15), enc(8, REGOP(1, 0)), enc(4, 13), enc(15)], data: { 14: 3, 15: 14 }, codeLen: 5 },
+  loop: { code: [enc(2, 14), enc(1, 15), enc(8, REGOP(1, 0)), enc(4, 13), enc(10, 2), enc(15)], data: { 14: 1, 15: 1 }, codeLen: 6 },
+  mod: { code: [enc(2, 14), enc(1, 15), enc(12, REGOP(1, 0)), enc(11, 5), enc(10, 2), enc(8, REGOP(1, 0)), enc(4, 13), enc(15)], data: { 14: 11, 15: 5 }, codeLen: 8 },
+};
+function mnem(v) {
+  const op = v >> 4, lo = v & 15;
+  if (!OPS[op]) return null;
+  if (op === 8 || op === 12) return `${OPS[op]} ${RN[lo >> 2]} ${RN[lo & 3]}`;
+  if (op === 15) return 'HALT';
+  return `${OPS[op]} ${lo}`;
+}
+const signed = v => (v & 128) ? v - 256 : v;
+
+/* ---------- 模拟器 ---------- */
+(function () {
+  let P = 'mod', st, timer = null;
+  function reset() {
+    const p = PROGS[P];
+    const ram = Array(16).fill(0);
+    p.code.forEach((v, i) => ram[i] = v);
+    Object.entries(p.data).forEach(([a, v]) => ram[a] = v & 255);
+    st = { ram, a: 0, b: 0, iar: 0, neg: 0, cnt: 0, state: 'run', last: null, wrote: null };
+    $('#trace').innerHTML = '';
+    paint(null);
+    const intro = { old: '上一集的程序原样照搬，最后没有 HALT。一直点"执行一条"，看 STORE_A 之后会发生什么。', halt: '补上 HALT 的正确版本。', loop: '数据改成 1 和 1，最后加了 JUMP 2。看寄存器 A 怎么一直数下去。', mod: '11 ÷ 5 求余数。注意负标志什么时候第一次亮起。' }[P];
+    $('#sim-cap').innerHTML = intro;
+    $$('#progs .btn').forEach(b => b.classList.toggle('sel', b.dataset.p === P));
+  }
+  function paint(changed) {
+    const p = PROGS[P];
+    $('#memlist').innerHTML = st.ram.map((v, i) => {
+      const isData = i >= p.codeLen && (i in p.data || i === 13);
+      const m = isData ? '' : (i < p.codeLen ? mnem(v) : (v ? mnem(v) || '' : ''));
+      const editable = P === 'mod' && (i === 14 || i === 15);
+      const right = isData ? (editable ? `<input type="number" data-a="${i}" value="${signed(v)}">` : `<span class="mn">${signed(v)}</span>`) : `<span class="mn">${m || (i < p.codeLen ? '' : '<span class="ad">0</span>')}</span>`;
+      return `<div class="${isData ? 'data' : ''} ${i === st.iar && st.state === 'run' ? 'ptr' : ''} ${i === st.wrote ? 'wr' : ''}"><span class="ar">${i === st.iar && st.state === 'run' ? '▶' : ''}</span><span class="ad">${i}</span><span class="bn">${b8(v).slice(0, 4)} ${b8(v).slice(4)}</span>${right}</div>`;
+    }).join('');
+    $$('#memlist input').forEach(inp => inp.onchange = () => { PROGS.mod.data[inp.dataset.a] = Math.max(1, Math.min(127, +inp.value | 0)); stop(); reset(); });
+    const set = (id, v, chg) => { const d = $(id); $('b', d).textContent = v; if (chg) { d.classList.remove('chg'); void d.offsetWidth; d.classList.add('chg'); } };
+    set('#r-iar', `${st.iar}`, changed === 'iar');
+    set('#r-a', `${signed(st.a)}`, changed === 'a');
+    set('#r-b', `${signed(st.b)}`, changed === 'b');
+    set('#r-n', st.neg ? '真' : '假');
+    $('#r-n').classList.toggle('on', !!st.neg);
+    set('#r-cnt', st.cnt);
+    set('#r-st', { run: '运行中', halt: '已停机', crash: '崩溃' }[st.state]);
+    $('#r-st b').className = st.state === 'crash' ? 'crash' : '';
+    $$('#isa tbody tr').forEach(tr => tr.classList.toggle('cur', st.last != null && +tr.dataset.op === st.last));
+    $('#sim-step').disabled = st.state !== 'run';
+  }
+  function step() {
+    if (st.state !== 'run') return false;
+    const at = st.iar, v = st.ram[at], op = v >> 4, lo = v & 15;
+    st.wrote = null;
+    let next = at + 1, msg, changed = null, jumped = false;
+    if (!OPS[op]) {
+      st.state = 'crash'; st.last = null;
+      msg = `<span class="crash">崩溃！</span>地址 ${at} 里是 <code>${b8(v)}</code>，操作码 ${b4(op)} 不是任何指令。CPU 只会傻傻地往下取，把数据当成了指令——这就是为什么需要 HALT。`;
+      paint(); $('#sim-cap').innerHTML = msg; addTrace(at, '??? ' + b8(v), '—'); return false;
+    }
+    st.cnt++; st.last = op;
+    const m = mnem(v);
+    switch (op) {
+      case 2: st.a = st.ram[lo]; changed = 'a'; msg = `LOAD_A ${lo}：把地址 ${lo} 的值 ${signed(st.a)} 读进寄存器 A。`; break;
+      case 1: st.b = st.ram[lo]; changed = 'b'; msg = `LOAD_B ${lo}：把地址 ${lo} 的值 ${signed(st.b)} 读进寄存器 B。`; break;
+      case 4: st.ram[lo] = st.a; st.wrote = lo; msg = `STORE_A ${lo}：把寄存器 A 的 ${signed(st.a)} 写进地址 ${lo}。`; break;
+      case 8: { const before = signed(st.a), r = before + signed(st.b); st.neg = r < 0 ? 1 : 0; st.a = r & 255; changed = 'a'; msg = `ADD B A：B + A = ${signed(st.b)} + ${before} = <b>${r}</b>，存进第二个寄存器 A。`; break; }
+      case 12: { const before = signed(st.a), r = before - signed(st.b); st.neg = r < 0 ? 1 : 0; st.a = r & 255; changed = 'a'; msg = `SUB B A：A − B = ${before} − ${signed(st.b)} = <b>${r}</b>，存进 A。${r < 0 ? '结果是负数 → ALU 把<b>负标志设为真</b>。' : '结果不是负数，负标志为假。'}`; break; }
+      case 10: next = lo; jumped = true; msg = `JUMP ${lo}：无条件跳转，把指令地址寄存器从 ${at + 1} 改写成 ${lo}。`; break;
+      case 11: if (st.neg) { next = lo; jumped = true; msg = `JUMP_NEG ${lo}：负标志为<b>真</b> → 跳到地址 ${lo}。跳出循环了！`; } else msg = `JUMP_NEG ${lo}：负标志为假 → 不跳，继续下一条。`; break;
+      case 15: st.state = 'halt'; next = at; msg = `HALT：停机。${P === 'mod' ? `程序一共 ${PROGS.mod.codeLen} 条指令，CPU 执行了 <b>${st.cnt}</b> 条。地址 13 里的余数是 <b>${signed(st.ram[13])}</b>。` : `CPU 执行了 ${st.cnt} 条指令。`}`; break;
+    }
+    if (P === 'loop' && op === 4 && st.cnt > 8) msg += ' ……它会一直数下去，永远到不了 HALT。点"重置"或停止。';
+    st.iar = next;
+    addTrace(at, m, st.state === 'halt' ? '停' : next, jumped);
+    paint(changed || (jumped ? 'iar' : null));
+    $('#sim-cap').innerHTML = msg;
+    if (st.cnt > 200) { stop(); $('#sim-cap').innerHTML += '<br>（已经执行了 200 多条，先停一下。）'; return false; }
+    return st.state === 'run';
+  }
+  function addTrace(at, m, next, jumped) {
+    const tr = document.createElement('tr');
+    if (jumped) tr.className = 'jump';
+    tr.innerHTML = `<td>${st.cnt}</td><td>${at}</td><td>${m}</td><td>${signed(st.a)}</td><td>${signed(st.b)}</td><td>${st.neg ? '真' : '假'}</td><td>${next}</td>`;
+    const tb = $('#trace'); tb.appendChild(tr); tb.parentNode.parentNode.scrollTop = 1e6;
+  }
+  const stop = () => { clearInterval(timer); timer = null; $('#sim-run').textContent = '▶ 连续运行'; };
+  $('#sim-run').onclick = () => {
+    if (timer) return stop();
+    $('#sim-run').textContent = '⏸ 暂停';
+    timer = setInterval(() => { if (!step()) stop(); }, 600);
+  };
+  $('#sim-step').onclick = () => { stop(); step(); };
+  $('#sim-reset').onclick = () => { stop(); reset(); };
+  $$('#progs .btn').forEach(b => b.onclick = () => { stop(); P = b.dataset.p; reset(); });
+  reset();
+})();
+
+/* ---------- 流程图 ---------- */
+(function () {
+  const svg = $('#flow');
+  const defs = el('defs', {}, svg);
+  const mk = el('marker', { id: 'fa', viewBox: '0 0 10 10', refX: 5, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto-start-reverse' }, defs);
+  el('path', { d: 'M0,0 L10,5 L0,10 z', style: 'fill:var(--ink)' }, mk);
+  const node = (x, y, w, t, sub, cls) => { el('rect', { x: x - w / 2, y, width: w, height: 40, rx: 10, class: cls || 's-panel' }, svg); txt(svg, x, y + 18, t, 't-mono mid'); if (sub) txt(svg, x, y + 33, sub, 't-sub mid'); };
+  const arrow = d => el('path', { d, class: 's-line', 'marker-end': 'url(#fa)' }, svg);
+  node(170, 10, 220, 'LOAD_A 14 · LOAD_B 15', 'A = 11，B = 5', 's-soft');
+  arrow('M170,50 V74');
+  node(170, 78, 180, '2: SUB B A', 'A = A − B', 's-on');
+  arrow('M170,118 V140');
+  el('path', { d: 'M170,142 L240,176 L170,210 L100,176 Z', class: 's-acc' }, svg);
+  txt(svg, 170, 172, '3: JUMP_NEG 5', 't-mono mid'); txt(svg, 170, 188, 'A 是负数？', 't-sub mid');
+  // 否 → JUMP 2
+  arrow('M100,176 H40 V98 H76');
+  txt(svg, 36, 160, '否', 't-main end');
+  el('rect', { x: 10, y: 120, width: 60, height: 22, rx: 5, class: 's-soft' }, svg);
+  txt(svg, 40, 135, '4: JUMP 2', 't-sub mid');
+  // 是 → ADD
+  arrow('M240,176 H360 V214');
+  txt(svg, 300, 168, '是（跳出循环）', 't-main mid t-on');
+  node(360, 218, 200, '5: ADD B A', 'A = A + B（加回一个 B）');
+  arrow('M360,258 V272');
+  node(360, 276, 260, '6: STORE_A 13 · 7: HALT', '地址 13 = 余数', 's-soft');
+  // 右侧：跟踪
+  const T = [['A', '11'], ['SUB', '6'], ['不负', ''], ['SUB', '1'], ['不负', ''], ['SUB', '−4'], ['负！', ''], ['ADD', '1']];
+  txt(svg, 520, 20, '11 ÷ 5 的过程', 't-main mid');
+  T.forEach(([a, b], i) => { txt(svg, 490, 46 + i * 22, a, 't-sub end'); txt(svg, 510, 46 + i * 22, b, i === 7 ? 't-mono t-on' : 't-mono'); });
+  txt(svg, 520, 236, '循环 2 次 → 商 2', 't-sub mid');
+})();
+
+/* ---------- 可变长度 ---------- */
+(function () {
+  const svg = $('#varlen');
+  const cells = [['LOAD_A', 'on', ''], ['200', 'acc', '立即值'], ['ADD', 'on', '1 字节'], ['JUMP', 'on', ''], ['17', 'acc', '立即值'], ['HALT', 'on', '1 字节'], ['…', 'soft', '']];
+  cells.forEach(([t, c, sub], i) => {
+    const x = 20 + i * 92;
+    el('rect', { x, y: 40, width: 86, height: 46, rx: 6, class: c === 'on' ? 's-on' : c === 'acc' ? 's-acc' : 's-soft' }, svg);
+    txt(svg, x + 43, 69, t, 't-mono mid');
+    txt(svg, x + 43, 30, '地址 ' + i, 't-sub mid');
+    if (sub) txt(svg, x + 43, 104, sub, 't-sub mid');
+  });
+  [[0, 1], [3, 4]].forEach(([a, b]) => {
+    const x1 = 20 + a * 92, x2 = 20 + b * 92 + 86;
+    el('path', { d: `M${x1 + 4},116 V124 H${x2 - 4} V116`, class: 's-thin' }, svg);
+    txt(svg, (x1 + x2) / 2, 142, '一条 2 字节的指令', 't-sub mid');
+  });
+  txt(svg, 20, 164, '8 位的立即值能表示 0~255，所以 JUMP 17 也没问题了', 't-sub');
+})();
+</script>
+</body>
+</html>

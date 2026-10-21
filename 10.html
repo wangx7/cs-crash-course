@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>10 早期的编程方式 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.loom{display:grid;grid-template-columns:auto auto;gap:24px;align-items:start;justify-content:start}
+@media (max-width:700px){.loom{grid-template-columns:1fr}}
+.cards{display:flex;flex-direction:column;gap:3px}
+.pcard{display:flex;gap:4px;padding:4px 8px;background:var(--paper);border:1px solid var(--wood);border-radius:3px}
+.pcard button{width:18px;height:18px;border-radius:50%;border:1px solid var(--wood);background:transparent;cursor:pointer;padding:0}
+.pcard button.on{background:var(--ink);border-color:var(--ink)}
+.fabric{display:grid;width:max-content;grid-template-columns:repeat(8,22px);gap:0;border:2px solid var(--ink);border-radius:4px;overflow:hidden}
+.fabric div{width:22px;height:25px}
+.fabric .up{background:var(--accent)}
+.fabric .dn{background:var(--on)}
+.legend2{font-size:13px;color:var(--muted);margin-top:6px}
+.legend2 i{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:-1px;margin:0 4px 0 10px}
+.stack-wrap{display:flex;gap:2px;align-items:flex-end;height:150px;padding:10px 0}
+.stack-wrap div{width:22px;height:120px;background:var(--paper);border:1px solid var(--wood);border-radius:2px;position:relative;overflow:hidden;transition:transform .4s}
+.stack-wrap div span{position:absolute;left:0;width:100%;height:4px;background:var(--bad)}
+.stack-wrap div b{position:absolute;bottom:2px;width:100%;text-align:center;font:10px var(--mono);color:var(--muted)}
+.altair{background:#2b3a55;border-radius:14px;padding:18px 16px;color:#e8edf5;max-width:720px}
+:root[data-theme="dark"] .altair{background:#1e2a3f}
+.altair .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:6px 0}
+.altair .lbl{width:84px;font-size:12px;color:#a9b6cc}
+.leds{display:flex;gap:8px}
+.led{width:16px;height:16px;border-radius:50%;background:#4a1f1f;border:1px solid #000;transition:background .1s}
+.led.on{background:#ff4a3a;box-shadow:0 0 8px #ff4a3a}
+.sw{display:flex;gap:8px}
+.sw button{width:16px;height:34px;border-radius:4px;border:0;background:#c9d2e0;cursor:pointer;position:relative;padding:0}
+.sw button::after{content:"";position:absolute;left:2px;right:2px;height:14px;border-radius:3px;background:#5d6b82;top:2px;transition:top .1s}
+.sw button.on::after{top:18px}
+.sw button.on{background:#ffd7a3}
+.pbtn{font:600 13px inherit;border:0;border-radius:7px;padding:7px 12px;background:#d7dfeb;color:#22304a;cursor:pointer}
+.pbtn.run{background:#ff9f43;color:#2b1a00}
+.altair .bits-label{display:flex;gap:8px;font:10px var(--mono);color:#a9b6cc}
+.altair .bits-label span{width:16px;text-align:center}
+.altair .msg{font-size:14px;background:rgba(255,255,255,.08);border-radius:8px;padding:8px 12px;margin-top:10px;min-height:40px}
+.todo{font:13px var(--mono)}
+.todo li.done{color:var(--ok);text-decoration:line-through}
+</style>
+</head>
+<body data-ep="10">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=11" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 10 集</div>
+  <h1>早期的编程方式</h1>
+  <p class="en">Early Programming</p>
+  <p class="lead">前几集我们假设程序"魔法般地"已经在内存里了。这一集讲程序到底是怎么进去的：从织布机的穿孔卡，到插线板、存储程序计算机，再到 1975 年拨开关输入二进制的家用电脑。</p>
+  <div class="road">
+    <span>雅卡尔织布机</span><i>→</i><span>穿孔卡存数据</span><i>→</i><span>插线板</span><i>→</i><span>存储程序 / 冯·诺依曼结构</span><i>→</i><span>穿孔卡读程序</span><i>→</i><span>面板编程</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 程序怎么进去</a></li>
+    <li><a href="#ch1">1 · 雅卡尔织布机</a></li>
+    <li><a href="#ch2">2 · 插线板</a></li>
+    <li><a href="#ch3">3 · 存储程序计算机</a></li>
+    <li><a href="#ch4">4 · 穿孔卡的年代</a></li>
+    <li><a href="#ch5">5 · 面板编程</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>程序是怎么进入计算机的？</h2>
+  <p>前几集我们讲了很多计算机的工作原理：它们怎样用复杂的电路在内存里存取数值，怎样对这些数值做运算，比如把两个数加起来。我们甚至简单讲了一连串的操作，也就是计算机程序。</p>
+  <p>但我们还没讲的是：<b>程序是怎么进入计算机的？</b>你可能还记得，第 7、8 集里我们一步步走了几个示例程序。为了简单，我们挥挥手说程序已经魔法般地在内存里了。但实际上，程序必须被加载进计算机的内存。这不是魔法，这是计算机科学！</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>雅卡尔织布机：最早的"编程"</h2>
+  <p>给机器编程的需求，早在计算机出现之前就存在了。最著名的例子来自纺织业。如果你只想织一块红色的大桌布，只要把红线放进织布机让它运转就行。但如果你想让布上有图案，比如条纹或格子呢？工人就得按照图案的要求，每隔一段时间重新调整一次织布机。这非常费人工，所以带图案的布料很贵。</p>
+  <p>1801 年，约瑟夫·玛丽·雅卡尔发明了一种<b>可编程的织布机</b>，每一行的图案由一张<b>穿孔卡</b>决定。<span class="muted" style="font-size:13px">（中文字幕漏了这一句，按视频补上。）</span>卡片上某个位置有没有孔，决定了织布机里某根线被提起还是压低，于是横着穿过去的线（叫<b>纬线</b>）就从那根线的上面或下面穿过。为了让每一行的图案不同，这些穿孔卡被连成长长的链条，形成一串给织布机的命令。</p>
+  <p>听起来是不是很耳熟？很多人认为雅卡尔织布机是最早的编程形式之一。</p>
+
+  <div class="card">
+    <h3>动手：给织布机打孔</h3>
+    <div class="loom">
+      <div>
+        <p class="muted" style="margin:0 0 6px;font-size:13px">卡片链（每张卡 = 布的一行，点圆圈打孔）</p>
+        <div class="cards" id="cards"></div>
+      </div>
+      <div>
+        <p class="muted" style="margin:0 0 6px;font-size:13px">织出来的布</p>
+        <div class="fabric" id="fabric"></div>
+        <div class="legend2"><i style="background:var(--accent)"></i>经线被提起（露在上面）<i style="background:var(--on)"></i>纬线盖在上面</div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn" data-pat="stripe">条纹</button>
+      <button class="btn" data-pat="check">格子</button>
+      <button class="btn" data-pat="diamond">菱形</button>
+      <button class="btn" data-pat="clear">清空</button>
+    </div>
+    <p class="hint">有孔 → 那根经线被提起，纬线从它下面穿过，这一格就露出经线的颜色。换一串卡片，同一台机器就织出另一种图案</p>
+  </div>
+
+  <p>事实证明，穿孔卡是一种便宜、可靠、人也比较容易看懂的数据存储方式。将近一个世纪后，穿孔卡被用来帮助汇总 1890 年的美国人口普查，第 1 集讲过。每张卡存一个人的数据，比如种族、婚姻状况、子女数量、出生国家等等。针对每个人口统计问题，普查员在对应的位置打孔。卡片插进制表机时，一个孔会让那个答案的累计总数加 1。这样你可以把整个国家的人的卡片都喂进去，最后得到你问过的所有问题的累计总数。</p>
+  <p>这里有一点很重要：早期的制表机<b>不算真正的计算机</b>，因为它们只能做一件事——汇总。它们的操作是固定的，不能编程。<b>穿孔卡存的是数据，而不是程序。</b></p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>插线板</h2>
+  <p>之后 60 年，这些商业机器的能力不断增强，加上了减、乘、除的功能，甚至能做一些简单的决定，判断什么时候执行某个操作。为了恰当地触发这些功能，以完成不同的计算，程序员要操作一块<b>控制面板</b>。面板上满是小插孔，程序员往里面插电线，在机器的不同部分之间传递数值和信号，所以它也叫<b>插线板</b>（plug board）。</p>
+  <p>不幸的是，这意味着每次要运行不同的程序，都得给机器重新接线。所以到了 1920 年代，插线板被做成了<b>可以整块替换</b>的。这不仅让编程舒服了很多，还让不同的程序可以插进同一台机器。比如一块插线板接好了算销售税的线，另一块用来算工资。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="boards" viewBox="0 0 680 210" role="img" aria-label="可替换的插线板"></svg></div>
+      <figcaption>图 1　1920 年代起，插线板可以整块拔下、换上另一块：一块就是一个程序（示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>但给插线板编程复杂得要命。这一团乱麻似的电线，是 IBM 402 会计机上一个计算盈亏汇总的程序，这种机器在 1940 年代很流行。这种插线板编程方式也不只用在机电计算机上：世界上第一台通用电子计算机 ENIAC，1946 年完工，就用了一大堆插线板。即使一个程序已经在纸上完全设计好，给 ENIAC 实际接线、让程序跑起来，可能也要花<b>三个星期</b>以上。考虑到这些早期计算机的造价极其高昂，仅仅为了换程序就停机几个星期，完全不能接受。人们急需一种更快、更灵活的新方式来给机器编程。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>存储程序计算机与冯·诺依曼结构</h2>
+  <p>幸运的是，到了 1940 年代末、进入 50 年代，电子内存变得可行了。随着成本下降、容量增长，程序不必再存成一块实实在在接满电线的插线板，而是可以<b>完全存在计算机的内存里</b>：程序员能轻松修改它，CPU 也能快速读取它。这类机器叫<b>存储程序计算机</b>（stored-program computer）。</p>
+  <p>只要内存够大，你不仅能存想运行的程序，还能存程序需要的任何数据，包括程序运行过程中产生的新值。把程序和数据统一存放在同一个共享内存里，叫<b>冯·诺依曼结构</b>（Von Neumann Architecture），以约翰·冯·诺依曼命名。他是一位杰出的数学家和物理学家，参与过曼哈顿计划和几台早期电子计算机的研制，他曾说：</p>
+  <blockquote class="quote"><b>"我在思考一件比炸弹重要得多的事情：我在思考计算机。"</b><span class="who">—— 约翰·冯·诺依曼</span></blockquote>
+  <p>冯·诺依曼计算机的标志是：一个处理单元，里面有算术逻辑单元、数据寄存器、指令寄存器和指令地址寄存器；以及一个<b>同时存放数据和指令</b>的内存。希望这听起来很耳熟——因为我们在第 7 集里实际上就造了一台冯·诺依曼计算机！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="vn" viewBox="0 0 680 240" role="img" aria-label="冯·诺依曼结构"></svg></div>
+      <figcaption>图 2　冯·诺依曼结构：程序和数据放在同一个内存里——正是第 7、8 集那台 CPU 的样子。</figcaption>
+    </figure>
+  </div>
+
+  <p>第一台冯·诺依曼结构的存储程序计算机，由曼彻斯特大学在 1948 年建成，绰号<b>"宝宝"</b>（Baby）。就连你现在看这个视频用的计算机，用的也是同样的结构。</p>
+  <div class="extra">
+    <span class="t">这件事为什么这么重要</span>
+    程序变成了内存里的数据，"换程序"就从"重新接线三个星期"变成了"把另一串数字读进内存"。而且既然程序也是数据，一个程序就能读、写、生成另一个程序——后面几集的编译器、操作系统都建立在这一点上。第 8 集说"指令和数据没有区别，所以需要 HALT"，也是它的另一面。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · 思想泡泡</div>
+  <h2>穿孔卡的年代</h2>
+  <p>电子内存当然很棒，但在运行之前，你还是得先把程序和数据装进计算机，为此人们用的是穿孔卡。</p>
+  <p>直到 1980 年代，几乎所有计算机都有<b>穿孔卡读卡器</b>，一次能吸进一张卡，把卡上的内容写进计算机内存。如果放进去一叠穿孔卡，读卡器会按顺序把它们作为一大块全部读进内存。程序和数据都进了内存之后，再告诉计算机去执行。</p>
+  <p>当然，即使是简单的计算机程序也可能有几百条指令，这意味着程序是存成<b>一叠穿孔卡</b>的。所以如果你不幸把程序掉在了地上，可能要花几小时、几天甚至几周，才能把代码重新按正确的顺序排好。一个常用的小技巧是在卡片叠的侧面画一条对角线，叫<b>"划线"</b>（striping），这样至少你还有点线索把它排回正确的顺序。</p>
+
+  <div class="card">
+    <h3>动手：卡片掉地上了</h3>
+    <div class="stack-wrap" id="stack"></div>
+    <div class="btns"><button class="btn" id="st-drop">哎呀，掉了</button><button class="btn primary" id="st-sort">按斜线排回去</button></div>
+    <div class="step-text" id="st-cap"></div>
+  </div>
+
+  <p>用穿孔卡写过的最大的程序，是美国空军 1955 年完成的 <b>SAGE 防空系统</b>。据说在项目的高峰期，雇用了全世界 20% 的程序员。它的主控程序存在多达 <b>62,500 张</b>穿孔卡上，大约相当于 5 MB 的数据——以今天的标准，实在不值一提。</p>
+  <div class="extra">
+    <span class="t">62,500 张卡叠起来有多高</span>
+    一张标准穿孔卡约 0.18 毫米厚，62,500 张叠起来大约 <b>11 米</b>，差不多四层楼。而今天一张手机照片就有好几 MB。
+  </div>
+  <p>穿孔卡不仅能把数据送进计算机，也能把数据拿出来。程序运行结束时，结果可以从计算机内存写到穿孔卡上——方式嘛，当然就是打孔。然后人可以分析这些数据，或者把它装进第二个程序做进一步计算。</p>
+  <p>穿孔卡的近亲是<b>穿孔纸带</b>，基本上是同一个思路，只不过是连续的一长条，而不是一张张单独的卡片。当然，我们还没讲硬盘、CD-ROM、DVD、U 盘之类的好东西，以后的课程会讲这些更先进的存储方式。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>面板编程：拨开关输入二进制</h2>
+  <p>最后，除了插线板和穿孔纸，1980 年代以前还有一种常见的编程和控制计算机的方式：<b>面板编程</b>。不用实际插电线来启用某些功能，而是用一大块布满开关和按钮的面板来完成，面板上还有指示灯，显示各种功能的状态和内存里的值。五六十年代的计算机常常配着这样巨大的控制台。虽然只用开关输入整个程序很少见，但确实可行。</p>
+  <p>早期面向爱好者市场的家用计算机大量使用开关，因为大多数家庭用户买不起穿孔卡读卡器这类昂贵的外设。第一款取得商业成功的家用计算机是 <b>Altair 8800</b>，有两个版本：组装好的整机和套件。套件在业余计算机爱好者中很受欢迎，1975 年卖出了前所未有的低价，大约 400 美元，相当于 2017 年的 2000 美元左右。</p>
+  <p>要给 8800 编程，你要实实在在地拨动前面板上的开关，输入想要的那条指令的二进制操作码，然后按"存入"（deposit）按钮把这个值写进内存。接着到内存的下一个位置，再拨开关输入下一条指令、存入，以此类推。等你终于把整个程序输进了内存，再把开关拨回内存地址 0，按下运行按钮，看着小灯一闪一闪。这就是 1975 年的家用计算机。哇。</p>
+
+  <div class="card">
+    <h3>动手：用 1975 年的方式，输入第 8 集的程序</h3>
+    <div class="altair">
+      <div class="row"><span class="lbl">地址灯</span><div class="leds" id="led-addr"></div><span id="addr-num" style="font:13px var(--mono)"></span></div>
+      <div class="row"><span class="lbl">数据灯</span><div class="leds" id="led-data"></div><span id="data-num" style="font:13px var(--mono)"></span></div>
+      <div class="row"><span class="lbl"></span><div class="bits-label"><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span><span>0</span></div></div>
+      <div class="row"><span class="lbl">数据开关</span><div class="sw" id="sws"></div></div>
+      <div class="row" style="margin-top:12px">
+        <span class="lbl"></span>
+        <button class="pbtn" id="p-exam">查看地址（按开关）</button>
+        <button class="pbtn" id="p-dep">存入</button>
+        <button class="pbtn" id="p-next">存入并前进</button>
+        <button class="pbtn" id="p-reset">回到地址 0</button>
+        <button class="pbtn run" id="p-run">运行</button>
+      </div>
+      <div class="msg" id="p-msg"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+      <div>
+        <p style="margin:0 0 4px;font-size:14px"><b>照着输入：</b></p>
+        <ol class="todo" id="todo" start="0"></ol>
+      </div>
+      <div style="font-size:14px" class="muted">
+        <p style="margin:0">拨好开关（往下 = 1）→ 按"存入并前进"，地址会自动加 1。</p>
+        <p>输完地址 0~4，用开关拨出 <code>00001110</code>（14），按"查看地址"跳到地址 14，再存入两个数据。</p>
+        <p>最后"回到地址 0"、按"运行"。程序会把 3 + 14 = 17 写进地址 13。</p>
+      </div>
+    </div>
+  </div>
+
+  <p>不管是插线板、开关还是穿孔纸，给这些早期计算机编程都是<b>专家的领域</b>——要么是靠这个谋生的专业人士，要么是技术发烧友。你需要非常熟悉底层硬件，比如处理器的操作码和寄存器的位宽，才能写程序。这意味着编程又难又繁琐，就连专业工程师和科学家也很难充分利用计算机能提供的能力。</p>
+  <p>我们需要一种更简单的方式告诉计算机做什么，一种更简单的写程序的方式。这就把我们带到了<b>编程语言</b>，我们下一集讲。下周见！</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <ul class="timeline">
+    <li><span class="yr">1801</span>雅卡尔织布机：一串穿孔卡决定每一行的图案，最早的"编程"之一</li>
+    <li><span class="yr">1890</span>人口普查用穿孔卡存<b>数据</b>；制表机只会汇总，不能编程</li>
+    <li><span class="yr">1920s</span>插线板可以整块替换：一块插线板 = 一个程序</li>
+    <li><span class="yr">1946</span>ENIAC 也靠插线板，换一个程序要接线三周</li>
+    <li><span class="yr">1948</span>曼彻斯特"宝宝"：第一台冯·诺依曼结构的存储程序计算机</li>
+    <li><span class="yr">1955</span>SAGE 防空系统：62,500 张穿孔卡，约 5 MB</li>
+    <li><span class="yr">1975</span>Altair 8800：拨开关、按存入，一个字节一个字节输入程序</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    程序从"接线"变成了"数据"：插线板时代换程序要重新接线；冯·诺依曼结构把程序和数据放进同一个内存，换程序只要读入另一串数字。但无论用穿孔卡还是开关，输入的仍是二进制操作码——太难了，于是有了编程语言。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么说 1890 年的制表机不算真正的计算机？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它只能做一件固定的事——汇总，操作不能改，不能编程。穿孔卡里存的是数据（每个人的信息），不是程序。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 插线板编程的最大问题是什么？存储程序计算机怎样解决？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">程序就是接线方式，换程序要重新接线，ENIAC 可能要三周，昂贵的机器只能停机。存储程序计算机把程序作为数字存进内存，换程序只要把新的数字读进去，程序员也容易修改。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 冯·诺依曼结构的标志是什么？它和第 7 集的 CPU 有什么关系？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">处理单元（ALU、数据寄存器、指令寄存器、指令地址寄存器）+ 一个同时存放<b>数据和指令</b>的内存。第 7 集造的就是一台冯·诺依曼计算机：程序和数字 3、14 都放在同一块 RAM 里。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 在 Altair 8800 上输入一个程序要做哪些事？为什么这让编程成了专家的活？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">对每条指令：拨开关拼出二进制操作码 → 按存入写进当前地址 → 到下一个地址重复；全部输完后回到地址 0，按运行。必须清楚处理器的操作码、寄存器、地址这些底层细节，又慢又容易错。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="09.html"><small>← 上一集</small>09 高级 CPU 设计</a>
+    <a class="next" href="11.html"><small>下一集 →</small>11 编程语言发展史</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 10 集 Early Programming（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const b8 = n => (n & 255).toString(2).padStart(8, '0');
+
+/* ---------- 雅卡尔织布机 ---------- */
+(function () {
+  const N = 8;
+  let grid = Array.from({ length: N }, () => Array(N).fill(0));
+  const PATS = {
+    stripe: (r, c) => c % 2,
+    check: (r, c) => ((r >> 1) + (c >> 1)) % 2,
+    diamond: (r, c) => { const d = Math.abs(r - 3.5) + Math.abs(c - 3.5); return d < 2.5 || d > 4.5 ? 1 : 0; },
+    clear: () => 0,
+  };
+  const cards = $('#cards'), fabric = $('#fabric');
+  function paint() {
+    cards.innerHTML = ''; fabric.innerHTML = '';
+    grid.forEach((row, r) => {
+      const card = document.createElement('div'); card.className = 'pcard';
+      row.forEach((v, c) => {
+        const b = document.createElement('button');
+        b.className = v ? 'on' : ''; b.setAttribute('aria-label', `第 ${r + 1} 行第 ${c + 1} 个孔`);
+        b.onclick = () => { grid[r][c] ^= 1; paint(); };
+        card.appendChild(b);
+        const d = document.createElement('div'); d.className = v ? 'up' : 'dn'; fabric.appendChild(d);
+      });
+      cards.appendChild(card);
+    });
+  }
+  $$('[data-pat]').forEach(b => b.onclick = () => { const f = PATS[b.dataset.pat]; grid = grid.map((row, r) => row.map((_, c) => f(r, c))); paint(); });
+  grid = grid.map((row, r) => row.map((_, c) => PATS.check(r, c)));
+  paint();
+})();
+
+/* ---------- 可替换插线板 ---------- */
+(function () {
+  const svg = $('#boards');
+  el('rect', { x: 20, y: 30, width: 240, height: 150, rx: 12, class: 's-panel' }, svg);
+  txt(svg, 140, 54, '会计机', 't-main mid');
+  el('rect', { x: 60, y: 70, width: 160, height: 90, rx: 6, class: 's-dash' }, svg);
+  txt(svg, 140, 120, '插线板插槽', 't-sub mid');
+  const boards = [['算销售税', 'var(--on)'], ['算工资', 'var(--accent)'], ['算盈亏', 'var(--ok)']];
+  boards.forEach(([name, col], i) => {
+    const x = 300 + i * 125, y = 50;
+    el('rect', { x, y, width: 110, height: 110, rx: 6, class: 's-panel' }, svg);
+    for (let a = 0; a < 5; a++) for (let b = 0; b < 5; b++) el('circle', { cx: x + 15 + b * 20, cy: y + 15 + a * 20, r: 3, style: 'fill:var(--line)' }, svg);
+    for (let k = 0; k < 4; k++) {
+      const x1 = x + 15 + ((k * 3 + i) % 5) * 20, y1 = y + 15 + ((k + i) % 5) * 20, x2 = x + 15 + ((k * 2 + 2 + i) % 5) * 20, y2 = y + 15 + ((k * 3 + 1) % 5) * 20;
+      el('path', { d: `M${x1},${y1} Q${(x1 + x2) / 2},${Math.max(y1, y2) + 18} ${x2},${y2}`, style: `fill:none;stroke:${col};stroke-width:2.5` }, svg);
+    }
+    txt(svg, x + 55, y + 132, name, 't-main mid');
+  });
+  el('path', { d: 'M300,105 C280,105 260,115 222,115', class: 's-dash' }, svg);
+  txt(svg, 270, 96, '换一块', 't-sub mid t-acc');
+})();
+
+/* ---------- 冯·诺依曼结构 ---------- */
+(function () {
+  const svg = $('#vn');
+  el('rect', { x: 20, y: 20, width: 300, height: 200, rx: 14, class: 's-on' }, svg);
+  txt(svg, 170, 44, '处理单元（CPU）', 't-main mid');
+  [['算术逻辑单元 ALU', 60], ['数据寄存器 A B C D', 100], ['指令寄存器', 140], ['指令地址寄存器', 180]].forEach(([t, y]) => {
+    el('rect', { x: 50, y: y - 6, width: 240, height: 30, rx: 6, class: 's-panel' }, svg);
+    txt(svg, 170, y + 14, t, 't-sub mid');
+  });
+  el('rect', { x: 430, y: 20, width: 230, height: 200, rx: 14, class: 's-acc' }, svg);
+  txt(svg, 545, 44, '内存（同一个！）', 't-main mid');
+  const rows = [['LOAD_A 14', 1], ['LOAD_B 15', 1], ['ADD B A', 1], ['STORE_A 13', 1], ['HALT', 1], ['…', 2], ['3', 0], ['14', 0]];
+  rows.forEach(([t, k], i) => {
+    const y = 56 + i * 20;
+    el('rect', { x: 460, y, width: 170, height: 18, rx: 3, style: `fill:${k === 1 ? 'var(--on-soft)' : k === 0 ? 'var(--panel)' : 'transparent'};stroke:${k === 2 ? 'transparent' : 'var(--line)'}` }, svg);
+    txt(svg, 470, y + 13, t, 't-mono');
+  });
+  txt(svg, 645, 106, '指令', 't-sub'); txt(svg, 645, 196, '数据', 't-sub');
+  el('path', { d: 'M322,100 H428', class: 's-line' }, svg);
+  el('path', { d: 'M322,140 H428', class: 's-line' }, svg);
+  txt(svg, 375, 92, '取指令', 't-sub mid'); txt(svg, 375, 132, '读写数据', 't-sub mid');
+})();
+
+/* ---------- 卡片叠 ---------- */
+(function () {
+  const N = 16;
+  let order = Array.from({ length: N }, (_, i) => i);
+  const host = $('#stack');
+  function paint(msg) {
+    host.innerHTML = order.map(i => `<div><span style="top:${8 + i * 6.5}px"></span><b>${i + 1}</b></div>`).join('');
+    $('#st-cap').innerHTML = msg;
+  }
+  $('#st-drop').onclick = () => {
+    for (let i = N - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+    paint('顺序全乱了。但每张卡侧面那一小段红线的高度还在——按红线从高到低排，斜线连起来就对了。');
+  };
+  $('#st-sort').onclick = () => { order.sort((a, b) => a - b); paint('斜线重新连成一条直线：顺序恢复了。'); };
+  paint('一叠 16 张卡片的程序，侧面画了一条红色斜线。（实际一叠可能有几百上千张。）');
+})();
+
+/* ---------- Altair 8800 ---------- */
+(function () {
+  const mem = new Uint8Array(16);
+  let addr = 0, sw = 0;
+  const TODO = [[0, 0b00101110, 'LOAD_A 14'], [1, 0b00011111, 'LOAD_B 15'], [2, 0b10000100, 'ADD B A'], [3, 0b01001101, 'STORE_A 13'], [4, 0b11110000, 'HALT'], [14, 3, '数据 3'], [15, 14, '数据 14']];
+  const mkLeds = (host, n) => Array.from({ length: n }, () => { const d = document.createElement('div'); d.className = 'led'; host.appendChild(d); return d; });
+  const la = mkLeds($('#led-addr'), 4), ld = mkLeds($('#led-data'), 8);
+  const swBtns = [];
+  for (let i = 7; i >= 0; i--) {
+    const b = document.createElement('button'); b.setAttribute('aria-label', '开关 ' + i);
+    b.onclick = () => { sw ^= 1 << i; paint(); };
+    $('#sws').appendChild(b); swBtns.push([b, i]);
+  }
+  const say = s => { $('#p-msg').innerHTML = s; };
+  function paint() {
+    la.forEach((d, k) => d.classList.toggle('on', !!((addr >> (3 - k)) & 1)));
+    ld.forEach((d, k) => d.classList.toggle('on', !!((mem[addr] >> (7 - k)) & 1)));
+    swBtns.forEach(([b, i]) => b.classList.toggle('on', !!((sw >> i) & 1)));
+    $('#addr-num').textContent = `地址 ${addr}`;
+    $('#data-num').textContent = `内容 ${b8(mem[addr])}`;
+    $('#todo').innerHTML = TODO.map(([a, v, t]) => `<li value="${a}" class="${mem[a] === v ? 'done' : ''}">地址 ${a}：${b8(v)}　${t}</li>`).join('');
+  }
+  $('#p-exam').onclick = () => { addr = sw & 15; say(`跳到地址 ${addr}（用开关的低 4 位当地址）。`); paint(); };
+  $('#p-dep').onclick = () => { mem[addr] = sw; say(`把开关的 ${b8(sw)} 存进地址 ${addr}。`); paint(); };
+  $('#p-next').onclick = () => { mem[addr] = sw; say(`把 ${b8(sw)} 存进地址 ${addr}，地址前进到 ${(addr + 1) & 15}。`); addr = (addr + 1) & 15; paint(); };
+  $('#p-reset').onclick = () => { addr = 0; say('回到地址 0。'); paint(); };
+  $('#p-run').onclick = async () => {
+    const m = Array.from(mem); let pc = 0, A = 0, B = 0, steps = 0;
+    while (steps < 50) {
+      const v = m[pc], op = v >> 4, lo = v & 15; steps++;
+      // 灯闪一下
+      addr = pc; la.forEach((d, k) => d.classList.toggle('on', !!((pc >> (3 - k)) & 1))); ld.forEach((d, k) => d.classList.toggle('on', !!((v >> (7 - k)) & 1)));
+      await new Promise(r => setTimeout(r, 220));
+      if (op === 2) A = m[lo]; else if (op === 1) B = m[lo];
+      else if (op === 4) m[lo] = A;
+      else if (op === 8) { const s = lo >> 2, d = lo & 3; const regs = [A, B]; regs[d] = (regs[d] + regs[s]) & 255; [A, B] = regs; }
+      else if (op === 12) { const s = lo >> 2, d = lo & 3; const regs = [A, B]; regs[d] = (regs[d] - regs[s]) & 255; [A, B] = regs; }
+      else if (op === 10) { pc = lo; continue; }
+      else if (op === 15) { mem.set(m); addr = 13; paint(); say(`运行结束（HALT）。地址 13 现在是 <b>${b8(m[13])}</b> = ${m[13]}${m[13] === 17 ? '：3 + 14 = 17，成功！数据灯显示的就是它。' : '。和预期的 17 不一样？对照左边清单检查一下哪一格输错了。'}`); return; }
+      else { mem.set(m); paint(); say(`在地址 ${pc} 遇到 ${b8(v)}，不是能识别的指令，停住了。检查是不是漏输了什么（比如 HALT）。`); return; }
+      pc = (pc + 1) & 15;
+    }
+    mem.set(m); paint(); say('跑了 50 条还没停，可能进了循环。');
+  };
+  paint();
+  say('先拨开关：往下 = 1。地址 0 要输入 00101110。');
+})();
+</script>
+</body>
+</html>

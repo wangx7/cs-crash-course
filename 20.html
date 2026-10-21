@@ -1,0 +1,422 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>20 文件系统 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.bytes{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px;font:15px var(--mono)}
+.bytes span{padding:6px 8px;border-radius:6px;background:var(--panel);border:1px solid var(--line);min-width:36px;text-align:center}
+.hdr{display:flex;flex-wrap:wrap;gap:3px;font:12px var(--mono);margin-top:8px}
+.hdr span{padding:4px 5px;border-radius:4px;border:1px solid transparent;cursor:default}
+.hdr span.on{outline:2px solid var(--on)}
+.fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px;margin-top:10px;font-size:13px}
+.fields div{padding:6px 10px;border-radius:8px;border:1px solid var(--line);cursor:pointer}
+.fields div b{font-family:var(--mono)}
+.bmp-wrap{display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start}
+@media (max-width:640px){.bmp-wrap{grid-template-columns:1fr}}
+.pix{display:grid;grid-template-columns:repeat(4,52px);gap:3px;padding:6px;background:var(--bg);border-radius:10px;width:max-content}
+.pix div{width:52px;height:52px;border-radius:4px;border:1px solid var(--line);cursor:pointer}
+.pix div.blank{background:repeating-linear-gradient(45deg,var(--bg),var(--bg) 5px,var(--line) 5px,var(--line) 10px)}
+.pix div.cur{outline:3px solid var(--on)}
+.bmpbytes{font:13px/1.9 var(--mono)}
+.bmpbytes span{padding:1px 4px;border-radius:4px}
+.bmpbytes span.meta{color:var(--accent)}
+.bmpbytes span.cur{background:var(--on-soft);font-weight:700}
+.blocks{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;margin-top:10px}
+.blk{border:2px solid var(--line);border-radius:8px;padding:6px 4px;text-align:center;min-height:62px;background:var(--panel);transition:all .25s}
+.blk small{display:block;font:11px var(--mono);color:var(--muted)}
+.blk b{display:block;font-size:12px;margin-top:4px;word-break:break-all}
+.blk.dir{background:var(--accent-soft);border-color:var(--accent)}
+.blk.f0{background:var(--on-soft);border-color:var(--on)}
+.blk.f1{background:var(--ok-soft);border-color:var(--ok)}
+.blk.f2{background:rgba(201,162,39,.18);border-color:var(--brass)}
+.blk.ghost{border-style:dashed;opacity:.6}
+.blk.hl{box-shadow:0 0 0 3px var(--on)}
+@media (max-width:600px){.blocks{grid-template-columns:repeat(4,1fr)}}
+table.dirt{width:100%;border-collapse:collapse;font-size:13px;margin-top:6px}
+table.dirt th,table.dirt td{border:1px solid var(--line);padding:4px 8px;text-align:left}
+table.dirt th{background:var(--bg);font-size:12px}
+table.dirt td.m{font-family:var(--mono)}
+.dirs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:700px){.dirs{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-ep="20">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=21" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 20 集</div>
+  <h1>文件系统</h1>
+  <p class="en">Files &amp; File Systems</p>
+  <p class="lead">文本、音乐、照片，在硬盘上都只是一长串二进制数。这一集讲两件事：文件格式怎样让一串数字有意义，以及操作系统怎样用文件系统在一排"存储桶"里管好成千上万个文件。</p>
+  <div class="road">
+    <span>TXT</span><i>→</i><span>WAV 与元数据</span><i>→</i><span>BMP</span><i>→</i><span>目录文件</span><i>→</i><span>块与碎片</span><i>→</i><span>碎片整理</span><i>→</i><span>分层文件系统</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 文件格式与 TXT</a></li>
+    <li><a href="#ch1">1 · WAV 与元数据</a></li>
+    <li><a href="#ch2">2 · BMP</a></li>
+    <li><a href="#ch3">3 · 目录文件</a></li>
+    <li><a href="#ch4">4 · 块、碎片、整理</a></li>
+    <li><a href="#ch5">5 · 分层文件系统</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>文件格式与文本文件</h2>
+  <p>上一集我们讲了数据存储：磁带、硬盘这样的技术，能在不通电的情况下长期存储上万亿个位。这非常适合记录一大块相关的数据，也就是我们常说的计算机<b>文件</b>。你肯定见过很多种文件，比如文本文件、音乐文件、照片和视频。今天我们来讲文件是怎么工作的，以及计算机怎样用<b>文件系统</b>把它们管理得井井有条。</p>
+  <p>文件里装任意的、没有格式的数据完全合法，但如果文件里的数据以某种方式组织起来，才最有用、最实际。这种组织方式叫<b>文件格式</b>（file format）。你可以发明自己的格式，程序员也时不时这么做，但通常用现成的标准最好、最省事，比如 JPEG 和 MP3。</p>
+  <p>来看几种简单的文件格式。最直接的是<b>文本文件</b>，也叫 TXT 文件，里面装的是……惊喜吧！文字。和所有计算机文件一样，它只是一长串以二进制存储的数字。如果看文本文件在存储器里的原始值，是这个样子的。我们可以把它看成十进制数，但这仍然帮不了我们读出文字。解读这些数据的关键，是知道 TXT 文件用的是 <b>ASCII</b>——第 4 集讲过的一种字符编码标准。在 ASCII 里，第一个值 72 对应大写字母 H。这样一个个对下去，就能解码整个文件。</p>
+
+  <div class="card">
+    <h3>动手：同一串数字，三种看法</h3>
+    <span class="seg-btns" id="txt-mode"><button data-m="bin">二进制</button><button data-m="dec">十进制</button><button data-m="asc">按 ASCII 解读</button></span>
+    <div class="bytes" id="txt-bytes"></div>
+    <p class="hint">存储器里永远只有左边那种 0 和 1；"文件格式"告诉程序该怎么读它们</p>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>WAV 文件：元数据和文件头</h2>
+  <p>来看一个复杂一点的例子：<b>WAVE 文件</b>，也叫 WAV，它存储音频。要正确读取数据，我们需要先知道一些信息，比如码率，以及是单声道还是立体声。关于数据的数据，叫<b>元数据</b>（metadata）。这些元数据存在文件的最前面、在所有实际数据之前，这部分叫<b>文件头</b>（header）。</p>
+  <p>这是一个 WAV 文件开头 44 个字节的样子。有些部分总是一样的，比如拼出 W-A-V-E 的那一段；另一些部分是数字，会随文件里装的数据而变化。音频数据紧跟在元数据后面，存成一长串数字。这些数值代表每秒捕获很多次的声音<b>振幅</b>。如果想了解声音的基础知识，可以看我们物理速成课里讲声音的那一集。</p>
+
+  <div class="card">
+    <h3>动手：现场生成一个 WAV 文件，拆开它的文件头</h3>
+    <div class="btns" style="margin-top:0"><button class="btn primary" id="wav-play">▶ 播放这个 WAV</button><span class="muted" style="font-size:13px;align-self:center">（一段合成的"嘀—嘟"声，8000 Hz 采样、单声道、8 位）</span></div>
+    <div class="hdr" id="wav-hdr"></div>
+    <div class="fields" id="wav-fields"></div>
+    <div class="scroll-x" style="margin-top:12px"><svg class="diagram" id="wav-wave" viewBox="0 0 680 200" role="img" aria-label="波形与采样点"></svg></div>
+    <p class="hint">把鼠标放在下面的字段说明上，上面对应的字节会被框出来；下面是声音数据的一小段放大：每个点就是文件里存的一个数字</p>
+  </div>
+
+  <p>举个例子，来看我说"hello!"的波形。现在我们捕获到了一些声音，放大其中一小段。数字麦克风，比如你电脑或手机里的那种，每秒对声压采样几千次，每个采样都可以表示成一个数字。数字越大，声压越高，这叫振幅。WAVE 文件里存的正是这些数字！每一秒的音频都有几千个振幅！播放这个文件时，音频程序需要驱动计算机的扬声器，让它发出原来的波形。"Hello!"</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>BMP：一个个像素</h2>
+  <p>现在你开始熟悉文件格式了，我们来谈谈<b>位图</b>（bitmap），也就是 BMP，它存储图片。在计算机上，图片由很多叫<b>像素</b>（pixel）的小方块组成。每个像素是三种颜色的组合：红、绿、蓝。它们叫<b>加色三原色</b>，混合在一起，可以在电子屏幕上创造出任何其他颜色。</p>
+  <p>和 WAV 文件一样，BMP 也以元数据开头，包括图片宽度、图片高度和<b>颜色深度</b>这些关键值。比如，假设元数据说这张图宽 4 像素、高 4 像素，颜色深度 24 位——红 8 位、绿 8 位、蓝 8 位。提醒一下，8 位就是 1 个字节，一个字节能存的最小数是 0，最大是 255。</p>
+
+  <div class="card">
+    <h3>动手：一个字节一个字节地读出图片</h3>
+    <div class="bmp-wrap">
+      <div><div class="pix" id="pix"></div><div class="btns"><button class="btn primary" id="bmp-next">读下一个像素</button><button class="btn" id="bmp-all">全部读完</button><button class="btn" id="bmp-reset">重来</button></div></div>
+      <div><div class="bmpbytes" id="bmp-bytes"></div><div class="step-text" id="bmp-cap"></div></div>
+    </div>
+    <p class="hint">读完以后可以点格子换颜色，右边的字节会跟着变。第一行的四个颜色来自课程，其余像素按第 21 集给出的条件反推（连续 7 个黄色等）</p>
+  </div>
+
+  <p>来看第一个像素的颜色：红是 255，绿是 255，蓝也是 255，也就是红、绿、蓝都是全强度，它们在显示器上混合成<b>白色</b>。所以第一个像素是白的！下一个像素的红绿蓝值——也就是 RGB 值——是 255, 255, 0，是<b>黄色</b>！再下一个的 RGB 值是 0, 0, 0，所有颜色都是零强度，也就是<b>黑色</b>。再下一个是黄色。因为元数据说这是一张 4×4 的图片，我们知道已经到了第一行像素的末尾，所以要换到下一行。下一个 RGB 值是 255, 255, 0，又是黄色。好，把这张 4×4 图片的所有像素都读出来——当当！一个分辨率很低的吃豆人！</p>
+  <p>这显然只是一张小图的简单例子，但我们完全可以把这张图存成一个 BMP。我想再强调一次：不管是文本文件、WAV、BMP，还是我们没时间讨论的更花哨的格式，在底层它们<b>都一样</b>：存在存储设备上的、一长串二进制数字。文件格式是读懂其中数据的关键。</p>
+  <div class="extra">
+    <span class="t">文件扩展名不是格式本身</span>
+    把 photo.bmp 改名成 photo.txt，里面的字节一个都没变，只是你的电脑会拿错误的格式去读它。程序真正判断格式，常常是看文件开头那几个固定的字节，比如 WAV 开头总是 "RIFF"，BMP 开头总是 "BM"，PNG 开头是 0x89 "PNG"。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>把很多文件放进存储器：目录文件</h2>
+  <p>现在你对文件更了解了，我们接着讲计算机怎么存放它们。虽然底层的存储介质可能是一条磁带、一个磁鼓、一张磁盘或者集成电路……软硬件的抽象让我们可以把存储器想成<b>一长排存放数值的小桶</b>。</p>
+  <p>早期，计算机一次只做一项计算，比如计算炮兵射程表，整个存储器就像一个大文件：数据从存储器的开头开始，随着输出的产生按顺序往后填，直到填满存储容量。然而，随着计算能力和存储容量的提升，同时存放不止一个文件变得可能，也变得有用。最简单的办法是把文件<b>首尾相接</b>地存放。这样可以……但计算机怎么知道每个文件从哪里开始、到哪里结束呢？存储设备没有"文件"的概念，它们只是存放大量位的机制。</p>
+  <p>所以，要让它行得通，我们需要一个<b>特殊的文件</b>，记录其他文件都在哪里。它有很多名字，一个比较通用的说法是<b>目录文件</b>（Directory File）。它通常就放在存储器的最前面，这样我们总知道去哪里找它——位置 0！</p>
+  <p>目录文件里有存储器中所有其他文件的名字。在我们的例子里，每个文件都有一个名字，后面跟一个点，再以所谓的<b>文件扩展名</b>结尾，比如"BMP"或"WAV"，它们进一步帮助程序识别文件类型。目录文件还存着这些文件的元数据，比如创建时间、最后修改时间、所有者是谁，以及能不能读、能不能写，或者两者都行。但最重要的是，目录文件记录着每个文件<b>从存储器的哪里开始、有多长</b>。</p>
+  <p>如果要添加文件、删除文件、更改文件名之类的，就必须更新目录文件里的信息。这就像书的目录：如果你把某一章改短了，或者挪到了别的地方，就得更新目录，不然页码就对不上了！目录文件以及对它的维护，是一个非常基础的<b>文件系统</b>的例子——文件系统是操作系统中负责管理和追踪存储文件的那部分。这个例子叫<b>平面文件系统</b>（Flat File System），因为所有文件都存在同一个层级上。它是平的！</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>块、碎片和碎片整理</h2>
+  <p>当然，把文件首尾相接地挤在一起有点问题：比如我们想给"todo.txt"加点数据，就没有空间了，除非覆盖掉"carrie.bmp"的一部分。所以现代文件系统做两件事。</p>
+  <p>第一，它们把文件存在<b>块</b>（block）里。这会给改动留出一点额外空间，叫<b>空闲空间</b>（slack space）；也意味着所有文件数据都对齐到同一个大小，管理起来更简单。在这种方案里，目录文件需要记录每个文件存在哪个块里。</p>
+  <p>第二，文件系统允许把文件<b>拆成几段</b>，存在很多个块里。假设我们打开"todo.txt"，又加了几项，文件变得太大，一个块装不下了。我们不想覆盖相邻的块，于是文件系统分配一个<b>没用的块</b>来容纳多出来的数据。在这种文件系统方案里，目录文件要为每个文件存的不只是一个块，而是一个<b>块列表</b>。这样，文件就可以有各种大小，只要分配和释放块，就能轻松变大变小。如果你看过讲操作系统的那一集，这应该听起来很像虚拟内存。概念上确实非常相似！</p>
+
+  <div class="card">
+    <h3>动手：一个小文件系统</h3>
+    <div class="blocks" id="fs-blocks"></div>
+    <div class="dirs" id="fs-dirs"></div>
+    <div class="step-text" id="fs-cap"></div>
+    <div class="btns">
+      <button class="btn" data-a="grow">给 todo.txt 加几项</button>
+      <button class="btn" data-a="del">删除 carrie.bmp</button>
+      <button class="btn" data-a="defrag">碎片整理</button>
+      <button class="btn" data-a="mkdir">新建文件夹 music</button>
+      <button class="btn" data-a="move">把 theme.wav 移进 music</button>
+      <button class="btn" data-a="reset">重来</button>
+    </div>
+    <p class="hint">推荐顺序：加几项 → 删除 carrie.bmp → 再加几项（看碎片）→ 碎片整理 → 新建文件夹 → 移动文件。块的编号和课程画面不完全一样，过程相同</p>
+  </div>
+
+  <p>现在假设我们想删除"carrie.bmp"，只要把它的记录从目录文件里删掉就行了。这让一个块变成了空闲的。注意，我们并没有真的擦除存储器里这个文件的数据，只是删掉了它的记录。那个块迟早会被新数据覆盖，但在那之前，数据就一直待在那里。这就是计算机取证团队能从电脑里"恢复"数据的一种方式，哪怕人们以为它已经删掉了。狡猾！</p>
+  <p>好，假设我们往待办清单里加了更多项，文件系统又给这个文件分配了一个块，这次回收了从 carrie.bmp 释放出来的那个块。现在"todo.txt"存在 3 个块里，彼此隔开，而且<b>顺序也乱了</b>。文件像这样在存储器里被拆散，叫<b>碎片化</b>（fragmentation），它是文件被创建、删除、修改的必然副产品。对很多存储技术来说，这是坏消息：如果在磁带上，把 todo.txt 读进内存，需要先找到第一块，再快进到后面那块，再倒带回中间那块——来回折腾！在真实的文件系统里，大文件可能存在几百个块里，你可不想等五分钟才打开一个文件。</p>
+  <p>答案是<b>碎片整理</b>（defragmentation）！这听起来像一堆术语，但过程其实很简单，而且曾经看它运行非常有意思！计算机把数据来回复制，让每个文件的块在存储器里挨在一起、顺序正确。整理之后，我们可以一次快速地读出 todo 文件，它现在位于连续的几个块里。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>分层文件系统</h2>
+  <p>到目前为止，我们只讲了平面文件系统，所有文件都存在一个目录里。当计算机只有一点点存储空间、你可能只有十几个文件时，这还行得通。但就像上一集讲的，存储容量爆炸式增长，计算机上的文件数量也是。很快，把所有文件都放在同一层就变得不切实际了。</p>
+  <p>就像现实世界里的文件一样，把相关的文件放进<b>文件夹</b>会很方便，然后还可以把相关的文件夹放进文件夹，以此类推。这就是<b>分层文件系统</b>（Hierarchical File System），你的电脑用的就是它。实现方式有很多种，我们沿用前面的例子来说明主要思路。</p>
+  <p>最大的变化是，目录文件不仅要能指向文件，还要能指向<b>其他目录</b>。为了区分哪个是文件、哪个是目录，需要一些额外的元数据。最上面的这个目录文件叫<b>根目录</b>（Root Directory），所有其他文件和文件夹都沿着不同的文件路径位于它下面。可以看到，我们的根目录文件里有 3 个文件和 2 个子目录：music 和 photos。如果想看 music 目录里存了什么，就得去那个块，读那里的目录文件，它的格式和根目录一样。里面有好多好歌！</p>
+  <p>除了能建立无限深度的层级，这种方法还让我们能轻松地移动文件。如果想把"theme.wav"从根目录移到 music 目录，<b>不需要重新排列任何数据块</b>，只要修改两个目录文件：从一个里删掉一条记录，在另一个里加上一条。重要的是，theme.wav 文件还待在原来的块里。（上面的模拟器里试过了吗？）</p>
+  <p>以上就是文件系统关键原理的快速概览。它们提供了又一种往上提升一层抽象的方式：文件系统让我们不必面对存在磁带、旋转磁盘之类东西上的原始位，而是把数据想成整齐有序、方便访问的文件。我们甚至开始讲<b>用户</b>——而不是程序员——操作数据，比如打开文件、整理文件，这预示了接下来几集的方向。下周见！</p>
+  <div class="extra">
+    <span class="t">在你的电脑上</span>
+    你在终端里看到的 <code>/Users/你的名字/Desktop/a.txt</code> 就是一条从根目录 <code>/</code> 一层层往下的路径。mv 一个大文件到同一块硬盘的另一个文件夹几乎是瞬间完成的，就是因为它只改了目录记录；而复制到 U 盘要慢得多，因为那才是真的在搬数据。固态硬盘读取不同位置一样快，所以现在基本不需要手动做碎片整理了。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>概念</th><th>要点</th></tr></thead>
+      <tbody>
+        <tr><td>文件格式</td><td>约定数据怎么排、怎么读；底层都是一长串二进制</td></tr>
+        <tr><td>TXT</td><td>每个数按 ASCII 对应一个字符（72 → H）</td></tr>
+        <tr><td>WAV</td><td>44 字节文件头（元数据：声道、采样率……）+ 一长串振幅</td></tr>
+        <tr><td>BMP</td><td>元数据（宽、高、颜色深度）+ 每个像素 RGB 三个字节</td></tr>
+        <tr><td>目录文件</td><td>放在位置 0，记录每个文件的名字、元数据、起始位置和长度</td></tr>
+        <tr><td>块</td><td>文件按块存放、可跨多个块；目录记录块列表；删除只删记录</td></tr>
+        <tr><td>碎片 / 整理</td><td>增删改让文件的块散开、乱序；整理把它们排回连续、有序</td></tr>
+        <tr><td>分层文件系统</td><td>目录也能指向目录；根目录；移动文件只改两个目录文件</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    文件格式让一串数字有了意义；文件系统用一个"目录文件"记录每个文件在哪些块里，让我们把一排存储桶看成一个个有名字、能放进文件夹的文件——又一层抽象。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 什么是元数据？WAV 文件为什么需要文件头？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">关于数据的数据。不知道采样率、单声道还是立体声、每个采样几位，后面那串数字就没法正确播放。这些信息放在文件最前面，叫文件头。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 24 位颜色深度的 BMP，一个像素占几个字节？255, 255, 0 是什么颜色？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">3 个字节：红、绿、蓝各 1 个字节（0~255）。255, 255, 0 是全强度的红加全强度的绿，没有蓝——黄色。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么"删除"的文件有时能被恢复？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">删除只是把文件的记录从目录文件里去掉，块被标成空闲，里面的数据并没有被擦除，直到某天被新数据覆盖。在那之前，取证工具可以把它读回来。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 在分层文件系统里，把文件从一个文件夹移到另一个，数据块要动吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不用。只要在原文件夹的目录文件里删掉这条记录、在目标文件夹的目录文件里加上，文件的数据还在原来的块里。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="19.html"><small>← 上一集</small>19 内存与储存介质</a>
+    <a class="next" href="21.html"><small>下一集 →</small>21 压缩</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 20 集 Files &amp; File Systems（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- TXT ---------- */
+(function () {
+  const S = 'Hello, world!';
+  let mode = 'bin';
+  function paint() {
+    $('#txt-bytes').innerHTML = [...S].map(c => { const n = c.charCodeAt(0); return `<span>${mode === 'bin' ? n.toString(2).padStart(8, '0') : mode === 'dec' ? n : (c === ' ' ? '␣' : c)}</span>`; }).join('');
+    $$('#txt-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+  }
+  $$('#txt-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; paint(); });
+  paint();
+})();
+
+/* ---------- WAV ---------- */
+(function () {
+  const SR = 8000, N = Math.floor(SR * 0.8);
+  const samples = new Uint8Array(N);
+  for (let i = 0; i < N; i++) {
+    const t = i / SR, f = t < 0.4 ? 660 : 440;
+    const env = Math.min(1, (t % 0.4) * 40) * Math.max(0, 1 - (t % 0.4) / 0.4);
+    samples[i] = Math.round(128 + 100 * env * Math.sin(2 * Math.PI * f * t));
+  }
+  const buf = new ArrayBuffer(44 + N), dv = new DataView(buf);
+  const str = (o, s) => [...s].forEach((c, i) => dv.setUint8(o + i, c.charCodeAt(0)));
+  str(0, 'RIFF'); dv.setUint32(4, 36 + N, true); str(8, 'WAVE'); str(12, 'fmt ');
+  dv.setUint32(16, 16, true); dv.setUint16(20, 1, true); dv.setUint16(22, 1, true); dv.setUint32(24, SR, true);
+  dv.setUint32(28, SR, true); dv.setUint16(32, 1, true); dv.setUint16(34, 8, true); str(36, 'data'); dv.setUint32(40, N, true);
+  new Uint8Array(buf, 44).set(samples);
+  const F = [
+    [0, 4, '"RIFF"', '固定：这是一个 RIFF 格式的文件', 'var(--accent-soft)'],
+    [4, 4, `${36 + N}`, '后面还有多少字节（文件大小 − 8）', 'var(--bg)'],
+    [8, 4, '"WAVE"', '固定：拼出 W-A-V-E', 'var(--accent-soft)'],
+    [12, 4, '"fmt "', '固定：格式说明开始', 'var(--accent-soft)'],
+    [16, 4, '16', '格式说明有 16 字节', 'var(--bg)'],
+    [20, 2, '1', '编码方式：1 = 未压缩的 PCM', 'var(--on-soft)'],
+    [22, 2, '1', '声道数：1 = 单声道（2 是立体声）', 'var(--on-soft)'],
+    [24, 4, `${SR}`, '采样率：每秒采样 8000 次', 'var(--on-soft)'],
+    [28, 4, `${SR}`, '每秒字节数', 'var(--on-soft)'],
+    [32, 2, '1', '每个采样占几个字节', 'var(--on-soft)'],
+    [34, 2, '8', '每个采样几位', 'var(--on-soft)'],
+    [36, 4, '"data"', '固定：声音数据开始', 'var(--accent-soft)'],
+    [40, 4, `${N}`, '声音数据有多少字节', 'var(--bg)'],
+  ];
+  const bytes = new Uint8Array(buf, 0, 44);
+  $('#wav-hdr').innerHTML = [...bytes].map((b, i) => { const f = F.find(([o, l]) => i >= o && i < o + l); return `<span data-i="${i}" style="background:${f[4]}" title="${f[3]}">${b.toString(16).padStart(2, '0').toUpperCase()}</span>`; }).join('');
+  $('#wav-fields').innerHTML = F.map(([o, l, v, d], k) => `<div data-k="${k}"><b>${o}~${o + l - 1}</b>　${v}<br><span class="muted">${d}</span></div>`).join('');
+  $$('#wav-fields div').forEach(d => {
+    const [o, l] = F[+d.dataset.k];
+    const on = v => $$('#wav-hdr span').forEach(s => { const i = +s.dataset.i; s.classList.toggle('on', v && i >= o && i < o + l); });
+    d.onmouseenter = () => on(true); d.onmouseleave = () => on(false); d.onclick = () => on(true);
+  });
+  // 波形放大
+  const svg = $('#wav-wave');
+  const start = 400, M = 60;
+  el('line', { x1: 20, y1: 100, x2: 660, y2: 100, class: 's-thin' }, svg);
+  let d = '';
+  for (let k = 0; k < M; k++) { const x = 30 + k * 10.6, y = 100 - (samples[start + k] - 128) * 0.7; d += (k ? 'L' : 'M') + x + ',' + y; }
+  el('path', { d, style: 'fill:none;stroke:var(--accent);stroke-width:2' }, svg);
+  for (let k = 0; k < M; k++) { const x = 30 + k * 10.6, y = 100 - (samples[start + k] - 128) * 0.7; el('circle', { cx: x, cy: y, r: 3, style: 'fill:var(--on)' }, svg); if (k % 6 === 0) txt(svg, x, 192, String(samples[start + k]), 't-mono mid'); }
+  txt(svg, 20, 18, '放大其中 60 个采样（每个点 = 文件里的一个数字，下面标出其中几个）', 't-sub');
+  const url = URL.createObjectURL(new Blob([buf], { type: 'audio/wav' }));
+  const audio = new Audio(url);
+  $('#wav-play').onclick = () => { audio.currentTime = 0; audio.play().catch(() => {}); };
+})();
+
+/* ---------- BMP ---------- */
+(function () {
+  const W = [255, 255, 255], Y = [255, 255, 0], K = [0, 0, 0];
+  const INIT = [W, Y, K, Y, Y, Y, Y, Y, Y, Y, W, W, W, Y, Y, Y]; // 第一行来自课程；整张图与第 21 集的数据一致
+  const CYCLE = [W, Y, K, [255, 0, 0], [0, 120, 255]];
+  let px, shown;
+  const name = c => c.join() === '255,255,255' ? '白' : c.join() === '255,255,0' ? '黄' : c.join() === '0,0,0' ? '黑' : c.join() === '255,0,0' ? '红' : '蓝';
+  function paint(msg) {
+    $('#pix').innerHTML = px.map((c, i) => `<div data-i="${i}" class="${i < shown ? '' : 'blank'} ${i === shown - 1 ? 'cur' : ''}" style="${i < shown ? `background:rgb(${c})` : ''}"></div>`).join('');
+    $$('#pix div').forEach(d => d.onclick = () => { if (shown < 16) return; const i = +d.dataset.i; const k = CYCLE.findIndex(c => c.join() === px[i].join()); px[i] = CYCLE[(k + 1) % CYCLE.length]; paint(`第 ${i + 1} 个像素改成${name(px[i])}色：RGB = ${px[i].join(', ')}，文件里对应的 3 个字节变了，其他字节一个都没动。`); });
+    $('#bmp-bytes').innerHTML = `<span class="meta">元数据：宽 4 · 高 4 · 颜色深度 24 位</span><br>` + px.map((c, i) => `<span class="${i === shown - 1 ? 'cur' : ''}">${c.join(',')}</span>${i % 4 === 3 ? '<br>' : ' · '}`).join('');
+    $('#bmp-cap').innerHTML = msg;
+    $('#bmp-next').disabled = $('#bmp-all').disabled = shown >= 16;
+  }
+  function reset() { px = INIT.map(c => c.slice()); shown = 0; paint('先读元数据：4 × 4，每个像素 3 个字节。点"读下一个像素"。'); }
+  $('#bmp-next').onclick = () => { shown++; const c = px[shown - 1]; paint(`第 ${shown} 个像素：RGB = ${c.join(', ')} → <b>${name(c)}色</b>。` + (shown % 4 === 0 && shown < 16 ? '<br>元数据说宽是 4，这一行读完了，换到下一行。' : '') + (shown === 16 ? '<br>当当！一个低分辨率的吃豆人。现在可以点格子改颜色了。' : '')); };
+  $('#bmp-all').onclick = () => { shown = 16; paint('全部 16 个像素读完：一个低分辨率的吃豆人！现在可以点格子改颜色了。'); };
+  $('#bmp-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 文件系统 ---------- */
+(function () {
+  const NB = 8;
+  const COLORS = { 'todo.txt': 'f0', 'carrie.bmp': 'f1', 'theme.wav': 'f2' };
+  let blocks, dirs, grown, hl;
+  function reset() {
+    blocks = Array(NB).fill(null);
+    blocks[0] = { dir: '根目录' }; blocks[1] = { f: 'todo.txt', part: 1 }; blocks[2] = { f: 'carrie.bmp', part: 1 }; blocks[3] = { f: 'theme.wav', part: 1 };
+    dirs = { '根目录': [{ n: 'todo.txt', b: [1] }, { n: 'carrie.bmp', b: [2] }, { n: 'theme.wav', b: [3] }] };
+    grown = 0; hl = [];
+    paint('块 0 是根目录文件，记录着每个文件存在哪些块里。其他块都还空着。');
+  }
+  const free = () => blocks.findIndex((b, i) => i > 0 && (!b || b.ghost));
+  function paint(msg) {
+    $('#fs-blocks').innerHTML = blocks.map((b, i) => {
+      let cls = '', label = '空闲';
+      if (b && b.dir) { cls = 'dir'; label = b.dir + '（目录文件）'; }
+      else if (b && b.ghost) { cls = COLORS[b.f] + ' ghost'; label = b.f + ' 的残留数据'; }
+      else if (b && b.f) { cls = COLORS[b.f]; label = b.f + (b.part ? ` 第 ${b.part} 段` : ''); }
+      return `<div class="blk ${cls} ${hl.includes(i) ? 'hl' : ''}"><small>块 ${i}</small><b>${label}</b></div>`;
+    }).join('');
+    $('#fs-dirs').innerHTML = Object.entries(dirs).map(([d, es]) => `<div><b style="font-size:14px">📁 ${d} 的目录文件</b><table class="dirt"><thead><tr><th>名字</th><th>类型</th><th>块列表</th></tr></thead><tbody>${es.map(e => `<tr><td>${e.n}</td><td>${e.dir ? '目录' : '文件'}</td><td class="m">${e.b.join(' → ')}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">（空）</td></tr>'}</tbody></table></div>`).join('');
+    $('#fs-cap').innerHTML = msg;
+  }
+  const entry = n => Object.values(dirs).flat().find(e => e.n === n);
+  const act = {
+    grow() {
+      const e = entry('todo.txt'), k = free();
+      if (k < 0) return paint('没有空闲块了。');
+      const reused = blocks[k] && blocks[k].ghost;
+      blocks[k] = { f: 'todo.txt', part: e.b.length + 1 }; e.b.push(k); hl = [k]; grown++;
+      const order = e.b.slice().sort((a, b) => a - b).join() === e.b.join();
+      paint(`todo.txt 一个块装不下了。文件系统不覆盖隔壁的 carrie.bmp，而是找一个空闲块（块 ${k}${reused ? '，正是刚才 carrie.bmp 释放的那个，旧数据被覆盖了' : ''}）放多出来的部分，并把它加进目录里的块列表。` + (!order ? '<br><b>现在 todo.txt 的块是 ' + e.b.join(' → ') + '：隔开了，顺序也乱了——这就是碎片。</b>在磁带上读它要来回快进倒带。' : ''));
+    },
+    del() {
+      const d = dirs['根目录'], i = d.findIndex(e => e.n === 'carrie.bmp');
+      if (i < 0) return paint('carrie.bmp 已经删掉了。');
+      const [e] = d.splice(i, 1); e.b.forEach(b => blocks[b] = { f: 'carrie.bmp', ghost: true }); hl = e.b;
+      paint(`删除 carrie.bmp：只是把它的记录从目录文件里删掉，块 ${e.b.join('、')} 被标成空闲。注意数据<b>还在</b>（虚线），直到被新数据覆盖——取证人员就是这样"恢复"已删除文件的。`);
+    },
+    defrag() {
+      const files = [];
+      Object.values(dirs).flat().filter(e => !e.dir).forEach(e => files.push(e));
+      const dirBlocks = blocks.map((b, i) => b && b.dir ? i : -1).filter(i => i > 0);
+      const nb = Array(NB).fill(null); nb[0] = blocks[0];
+      let p = 1;
+      files.sort((a, b) => a.n === 'todo.txt' ? -1 : b.n === 'todo.txt' ? 1 : 0).forEach(e => { e.b = e.b.map((_, j) => { const k = p++; nb[k] = { f: e.n, part: e.b.length > 1 ? j + 1 : 1 }; return k; }); });
+      dirBlocks.forEach(db => { const k = p++; nb[k] = blocks[db]; const ent = Object.values(dirs).flat().find(e => e.dir && e.b[0] === db); if (ent) ent.b = [k]; });
+      blocks = nb; hl = files.find(f => f.n === 'todo.txt').b;
+      paint('碎片整理：把数据搬来搬去，让每个文件的块挨在一起、顺序正确，同时更新目录里的块列表。现在 todo.txt 是 ' + hl.join(' → ') + '，一次就能顺序读完。');
+    },
+    mkdir() {
+      if (dirs.music) return paint('music 已经有了。');
+      const k = free(); if (k < 0) return paint('没有空闲块了。');
+      blocks[k] = { dir: 'music' }; dirs.music = []; dirs['根目录'].push({ n: 'music', dir: true, b: [k] }); hl = [k];
+      paint(`新建文件夹 music：在块 ${k} 放一个新的目录文件（格式和根目录一样），再在根目录里加一条记录，类型标成"目录"。这就是分层文件系统。`);
+    },
+    move() {
+      if (!dirs.music) return paint('先新建文件夹 music。');
+      const d = dirs['根目录'], i = d.findIndex(e => e.n === 'theme.wav');
+      if (i < 0) return paint('theme.wav 已经在 music 里了。');
+      const [e] = d.splice(i, 1); dirs.music.push(e); hl = e.b;
+      paint(`把 theme.wav 移进 music：只改了两个目录文件——根目录删一条、music 加一条。theme.wav 的数据<b>还在块 ${e.b.join('、')}</b>，一个数据块都没动。`);
+    },
+    reset,
+  };
+  $$('#ch4 [data-a]').forEach(b => b.onclick = () => act[b.dataset.a]());
+  reset();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,442 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>21 压缩 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.pxrow{display:flex;flex-wrap:wrap;gap:3px;margin:8px 0}
+.pxrow div{width:30px;height:30px;border-radius:4px;border:1px solid var(--line)}
+.runs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.run{display:flex;align-items:center;gap:4px;padding:4px 6px;border:2px solid var(--line);border-radius:8px;background:var(--panel);font:13px var(--mono)}
+.run i{display:inline-block;width:22px;height:22px;border-radius:4px;border:1px solid var(--line)}
+.run b{color:var(--on)}
+.bytes-bar{display:flex;align-items:center;gap:10px;margin:6px 0;font-size:14px}
+.bytes-bar .bb{height:20px;border-radius:4px;transition:width .3s}
+.pairs{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.pair{display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px;border-radius:8px;border:2px solid var(--line);background:var(--panel)}
+.pair.hl{border-color:var(--on)}
+.pair .sw{display:flex;gap:2px}
+.pair .sw i{width:20px;height:20px;border-radius:3px;border:1px solid var(--line)}
+.pair code{font-size:12px}
+.bitstr{font:20px var(--mono);letter-spacing:2px;padding:8px 12px;background:var(--panel);border:2px solid var(--on);border-radius:10px;word-break:break-all}
+.bitstr span{padding:0 2px;border-radius:3px}
+.bitstr span:nth-child(odd){background:var(--on-soft)}
+.jpeg{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start}
+.jpeg > div{flex:1 1 100%}
+.jpeg canvas{border-radius:8px;border:1px solid var(--line);image-rendering:pixelated;width:220px;height:220px;max-width:100%}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:14px;margin-top:10px}
+.ctl input[type=range]{width:240px}
+.vid{display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start}
+.vid canvas{border-radius:8px;border:1px solid var(--line);width:240px;height:150px}
+.vid figure{margin:0}
+</style>
+</head>
+<body data-ep="21">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=22" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 21 集</div>
+  <h1>压缩</h1>
+  <p class="en">Compression</p>
+  <p class="lead">文件越小，能存的越多，传得越快。这一集讲怎样用更少的位表示同样的信息：先是一点不丢的无损压缩，再是利用人类感官缺陷的有损压缩——MP3、JPEG 和视频都靠它。</p>
+  <div class="road">
+    <span>游程编码</span><i>→</i><span>字典编码与霍夫曼树</span><i>→</i><span>感知编码</span><i>→</i><span>有损音频</span><i>→</i><span>JPEG</span><i>→</i><span>视频压缩</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 为什么要压缩</a></li>
+    <li><a href="#ch1">1 · 游程编码</a></li>
+    <li><a href="#ch2">2 · 霍夫曼树</a></li>
+    <li><a href="#ch3">3 · 有损：声音</a></li>
+    <li><a href="#ch4">4 · 有损：JPEG</a></li>
+    <li><a href="#ch5">5 · 视频压缩</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>为什么要压缩</h2>
+  <p>上一集我们讲了文件：存在计算机上、经过格式化和排列来编码信息的一包包数据，比如文字、声音或图像。我们还讨论了几种基础的文件格式，比如文本、WAVE 和位图。这些格式完全没问题，今天也还在用，但它们的简单也意味着效率不高。理想情况下，我们希望文件尽可能小，这样能存很多文件而不把硬盘塞满，传输起来也更快。没有什么比等一个邮件附件下载更让人抓狂的了。唉！</p>
+  <p>答案是<b>压缩</b>（compression），字面意思就是把数据挤成更小的尺寸。为此，我们要用比原来的表示方式<b>更少的位</b>来编码数据。这听起来像魔法，但其实是计算机科学！</p>
+  <p>回到上一集的老朋友，吃豆人先生！这张图片是 4 × 4 像素。前面讲过，图像数据通常存成一串像素值；为了知道每一行在哪里结束，图像文件还有记录尺寸等属性的元数据，不过今天为了简单，我们先不管它。红、绿、蓝都是全强度——三个值都是 255——就得到白色；红和绿全强度、没有蓝（是 0），就得到黄色。图像里有 16 个像素，每个需要 3 个字节的颜色数据，所以这张图的数据要占 <b>48 个字节</b>。但我们可以把数据压缩，装进比 48 更少的字节里！</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>游程编码</h2>
+  <p>压缩数据的一种方法，是<b>减少重复或冗余的信息</b>。最直接的做法叫<b>游程编码</b>（Run-Length Encoding）。它利用了一个事实：文件里经常出现连续相同的值。比如，在我们的吃豆人图片里，有 7 个黄色像素连在一起。与其编码这些冗余数据——黄像素、黄像素、黄像素……——我们可以直接说"这里有连续 7 个黄像素"：插入一个额外的字节，标明这一段有多长，然后删掉后面的冗余数据。</p>
+  <p>为了让计算机不把哪些字节是长度、哪些字节是颜色搞混，我们得一致地使用这个方案，所以要在<b>所有</b>像素前面都加上长度。在某些情况下，这其实会增加数据，但总的来说，我们大幅减少了编码这张图需要的字节数：现在是 24 字节，原来是 48。小了 50%！省了好多！</p>
+
+  <div class="card">
+    <h3>动手：游程编码</h3>
+    <p class="muted" style="margin:0;font-size:13px">原始数据：16 个像素，一行一行排成一串</p>
+    <div class="pxrow" id="rle-px"></div>
+    <div class="bytes-bar"><span style="width:90px">原始</span><span class="bb" id="bb-raw" style="background:var(--accent)"></span><b id="bb-raw-n"></b></div>
+    <div class="btns" style="margin:6px 0"><button class="btn primary" id="rle-go">游程编码</button><button class="btn" id="rle-dec">解压回去</button></div>
+    <div class="runs" id="rle-runs"></div>
+    <div class="bytes-bar"><span style="width:90px">游程编码后</span><span class="bb" id="bb-rle" style="background:var(--on)"></span><b id="bb-rle-n"></b></div>
+    <div class="step-text" id="rle-cap">点"游程编码"。</div>
+  </div>
+
+  <p>还要注意，我们没有丢失任何数据，可以轻松地把它展开回原来的样子，没有任何劣化。具有这种特性的压缩技术叫<b>无损压缩</b>（lossless compression），因为什么也没丢：解压后的数据和压缩前的原始数据<b>逐位完全相同</b>。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>字典编码与霍夫曼树</h2>
+  <p>再来看另一种无损压缩：用更紧凑的表示来替换数据块。这有点像把"Don't Forget To Be Awesome"（别忘了变得超棒）写成 DFTBA。为此，我们需要一个<b>字典</b>，存储代码和数据之间的对应关系。</p>
+  <p>看看它在我们的例子里怎么工作。我们可以把图像不只看成一串单个像素，而是看成一小块一小块的数据。为了简单，我们用<b>像素对</b>，每块 6 个字节，不过块可以是任意大小。在我们的例子里只有四种像素对：白黄、黑黄、黄黄和白白，这就是我们要为之生成紧凑代码的字典里的数据块。有意思的是，这些块出现的<b>频率不同</b>。</p>
+  <p>一种生成高效代码的方法是构建<b>霍夫曼树</b>（Huffman Tree），由大卫·霍夫曼在 1950 年代还是麻省理工学院学生时发明。他的算法是这样的：首先，列出所有可能的块和它们的频率。每一轮，选出频率最低的两个。这里是黑黄和白白，频率都是 1。把它们合成一棵小树，合起来的频率是 2，记下来。这样算法的一步就完成了。然后重复这个过程：这次有三样东西可选，和之前一样，选频率最低的两个放进一棵小树，记下所有子项的新总频率。好，快完成了。这次很容易选出频率最低的两个，因为只剩下两样了。把它们合成一棵树，就完成了！</p>
+
+  <div class="card">
+    <h3>动手：建一棵霍夫曼树，然后编码</h3>
+    <div class="pairs" id="hf-pairs"></div>
+    <div class="scroll-x"><svg class="diagram" id="hf-tree" viewBox="0 0 640 280" role="img" aria-label="霍夫曼树"></svg></div>
+    <div class="step-text" id="hf-cap"></div>
+    <div class="btns"><button class="btn primary" id="hf-next">下一步</button><button class="btn" id="hf-reset">重来</button></div>
+    <div id="hf-out"></div>
+  </div>
+
+  <p>我们的树长这样，它有一个很酷的特性：它是<b>按频率排列</b>的，不常见的东西在更下面。现在我们有了一棵树，你可能在想这怎么变成字典。我们用这棵按频率排好的树来生成需要的代码：给每个分支标上 0 或 1。这样就能写出代码字典：黄黄编码成一个 0，白黄编码成 10，黑黄是 110，最后白白是 111。</p>
+  <p>这些代码真正酷的地方在于，它们不可能互相冲突，因为树上往下的每条路径都是唯一的。这意味着我们的代码是<b>无前缀</b>（prefix-free）的：没有哪个代码是以另一个完整代码开头的。</p>
+  <p>现在回到图像数据，把它压缩！——不是字节——是<b>位</b>！只有 14 位，还不到 2 个字节！但先别急着开香槟！除非我们把代码字典也一起存下来，否则这些数据毫无意义。所以要把字典加到图像数据前面。现在，算上字典，图像数据是 30 字节长，比 48 字节还是好得多。</p>
+  <p>我们讨论的这两种方法——<b>消除冗余</b>和<b>使用更紧凑的表示</b>——经常组合使用，几乎所有无损压缩的文件格式都建立在它们之上，比如 GIF、PNG、PDF 和 ZIP 文件。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>有损压缩：利用不完美的听觉</h2>
+  <p>游程编码和字典编码都是无损压缩技术：没有丢失任何信息，解压后得到的就是原文件。这对很多类型的文件非常重要。比如，如果我把一个 Word 文档压缩成 zip 发给你，你在自己电脑上解压后，发现文字变了，那就太奇怪了。</p>
+  <p>但也有一些类型的文件，我们可以接受一点小改变，也许是去掉不必要或不太重要的信息，尤其是人类感知不太能察觉到的信息。大多数<b>有损压缩</b>技术就建立在这个窍门上。它们往往相当复杂，所以我们从概念上来讲。</p>
+  <p>拿声音举例。你的听力并不完美：我们对某些频率的声音听得比别的清楚，有些频率根本听不见，比如超声波——除非你是蝙蝠。基本上，如果我们录了一段音乐，里面有超声频段的数据，就可以把它扔掉，因为我们知道人类听不见。另一方面，人类对人声频段非常敏感，比如有人在唱歌，所以那里最好尽量保留质量。低沉的低音介于两者之间：人类听得到，但不太敏感，主要是"感觉"到它。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="hear" viewBox="0 0 680 230" role="img" aria-label="人耳对频率的敏感度与有损编码"></svg></div>
+      <figcaption>图 1　有损音频压缩：按人耳的敏感程度，给不同频段分配不同的精度（示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>有损音频压缩器利用这一点，<b>用不同的精度编码不同的频段</b>。即使结果更粗糙，用户也很可能察觉不到区别，或者至少不会明显影响体验。（发烧友们的抗议信要来了！）你无时无刻不在遇到这种音频压缩，它就是你在电话里的声音和当面不一样的原因之一：音频数据被压缩了，好让更多人能同时打电话。当信号质量或带宽变差时，压缩算法会删掉更多数据，进一步降低精度，这就是为什么 Skype 通话有时听起来像机器人在说话。</p>
+  <p>和未压缩的音频格式比，比如 WAV 或 FLAC（好了，发烧友们回来了），压缩过的音频文件，比如 MP3，往往<b>小 10 倍</b>。省了好多！这也是为什么我那台复古 iPod 里有一大堆超棒的歌。别批判我。</p>
+  <p>这种按照人类感知的方式丢弃信息或降低精度的思路，叫<b>感知编码</b>（perceptual coding），它依赖于人类感知的模型，这些模型来自一个叫<b>心理物理学</b>（Psychophysics）的研究领域。</p>
+  <div class="extra">
+    <span class="t">FLAC 是无损的</span>
+    课程把 FLAC 和 WAV 放在一起当"未压缩"的例子，严格说 FLAC 是<b>无损压缩</b>格式：比 WAV 小一半左右，解压后逐位相同，所以发烧友喜欢它。MP3 才是有损的。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>JPEG：利用不完美的视觉</h2>
+  <p>同样的思路也是有损压缩图像格式的基础，最有名的是 <b>JPEG</b>。和听觉一样，人的视觉系统也不完美：我们非常善于察觉强烈的对比，比如物体的边缘，但我们的感知系统不太擅长分辨细微的颜色变化。JPEG 利用这一点：把图像分成 <b>8 × 8 像素</b>的块，然后扔掉大量<b>高频的空间数据</b>。</p>
+  <p>比如这张我们导演的狗——面条（Noodle）——的照片。太可爱了！看其中一块 8 × 8 的像素：几乎每个像素都和相邻的不同，用无损技术很难压缩，因为变化太多了，到处是小细节。但人类的感知并不会记下所有这些细节。所以我们可以扔掉很多细节，换成一个像这样简化过的块。它保留了视觉上的本质，但可能只用了 10% 的数据。对图像里所有的块都这样做，就得到这样的结果：你仍然能看出这是一只狗，但图像更粗糙了。</p>
+
+  <div class="card">
+    <h3>动手：JPEG 是怎么"扔掉高频"的</h3>
+    <div class="jpeg">
+      <figure><canvas id="jp-orig" width="128" height="128"></canvas><figcaption>原图（程序画的）</figcaption></figure>
+      <figure><canvas id="jp-comp" width="128" height="128"></canvas><figcaption>每个 8×8 块只保留前 k 个系数</figcaption></figure>
+      <div>
+        <div class="ctl"><label>每块保留 <input type="range" id="jp-k" min="1" max="64" value="10"> <b id="jp-kv" style="font-family:var(--mono)"></b> / 64 个系数</label></div>
+        <div class="readout" id="jp-read" style="font-size:14px"></div>
+        <div style="margin-top:8px;max-width:320px"><svg class="diagram" id="jp-zz" viewBox="0 0 260 150" role="img" aria-label="保留哪些系数"></svg></div>
+      </div>
+    </div>
+    <p class="hint">拖到 64 = 完全没压缩；拖到 1 = 每块只剩一个平均颜色。注意边缘最先变糊、出现 8×8 的格子</p>
+  </div>
+  <div class="extra">
+    <span class="t">"高频"是什么意思</span>
+    JPEG 用一种叫离散余弦变换（DCT）的数学方法，把每个 8×8 块改写成 64 个"波纹图案"的叠加：第 1 个是整块的平均颜色，越往后的图案变化越细密（高频，对应细小的纹理和噪点）。人眼对细密的变化不敏感，所以 JPEG 主要扔的是后面那些系数——上面的滑块就是在决定扔掉多少个。真实的 JPEG 不是一刀切地扔，而是把每个系数按重要程度"粗略化"，但原理一样。
+  </div>
+
+  <p>这是个极端的例子：从轻度压缩的 JPEG 到高度压缩的版本，文件只有原来的八分之一。通常你可以选一个折中的质量，在感知上和原图基本一样。你能看出这两张有什么区别吗？大概看不出来。不过我得提一句，视频压缩在这里也起了作用，因为我此刻正被压缩在一段视频里呢。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>视频压缩：时间冗余</h2>
+  <p>视频其实就是一长串图像，所以我刚才说的很多也适用于视频。但视频还能做一些额外的聪明事，因为帧与帧之间，很多像素是一样的，比如我身后的整个背景！这叫<b>时间冗余</b>（temporal redundancy）。我们不需要在视频的每一帧里都重新传输这些像素，只要把数据块往前复制就行。</p>
+  <p>当像素有细小的差异时，比如我身后这台频率发生器上的读数，大多数视频格式只发送编码了块之间<b>差异</b>的数据，这比重新传输所有像素高效得多，同样利用了帧间的相似性。</p>
+
+  <div class="card">
+    <h3>动手：只存变了的部分</h3>
+    <div class="vid">
+      <figure><canvas id="v-full" width="240" height="150"></canvas><figcaption>完整的画面</figcaption></figure>
+      <figure><canvas id="v-diff" width="240" height="150"></canvas><figcaption>和上一帧相比，真正需要存的部分</figcaption></figure>
+    </div>
+    <div class="readout" id="v-read" style="font-size:14px"></div>
+    <div class="btns"><button class="btn" id="v-pause">暂停</button></div>
+  </div>
+
+  <p>最先进的视频压缩格式更进一步：它们找出帧与帧之间相似的块，不仅能把它们往前复制（带或不带差异），还能对它们施加简单的效果，比如<b>平移或旋转</b>，也能让一个块在帧之间变亮或变暗。所以如果我像这样左右挥手，视频压缩器会识别出这种相似性，用一个或几个块捕捉住我的手，然后只是在帧之间移动这些块。你看到的其实是我"过去"的手——有点吓人——但它用的数据少得多。</p>
+  <p>常见的标准 MPEG-4 视频，往往比原始未压缩的文件小 <b>20 到 200 倍</b>。然而，当压缩得太狠、没有足够的空间更新块里面的像素数据时，把帧编码成"前一帧中各个块的平移和旋转"就可能错得离谱：视频播放器会照样往下播，应用正确的运动，哪怕块里的数据是错的。这就造成了一些滑稽又迷幻的效果，我相信你见过。</p>
+  <p>总的来说，对今天讲的这些类型的数据都有压缩技术，是极其有用的。（我猜我们不完美的视觉和听觉也算"有用"吧。）了解压缩很重要，因为它让用户能以高效的方式存储图片、音乐和视频。没有它，在 YouTube 上流畅播放你最爱的《拼车 K 歌》视频几乎不可能，因为带宽不够，免费传输那么大量的数据在经济上也不划算。而下次你的 Skype 通话听起来像被恶魔附身时，你就知道到底发生了什么。下周见！</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>技术</th><th>类型</th><th>思路</th><th>例子</th></tr></thead>
+      <tbody>
+        <tr><td>游程编码</td><td>无损</td><td>连续相同的值只存一次 + 长度</td><td>吃豆人 48 → 24 字节</td></tr>
+        <tr><td>字典编码 / 霍夫曼树</td><td>无损</td><td>常见的块用短代码，罕见的用长代码；无前缀</td><td>14 位 + 字典 = 30 字节；GIF、PNG、PDF、ZIP</td></tr>
+        <tr><td>感知编码（音频）</td><td>有损</td><td>按人耳敏感度给频段不同精度，扔掉听不见的</td><td>MP3 约小 10 倍；电话、Skype</td></tr>
+        <tr><td>JPEG</td><td>有损</td><td>8×8 块，扔掉人眼不敏感的高频细节</td><td>可压到原来的 1/8 甚至更小</td></tr>
+        <tr><td>视频压缩</td><td>有损</td><td>时间冗余：只存变化，块可以平移、旋转、变亮变暗</td><td>MPEG-4 小 20~200 倍</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    无损压缩靠"消除冗余 + 更紧凑的表示"，解压后逐位相同，文档、程序必须用它；有损压缩靠"扔掉人感知不到的部分"，声音、图片、视频能因此小十倍到几百倍。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 游程编码为什么给每一段都加长度字节，哪怕只有 1 个像素？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">为了格式一致：计算机要能分清哪个字节是长度、哪些是颜色。如果有的段加了长度、有的没加，就没法正确解码。代价是单个像素的段反而多了 1 字节，但整体上省得更多。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 霍夫曼编码为什么让黄黄只用 1 位，而白白要 3 位？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">黄黄出现得最多（4 次），白白最少（1 次）。建树时频率最低的先合并、被压在最下面，路径最长；频率高的在上面，路径短。常见的用短代码，总位数就少。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. "无前缀"是什么意思？为什么重要？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">没有哪个代码是另一个代码的开头（0、10、110、111）。这样一串连在一起的位，可以从头往后唯一地切分、解码，不需要分隔符。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 有损压缩丢掉的是什么样的信息？举一个声音和一个图像的例子。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">人类感知不到或不敏感的信息。声音：超声波直接扔掉，低音用较低精度，人声保持高精度。图像：JPEG 扔掉 8×8 块里人眼不敏感的细微颜色变化（高频细节）。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="20.html"><small>← 上一集</small>20 文件系统</a>
+    <a class="next" href="22.html"><small>下一集 →</small>22 命令行界面</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 21 集 Compression（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const W = [255, 255, 255], Y = [255, 255, 0], K = [0, 0, 0];
+const IMG = [W, Y, K, Y, Y, Y, Y, Y, Y, Y, W, W, W, Y, Y, Y];
+const rgb = c => `rgb(${c})`;
+const nm = c => c.join() === '255,255,255' ? '白' : c.join() === '255,255,0' ? '黄' : '黑';
+
+/* ---------- 游程编码 ---------- */
+(function () {
+  $('#rle-px').innerHTML = IMG.map(c => `<div style="background:${rgb(c)}"></div>`).join('');
+  const bar = (id, n) => { $('#bb-' + id).style.width = n * 6 + 'px'; $('#bb-' + id + '-n').textContent = n + ' 字节'; };
+  bar('raw', 48); bar('rle', 0); $('#bb-rle-n').textContent = '';
+  const runs = [];
+  IMG.forEach(c => { const l = runs[runs.length - 1]; if (l && l.c.join() === c.join()) l.n++; else runs.push({ c, n: 1 }); });
+  $('#rle-go').onclick = () => {
+    $('#rle-runs').innerHTML = runs.map(r => `<div class="run"><b>${r.n}</b><i style="background:${rgb(r.c)}"></i><span>${r.c.join(',')}</span></div>`).join('');
+    bar('rle', runs.length * 4);
+    $('#rle-cap').innerHTML = `${runs.length} 段，每段 = 1 个长度字节 + 3 个颜色字节 → ${runs.length} × 4 = <b>${runs.length * 4} 字节</b>，比 48 小了 50%。注意那段"<b>7</b> 个黄"——一个字节就代替了 6 × 3 = 18 个重复的字节；而单个像素的段反而多了 1 个字节。`;
+  };
+  $('#rle-dec').onclick = () => {
+    if (!$('#rle-runs').innerHTML) { $('#rle-cap').textContent = '先编码再解压。'; return; }
+    const back = runs.flatMap(r => Array(r.n).fill(r.c));
+    const same = back.every((c, i) => c.join() === IMG[i].join());
+    $('#rle-cap').innerHTML = `按"长度 × 颜色"展开：得到 ${back.length} 个像素，和原图${same ? '<b>逐位完全相同</b>——这就是无损压缩' : '不一样？'}。`;
+  };
+})();
+
+/* ---------- 霍夫曼 ---------- */
+(function () {
+  const PAIRS = []; for (let i = 0; i < 16; i += 2) PAIRS.push([IMG[i], IMG[i + 1]]);
+  const key = p => nm(p[0]) + nm(p[1]);
+  const freq = {}; PAIRS.forEach(p => freq[key(p)] = (freq[key(p)] || 0) + 1);
+  const svg = $('#hf-tree');
+  const LEAVES = { '黄黄': [520, 230], '白黄': [400, 230], '黑黄': [180, 230], '白白': [290, 230] };
+  // 预先定义合并结果（与课程一致）
+  const N1 = { name: 'n1', f: 2, kids: ['黑黄', '白白'], pos: [235, 160] };
+  const N2 = { name: 'n2', f: 4, kids: ['白黄', 'n1'], pos: [320, 95] };
+  const N3 = { name: 'n3', f: 8, kids: ['黄黄', 'n2'], pos: [420, 35] };
+  // 课程的标注：黄黄 0、白黄 10、黑黄 110、白白 111
+  const COURSE = { '黄黄': '0', '白黄': '10', '黑黄': '110', '白白': '111' };
+  let step;
+  const pairHTML = (p, extra) => `<div class="pair ${extra || ''}"><div class="sw"><i style="background:${rgb(p[0])}"></i><i style="background:${rgb(p[1])}"></i></div><code>${key(p)}</code></div>`;
+  function draw() {
+    svg.innerHTML = '';
+    const pos = n => (LEAVES[n] || [N1, N2, N3].find(x => x.name === n).pos);
+    const nodes = [N1, N2, N3].slice(0, Math.min(step, 3));
+    nodes.forEach(N => N.kids.forEach((k, i) => {
+      const [x1, y1] = N.pos, [x2, y2] = pos(k);
+      el('line', { x1, y1, x2, y2, class: 's-line' }, svg);
+      if (step >= 4) txt(svg, (x1 + x2) / 2 + (i ? 10 : -10), (y1 + y2) / 2, i ? '1' : '0', 't-mono t-on');
+    }));
+    Object.entries(LEAVES).forEach(([k, [x, y]]) => {
+      const [a, b] = k === '黄黄' ? [Y, Y] : k === '白黄' ? [W, Y] : k === '黑黄' ? [K, Y] : [W, W];
+      el('rect', { x: x - 34, y: y - 18, width: 68, height: 36, rx: 8, class: 's-panel' }, svg);
+      el('rect', { x: x - 26, y: y - 10, width: 16, height: 16, style: `fill:${rgb(a)};stroke:var(--line)` }, svg);
+      el('rect', { x: x - 8, y: y - 10, width: 16, height: 16, style: `fill:${rgb(b)};stroke:var(--line)` }, svg);
+      txt(svg, x + 22, y + 4, String(freq[k]), 't-mono t-acc');
+      if (step >= 4) txt(svg, x, y + 34, COURSE[k], 't-mono mid t-on');
+    });
+    nodes.forEach(N => { el('circle', { cx: N.pos[0], cy: N.pos[1], r: 16, style: 'fill:var(--panel)' }, svg); el('circle', { cx: N.pos[0], cy: N.pos[1], r: 16, class: 's-acc' }, svg); txt(svg, N.pos[0], N.pos[1] + 5, String(N.f), 't-mono mid'); });
+  }
+  const CAP = [
+    '列出四种像素对和它们出现的次数（蓝色数字）。点"下一步"开始建树。',
+    '第 1 轮：频率最低的两个是 <b>黑黄（1）</b>和<b>白白（1）</b>，合成一棵小树，频率 1 + 1 = 2。',
+    '第 2 轮：剩下 白黄（2）、刚才那棵（2）、黄黄（4）。选最低的两个：白黄 和 那棵小树，合起来是 4。',
+    '第 3 轮：只剩两样了：黄黄（4）和 那棵树（4），合成最终的树，总频率 8。频率越低的，被压得越深。',
+    '给每个分支标上 0 和 1。从根往下走到每个叶子，把经过的数字连起来，就是它的代码：<b>黄黄 0、白黄 10、黑黄 110、白白 111</b>。',
+    '用字典把 8 个像素对编码：',
+  ];
+  function paint() {
+    $('#hf-pairs').innerHTML = PAIRS.map(p => pairHTML(p)).join('');
+    draw();
+    $('#hf-cap').innerHTML = CAP[step];
+    $('#hf-next').disabled = step >= 5;
+    if (step >= 5) {
+      const bits = PAIRS.map(p => COURSE[key(p)]);
+      $('#hf-out').innerHTML = `<div class="bitstr">${bits.map(b => `<span>${b}</span>`).join('')}</div>
+        <div class="readout" style="font-size:14px">一共 <b>${bits.join('').length} 位</b>——不是字节，是位！不到 2 个字节。但字典也得一起存，加上字典一共 30 字节，仍然比 48 小。<br>解码时从左往右读：读到 0 就是黄黄；读到 1 再看下一位……因为没有哪个代码是另一个的开头（<b>无前缀</b>），永远不会切错。</div>`;
+    } else $('#hf-out').innerHTML = '';
+  }
+  $('#hf-next').onclick = () => { step++; paint(); };
+  $('#hf-reset').onclick = () => { step = 0; paint(); };
+  step = 0; paint();
+})();
+
+/* ---------- 听觉 ---------- */
+(function () {
+  const svg = $('#hear');
+  const X0 = 60, X1 = 640;
+  const bands = [['低音', 20, 250, '中等精度', 's-acc', .55], ['人声', 250, 4000, '高精度', 's-on', 1], ['高音', 4000, 20000, '较低精度', 's-acc', .45], ['超声波', 20000, 60000, '直接扔掉', 's-soft', .08]];
+  const lx = f => X0 + (Math.log10(f) - Math.log10(20)) / (Math.log10(60000) - Math.log10(20)) * (X1 - X0);
+  bands.forEach(([n, a, b, p, cls, h]) => {
+    const x1 = lx(a), x2 = lx(b), H = 150 * h;
+    el('rect', { x: x1 + 2, y: 170 - H, width: x2 - x1 - 4, height: H, rx: 6, class: cls }, svg);
+    txt(svg, (x1 + x2) / 2, 190, n, 't-main mid');
+    txt(svg, (x1 + x2) / 2, 208, p, n === '超声波' ? 't-sub mid t-on' : 't-sub mid');
+  });
+  [20, 100, 1000, 10000, 20000].forEach(f => txt(svg, lx(f), 226, f >= 1000 ? f / 1000 + 'k Hz' : f + ' Hz', 't-sub mid'));
+  txt(svg, X0, 14, '柱子高度 ≈ 人耳在这个频段有多敏感 = 给它分配多少位来编码', 't-sub');
+})();
+
+/* ---------- JPEG（真实的 8×8 DCT） ---------- */
+(function () {
+  const S = 128;
+  const orig = document.getElementById('jp-orig').getContext('2d');
+  // 程序画一张有边缘、有渐变、有噪点的图
+  const img = orig.createImageData(S, S);
+  let seed = 9; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
+    let r = 120 + y * .6, g = 170 - y * .3, b = 220 - y * .5;
+    const d = Math.hypot(x - 62, y - 70);
+    if (d < 34) { r = 210 + 20 * Math.sin(x * .9); g = 150 + 15 * Math.cos(y * .8); b = 90; }
+    if (Math.hypot(x - 50, y - 60) < 5 || Math.hypot(x - 74, y - 60) < 5) { r = g = b = 25; }
+    if (y > 104) { r = 70 + 30 * ((x >> 2) % 2); g = 140; b = 60; }
+    const n = (rnd() - .5) * 34;
+    const i = (y * S + x) * 4; img.data[i] = r + n; img.data[i + 1] = g + n; img.data[i + 2] = b + n; img.data[i + 3] = 255;
+  }
+  orig.putImageData(img, 0, 0);
+  // DCT 基
+  const C = Array.from({ length: 8 }, (_, u) => Array.from({ length: 8 }, (_, x) => (u === 0 ? Math.SQRT1_2 : 1) * Math.cos((2 * x + 1) * u * Math.PI / 16) / 2));
+  const ZZ = []; for (let s = 0; s < 15; s++) { const cells = []; for (let i = 0; i <= s; i++) { const j = s - i; if (i < 8 && j < 8) cells.push(s % 2 ? [i, j] : [j, i]); } ZZ.push(...cells); }
+  const comp = document.getElementById('jp-comp').getContext('2d');
+  function run() {
+    const k = +$('#jp-k').value;
+    const keep = new Set(ZZ.slice(0, k).map(([u, v]) => u * 8 + v));
+    const out = comp.createImageData(S, S);
+    for (let by = 0; by < S; by += 8) for (let bx = 0; bx < S; bx += 8) for (let ch = 0; ch < 3; ch++) {
+      const blk = Array.from({ length: 8 }, (_, y) => Array.from({ length: 8 }, (_, x) => img.data[((by + y) * S + bx + x) * 4 + ch] - 128));
+      const F = Array.from({ length: 8 }, () => Array(8).fill(0));
+      for (let u = 0; u < 8; u++) for (let v = 0; v < 8; v++) { if (!keep.has(u * 8 + v)) continue; let s = 0; for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) s += C[u][y] * C[v][x] * blk[y][x]; F[u][v] = s; }
+      for (let y = 0; y < 8; y++) for (let x = 0; x < 8; x++) { let s = 0; for (let u = 0; u < 8; u++) for (let v = 0; v < 8; v++) if (F[u][v]) s += C[u][y] * C[v][x] * F[u][v]; out.data[((by + y) * S + bx + x) * 4 + ch] = Math.max(0, Math.min(255, s + 128)); }
+    }
+    for (let i = 3; i < out.data.length; i += 4) out.data[i] = 255;
+    comp.putImageData(out, 0, 0);
+    $('#jp-kv').textContent = k;
+    $('#jp-read').innerHTML = `每个 8×8 块原本有 64 个系数，现在只留 <b>${k}</b> 个（约 ${Math.round(k / 64 * 100)}% 的数据）。` + (k <= 3 ? '只剩下最"平滑"的几个：每块几乎成了一个色块，8×8 的格子清清楚楚。' : k <= 12 ? '大致形状和颜色都在，细小的噪点和锐利边缘最先被抹掉。' : k < 64 ? '肉眼已经很难看出区别了。' : '完全没扔，和原图一样。');
+    // 系数示意
+    const z = $('#jp-zz'); z.innerHTML = '';
+    for (let u = 0; u < 8; u++) for (let v = 0; v < 8; v++) el('rect', { x: 10 + v * 16, y: 10 + u * 16, width: 14, height: 14, rx: 2, style: `fill:${keep.has(u * 8 + v) ? 'var(--on)' : 'var(--line)'}` }, z);
+    txt(z, 150, 30, '64 个系数', 't-sub'); txt(z, 150, 50, '左上：平滑、整体', 't-sub'); txt(z, 150, 70, '右下：细密的纹理', 't-sub'); txt(z, 150, 100, '橙色 = 保留', 't-sub t-on');
+  }
+  $('#jp-k').oninput = run; run();
+})();
+
+/* ---------- 视频 ---------- */
+(function () {
+  const W2 = 240, H2 = 150;
+  const full = $('#v-full').getContext('2d'), diff = $('#v-diff').getContext('2d');
+  let t = 0, paused = false, prev = null;
+  function scene(ctx, t) {
+    const g = ctx.createLinearGradient(0, 0, 0, H2); g.addColorStop(0, '#9cc3e6'); g.addColorStop(1, '#e8d9b5');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W2, H2);
+    ctx.fillStyle = '#6b8e4e'; ctx.fillRect(0, 110, W2, 40);
+    ctx.fillStyle = '#8a6a4a'; ctx.fillRect(20, 50, 40, 60); ctx.fillStyle = '#c94'; ctx.beginPath(); ctx.moveTo(15, 50); ctx.lineTo(40, 25); ctx.lineTo(65, 50); ctx.fill();
+    ctx.fillStyle = '#333'; ctx.fillRect(170, 60, 50, 36); ctx.fillStyle = '#7f7'; ctx.font = '14px monospace'; ctx.fillText(String(440 + Math.floor(t / 10) % 7), 178, 84);
+    const x = 100 + 40 * Math.sin(t / 12);
+    ctx.fillStyle = '#e8b48a'; ctx.beginPath(); ctx.arc(x, 85, 12, 0, Math.PI * 2); ctx.fill();
+  }
+  function frame() {
+    if (!paused) {
+      t++;
+      scene(full, t);
+      const cur = full.getImageData(0, 0, W2, H2);
+      const out = diff.createImageData(W2, H2);
+      let changed = 0;
+      for (let i = 0; i < cur.data.length; i += 4) {
+        const d = prev ? Math.abs(cur.data[i] - prev.data[i]) + Math.abs(cur.data[i + 1] - prev.data[i + 1]) + Math.abs(cur.data[i + 2] - prev.data[i + 2]) : 999;
+        if (d > 6) { out.data[i] = cur.data[i]; out.data[i + 1] = cur.data[i + 1]; out.data[i + 2] = cur.data[i + 2]; out.data[i + 3] = 255; changed++; }
+        else { out.data[i] = out.data[i + 1] = out.data[i + 2] = 40; out.data[i + 3] = 255; }
+      }
+      diff.putImageData(out, 0, 0);
+      prev = cur;
+      if (t % 5 === 0) $('#v-read').innerHTML = `这一帧和上一帧相比，只有 <b>${(changed / (W2 * H2) * 100).toFixed(1)}%</b> 的像素变了（挥动的手、频率发生器的读数）。背景、房子、草地都不用重新存——这就是时间冗余。`;
+    }
+    requestAnimationFrame(frame);
+  }
+  $('#v-pause').onclick = () => { paused = !paused; $('#v-pause').textContent = paused ? '继续' : '暂停'; };
+  frame();
+})();
+</script>
+</body>
+</html>

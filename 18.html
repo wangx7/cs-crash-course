@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>18 操作系统 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.g-a{fill:var(--on-soft);stroke:var(--on)}
+.g-b{fill:var(--accent-soft);stroke:var(--accent)}
+.g-c{fill:var(--ok-soft);stroke:var(--ok)}
+.g-w{fill:var(--bg);stroke:var(--muted);stroke-dasharray:4 3}
+.g-r{fill:transparent;stroke:var(--line);stroke-dasharray:2 3}
+.g-idle{fill:var(--bad-soft);stroke:var(--bad);stroke-dasharray:4 3}
+.vm-ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:12px;font-size:14px}
+.vm-ctl input[type=range]{width:220px}
+.btn.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.blocked{color:var(--bad);font-weight:700}
+</style>
+</head>
+<body data-ep="18">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=19" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 18 集</div>
+  <h1>操作系统</h1>
+  <p class="en">Operating Systems</p>
+  <p class="lead">计算机快到"人往读卡器里塞程序"比程序本身跑得还慢的时候，就需要一个程序来管理其他程序了。这一集讲操作系统怎样一步步学会批处理、驱动设备、多任务、虚拟内存、内存保护和分时。</p>
+  <div class="road">
+    <span>批处理</span><i>→</i><span>设备驱动</span><i>→</i><span>多任务（Atlas）</span><i>→</i><span>虚拟内存 / 内存保护</span><i>→</i><span>分时（Multics）</span><i>→</i><span>Unix 内核</span><i>→</i><span>个人电脑</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 批处理</a></li>
+    <li><a href="#ch1">1 · 设备驱动</a></li>
+    <li><a href="#ch2">2 · 多任务</a></li>
+    <li><a href="#ch3">3 · 虚拟内存</a></li>
+    <li><a href="#ch4">4 · 内存保护</a></li>
+    <li><a href="#ch5">5 · 分时与 Multics</a></li>
+    <li><a href="#ch6">6 · Unix</a></li>
+    <li><a href="#ch7">7 · 个人电脑的 OS</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从人工上机到批处理</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！</p>
+  <p>1940 年代和 50 年代初的计算机，一次只运行一个程序。程序员在自己桌上写好程序，比如写在穿孔卡上，然后拿到一个摆着房间大小计算机的机房，交给专门的计算机<b>操作员</b>。等计算机下一次空闲时，操作员把程序送进去，计算机运行它，吐出一些输出，然后停机。</p>
+  <p>当计算机还很慢、运行一个程序动辄要几小时、几天甚至几周的时候，这种非常手工的流程还能接受。但上一集说过，计算机变得越来越快……越来越快……呈指数级地快！很快，人跑来跑去往读卡器里塞程序的时间，比运行程序本身的时间还长。我们需要一种让计算机<b>自己操作自己</b>的方式，于是<b>操作系统</b>诞生了。</p>
+  <p>操作系统，简称 <b>OS</b>，其实也只是程序。但它在硬件上有<b>特殊权限</b>，可以运行和管理其他程序。它通常是计算机开机后第一个启动的程序，之后所有的程序都由操作系统启动。</p>
+  <p>操作系统起步于 1950 年代，那时计算机变得越来越普及、越来越强大。最早的操作系统改进了手工加载程序这件枯燥的事：计算机不再一次只接收一个程序，而是可以一次接收<b>一批</b>。一个程序跑完，它会自动、几乎立刻开始下一个，不再有停机时间让人满办公室去找下一个要运行的程序。这叫<b>批处理</b>（batch processing）。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="batch" viewBox="0 0 680 150" role="img" aria-label="人工上机与批处理"></svg></div>
+      <figcaption>图 1　计算机越来越快以后，人工换程序的空档（灰色）比程序本身还长；批处理把空档去掉了（示意）。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>设备驱动：不用再"插上祈祷"</h2>
+  <p>计算机变快的同时也变便宜了，于是它们出现在世界各地，尤其是大学和政府机构。很快，人们开始分享软件。但有一个问题。</p>
+  <p>在哈佛马克一号或 ENIAC 那种"独一份"的计算机时代，程序员只需要为那一台机器写代码，处理器、读卡器、打印机都是已知的、不变的。但随着计算机越来越普及，它们的配置并不总是相同，比如两台计算机 CPU 一样，打印机却不一样。这让程序员非常头疼：他们不仅要操心写自己的程序，还要操心怎样和每一种型号的打印机打交道，以及计算机连接的所有设备——这些统称<b>外部设备</b>（peripherals）。</p>
+  <p>和早期外部设备打交道非常底层，程序员需要了解每台设备的硬件细节。更糟的是，程序员很少能拿到所有型号的外设来测试代码，所以只能看着手册尽力去写，然后祈祷分享出去以后能用。那时候可不是"即插即用"（plug-and-play），更像是"插上祈祷"（plug-and-pray）。</p>
+  <p>这显然很糟糕。所以为了让程序员轻松一点，操作系统站出来，充当软件程序和硬件外设之间的<b>中间人</b>。更具体地说，操作系统通过 API 提供了一种软件抽象，叫<b>设备驱动程序</b>（device driver），让程序员能用标准化的方式和常见的输入输出硬件——简称 <b>I/O</b>——打交道。比如，程序员只要调用一个像 <code>print(highscore)</code> 这样的函数，操作系统就会完成把它印到纸上的那些繁重工作。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="drivers" viewBox="0 0 680 230" role="img" aria-label="设备驱动的抽象"></svg></div>
+      <figcaption>图 2　程序只说"打印"；不同型号的打印机怎么驱动，由操作系统里对应的驱动程序负责。</figcaption>
+    </figure>
+  </div>
+  <div class="extra">
+    <span class="t">和前端的类比</span>
+    这和浏览器很像：你写 <code>fetch()</code>，不用关心电脑用的是网线还是 Wi-Fi、是哪家的网卡——浏览器和操作系统替你处理了。好的抽象，就是让上一层只面对一个统一的接口。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>多任务：Atlas 让 CPU 不再闲着</h2>
+  <p>到 1950 年代末，计算机已经快到经常闲着，等待打印机、读卡器这些慢吞吞的机械设备。当程序<b>阻塞在 I/O 上</b>时，昂贵的处理器就在那儿发呆……不是反派那种"冷血"，只是在放空。</p>
+  <p>50 年代末，英国的曼彻斯特大学开始研制一台叫 <b>Atlas</b> 的超级计算机，它是世界上最早的超级计算机之一。他们知道这台机器会快得吓人，所以需要一种方法来最大限度地利用这台昂贵的机器。他们的解决方案是一个叫 <b>Atlas Supervisor</b> 的程序，于 1962 年完成。这个操作系统不仅能像早期的批处理系统那样自动加载程序，还能<b>在它唯一的 CPU 上同时运行好几个程序</b>。它靠的是巧妙的<b>调度</b>（scheduling）。</p>
+  <p>假设 Atlas 上正运行着一个游戏程序，我们调用了 <code>print(highscore)</code>，让 Atlas 把变量 highscore 的值打印到纸上，好向朋友炫耀我们是虚拟弹珠游戏的终极冠军。这个函数调用要花一阵子，相当于几千个时钟周期，因为机械打印机和电子 CPU 比起来太慢了。所以 Atlas 不去等 I/O 完成，而是让我们的程序<b>休眠</b>，然后挑选另一个正在等待、准备好运行的程序来运行。最终，打印机会向 Atlas 报告 highscore 已经打印完了，Atlas 就把我们的程序标记为<b>可以继续</b>，在之后某个时刻，它会被再次安排到 CPU 上运行，接着执行 print 语句之后的下一行代码。</p>
+  <p>这样，Atlas 就能让一个程序在 CPU 上做计算，同时另一个程序在打印数据，还有一个在从纸带上读数据。Atlas 的工程师在这个想法上加倍下注，给计算机配了 4 台纸带读取器、4 台纸带打孔机和多达 8 台磁带机。这让很多程序可以同时进行，共享一个 CPU 的时间。这种由操作系统提供的能力，叫<b>多任务处理</b>（multitasking）。</p>
+
+  <div class="card">
+    <h3>动手：一个 CPU，三个程序</h3>
+    <span class="seg-btns" id="mt-mode"><button data-m="single">一次只跑一个</button><button data-m="multi">多任务（Atlas）</button></span>
+    <div class="scroll-x" style="margin-top:12px"><svg class="diagram" id="mt" viewBox="0 0 700 220" role="img" aria-label="多任务调度时间线"></svg></div>
+    <div class="step-text" id="mt-cap"></div>
+    <p class="hint">实心格 = 在 CPU 上运行；虚线灰格 = 在等打印机 / 纸带（I/O）；红色虚线 = CPU 空闲</p>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>内存分配与虚拟内存</h2>
+  <p>不过，在一台计算机上同时运行很多程序有一个大问题：每个程序都需要一些内存，而且切换到另一个程序时，不能把这个程序的数据弄丢。解决办法是给每个程序<b>分配一块属于自己的内存</b>。比如，假设一台计算机一共有 10,000 个内存位置，程序 A 可能分到地址 0 到 999，程序 B 分到 1000 到 1999，以此类推。如果某个程序请求更多内存，操作系统决定能不能批准，如果能，再决定接下来分配哪一块。</p>
+  <p>这种灵活性很好，但带来一个怪现象：程序 A 最后分到的内存块可能<b>不连续</b>，比如地址 0 到 999，加上 2000 到 2999。这还只是个简单例子，真实的程序可能分到几十块，散落在内存各处。可以想象，这会让程序员很难追踪。比如内存里有一长串销售数据，程序每天下班要把它们加起来，可这串数据被存在一堆不同的内存块里。</p>
+  <p>为了隐藏这种复杂性，操作系统把内存地址<b>虚拟化</b>了。有了<b>虚拟内存</b>（virtual memory），程序可以认为自己的内存总是从地址 0 开始，简单又一致。而实际在计算机内存里的物理位置，被操作系统隐藏和抽象了。又一层新的抽象。</p>
+  <p>拿程序 B 举例，它分到了从地址 1000 到 1999 的一块内存。在程序 B 看来，这是一块从 0 到 999 的内存。操作系统和 CPU 会自动处理虚拟地址到物理地址的重新映射，所以如果程序 B 请求内存地址 42，实际读到的是地址 1042。</p>
+  <p>这种内存地址虚拟化对程序 A 更有用。在我们的例子里，它分到了两块彼此隔开的内存，这对程序 A 同样是不可见的：在它看来，自己分到的是一整块连续的 2000 个地址。当程序 A 读内存地址 999 时，碰巧映射到物理地址 999；但如果它读下一个地址 1000，背后会映射到物理地址 2000。</p>
+
+  <div class="card">
+    <h3>动手：虚拟地址 → 物理地址</h3>
+    <div class="scroll-x"><svg class="diagram" id="vm" viewBox="0 0 700 300" role="img" aria-label="虚拟内存映射"></svg></div>
+    <div class="vm-ctl">
+      <span>程序：</span><button class="btn" data-p="A">程序 A</button><button class="btn" data-p="B">程序 B</button>
+      <label>它要访问的地址 <input type="range" id="vm-addr" min="0" max="2999" value="42"> <b id="vm-addr-v" style="font-family:var(--mono)"></b></label>
+    </div>
+    <div class="btns">
+      <button class="btn" data-ex="B42">B 读 42</button>
+      <button class="btn" data-ex="A999">A 读 999</button>
+      <button class="btn" data-ex="A1000">A 读 1000</button>
+      <button class="btn" data-ex="Agrow">A 再要 1000 个位置</button>
+      <button class="btn" data-ex="Bbad">B 乱写到 1500</button>
+      <button class="btn" data-ex="reset">重来</button>
+    </div>
+    <div class="step-text" id="vm-cap"></div>
+  </div>
+
+  <p>这种机制让程序的内存大小可以灵活增减，叫<b>动态内存分配</b>（dynamic memory allocation），而在程序看来内存始终是连续的。它让一切都变简单了，也给操作系统同时运行多个程序带来了极大的灵活性。</p>
+  <div class="extra">
+    <span class="t">和你写的代码有什么关系</span>
+    你在 JS 里 <code>new Array(1e6)</code> 或往对象里塞东西时，JS 引擎会向操作系统要内存；操作系统给的是虚拟地址，物理上可能七零八落，但你的程序完全感觉不到。每个浏览器标签页是一个独立进程、有自己的虚拟地址空间，一个页面崩了不会拖垮别的页面——这就是下一节说的内存保护。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>内存保护</h2>
+  <p>给每个程序分配自己的内存还有一个好处：程序之间<b>隔离</b>得更好。如果一个有 bug 的程序跑偏了，开始乱写一通，它只能糟蹋自己的内存，影响不到其他程序。这个特性叫<b>内存保护</b>（memory protection）。</p>
+  <p>它对防范恶意软件，比如病毒，也非常有用。比如，我们一般不希望其他程序能读取或修改我们邮件程序的内存。有了那种权限，恶意软件就可能以你的名义发邮件，甚至窃取个人信息。可不好！</p>
+  <p>Atlas 既有虚拟内存，也有内存保护，它是第一台支持这些功能的计算机和操作系统！</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>终端、分时与 Multics</h2>
+  <p>到了 1970 年代，计算机已经足够快、足够便宜，大学之类的机构可以买一台计算机让学生使用。它不仅快到能同时运行好几个程序，还能让<b>好几个用户同时交互地使用</b>。这是通过<b>终端</b>实现的：终端就是一个键盘加一块屏幕，连到一台大计算机上，本身没有任何处理能力。一台冰箱大小的计算机可能连着 50 个终端，供多达 50 个用户使用。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="terms" viewBox="0 0 680 220" role="img" aria-label="一台主机连着很多终端"></svg></div>
+      <figcaption>图 3　终端只有键盘和屏幕；所有计算都在中间那台主机上，由分时操作系统分给每个用户一小份。</figcaption>
+    </figure>
+  </div>
+
+  <p>现在操作系统不仅要处理多个程序，还要处理多个用户。为了不让任何一个人吃光计算机的全部资源，人们开发了提供<b>分时</b>（time-sharing）的操作系统。分时意味着每个用户只能使用计算机处理器、内存等资源的一小部分。因为计算机非常快，即使只拿到 1/50 的资源，也足够个人完成许多任务。</p>
+  <p>早期分时操作系统中最有影响力的是 <b>Multics</b>（Multiplexed Information and Computing Service，多路信息与计算服务），于 1969 年发布。Multics 是第一个<b>从一开始就按安全来设计</b>的主要操作系统。开发者不希望调皮的用户访问他们不该访问的数据，比如学生想登进教授的账户去看期末考试题。这样的功能让 Multics 在当时非常复杂，大约要占用 1 兆位（Megabit）的内存，这在当时可是很多了！光运行操作系统就可能占掉计算机一半的内存！</p>
+  <p>Multics 的研究人员之一 Dennis Ritchie 曾说：</p>
+  <blockquote class="quote"><b>"Multics 在商业上没能成功，一个明显的原因是它在某种意义上被过度设计了，里面东西实在太多。"</b><span class="who">—— Dennis Ritchie</span></blockquote>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>Unix：精简的内核</h2>
+  <p>这让 Dennis 和另一位 Multics 研究员 Ken Thompson 决定自立门户，打造一个新的、精简的操作系统，叫 <b>Unix</b>。他们想把操作系统分成两部分：第一部分是操作系统的核心功能，比如内存管理、多任务和 I/O 处理，这叫<b>内核</b>（kernel）；第二部分是一大堆和内核打包在一起、但不属于内核的有用工具，比如各种程序和程序库。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="unix" viewBox="0 0 680 250" role="img" aria-label="Unix：内核与工具"></svg></div>
+      <figcaption>图 4　Unix 的分层：内核只做最核心的几件事，其余功能都做成内核外面的工具。</figcaption>
+    </figure>
+  </div>
+
+  <p>打造一个紧凑、精简的内核，意味着要有意<b>舍弃一些功能</b>。另一位 Multics 开发者 Tom Van Vleck 回忆说："我跟 Dennis 说，我在 Multics 里写的代码，足足有一半是错误恢复代码。"Dennis 说："这些东西我们在 Unix 里全都省掉了。如果出了错，我们有个叫 panic 的例程，一调用它，机器就崩溃，然后你冲着走廊大喊：'嘿，重启一下！'"</p>
+  <p>你可能听说过<b>内核恐慌</b>（kernel panic），这个词就是这么来的。它指的就是内核崩溃了、没有办法恢复，于是调用一个叫"panic"的函数。最初这个函数做的事只是打印"panic"这个词，然后进入一个无限循环。</p>
+  <p>这种简单让 Unix 能在更便宜、更多样的硬件上运行，因此在 Dennis 和 Ken 工作的贝尔实验室里大受欢迎。随着越来越多开发者用 Unix 来编写和运行自己的程序，大家贡献的工具也越来越多。1971 年发布后不久，它就有了不同编程语言的编译器，甚至还有了文字处理器，很快成为 1970、80 年代最流行的操作系统之一。</p>
+  <div class="extra">
+    <span class="t">Unix 的后代</span>
+    你的 Mac 的 macOS、iPhone 的 iOS 都是 Unix 一脉；Linux 是照着 Unix 的样子重写的，安卓、绝大多数服务器、你以后部署前端项目用的云主机，跑的都是它。你在终端里敲的 <code>ls</code>、<code>cd</code>、<code>grep</code>，就是当年那些"内核之外的工具"的后代。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>个人电脑的操作系统</h2>
+  <p>与此同时，到 1980 年代初，一台基础计算机的价格已经降到个人买得起的程度，叫<b>个人电脑</b>或家用电脑。它们比大学、公司和政府里的大型主机简单得多，所以操作系统也得同样简单。比如，微软的磁盘操作系统 <b>MS-DOS</b> 只有 160 KB，正如它的名字所说，一张磁盘就装得下。它在 1981 年首次发布，成为早期家用电脑上最流行的操作系统，尽管它<b>没有多任务，也没有内存保护</b>。这意味着程序可能、也确实会经常把整个系统搞崩溃。虽然很烦人，但这是可以接受的权衡，因为用户可以把自己的电脑关掉再打开！</p>
+  <p>就连微软 1985 年首次发布、整个 90 年代主宰操作系统市场的早期 Windows，也缺乏强有力的内存保护。程序行为不端时，你可能会看到<b>"死亡蓝屏"</b>，这表示某个程序崩溃得太厉害，把整个操作系统都拖垮了。幸运的是，新版 Windows 有了更好的保护，通常不会那么频繁地崩溃。</p>
+  <p>今天，计算机运行着现代操作系统，比如 Mac OS X、Windows 10、Linux、iOS 和 Android。尽管我们拥有的计算机大多只有一个人在用——就是你！——但它们的操作系统全都有多任务、虚拟内存和内存保护。所以它们能同时运行很多程序：你可以在浏览器里看 YouTube，在 Photoshop 里修图，用 Spotify 放音乐，同时让 Dropbox 同步文件。如果没有几十年来对操作系统的研究和发展，这一切都不可能实现——当然，还需要合适的存储器来存放这些程序，我们下周讲。</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <ul class="timeline">
+    <li><span class="yr">1950s</span>批处理：一批程序自动接连运行，不用人来回换</li>
+    <li><span class="yr">设备驱动</span>操作系统做程序和外设之间的中间人，程序只调用 <code>print()</code></li>
+    <li><span class="yr">1962</span>Atlas Supervisor：程序等 I/O 时让它休眠、换别的程序上 CPU —— 多任务；还首次有了虚拟内存和内存保护</li>
+    <li><span class="yr">1969</span>Multics：分时、多用户、从设计起就考虑安全，但过度设计</li>
+    <li><span class="yr">1971</span>Unix：精简的内核 + 内核外的工具；出错就 panic</li>
+    <li><span class="yr">1981</span>MS-DOS：160 KB，没有多任务和内存保护，崩了就重启</li>
+    <li><span class="yr">今天</span>macOS、Windows、Linux、iOS、Android 都有多任务、虚拟内存、内存保护</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    操作系统是一个有特殊权限、负责管理其他程序的程序：它替程序跟硬件打交道（驱动），让一个 CPU 轮流跑很多程序（多任务、分时），给每个程序一块看起来从 0 开始、连续的私有内存（虚拟内存、内存保护）。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 设备驱动解决了什么问题？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不同计算机接的外设型号不同，程序员没法为每一种写底层代码、也没法每种都测试。操作系统通过驱动提供统一的 API，程序只要调用 <code>print(...)</code>，具体怎么驱动这台打印机由驱动负责。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. Atlas 只有一个 CPU，怎么做到"同时"运行多个程序？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">调度：一个程序要等慢速 I/O（比如打印）时，操作系统让它休眠，把 CPU 交给另一个准备好的程序；I/O 完成后再把它标记为可运行，之后轮到它时接着往下执行。CPU 不再空等，多个程序轮流共享 CPU 时间。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 程序 A 分到物理地址 0~999 和 2000~2999。它读自己的地址 1000，实际读到哪里？为什么要这样设计？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">物理地址 2000。虚拟内存让程序看到一块从 0 开始、连续的内存，不用管它在物理上被拆成了几块、在哪里；操作系统和 CPU 自动做映射。这样内存可以灵活增减（动态分配），程序也写得简单。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. Unix 的"内核"包括什么？为什么说它的精简是一种取舍？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">内核只包含核心功能：内存管理、多任务、I/O 处理；其余程序和库都放在内核之外。精简意味着故意舍弃功能，比如大量错误恢复代码——出错就 panic、重启。换来的是能在更便宜、更多样的硬件上运行。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="17.html"><small>← 上一集</small>17 集成电路与摩尔定律</a>
+    <a class="next" href="19.html"><small>下一集 →</small>19 内存与储存介质</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 18 集 Operating Systems（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 批处理 ---------- */
+(function () {
+  const svg = $('#batch');
+  const X0 = 120, U = 22;
+  const bar = (y, x, w, cls, t) => { el('rect', { x: X0 + x * U, y, width: w * U - 3, height: 30, rx: 5, class: cls }, svg); if (t) txt(svg, X0 + x * U + (w * U - 3) / 2, y + 20, t, 't-sub mid'); };
+  txt(svg, X0 - 10, 40, '人工上机', 't-main end');
+  let x = 0;
+  ['程序 1', '程序 2', '程序 3'].forEach((p, i) => { bar(20, x, 3, 'g-a', p); x += 3; if (i < 2) { bar(20, x, 4, 'g-w', '人去换卡'); x += 4; } });
+  txt(svg, X0 - 10, 100, '批处理', 't-main end t-on');
+  x = 0;
+  ['程序 1', '程序 2', '程序 3'].forEach(p => { bar(80, x, 3, 'g-a', p); x += 3; });
+  txt(svg, X0 + 9 * U + 8, 100, '← 早早跑完', 't-sub t-on');
+  txt(svg, X0, 138, '时间 →', 't-sub');
+})();
+
+/* ---------- 驱动 ---------- */
+(function () {
+  const svg = $('#drivers');
+  el('rect', { x: 20, y: 90, width: 150, height: 50, rx: 10, class: 's-on' }, svg);
+  txt(svg, 95, 112, '你的程序', 't-main mid'); txt(svg, 95, 130, 'print(highscore)', 't-mono mid');
+  el('rect', { x: 230, y: 30, width: 170, height: 170, rx: 12, class: 's-acc' }, svg);
+  txt(svg, 315, 52, '操作系统', 't-main mid');
+  ['A 牌打印机驱动', 'B 牌打印机驱动', '读卡器驱动'].forEach((t, i) => {
+    el('rect', { x: 245, y: 70 + i * 42, width: 140, height: 32, rx: 6, class: 's-panel' }, svg);
+    txt(svg, 315, 91 + i * 42, t, 't-sub mid');
+    el('path', { d: `M385,${86 + i * 42} H470`, class: 's-line' }, svg);
+    el('rect', { x: 470, y: 70 + i * 42, width: 120, height: 32, rx: 6, class: 's-soft' }, svg);
+    txt(svg, 530, 91 + i * 42, ['A 牌打印机', 'B 牌打印机', '穿孔卡读卡器'][i], 't-sub mid');
+  });
+  el('path', { d: 'M170,115 H230', class: 's-line' }, svg);
+  txt(svg, 200, 106, 'API', 't-sub mid t-acc');
+  txt(svg, 530, 216, '外部设备（peripherals）', 't-sub mid');
+  txt(svg, 95, 170, '只管"打印"', 't-sub mid');
+})();
+
+/* ---------- 多任务 ---------- */
+(function () {
+  const svg = $('#mt');
+  // 每个程序：交替的 [类型, 长度]，c = 计算，w = 等 I/O
+  const PROGS = [
+    { name: '游戏', cls: 'g-a', seq: [['c', 2], ['w', 4, '打印 highscore'], ['c', 2]] },
+    { name: '统计', cls: 'g-b', seq: [['c', 3], ['w', 3, '读纸带'], ['c', 1]] },
+    { name: '算账', cls: 'g-c', seq: [['c', 2]] },
+  ];
+  const X0 = 90, U = 30;
+  function simulate(multi) {
+    const st = PROGS.map(p => ({ i: 0, left: p.seq[0][1], wait: false, done: false }));
+    const rows = PROGS.map(() => []), cpu = [];
+    let cur = 0, t = 0;
+    while (st.some(s => !s.done) && t < 40) {
+      // 选一个能用 CPU 的程序
+      let run = -1;
+      if (multi) {
+        for (let k = 0; k < 3; k++) { const j = (cur + k) % 3; const s = st[j]; if (!s.done && PROGS[j].seq[s.i][0] === 'c') { run = j; break; } }
+      } else {
+        const j = st.findIndex(s => !s.done);
+        if (j >= 0 && PROGS[j].seq[st[j].i][0] === 'c') run = j;
+      }
+      cpu.push(run);
+      st.forEach((s, j) => {
+        if (s.done) { rows[j].push(null); return; }
+        const kind = PROGS[j].seq[s.i][0];
+        const active = multi ? true : j === st.findIndex(x => !x.done);
+        if (kind === 'w' && active) { rows[j].push('w'); s.left--; }
+        else if (kind === 'c' && run === j) { rows[j].push('c'); s.left--; }
+        else rows[j].push(multi || active ? 'r' : null);
+        if (s.left === 0) { s.i++; if (s.i >= PROGS[j].seq.length) s.done = true; else s.left = PROGS[j].seq[s.i][1]; }
+      });
+      if (run >= 0) cur = run;
+      t++;
+    }
+    return { rows, cpu, T: t };
+  }
+  function draw(mode) {
+    svg.innerHTML = '';
+    const { rows, cpu, T } = simulate(mode === 'multi');
+    for (let c = 0; c <= 18; c++) txt(svg, X0 + c * U, 16, String(c), 't-sub mid');
+    rows.forEach((r, j) => {
+      const y = 28 + j * 40;
+      txt(svg, X0 - 10, y + 20, PROGS[j].name, 't-main end');
+      r.forEach((k, c) => {
+        if (!k) return;
+        el('rect', { x: X0 + c * U + 2, y, width: U - 4, height: 28, rx: 4, class: k === 'c' ? PROGS[j].cls : k === 'w' ? 'g-w' : 'g-r' }, svg);
+      });
+    });
+    const y = 28 + 3 * 40 + 10;
+    txt(svg, X0 - 10, y + 20, 'CPU', 't-main end');
+    let idle = 0;
+    cpu.forEach((j, c) => {
+      if (j < 0) idle++;
+      el('rect', { x: X0 + c * U + 2, y, width: U - 4, height: 28, rx: 4, class: j < 0 ? 'g-idle' : PROGS[j].cls }, svg);
+    });
+    el('line', { x1: X0 + T * U, y1: 22, x2: X0 + T * U, y2: y + 34, style: 'stroke:var(--ink);stroke-dasharray:4 3' }, svg);
+    txt(svg, X0 + T * U + 6, y + 50, `全部跑完：${T} 格`, 't-sub');
+    $$('#mt-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    $('#mt-cap').innerHTML = mode === 'multi'
+      ? `多任务：游戏要打印时被<b>休眠</b>，CPU 立刻交给统计程序；统计去读纸带时，又交给算账程序。打印完成后游戏被标记为可运行，轮到它时接着往下跑。一共 <b>${T}</b> 格，CPU 只空闲 <b>${idle}</b> 格。`
+      : `一次只跑一个：游戏等打印机的那 4 格、统计等纸带的那 3 格里，CPU 什么也不做。一共 <b>${T}</b> 格，CPU 空闲了 <b>${idle}</b> 格。`;
+  }
+  $$('#mt-mode button').forEach(b => b.onclick = () => draw(b.dataset.m));
+  draw('single');
+})();
+
+/* ---------- 虚拟内存 ---------- */
+(function () {
+  const svg = $('#vm');
+  const PX0 = 40, PW = 620, PY = 40;               // 物理内存条
+  const sx = a => PX0 + a / 10000 * PW;
+  let alloc, prog = 'B', addr = 42, attempt = null;
+  function reset() { alloc = { A: [[0, 1000], [2000, 3000]], B: [[1000, 2000]] }; prog = 'B'; addr = 42; attempt = null; }
+  const size = p => alloc[p].reduce((s, [a, b]) => s + b - a, 0);
+  function toPhys(p, v) {
+    let off = v;
+    for (const [a, b] of alloc[p]) { if (off < b - a) return a + off; off -= b - a; }
+    return null;
+  }
+  function draw() {
+    svg.innerHTML = '';
+    txt(svg, PX0, PY - 12, '物理内存：0 ~ 9999（每格 1000 个位置）', 't-sub');
+    for (let k = 0; k < 10; k++) {
+      const owner = Object.keys(alloc).find(p => alloc[p].some(([a]) => a === k * 1000));
+      el('rect', { x: sx(k * 1000) + 1, y: PY, width: PW / 10 - 2, height: 40, rx: 4, class: owner === 'A' ? 's-on' : owner === 'B' ? 's-acc' : 's-soft' }, svg);
+      txt(svg, sx(k * 1000) + PW / 20, PY + 25, owner ? '程序 ' + owner : '空', 't-sub mid');
+      txt(svg, sx(k * 1000) + 2, PY + 56, String(k * 1000), 't-sub');
+    }
+    // 程序 A、B 的虚拟视图（用单独的比例尺，画得宽一些）
+    const VS = Math.max(4000, size('A') + 700, size('B') + 700);
+    const views = { A: 150, B: 230 };
+    Object.entries(views).forEach(([p, y]) => {
+      const n = size(p), w = n / VS * PW;
+      txt(svg, PX0, y - 10, `程序 ${p} 看到的内存：0 ~ ${n - 1}，连续的一整块`, 't-sub');
+      el('rect', { x: PX0, y, width: w, height: 32, rx: 6, class: p === 'A' ? 's-on' : 's-acc', style: prog === p ? '' : 'opacity:.45' }, svg);
+      let off = 0;
+      alloc[p].forEach(([a, b], i) => {
+        if (i) el('line', { x1: PX0 + off / VS * PW, y1: y, x2: PX0 + off / VS * PW, y2: y + 32, class: 's-dash' }, svg);
+        txt(svg, PX0 + (off + (b - a) / 2) / VS * PW, y + 21, `→ 物理 ${a}~${b - 1}`, 't-sub mid');
+        off += b - a;
+      });
+    });
+    // 当前访问
+    const n = size(prog), y = views[prog];
+    const v = attempt != null ? attempt : addr;
+    const vx = PX0 + Math.min(v, n + 600) / VS * PW;
+    const phys = v < n ? toPhys(prog, v) : null;
+    el('circle', { cx: vx, cy: y + 16, r: 6, style: `fill:${phys == null ? 'var(--bad)' : 'var(--ink)'}` }, svg);
+    if (phys != null) {
+      el('path', { d: `M${vx},${y} C${vx},${y - 40} ${sx(phys)},${PY + 90} ${sx(phys)},${PY + 42}`, style: 'fill:none;stroke:var(--ink);stroke-width:2' }, svg);
+      el('circle', { cx: sx(phys), cy: PY + 20, r: 6, style: 'fill:var(--ink)' }, svg);
+    } else {
+      txt(svg, vx + 10, y + 50, '✕ 不在它的内存里', 't-main t-on');
+    }
+    $('#vm-addr').max = Math.max(size('A'), size('B')) - 1 + 600;
+    $('#vm-addr').value = Math.min(v, +$('#vm-addr').max);
+    $('#vm-addr-v').textContent = v;
+    $$('#ch3 [data-p]').forEach(b => b.classList.toggle('sel', b.dataset.p === prog));
+    let s;
+    if (phys == null) s = `程序 ${prog} 想访问自己的地址 ${v}，可它只有 0~${n - 1}。<span class="blocked">操作系统拦下了这次访问</span>——这就是<b>内存保护</b>：它乱写也只能写坏自己的内存，碰不到别人的。`;
+    else s = `程序 ${prog} 访问自己的地址 <b>${v}</b> → 操作系统和 CPU 自动映射到物理地址 <b>${phys}</b>。` + (prog === 'A' && v >= 1000 && v < 2000 ? '（A 的第二块在物理 2000 开始，A 自己完全感觉不到中间隔着 B。）' : '');
+    $('#vm-cap').innerHTML = s;
+  }
+  $('#vm-addr').oninput = () => { addr = +$('#vm-addr').value; attempt = null; draw(); };
+  $$('#ch3 [data-p]').forEach(b => b.onclick = () => { prog = b.dataset.p; attempt = null; addr = Math.min(addr, size(prog) - 1); draw(); });
+  $$('#ch3 [data-ex]').forEach(b => b.onclick = () => {
+    const e = b.dataset.ex; attempt = null;
+    if (e === 'B42') { prog = 'B'; addr = 42; }
+    else if (e === 'A999') { prog = 'A'; addr = 999; }
+    else if (e === 'A1000') { prog = 'A'; addr = 1000; }
+    else if (e === 'Agrow') {
+      const used = new Set(Object.values(alloc).flat().map(([a]) => a));
+      let k = 0; while (used.has(k * 1000)) k++;
+      if (k < 10) { alloc.A.push([k * 1000, k * 1000 + 1000]); prog = 'A'; addr = size('A') - 1; draw(); $('#vm-cap').innerHTML += `<br>A 请求更多内存，操作系统找到空闲的物理块 ${k * 1000}~${k * 1000 + 999} 分给它；在 A 看来，只是自己的内存往后延长了 1000 个位置——这就是<b>动态内存分配</b>。`; return; }
+    }
+    else if (e === 'Bbad') { prog = 'B'; attempt = 1500; }
+    else if (e === 'reset') reset();
+    draw();
+  });
+  reset(); draw();
+})();
+
+/* ---------- 终端 ---------- */
+(function () {
+  const svg = $('#terms');
+  el('rect', { x: 290, y: 70, width: 100, height: 120, rx: 10, class: 's-on' }, svg);
+  txt(svg, 340, 122, '主机', 't-main mid'); txt(svg, 340, 142, '冰箱大小', 't-sub mid'); txt(svg, 340, 160, '分时操作系统', 't-sub mid');
+  for (let i = 0; i < 10; i++) {
+    const left = i < 5, k = i % 5;
+    const x = left ? 40 + (k % 2) * 60 : 540 + (k % 2) * 60, y = 20 + k * 38;
+    el('path', { d: `M${left ? x + 44 : x},${y + 14} L${left ? 290 : 390},${130}`, class: 's-thin' }, svg);
+    el('rect', { x, y, width: 44, height: 28, rx: 3, class: 's-panel' }, svg);
+    el('rect', { x: x + 6, y: y + 4, width: 32, height: 14, rx: 2, style: 'fill:var(--accent-soft)' }, svg);
+  }
+  txt(svg, 340, 30, '…最多 50 个终端（键盘 + 屏幕，没有处理能力）', 't-sub mid');
+  txt(svg, 340, 210, '每个用户分到约 1/50 的处理器和内存', 't-sub mid t-acc');
+})();
+
+/* ---------- Unix ---------- */
+(function () {
+  const svg = $('#unix');
+  el('ellipse', { cx: 250, cy: 125, rx: 220, ry: 110, class: 's-acc' }, svg);
+  el('ellipse', { cx: 250, cy: 125, rx: 110, ry: 55, class: 's-on' }, svg);
+  txt(svg, 250, 112, '内核 kernel', 't-main mid');
+  txt(svg, 250, 132, '内存管理 · 多任务', 't-sub mid'); txt(svg, 250, 148, 'I/O 处理', 't-sub mid');
+  [['编译器', 120, 50], ['文字处理器', 380, 50], ['程序库', 70, 130], ['各种小工具', 430, 130], ['你的程序', 130, 210], ['shell', 370, 210]].forEach(([t, x, y]) => txt(svg, x, y, t, 't-sub mid'));
+  txt(svg, 250, 30, '内核外面：打包在一起的工具和程序', 't-sub mid t-acc');
+  el('rect', { x: 500, y: 60, width: 160, height: 130, rx: 10, class: 's-soft' }, svg);
+  txt(svg, 580, 84, 'Multics', 't-main mid');
+  txt(svg, 580, 106, '什么都往里放', 't-sub mid'); txt(svg, 580, 124, '一半代码是错误恢复', 't-sub mid'); txt(svg, 580, 142, 'OS 占内存的一半', 't-sub mid');
+  txt(svg, 580, 172, 'Unix：出错就 panic', 't-sub mid t-on');
+})();
+</script>
+</body>
+</html>

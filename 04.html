@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>04 二进制 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.bits{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 6px}
+.bit{display:flex;flex-direction:column;align-items:center;gap:4px}
+.bit button{width:44px;height:52px;border-radius:10px;border:2px solid var(--line);background:var(--panel);font:700 22px var(--mono);color:var(--muted);cursor:pointer;transition:all .15s}
+.bit button.on{background:var(--on);border-color:var(--on);color:#fff;box-shadow:0 0 12px var(--on-glow)}
+.bit small{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.bit.sign button.on{background:var(--bad);border-color:var(--bad);box-shadow:none}
+.dec-cols{display:flex;gap:6px;margin:12px 0 6px}
+.dec-cols .bit div{width:44px;height:52px;border-radius:10px;border:2px solid var(--accent);background:var(--accent-soft);font:700 22px/48px var(--mono);text-align:center;color:var(--accent)}
+.cols{display:grid;gap:4px;font-family:var(--mono);font-size:20px;align-items:center;margin:12px 0}
+.cols .lab{font-family:inherit;font-size:13px;color:var(--muted);text-align:right;padding-right:8px}
+.cols .c{text-align:center;height:36px;line-height:36px;border-radius:7px;transition:background .2s}
+.cols .c.hl{background:var(--on-soft)}
+.cols .carry{font-size:14px;color:var(--on);font-weight:700}
+.cols .res{font-weight:700}
+.cols .rule{border-top:2px solid var(--ink);height:0}
+.two-col{display:grid;grid-template-columns:1fr 1.6fr;gap:20px}
+@media (max-width:760px){.two-col{grid-template-columns:1fr}}
+.f-bits{display:flex;flex-wrap:wrap;gap:2px;margin:12px 0}
+.f-bits span{width:20px;height:28px;line-height:28px;text-align:center;font:600 13px var(--mono);border-radius:4px}
+.f-bits .s{background:var(--bad-soft);color:var(--bad)}
+.f-bits .e{background:var(--accent-soft);color:var(--accent)}
+.f-bits .m{background:var(--on-soft);color:var(--on)}
+.f-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.f-legend b{font-family:var(--mono)}
+.inp{font:16px var(--mono);padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:220px}
+.inp.wide{width:100%;max-width:420px}
+.ascii-out{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.ascii-out div{border:1px solid var(--line);border-radius:8px;padding:6px 8px;text-align:center;background:var(--panel);min-width:72px}
+.ascii-out .ch{font-size:20px;font-weight:700;line-height:1.2}
+.ascii-out .d{font:13px var(--mono);color:var(--accent)}
+.ascii-out .b{font:12px var(--mono);color:var(--muted)}
+.ascii-out .bad{border-color:var(--bad);background:var(--bad-soft)}
+.moji{width:100%;border-collapse:collapse;margin-top:10px;font-size:15px}
+.moji td{border-bottom:1px solid var(--line);padding:8px 6px;vertical-align:top}
+.moji td:first-child{color:var(--muted);font-size:13px;white-space:nowrap;width:150px}
+.moji .ok{color:var(--ok);font-weight:700}
+.hex{font:13px var(--mono);color:var(--muted);word-break:break-all}
+</style>
+</head>
+<body data-ep="4">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=5" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 4 集</div>
+  <h1>二进制</h1>
+  <p class="en">Representing Numbers and Letters with Binary</p>
+  <p class="lead">只有 0 和 1，怎么表示 263、−5、3.14，还有你的名字？这一集讲计算机怎样把数字、文字，乃至一切东西，都变成一长串位。</p>
+  <div class="road">
+    <span>二进制数</span><i>→</i><span>二进制加法</span><i>→</i><span>位、字节、KB</span><i>→</i><span>正负数</span><i>→</i><span>浮点数</span><i>→</i><span>ASCII</span><i>→</i><span>Unicode</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 只有两个值怎么办</a></li>
+    <li><a href="#ch1">1 · 十进制与二进制</a></li>
+    <li><a href="#ch2">2 · 二进制加法</a></li>
+    <li><a href="#ch3">3 · 位、字节、KB</a></li>
+    <li><a href="#ch4">4 · 32 位、64 位、负数</a></li>
+    <li><a href="#ch5">5 · 浮点数</a></li>
+    <li><a href="#ch6">6 · 文字与 ASCII</a></li>
+    <li><a href="#ch7">7 · 乱码与 Unicode</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>只有两个值，怎么表示更多东西？</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！今天我们讲计算机怎样存储和表示数字，所以会涉及一些数学。不过别担心，你们每个人已经掌握了跟上这一集所需的全部数学知识。</p>
+  <p>上一集我们讲了怎样用晶体管搭出逻辑门，逻辑门可以判断布尔语句。而布尔代数里只有两个二进制值：true 和 false。可如果只有两个值，我们到底怎么表示两个值以外的信息呢？这就需要数学了。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>十进制与二进制</h2>
+  <p>上一集提到，一个二进制值可以用来表示一个数：不叫 true 和 false，而把这两种状态叫作 1 和 0，这其实非常有用。想表示更大的东西，只要加更多的二进制位就行了。</p>
+  <p>这和我们熟悉的十进制完全一样。十进制里，一位数"只有" 10 种可能：0 到 9；要表示比 9 大的数，就在前面加位。二进制也可以这么做。</p>
+  <p>拿 263 举例，这个数实际代表什么？它代表 2 个一百、6 个十和 3 个一，加起来就是 263。注意每一列都有不同的<b>乘数</b>：100、10、1，每个乘数都是右边那个的 10 倍。这是因为每一列有 10 个数字可用（0 到 9），超过 9 就要往下一列进 1。所以这叫<b>"以十为基数"</b>的表示法，也叫<b>十进制</b>（deci 的意思是十）。</p>
+  <p>二进制的原理完全一样，只是以 2 为基数。因为二进制只有两个数字：1 和 0，所以每个乘数必须是它右边那一列的 2 倍。不再是百、十、一，而是四、二、一。拿二进制数 101 举例：有 1 个四、0 个二、1 个一，加起来就是十进制的 5。</p>
+  <p>但要表示更大的数，二进制需要多得多的位。拿二进制数 10110111 举例，可以用同样的方法转换成十进制：1×128、0×64、1×32、1×16、0×8、1×4、1×2、1×1，加起来是 <b>183</b>。</p>
+
+  <div class="card">
+    <h3>同一套规则：十进制 263 与二进制 10110111</h3>
+    <div class="two-col">
+      <div>
+        <p class="muted" style="margin:0;font-size:14px">十进制：每列乘数 ×10</p>
+        <div class="dec-cols">
+          <div class="bit"><div>2</div><small>×100</small></div>
+          <div class="bit"><div>6</div><small>×10</small></div>
+          <div class="bit"><div>3</div><small>×1</small></div>
+        </div>
+        <div class="readout" style="font-size:15px">200 + 60 + 3 = <span class="big">263</span></div>
+      </div>
+      <div>
+        <p class="muted" style="margin:0;font-size:14px">二进制：每列乘数 ×2（点格子拨开关）</p>
+        <div class="bits" id="bits"></div>
+        <div class="readout" id="bin-out" style="font-size:15px"></div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn" data-v="5">101 → 5</button>
+      <button class="btn" data-v="183">10110111 → 183</button>
+      <button class="btn" data-v="255">全是 1</button>
+      <button class="btn" data-v="0">清零</button>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>二进制加法</h2>
+  <p>二进制数的运算也不难。拿十进制的 183 加 19 举例：先算 3 + 9 = 12，所以这一位写 2，向十位进 1；再算 8 + 1 + 进上来的 1 = 10，这一位写 0，再进 1；最后 1 + 进上来的 1 = 2。所以总和是 202。</p>
+  <p>同样的加法用二进制做：和之前一样，从最右边一列开始。1 + 1 等于 2，在二进制里也是如此。但二进制里没有"2"这个符号，所以我们用 10 表示：这一位写 0，进 1——就像十进制的例子一样。接下来 1 + 1 再加上进上来的 1 等于 3，二进制写作 11，所以这一位写 1，再进 1，以此类推。最后得到的这个数，和十进制的 202 一样。</p>
+
+  <div class="card">
+    <h3>动手：183 + 19，两种写法一列一列算</h3>
+    <div class="two-col">
+      <div><div class="cols" id="dec-add"></div><div class="btns"><button class="btn primary" id="dec-next">十进制下一步</button><button class="btn" id="dec-reset">重来</button></div></div>
+      <div><div class="cols" id="bin-add"></div><div class="btns"><button class="btn primary" id="bin-next">二进制下一步</button><button class="btn" id="bin-reset">重来</button></div></div>
+    </div>
+    <div class="step-text" id="add-step">两边都从最右边一列开始。</div>
+  </div>
+  <div class="extra">
+    <span class="t">和下一集的联系</span>
+    二进制每一列只有几种情况（0+0、0+1、1+1，再加不加进位），所以它可以用逻辑门搭出来。下一集的 ALU 就是在电路里做你刚刚做的事。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>位、字节和 KB、MB、GB</h2>
+  <p>二进制里的每一个数字，1 或 0，叫作一个<b>"位"</b>（bit）。前面几个例子用的都是 8 位数：最小值是 0（8 位全是 0），最大值是 255（8 位全是 1）。这一共是 256 个不同的值，也就是 2 的 8 次方。</p>
+  <p>你可能听说过 8 位机、8 位图像或 8 位音乐。这指的是那些大部分运算都以 8 位为一块来处理的计算机。但 256 个值可用的不多，所以像 8 位游戏，画面只能用 256 种颜色。</p>
+  <p>8 位在计算机里太常见了，有一个专门的名字：<b>字节</b>（byte）。1 字节 = 8 位。如果你有 10 个字节，就意味着你其实有 80 位。</p>
+  <p>你也听过千字节（KB）、兆字节（MB）、吉字节（GB）等等，这些前缀表示不同的数量级。就像 1 千克 = 1000 克，1 千字节 = 1000 字节，也就是 8000 位。Mega 是一百万字节（MB），Giga 是十亿字节（GB）。今天你的硬盘可能有 1 TB 的容量，那是 8 万亿个 1 和 0。</p>
+  <p>不过等一下！这并不总是对的。在二进制里，1 千字节是 2 的 10 次方，也就是 1024 字节。谈到千字节时，1000 也是对的，但我们得承认它不是唯一正确的定义。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="units" viewBox="0 0 680 210" role="img" aria-label="存储单位阶梯"></svg>
+      </div>
+      <figcaption>图 1　存储单位：上面一排按 1000 算，下面一排按 1024 算。越往大走，两种算法差得越多。</figcaption>
+    </figure>
+  </div>
+  <div class="extra">
+    <span class="t">1000 和 1024 现在怎么区分</span>
+    为了避免混淆，后来有了专门的写法：按 1024 算的写作 <b>KiB、MiB、GiB</b>（读作 kibibyte 等），按 1000 算的才叫 KB、MB、GB。硬盘厂商和 macOS 按 1000 算，Windows 按 1024 算却仍然写"GB"——所以一块"1 TB"的硬盘插到 Windows 上只显示约 931 GB，没有谁偷工减料。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>32 位、64 位，以及负数</h2>
+  <p>你可能还听说过 32 位或 64 位计算机，你现在用的几乎肯定是其中一种。意思是它们以 32 位或 64 位为一块来处理数据，这可是很多位！32 位能表示的最大数略小于 43 亿，也就是二进制的 32 个 1。这就是为什么我们的 Instagram 照片那么平滑漂亮：它们由上百万种颜色组成，因为今天的计算机用的是 32 位色彩。</p>
+  <p>当然，不是所有数都是正数——比如我上大学时的银行账户。所以我们需要一种方法来表示正数和负数。大多数计算机用<b>第一位表示符号</b>：1 是负，0 是正，剩下的 31 位用来表示数本身。这样能表示的范围大约是正负 20 亿。</p>
+  <p>虽然这个范围已经很大了，但很多任务还是不够用：地球上有 70 亿人，美国国债也接近 20 万亿美元。这就是 64 位数有用的原因。64 位能表示的最大值大约是 920 亿亿（9.2 × 10<sup>18</sup>）！可能的数非常多，希望在一段时间内，它都还能比美国国债大！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="ranges" viewBox="0 0 680 290" role="img" aria-label="不同位数能表示的最大数"></svg>
+      </div>
+      <figcaption>图 2　横轴是对数刻度，每往右一格是 100 倍。蓝色是"能装下的最大数"，橙色是现实里的数。</figcaption>
+    </figure>
+  </div>
+
+  <div class="extra">
+    <span class="t">符号位之外：负数实际上怎么存</span>
+    <p style="margin-top:4px">"第一位是 1 就是负数"这一点完全正确。不过今天的计算机存整数时，剩下那些位并不是直接写数值（这种叫<b>原码</b>），而是用<b>补码</b>：负数 = 把对应正数的各位取反再加 1。这样减法可以直接用加法电路来做，也不会出现"+0 和 −0"两个零。下面用 8 位对比一下（拨最左边的红色符号位看看）：</p>
+    <div class="bits" id="sbits"></div>
+    <div class="readout" id="s-out" style="font-size:15px"></div>
+  </div>
+
+  <p>最重要的是（我们以后会详细讲），计算机必须给内存里的每个位置做标记，这些标记叫<b>"地址"</b>，用来存取数据。随着计算机内存增长到 GB 甚至 TB——那可是上万亿字节——内存地址也有必要用 64 位了。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>浮点数</h2>
+  <p>除了负数和正数，计算机还得处理不是整数的数，比如 12.7 和 3.14，或者"星历 43989.1"。这些叫<b>"浮点数"</b>，因为小数点可以在数字中间浮动。</p>
+  <p>表示浮点数的方法有好几种，最常见的是 <b>IEEE 754</b> 标准。你还以为只有历史学家不会起名字呢！本质上，这个标准用一种类似<b>科学计数法</b>的方式来存小数。比如 625.9 可以写成 0.6259 × 10<sup>3</sup>。这里有两个重要的数：0.6259 叫<b>有效数字</b>（significand），3 是<b>指数</b>（exponent）。</p>
+  <p>在 32 位浮点数里，第 1 位表示这个数的符号，正或负；接下来 8 位存指数；剩下 23 位存有效数字。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 680 120" role="img" aria-label="32 位浮点数的布局">
+        <rect x="20" y="30" width="20" height="40" class="s-on" style="fill:var(--bad-soft);stroke:var(--bad)"/>
+        <rect x="40" y="30" width="160" height="40" class="s-acc"/>
+        <rect x="200" y="30" width="460" height="40" class="s-on"/>
+        <text x="30" y="56" class="t-mono mid" style="fill:var(--bad)">±</text>
+        <text x="120" y="56" class="t-main mid">指数 8 位</text>
+        <text x="430" y="56" class="t-main mid">有效数字 23 位</text>
+        <text x="30" y="20" class="t-sub mid">1 位</text>
+        <text x="30" y="92" class="t-sub mid">符号</text>
+        <text x="120" y="92" class="t-sub mid">×10³ 里的 "3"</text>
+        <text x="430" y="92" class="t-sub mid">0.6259 里的 "6259"</text>
+        <text x="20" y="112" class="t-sub">（这是课程用的十进制类比；真实格式是二进制的科学计数法，见下面的补充）</text>
+      </svg>
+      </div>
+      <figcaption>图 3　32 位浮点数：1 + 8 + 23 = 32 位。</figcaption>
+    </figure>
+  </div>
+
+  <div class="extra">
+    <span class="t">拆开一个真实的 32 位浮点数</span>
+    <p style="margin-top:4px">真实的 IEEE 754 用的是<b>二进制</b>科学计数法：值 = ± 1.xxx（二进制）× 2<sup>指数 − 127</sup>。输入一个数，看看它在 32 位里到底存成了什么：</p>
+    <div class="ctl-row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input class="inp" id="f-in" value="625.9" aria-label="输入一个数">
+      <button class="btn" data-f="625.9">625.9</button><button class="btn" data-f="0.1">0.1</button><button class="btn" data-f="-3.14">−3.14</button><button class="btn" data-f="1">1</button>
+    </div>
+    <div class="f-bits" id="f-bits"></div>
+    <div class="f-legend" id="f-legend"></div>
+    <div class="readout" id="f-out" style="font-size:14px"></div>
+    <p style="margin-bottom:0">试试 <b>0.1</b>：二进制里 0.1 是无限循环小数，23 位存不下，只能存一个最接近的值。这就是 JavaScript 里 <code>0.1 + 0.2 !== 0.3</code> 的根源（JS 的数字用的是 64 位版本，更精确，但同样存不准）。</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>文字：ASCII</h2>
+  <p>好了，聊了这么多数字，但你的名字大概是由字母组成的，所以计算机也得有办法表示文字。不过，计算机并没有给字母准备一种特殊的存储方式，而是<b>直接用数字来表示字母</b>。</p>
+  <p>最直接的办法也许是给字母表里的字母编号：A 是 1，B 是 2，C 是 3，以此类推。实际上，著名英国作家弗朗西斯·培根早在 1600 年代就用 5 位序列来编码全部 26 个英文字母，用来传递秘密信件。5 位能存 32 个可能的值，够 26 个字母用，但不够表示标点、数字以及大小写字母。</p>
+  <p>于是 <b>ASCII</b>（美国信息交换标准代码）登场了。它发明于 1963 年，是一种 7 位编码，足够存 128 个不同的值。范围扩大后，它能编码大写字母、小写字母、数字 0 到 9，以及 @ 这样的符号和标点符号。比如小写的 'a' 用数字 97 表示，大写的 'A' 是 65，冒号是 58，右括号是 41。</p>
+
+  <div class="card">
+    <h3>动手：把文字变成数字</h3>
+    <input class="inp wide" id="a-in" value="Hi :) A a" aria-label="输入文字">
+    <div class="ascii-out" id="a-out"></div>
+    <p class="hint">输入英文、数字、符号，看每个字符对应的 ASCII 编号和 7 位二进制；试试输入中文</p>
+  </div>
+
+  <p>ASCII 甚至有一组特殊的命令码，比如<b>换行符</b>，告诉计算机在哪里换到下一行。在老式计算机系统里，如果你不加换行符，那一行文字真的会一直延伸到屏幕外面！</p>
+  <p>因为 ASCII 是一个很早的标准，所以它被广泛采用，更关键的是，它让不同公司制造的计算机能够互相交换数据。这种通用地交换信息的能力，叫作<b>"互操作性"</b>（interoperability）。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>乱码与 Unicode</h2>
+  <p>然而 ASCII 有一个很大的局限：它其实只是为英语设计的。幸运的是，一个字节有 8 位而不是 7 位，于是用 128 到 255 这些以前没用的编码来表示"本国"字符很快流行起来。在美国，这些多出来的数字主要用来编码额外的符号，比如数学符号、图形元素和常见的带重音字母。另一方面，拉丁字母大家通用，但俄罗斯的计算机用这些多出来的编码表示西里尔字母，希腊的计算机表示希腊字母，等等。</p>
+  <p>这种各国自己安排的编码，对大多数国家来说效果还不错。问题是，如果你在一台土耳其电脑上打开一封用拉脱维亚语写的电子邮件，结果会完全看不懂。而随着计算机在亚洲兴起，这种做法彻底崩溃了，因为中文、日文这样的语言有成千上万个字符，8 位根本不可能编码所有这些字符！为此，各个国家都发明了多字节编码方案，而这些方案彼此都不兼容。日本人对这种编码问题熟悉到专门起了个名字：<b>"文字化け"（mojibake）</b>，意思是"乱码"。</p>
+
+  <div class="card">
+    <h3>动手：同一串字节，换一张编码表来读</h3>
+    <input class="inp wide" id="m-in" value="你好，世界" aria-label="输入文字">
+    <p class="hex" id="m-hex"></p>
+    <table class="moji" id="m-out"></table>
+    <p class="hint">先把文字按 UTF-8 存成字节，再假装"用错了编码表"去读。第二行那种"浣犲ソ"，你多半在网页上见过</p>
+  </div>
+
+  <p>于是 <b>Unicode</b> 诞生了——一种统一所有编码的格式。它设计于 1992 年，终于取代了各国五花八门的编码方案，换成一套通用的编码。最常见的 Unicode 版本用 16 位，有超过一百万个编码位置——足够容纳人类用过的每一种语言的每一个字符：100 多种文字、超过 12 万个字符，还给数学符号，甚至 Emoji 这样的图形字符留了位置。</p>
+  <div class="extra">
+    <span class="t">"16 位、一百万个位置"更准确的说法</span>
+    16 位只有 65,536 种组合，装不下一百万。准确地说：Unicode 给每个字符一个编号（码点），编号范围是 0 到 0x10FFFF，约 111 万个位置；"怎么把编号存成字节"另有几种方案。课程说的 16 位指 <b>UTF-16</b>（以 16 位为单位，不够时用两个单位）；今天网页上最常用的是 <b>UTF-8</b>，每个字符占 1 到 4 个字节，英文字母正好和 ASCII 一样占 1 个字节，中文一般占 3 个。上面演示里"你好"变成 6 个字节，就是这个原因。
+  </div>
+  <p>就像 ASCII 定义了把字母编码成二进制数的方案一样，其他文件格式，比如 MP3 或 GIF，也用二进制数来编码声音，或者照片、电影、音乐里每个像素的颜色。最重要的是，所有这些归根到底都是<b>一长串位</b>。短信、这个 YouTube 视频、互联网上的每个网页，甚至你电脑的操作系统，都只不过是一长串 1 和 0。</p>
+  <p>下周，我们开始讲计算机怎样操作这些二进制序列，第一次真正尝到"计算"的滋味。感谢观看，下周见！</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>要表示的东西</th><th>怎么用位来表示</th></tr></thead>
+      <tbody>
+        <tr><td>整数</td><td>二进制：每一列的乘数是右边的 2 倍（1、2、4、8……），逢二进一</td></tr>
+        <tr><td>大小</td><td>8 位 = 1 字节，256 种值；KB 是 1000 或 1024 字节</td></tr>
+        <tr><td>负数</td><td>第一位做符号：0 正 1 负；32 位约 ±20 亿，64 位约 ±9.2×10<sup>18</sup></td></tr>
+        <tr><td>小数</td><td>浮点数（IEEE 754）：符号 1 位 + 指数 8 位 + 有效数字 23 位，类似科学计数法</td></tr>
+        <tr><td>文字</td><td>给每个字符编号：ASCII 7 位 128 个；各国扩展互不兼容 → 乱码；Unicode 统一编号</td></tr>
+        <tr><td>声音、图片……</td><td>各种文件格式，也都是约定好的一串位</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    位本身没有意义，意义来自<b>约定</b>：同一串 01，按整数读是一个数，按浮点数读是另一个数，按 ASCII 读是一串字母。大家用同一套约定，计算机之间才能交换信息——这就是标准和"互操作性"的价值。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 二进制 10110111 等于十进制多少？你是怎么算的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">从右往左，各列的乘数是 1、2、4、8、16、32、64、128。是 1 的列加起来：128 + 32 + 16 + 4 + 2 + 1 = <b>183</b>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 8 位能表示多少种不同的值？为什么最大是 255 而不是 256？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">每一位 2 种可能，8 位就是 2<sup>8</sup> = <b>256</b> 种。其中一种是 0（全 0），所以从 0 数到 255 正好 256 个。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 32 位浮点数的 32 位分别存了什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">1 位符号（正负）+ 8 位指数 + 23 位有效数字，原理类似科学计数法 0.6259 × 10³。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 为什么会出现乱码？Unicode 解决了什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">8 位里 128~255 这段被各国拿去放自己的字符，中日等语言又各自发明了互不兼容的多字节编码。同一串字节，用别国的编码表去读，就成了乱码。Unicode 给全世界所有字符一套<b>统一的编号</b>，大家用同一套约定，就不会读错。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="03.html"><small>← 上一集</small>03 布尔逻辑和逻辑门</a>
+    <a class="next" href="05.html"><small>下一集 →</small>05 算术逻辑单元</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 4 集 Representing Numbers and Letters with Binary（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const bin = (n, w) => n.toString(2).padStart(w, '0');
+
+/* ---------- 二进制拨位 ---------- */
+(function () {
+  const host = $('#bits');
+  let v = 183;
+  const btns = [];
+  for (let i = 7; i >= 0; i--) {
+    const d = document.createElement('div'); d.className = 'bit';
+    const b = document.createElement('button'); b.setAttribute('aria-label', '第 ' + i + ' 位');
+    b.onclick = () => { v ^= (1 << i); paint(); };
+    const s = document.createElement('small'); s.textContent = '×' + (1 << i);
+    d.append(b, s); host.appendChild(d); btns.push([b, i]);
+  }
+  function paint() {
+    btns.forEach(([b, i]) => { const on = (v >> i) & 1; b.textContent = on; b.classList.toggle('on', !!on); });
+    const parts = btns.filter(([, i]) => (v >> i) & 1).map(([, i]) => 1 << i);
+    $('#bin-out').innerHTML = `${parts.length ? parts.join(' + ') : '0'} = <span class="big">${v}</span>`;
+  }
+  $$('#ch1 [data-v]').forEach(b => b.onclick = () => { v = +b.dataset.v; paint(); });
+  paint();
+})();
+
+/* ---------- 竖式加法 ---------- */
+function colAdd(host, a, b, base, w, label) {
+  const da = a.toString(base).padStart(w, '0').split('').map(Number);
+  const db = b.toString(base).padStart(w + 0, '0').split('').map(Number);
+  const W = w + 1;
+  host.style.gridTemplateColumns = `56px repeat(${W}, ${base === 2 ? 30 : 40}px)`;
+  let step, carries, res;
+  function draw(hl) {
+    const cell = (v, cls, i) => `<div class="c ${cls || ''} ${i === hl ? 'hl' : ''}">${v}</div>`;
+    let h = `<div class="lab">进位</div>` + Array.from({ length: W }, (_, i) => cell(carries[i] ? '1' : '', 'carry', i)).join('');
+    h += `<div class="lab">${label}</div>` + cell('', '', 0) + da.map((d, i) => cell(d, '', i + 1)).join('');
+    h += `<div class="lab">+</div>` + cell('', '', 0) + db.map((d, i) => cell(d, '', i + 1)).join('');
+    h += `<div></div><div class="rule" style="grid-column:2 / span ${W}"></div>`;
+    h += `<div class="lab">和</div>` + Array.from({ length: W }, (_, i) => cell(res[i] == null ? '' : res[i], 'res', i)).join('');
+    host.innerHTML = h;
+  }
+  function reset() { step = 0; carries = Array(W).fill(0); res = Array(W).fill(null); draw(-1); }
+  function next() {
+    if (step > w) return null;
+    const col = W - 1 - step;                    // 结果数组下标
+    if (step === w) {                            // 最左边：只剩进位
+      res[0] = carries[0] ? 1 : null; step++; draw(0);
+      return carries[0] ? `最左边只剩进上来的 1，直接写下。` : '没有剩下的进位，算完了。';
+    }
+    const x = da[col - 1], y = db[col - 1], c = carries[col];
+    const s = x + y + c;
+    res[col] = s % base;
+    if (s >= base) carries[col - 1] = 1;
+    step++; draw(col);
+    const sStr = base === 2 ? `${s}（二进制 ${s.toString(2)}）` : `${s}`;
+    return `${x} + ${y}${c ? ' + 进位 1' : ''} = ${sStr}：这一位写 <b>${s % base}</b>${s >= base ? '，向左进 1' : ''}。`;
+  }
+  reset();
+  return { reset, next };
+}
+(function () {
+  const d = colAdd($('#dec-add'), 183, 19, 10, 3, '183');
+  const b = colAdd($('#bin-add'), 183, 19, 2, 8, '');
+  const say = (pre, s) => { if (s) $('#add-step').innerHTML = pre + s; };
+  $('#dec-next').onclick = () => say('十进制：', d.next() || '算完了：183 + 19 = <b>202</b>。');
+  $('#bin-next').onclick = () => { const s = b.next(); say('二进制：', s || '算完了：10110111 + 00010011 = <b>11001010</b>，就是 128 + 64 + 8 + 2 = <b>202</b>。'); };
+  $('#dec-reset').onclick = () => { d.reset(); $('#add-step').textContent = '从最右边一列开始。'; };
+  $('#bin-reset').onclick = () => { b.reset(); $('#add-step').textContent = '从最右边一列开始。'; };
+})();
+
+/* ---------- 单位阶梯 ---------- */
+(function () {
+  const svg = $('#units');
+  const U = ['位 bit', '字节 B', 'KB', 'MB', 'GB', 'TB'];
+  const X = i => 30 + i * 125;
+  U.forEach((u, i) => {
+    el('rect', { x: X(i), y: 80, width: 86, height: 44, rx: 10, class: i < 2 ? 's-on' : 's-panel' }, svg);
+    txt(svg, X(i) + 43, 107, u, 't-main mid');
+    if (i > 0) {
+      const x1 = X(i - 1) + 86, x2 = X(i);
+      el('path', { d: `M${x1 + 2},${80} C${x1 + 12},40 ${x2 - 12},40 ${x2 - 2},80`, class: 's-thin' }, svg);
+      el('path', { d: `M${x1 + 2},${124} C${x1 + 12},164 ${x2 - 12},164 ${x2 - 2},124`, class: 's-thin' }, svg);
+      txt(svg, (x1 + x2) / 2, 42, i === 1 ? '×8' : '×1000', 't-mono mid');
+      txt(svg, (x1 + x2) / 2, 172, i === 1 ? '×8' : '×1024', 't-mono mid t-acc');
+    }
+  });
+  txt(svg, 30, 22, '按 1000 算（像千克和克）', 't-sub');
+  txt(svg, 30, 200, '按 1024 = 2¹⁰ 算（二进制里更自然）　→ 1 TB 两种算法相差约 10%', 't-sub t-acc');
+})();
+
+/* ---------- 范围（对数） ---------- */
+(function () {
+  const svg = $('#ranges');
+  const X0 = 210, X1 = 640, DEC = 20;
+  const xOf = v => X0 + Math.log10(v) / DEC * (X1 - X0);
+  for (let d = 0; d <= DEC; d += 2) {
+    const x = X0 + d / DEC * (X1 - X0);
+    el('line', { x1: x, y1: 14, x2: x, y2: 254, style: 'stroke:var(--line);stroke-width:1' }, svg);
+    txt(svg, x, 272, d === 0 ? '1' : `10^${d}`, 't-sub mid');
+  }
+  const rows = [
+    ['8 位：255', 255, 0], ['32 位带符号：约 21 亿', 2147483647, 0], ['32 位：约 43 亿', 4294967295, 0],
+    ['地球人口：70 亿', 7e9, 1], ['美国国债：约 20 万亿美元', 2e13, 1], ['64 位：约 9.2×10¹⁸', 9.2e18, 0],
+  ];
+  rows.forEach(([name, v, real], i) => {
+    const y = 22 + i * 38;
+    txt(svg, X0 - 10, y + 16, name, real ? 't-main end t-on' : 't-main end');
+    el('rect', { x: X0, y, width: xOf(v) - X0, height: 22, rx: 4, class: real ? 's-on' : 's-acc' }, svg);
+  });
+})();
+
+/* ---------- 符号位：原码 vs 补码 ---------- */
+(function () {
+  const host = $('#sbits');
+  let v = 0b10000101;
+  const btns = [];
+  for (let i = 7; i >= 0; i--) {
+    const d = document.createElement('div'); d.className = 'bit' + (i === 7 ? ' sign' : '');
+    const b = document.createElement('button');
+    b.onclick = () => { v ^= (1 << i); paint(); };
+    const s = document.createElement('small'); s.textContent = i === 7 ? '符号' : '×' + (1 << i);
+    d.append(b, s); host.appendChild(d); btns.push([b, i]);
+  }
+  function paint() {
+    btns.forEach(([b, i]) => { const on = (v >> i) & 1; b.textContent = on; b.classList.toggle('on', !!on); });
+    const neg = v >> 7, mag = v & 127;
+    const sm = (neg ? '−' : '+') + mag;
+    const tc = neg ? v - 256 : v;
+    $('#s-out').innerHTML = `按<b>原码</b>（课程说的"符号 + 数值"）读：<b>${sm}</b>　｜　按<b>补码</b>（今天实际用的）读：<span class="big">${tc}</span>`;
+  }
+  paint();
+})();
+
+/* ---------- 浮点数拆解 ---------- */
+(function () {
+  const inp = $('#f-in');
+  const dv = new DataView(new ArrayBuffer(4));
+  function show() {
+    const x = parseFloat(inp.value);
+    if (!isFinite(x)) { $('#f-out').textContent = '请输入一个普通的数，比如 3.14'; return; }
+    dv.setFloat32(0, x);
+    const u = dv.getUint32(0);
+    const bits = bin(u, 32);
+    $('#f-bits').innerHTML = bits.split('').map((b, i) => `<span class="${i === 0 ? 's' : i < 9 ? 'e' : 'm'}">${b}</span>`).join('');
+    const s = u >>> 31, e = (u >>> 23) & 255, m = u & 0x7fffff;
+    const stored = dv.getFloat32(0);
+    $('#f-legend').innerHTML = `<span>符号 <b>${s}</b>（${s ? '负' : '正'}）</span><span>指数位 <b>${bits.slice(1, 9)}</b> = ${e}，减去 127 → <b>${e - 127}</b></span><span>有效数字 <b>1.${bits.slice(9).replace(/0+$/, '') || '0'}</b>（二进制）</span>`;
+    const exact = stored === x;
+    if (e === 0 || e === 255) { $('#f-out').innerHTML = `指数位全是 ${e ? 1 : 0}：这是 IEEE 754 留给 0、极小数或无穷大的特殊编码，不按上面的公式算。`; return; }
+    $('#f-out').innerHTML = `值 = ${s ? '−' : '+'}1.${(m / 2 ** 23).toString().slice(2) || '0'}… × 2<sup>${e - 127}</sup><br>你输入的：${x}　实际存进去的：<b>${stored.toPrecision(17).replace(/0+$/, '').replace(/\.$/, '')}</b>　${exact ? '<span style="color:var(--ok)">完全相等</span>' : '<span style="color:var(--bad)">差了一点点，存不准</span>'}`;
+  }
+  inp.oninput = show;
+  $$('[data-f]').forEach(b => b.onclick = () => { inp.value = b.dataset.f; show(); });
+  show();
+})();
+
+/* ---------- ASCII ---------- */
+(function () {
+  const inp = $('#a-in');
+  const show = () => {
+    $('#a-out').innerHTML = Array.from(inp.value).map(ch => {
+      const c = ch.codePointAt(0);
+      if (c > 127) return `<div class="bad"><div class="ch">${ch}</div><div class="d">${c}</div><div class="b">不在 ASCII 里</div></div>`;
+      const shown = ch === ' ' ? '空格' : ch.replace(/[<&]/g, m => ({ '<': '&lt;', '&': '&amp;' }[m]));
+      return `<div><div class="ch" style="${ch === ' ' ? 'font-size:13px;line-height:24px' : ''}">${shown}</div><div class="d">${c}</div><div class="b">${bin(c, 7)}</div></div>`;
+    }).join('');
+  };
+  inp.oninput = show; show();
+})();
+
+/* ---------- 乱码 ---------- */
+(function () {
+  const inp = $('#m-in');
+  const decs = [['UTF-8（正确的表）', 'utf-8'], ['GBK（简体中文旧编码）', 'gbk'], ['Shift_JIS（日文）', 'shift_jis'], ['Windows-1252（西欧）', 'windows-1252'], ['ISO-8859-5（西里尔）', 'iso-8859-5']];
+  const show = () => {
+    const bytes = new TextEncoder().encode(inp.value);
+    $('#m-hex').textContent = `按 UTF-8 存成 ${bytes.length} 个字节：` + Array.from(bytes, b => b.toString(16).padStart(2, '0').toUpperCase()).join(' ');
+    $('#m-out').innerHTML = decs.map(([name, enc], i) => {
+      let out;
+      try { out = new TextDecoder(enc).decode(bytes); } catch (e) { out = '（这个浏览器不支持该编码）'; }
+      out = out.replace(/[<&]/g, m => ({ '<': '&lt;', '&': '&amp;' }[m]));
+      return `<tr><td>用 ${name} 去读</td><td class="${i === 0 ? 'ok' : ''}">${out}</td></tr>`;
+    }).join('');
+  };
+  inp.oninput = show; show();
+})();
+</script>
+</body>
+</html>

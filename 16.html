@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>16 软件工程 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.otree{white-space:pre;font:14px/1.9 var(--mono);background:var(--code);border-radius:10px;padding:10px 14px;overflow-x:auto}
+.otree .o{font-weight:700;color:var(--accent)}
+.otree .f{cursor:pointer;padding:1px 6px;border-radius:5px;color:var(--on)}
+.otree .f:hover{background:var(--on-soft)}
+.otree .f.sel{background:var(--on);color:#fff}
+.otree .v{color:var(--muted)}
+.callpath{font:16px var(--mono);padding:10px 14px;background:var(--panel);border:2px solid var(--on);border-radius:10px;margin-top:10px;word-break:break-all}
+.api-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:720px){.api-wrap{grid-template-columns:1fr}}
+.objbox{border:2px solid var(--ink);border-radius:12px;padding:10px 12px;background:var(--panel)}
+.objbox h4{margin:0 0 8px;font:700 15px var(--mono)}
+.fn{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:8px;margin:4px 0;font:14px var(--mono);border:1px solid var(--line)}
+.fn .tag{font:600 11px inherit;padding:1px 8px;border-radius:999px}
+.fn.pub .tag{background:var(--ok-soft);color:var(--ok)}
+.fn.pri .tag{background:var(--bad-soft);color:var(--bad)}
+.fn.pri{background:repeating-linear-gradient(45deg,transparent,transparent 6px,var(--bg) 6px,var(--bg) 12px)}
+.ide{border:1px solid var(--line);border-radius:10px;overflow:hidden;font:13px/1.7 var(--mono);background:var(--panel)}
+.ide .bar{background:var(--bg);padding:6px 12px;font:12px inherit;color:var(--muted);display:flex;gap:14px;border-bottom:1px solid var(--line)}
+.ide .bar b{color:var(--ink)}
+.ide .body{display:grid;grid-template-columns:150px 1fr}
+.ide .files{border-right:1px solid var(--line);padding:8px 10px;color:var(--muted);font-size:12px}
+.ide .files div.on{color:var(--ink);font-weight:700}
+.ide pre{margin:0;padding:8px 12px;overflow-x:auto}
+.ide .kw{color:#c678dd}.ide .st{color:#98c379}.ide .cm{color:var(--muted);font-style:italic}.ide .nm{color:#d19a66}.ide .fnm{color:#61afef}
+.ide .err{text-decoration:underline wavy var(--bad)}
+.ide .cur{background:var(--bad-soft);display:inline-block;width:100%}
+.ide .panel{border-top:1px solid var(--line);padding:6px 12px;font-size:12px;background:var(--bg)}
+.ide .panel .e{color:var(--bad)}
+@media (max-width:600px){.ide .body{grid-template-columns:1fr}.ide .files{display:none}}
+.vc{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.commit{display:grid;grid-template-columns:22px 70px 1fr auto;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);font-size:14px}
+.commit .dot{width:14px;height:14px;border-radius:50%;background:var(--ok)}
+.commit.bug .dot{background:var(--bad)}
+.commit.head{border-color:var(--on);box-shadow:0 0 0 2px var(--on-soft)}
+.commit.gone{opacity:.35;text-decoration:line-through}
+.commit .who{font-size:12px;color:var(--muted)}
+.commit .h{font:12px var(--mono);color:var(--muted)}
+.status{font-size:14px;padding:8px 12px;border-radius:8px;background:var(--bg);margin-top:8px}
+</style>
+</head>
+<body data-ep="16">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=17" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 16 集</div>
+  <h1>软件工程</h1>
+  <p class="en">Software Engineering</p>
+  <p class="lead">一段排序代码十来行，一个人用记事本就能写；可微软 Office 有大约 4000 万行代码。这一集讲人们用哪些工具和方法，让成百上千人一起造出这么大的软件。</p>
+  <div class="road">
+    <span>面向对象</span><i>→</i><span>API 与 public / private</span><i>→</i><span>IDE 与调试</span><i>→</i><span>文档与注释</span><i>→</i><span>版本控制</span><i>→</i><span>QA、alpha、beta</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 软件工程是什么</a></li>
+    <li><a href="#ch1">1 · 面向对象</a></li>
+    <li><a href="#ch2">2 · API 与权限</a></li>
+    <li><a href="#ch3">3 · IDE 与调试</a></li>
+    <li><a href="#ch4">4 · 文档与注释</a></li>
+    <li><a href="#ch5">5 · 版本控制</a></li>
+    <li><a href="#ch6">6 · 质量保证</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>软件工程是什么</h2>
+  <p>这个系列里我们讲了很多排序，给一串数字排序的代码往往只有十来行，一个程序员很容易写出来。而且它短到不需要任何专门的工具——用记事本就能写。真的！</p>
+  <p>但排序算法本身不是一个程序，它很可能只是一个大得多的程序里的一小部分。比如，微软 Office 大约有 <b>4000 万行代码</b>。4000 万！任何一个人都不可能把它全部弄懂、写出来！为了构建这样的大型程序，程序员会使用一整套工具和做法，合起来形成了<b>软件工程</b>（Software Engineering）这门学科。这个词由工程师<b>玛格丽特·汉密尔顿</b>（Margaret Hamilton）创造，她帮助 NASA 在阿波罗登月任务中避免了一些严重问题。她曾这样解释：</p>
+  <blockquote class="quote"><b>"这有点像根管治疗：你一直拖到最后，可其实有些事你本可以提前做。就像预防性的医疗保健，只不过这是预防性的软件。"</b><span class="who">—— 玛格丽特·汉密尔顿</span></blockquote>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="scale" viewBox="0 0 680 150" role="img" aria-label="代码规模对比"></svg></div>
+      <figcaption>图 1　按每页 50 行打印出来，大概是多厚（对数刻度，每往右一格是 10 倍）。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>面向对象：把函数打包成层级</h2>
+  <p>第 12 集提过，把大程序拆成小函数，可以让很多人同时工作。他们不用操心整个项目，只需要关心自己正在写的那个函数。所以如果你的任务是写一个排序算法，你只需要确保它排得正确、排得高效。</p>
+  <p>然而，光把代码打包成函数还不够。微软 Office 里大概有几十万个函数，虽然比 4000 万行代码好对付，但对一个人或一个团队来说，要管的"东西"还是太多了。解决办法是把函数<b>打包成层级</b>，把相关的代码放在一起，组成<b>对象</b>（object）。</p>
+  <p>比如，汽车的软件里可能有好几个和定速巡航有关的函数：设定速度、把速度往上或往下微调、彻底关掉定速巡航。因为它们都相关，我们可以把它们包装成一个统一的"定速巡航对象"。但我们不必止步于此：定速巡航只是引擎软件的一部分，可能还有控制火花塞点火、燃油泵和散热器的几组函数。所以我们可以创建一个"父"对象——引擎对象，包含所有这些"子"对象。除了子对象，引擎本身也可能有它<b>自己的</b>函数，比如启动和关闭引擎；也会有它自己的变量，比如汽车已经行驶了多少英里。总的来说，<b>对象可以包含其他对象、函数和变量</b>。当然，引擎也只是"汽车对象"的一部分，还有变速箱、车轮、车门、车窗等等。</p>
+  <p>作为程序员，如果我想设定定速巡航，就沿着对象层级往下走，从最外层的对象一路走到嵌套得越来越深的对象，最后找到想调用的函数："汽车，然后引擎，然后定速巡航，然后把巡航速度设为 55"。编程语言里常常用类似下面这样的写法。</p>
+
+  <div class="card">
+    <h3>动手：沿着对象层级找到一个函数</h3>
+    <div class="otree" id="otree"></div>
+    <div class="callpath" id="callpath"></div>
+    <p class="hint">点橙色的函数名，看要怎样一层层"点"下去才能调用它</p>
+  </div>
+
+  <p>把功能单元打包进嵌套对象的这种思想，叫<b>面向对象编程</b>（Object Oriented Programming）。这和我们整个系列一直在做的事非常相似：把底层细节封装进更高层的组件里，隐藏复杂性。以前我们把晶体管电路打包成更高层的逻辑门，现在我们对软件做同样的事。又一次，这是往上提升一层抽象的方式！</p>
+  <p>把一个大程序——比如汽车软件——拆成功能单元，非常适合团队合作。一个团队可能负责定速巡航系统，团队里的一个程序员负责其中几个函数。这和建造摩天大楼这种巨大的实体建筑很像：有电工布电线，管道工装水管，焊工焊接，油漆工刷漆，还有成百上千的人在楼体上忙来忙去。他们发挥各自的技能，同时在不同的部分工作，直到有一天，整栋楼都能用了！</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>API 与 public / private</h2>
+  <p>回到定速巡航的例子：它的代码需要用到引擎软件其他部分的函数，才能让车保持恒定的速度。那部分代码不归定速巡航团队负责，是另一个团队的代码。因为不是自己写的，定速巡航团队需要<b>好的文档</b>，说明那些代码里每个函数是做什么的，还需要一个定义清楚的<b>应用程序编程接口</b>（Application Programming Interface），简称 <b>API</b>。你可以把 API 看作合作的程序员们在代码各个部分之间打交道的方式。</p>
+  <p>比如，在 IgnitionControl（点火控制）对象里，可能有设置发动机转速的函数、检查火花塞电压的函数，以及点燃单个火花塞的函数。能设置发动机转速非常有用，定速巡航团队会需要调用这个函数。但他们对点火系统的工作原理了解不多，让他们去调用点燃单个火花塞的函数可不是好主意，引擎可能会爆炸！也许吧。</p>
+  <p>API 让<b>合适的人访问合适的函数和数据</b>。面向对象的编程语言通过让你指定函数是 <b>public</b>（公开）还是 <b>private</b>（私有）来做到这一点。如果一个函数被标为 private，就意味着只有这个对象内部的函数才能调用它。所以在这个例子里，只有 IgnitionControl 内部的其他函数，比如 setRPM，才能点燃火花塞。另一方面，因为 setRPM 函数被标为 public，其他对象——比如定速巡航——就可以调用它。</p>
+
+  <div class="card">
+    <h3>动手：定速巡航能调用哪些函数？</h3>
+    <div class="api-wrap">
+      <div class="objbox"><h4>IgnitionControl（点火控制）</h4><div id="ign"></div></div>
+      <div>
+        <div class="objbox"><h4>CruiseControl（定速巡航）</h4><p class="muted" style="margin:0;font-size:13px">点左边的函数，让定速巡航去调用它</p></div>
+        <div class="step-text" id="api-cap">选一个函数。</div>
+      </div>
+    </div>
+    <pre style="font:13px/1.6 var(--mono);background:var(--code);padding:10px 14px;border-radius:10px;margin-top:12px;overflow-x:auto"><span style="color:var(--muted)">// JavaScript 里的写法（补充）：# 开头的方法是 private</span>
+class IgnitionControl {
+  setRPM(rpm) { … this.#fireSparkplug(1); … }   <span style="color:var(--muted)">// public</span>
+  checkSparkplugVoltage() { … }                 <span style="color:var(--muted)">// public</span>
+  #fireSparkplug(n) { … }                       <span style="color:var(--muted)">// private：外面调用会直接报错</span>
+}</pre>
+  </div>
+
+  <p>这种<b>隐藏复杂性、并有选择地公开</b>的能力，是面向对象编程的精髓。它是构建大型复杂程序的一种强大而流行的方法。你电脑上几乎所有的软件、游戏机上运行的几乎所有游戏，都是用面向对象的编程语言写的，比如 C++、C# 或 Objective-C。你可能听说过的其他流行的"OO"语言还有 Python 和 Java。</p>
+  <div class="extra">
+    <span class="t">前端里的 API</span>
+    你写的 Vue 组件也是这个思路：<code>props</code> 和 <code>emit</code> 的事件是对外公开的接口，组件内部的状态和方法别人碰不到。后端提供的"接口文档"，就是前后端两个团队之间的 API。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>集成开发环境与调试</h2>
+  <p>有一点很重要：代码在编译之前，只是一堆文字而已。前面说过，你可以用记事本或者随便哪个文字处理软件写代码，确实有人这么做。但一般来说，今天的软件开发者用的是专门写程序的应用，里面集成了很多编写、整理、编译和测试代码的有用工具。因为它把你需要的一切都放在一个地方，所以叫<b>集成开发环境</b>（Integrated Development Environment），简称 <b>IDE</b>。</p>
+  <p>所有 IDE 都提供写代码用的文本编辑器，通常带有一些有用的功能，比如自动给代码上色，提高可读性。很多 IDE 甚至会在你打字时检查语法错误，就像代码的拼写检查。大型程序包含大量单独的源文件，所以 IDE 让程序员可以整理、高效地浏览所有文件。IDE 里还直接集成了编译和运行代码的功能。如果你的程序崩溃了——因为它还没写完嘛——IDE 能带你回到出事的那一行代码，并且往往会提供额外的信息，帮你追踪并修复这个 bug，这个过程叫<b>调试</b>（debugging）。</p>
+
+  <div class="ide" aria-label="IDE 界面示意">
+    <div class="bar"><b>car-software</b><span>engine/cruise.js</span><span>▶ 运行</span><span>🐞 调试</span></div>
+    <div class="body">
+      <div class="files"><div>📁 engine</div><div class="on">　cruise.js</div><div>　ignition.js</div><div>　fuelPump.js</div><div>📁 wheels</div><div>README.md</div></div>
+      <pre><span class="cm">// 定速巡航：保持设定的速度</span>
+<span class="kw">class</span> <span class="fnm">CruiseControl</span> {
+  <span class="fnm">setCruiseSpeed</span>(mph) {
+    <span class="kw">if</span> (mph &gt; <span class="nm">120</span>) <span class="kw">return</span>;   <span class="cm">// 超过上限就不设</span>
+    <span class="kw">this</span>.target = mph;
+<span class="cur">    <span class="kw">this</span>.ignition.<span class="err">fireSparkplug</span>(<span class="nm">1</span>);</span>
+  }
+}</pre>
+    </div>
+    <div class="panel"><span class="e">✖ TypeError: fireSparkplug is private（cruise.js 第 6 行）</span>　← IDE 直接带你跳到出错的那一行</div>
+  </div>
+  <p class="muted" style="font-size:13px">IDE 界面示意（补充）：左边整理文件，中间是自动上色的代码，出错的地方画波浪线，下面告诉你错在哪一行。</p>
+
+  <p>这很重要，因为大多数程序员要花 <b>70% 到 80%</b> 的时间在测试和调试上，而不是写新代码。IDE 里的好工具，在帮助程序员预防和找出错误方面大有作为。很多程序员对自己用的 IDE 相当忠诚。不过说实话，VIM 才是王道——前提是你知道怎么退出它。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>文档与注释</h2>
+  <p>除了写代码和调试，程序员工作中另一个重要部分是<b>给代码写文档</b>。可以写在单独的文件里，通常叫 <b>README</b>，告诉其他程序员在深入代码之前先读这个帮助文件。也可以直接写在代码里，叫<b>注释</b>（comment）：注释是特别标记过的语句，程序在编译代码时会忽略它们，它们存在的唯一目的，就是帮助程序员弄清源代码里什么是什么。</p>
+  <p>好的文档不仅能帮程序员回头看自己很久没碰过的代码，对完全没接触过这些代码的程序员也至关重要。我想在这里花一秒钟再强调一下：最糟糕的就是有人把一堆没注释、没文档的代码丢到你手上，你只能一行一行地读，才能弄懂它在做什么。说真的，别做那种人。</p>
+  <p>文档还能促进<b>代码复用</b>。程序员不必一遍遍地重复写同样的东西，可以找到别人写好的、正好满足需要的代码。然后多亏了文档，他们可以直接把它用进自己的程序，根本不用读那些代码。正如大家常说的："去读文档！"（Read the docs）</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>版本控制</h2>
+  <p>除了 IDE，另一种帮助大团队协作开发大型项目的重要软件叫<b>源代码管理</b>（Source Control），也叫<b>版本控制</b>（version control）或修订控制。在苹果或微软这样的大型软件公司，项目代码通常存在中心服务器上，叫<b>代码仓库</b>（code repository）。当程序员想修改一段代码时，可以把它<b>借出</b>（check out），有点像从图书馆借书，这通常可以直接在 IDE 里完成。然后他们可以在自己的电脑上随意编辑这段代码，加新功能、测试它们能不能用。当程序员确信改动没问题、没有遗漏时，就可以把代码<b>交回</b>代码仓库，这叫<b>提交</b>（commit），供其他所有人使用。</p>
+  <p>当一段代码被借出、大概正在被更新或修改时，其他程序员就不去碰它。这能防止奇怪的冲突和重复劳动。这样，成百上千的程序员可以同时借出和提交一段段代码，一点点迭代出庞大的系统。</p>
+
+  <div class="card">
+    <h3>动手：提交、发现 bug、回滚</h3>
+    <div class="vc" id="vc"></div>
+    <div class="status" id="vc-status"></div>
+    <div class="btns">
+      <button class="btn" id="vc-out">借出 cruise.js</button>
+      <button class="btn" id="vc-ok">提交：加了"减速"功能</button>
+      <button class="btn" id="vc-bug">提交：一段有 bug 的改动</button>
+      <button class="btn primary" id="vc-back">回滚到上一个稳定版本</button>
+      <button class="btn" id="vc-reset">重来</button>
+    </div>
+  </div>
+
+  <p>关键在于，你不希望有人提交有 bug 的代码，因为其他人、其他团队可能依赖它，他们的代码可能会崩溃，造成混乱、浪费时间。存在服务器上的代码<b>主版本</b>（master），应该始终能无错误地编译，并且运行时 bug 尽可能少。但有时 bug 还是会混进来。幸运的是，源代码管理软件会记录所有的改动，如果发现了 bug，整个代码或者其中一部分可以<b>回滚</b>（roll back）到之前某个稳定的版本。它还会记录每处改动是谁做的，这样同事们就可以给惹祸的人发去讨厌的——我是说，有帮助的、鼓励性的——邮件。</p>
+  <div class="extra">
+    <span class="t">今天的版本控制</span>
+    课程讲的"借出期间别人不能动"是早期集中式工具的做法。今天最常用的是 <b>Git</b>：每个人都有完整的仓库副本，大家可以同时改同一个文件，提交时再合并（merge），改到同一行才需要手动解决冲突。你的这个学习仓库、以及本图文版最后放到 GitHub 上，用的就是 Git。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>质量保证：alpha 和 beta</h2>
+  <p>调试和写代码密不可分，通常由个人或小团队完成。放眼全局的调试叫<b>质量保证测试</b>（Quality Assurance testing），简称 <b>QA</b>：由一个团队严格地测试一款软件，试图制造各种意想不到的情况把它绊倒。基本上，就是把 bug 引出来。把所有毛病都抚平需要巨大的努力，但这对确保软件在发布前、在尽可能多的情况下、为尽可能多的用户按预期工作至关重要。</p>
+  <p>你可能听说过 <b>beta</b> 版软件。这是基本完成、但没有百分之百完全测试过的版本。公司有时会向公众发布 beta 版来帮助发现问题，这基本上相当于得到了一支免费的 QA 团队。你不太常听说的，是 beta 之前的那个版本：<b>alpha</b> 版。它通常粗糙得很、bug 一大堆，只在公司内部测试。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="stages" viewBox="0 0 680 130" role="img" aria-label="软件发布阶段"></svg></div>
+      <figcaption>图 2　一款软件从内部到公众的几个阶段。</figcaption>
+    </figure>
+  </div>
+
+  <p>以上只是软件工程师用来构建我们今天熟知和喜爱的大型软件——比如 YouTube、《侠盗猎车手 5》和 PowerPoint——的那些工具、技巧和技术的冰山一角。你可能想到了，这几百万行代码需要相当强大的处理能力才能以有用的速度运行，所以下一集我们来讲计算机是怎样变得如此之快的。到时见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>问题</th><th>软件工程的办法</th></tr></thead>
+      <tbody>
+        <tr><td>代码太多，一个人管不过来</td><td>拆成函数，再按层级打包成对象（面向对象编程）</td></tr>
+        <tr><td>要用别的团队的代码</td><td>文档 + 定义清楚的 API；public 公开、private 只给内部用</td></tr>
+        <tr><td>写代码、找 bug 效率低</td><td>IDE：上色、语法检查、整理文件、编译运行、调试定位</td></tr>
+        <tr><td>代码过一阵就看不懂、别人也看不懂</td><td>README、注释；"去读文档"促进复用</td></tr>
+        <tr><td>很多人同时改代码</td><td>版本控制：仓库、借出、提交、记录作者、出错回滚</td></tr>
+        <tr><td>上线前尽量没 bug</td><td>QA 测试；alpha 内部测，beta 请公众帮忙测</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    软件工程是让很多人一起造出大软件的那套工具和做法：用对象和 API 隐藏复杂性、有选择地公开功能，用 IDE、文档、版本控制和 QA 防患于未然——正如汉密尔顿说的，"预防性的软件"。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么光把代码拆成函数还不够？对象解决了什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">大软件会有几十万个函数，还是太多。对象把相关的函数和变量打包在一起，并且可以层层嵌套（汽车 → 引擎 → 定速巡航），每个团队只需关心自己那一块。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. setRPM 是 public、fireSparkplug 是 private，这样设计有什么好处？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">别的团队（定速巡航）只需要、也只能调用 setRPM 这种安全的高层功能；直接点火花塞这种危险的底层操作只能由点火控制对象内部调用。API 让合适的人访问合适的函数，隐藏复杂性，也防止误用。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么说调试工具很重要？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">大多数程序员 70%~80% 的时间花在测试和调试上，而不是写新代码。IDE 能在出错时直接定位到那一行并给出信息，大大节省时间。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 版本控制除了让很多人同时工作，还有什么用？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它记录了所有改动和改动者。有人提交了有 bug 的代码时，可以把整个或部分代码回滚到之前的稳定版本，并且知道是谁改的。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="15.html"><small>← 上一集</small>15 阿兰·图灵</a>
+    <a class="next" href="17.html"><small>下一集 →</small>17 集成电路与摩尔定律</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 16 集 Software Engineering（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 规模 ---------- */
+(function () {
+  const svg = $('#scale');
+  const X0 = 200, X1 = 640, LO = 0, HI = 6;
+  const xOf = v => X0 + (Math.log10(v) - LO) / (HI - LO) * (X1 - X0);
+  for (let e = LO; e <= HI; e++) { const x = xOf(10 ** e); el('line', { x1: x, y1: 10, x2: x, y2: 110, style: 'stroke:var(--line)' }, svg); txt(svg, x, 128, e === 0 ? '1 页' : `10^${e}`, 't-sub mid'); }
+  [['排序代码：约 10 行', 1, '不到 1 页'], ['微软 Office：约 4000 万行', 8e5, '约 80 万页']].forEach(([n, v, l], i) => {
+    const y = 26 + i * 44;
+    txt(svg, X0 - 10, y + 16, n, 't-main end');
+    el('rect', { x: X0, y, width: Math.max(4, xOf(v) - X0), height: 24, rx: 4, class: i ? 's-on' : 's-acc' }, svg);
+    txt(svg, Math.max(X0 + 4, xOf(v)) + 8, y + 17, l, 't-mono');
+  });
+})();
+
+/* ---------- 对象层级 ---------- */
+(function () {
+  const T = { car: { _v: ['color'], engine: { _f: ['start()', 'stop()'], _v: ['miles'], cruiseControl: { _f: ['setCruiseSpeed(55)', 'nudgeSpeed(+1)', 'stopCruise()'] }, ignitionControl: { _f: ['setRPM(2500)'] }, fuelPump: { _f: ['setFlow(3)'] }, radiator: { _f: ['setFan(on)'] } }, transmission: { _f: ['shift(3)'] }, wheels: {}, doors: { _f: ['lock()'] }, windows: { _f: ['open()'] } } };
+  const lines = [];
+  (function walk(node, name, depth, path) {
+    lines.push(`${'    '.repeat(depth)}<span class="o">${name}</span>${depth === 0 ? '　<span class="v">← 汽车对象</span>' : ''}`);
+    (node._v || []).forEach(v => lines.push(`${'    '.repeat(depth + 1)}<span class="v">变量 ${v}</span>`));
+    (node._f || []).forEach(f => lines.push(`${'    '.repeat(depth + 1)}<span class="f" data-p="${[...path, name].join('.')}.${f}">${f}</span>`));
+    Object.entries(node).filter(([k]) => !k.startsWith('_')).forEach(([k, v]) => walk(v, k, depth + 1, [...path, name]));
+  })(T.car, 'car', 0, []);
+  $('#otree').innerHTML = lines.join('\n');
+  const show = el => { $$('#otree .f').forEach(x => x.classList.toggle('sel', x === el)); const p = el.dataset.p; $('#callpath').innerHTML = p.split('.').map((s, i, a) => i < a.length - 1 ? `<span style="color:var(--accent)">${s}</span>` : `<b style="color:var(--on)">${s}</b>`).join('.') + `<div class="muted" style="font:13px inherit;margin-top:4px">从最外层的 car 开始，经过 ${p.split('.').length - 2} 层对象，才找到这个函数</div>`; };
+  $$('#otree .f').forEach(f => f.onclick = () => show(f));
+  show($('#otree .f[data-p$="setCruiseSpeed(55)"]'));
+})();
+
+/* ---------- API ---------- */
+(function () {
+  const F = [['setRPM(rpm)', 'pub', '设置发动机转速。public：外面可以调用。定速巡航正需要它来保持车速。'], ['checkSparkplugVoltage()', 'pub', '检查火花塞电压。public：可以调用，只读不改，安全。'], ['fireSparkplug(n)', 'pri', '点燃某个火花塞。private：只有 IgnitionControl 自己内部的函数（比如 setRPM）能调用。定速巡航调用它会被拒绝——不然引擎可能会炸！']];
+  $('#ign').innerHTML = F.map(([n, t], i) => `<button class="fn ${t}" data-i="${i}" style="width:100%;background:none;cursor:pointer;color:var(--ink)"><span>${n}</span><span class="tag">${t === 'pub' ? 'public' : 'private'}</span></button>`).join('');
+  $$('#ign .fn').forEach(b => b.onclick = () => { const [n, t, d] = F[+b.dataset.i]; $('#api-cap').innerHTML = (t === 'pub' ? `<b style="color:var(--ok)">✓ 调用成功</b>：cruiseControl → ignition.${n}<br>` : `<b style="color:var(--bad)">✖ 拒绝访问</b>：${n} 是 private<br>`) + d; });
+})();
+
+/* ---------- 版本控制 ---------- */
+(function () {
+  const AUTH = ['Grace', 'Hank', 'Ada', 'Linus'];
+  let commits, head, out, n;
+  const hash = () => Math.random().toString(16).slice(2, 9);
+  function reset() { commits = [{ h: hash(), msg: '定速巡航：设定速度', who: 'Grace', bug: false }, { h: hash(), msg: '定速巡航：微调速度', who: 'Ada', bug: false }]; head = 1; out = false; n = 0; paint('仓库里的 master 版本能正常编译运行。'); }
+  function paint(msg) {
+    $('#vc').innerHTML = commits.map((c, i) => `<div class="commit ${c.bug ? 'bug' : ''} ${i === head ? 'head' : ''} ${i > head ? 'gone' : ''}"><span class="dot"></span><span class="h">${c.h}</span><span>${c.msg}</span><span class="who">${c.who}${i === head ? ' · ← master 当前' : ''}</span></div>`).join('');
+    const cur = commits[head];
+    $('#vc-status').innerHTML = (out ? '📕 cruise.js 已被你借出，正在编辑；别人暂时不动它。<br>' : '') + (cur.bug ? '<b style="color:var(--bad)">master 上有 bug！依赖它的团队代码崩了。</b>' : '<b style="color:var(--ok)">master 正常。</b>') + (msg ? '<br>' + msg : '');
+    $('#vc-ok').disabled = $('#vc-bug').disabled = !out;
+  }
+  const commit = (msg, bug) => { commits = commits.slice(0, head + 1); commits.push({ h: hash(), msg, who: 'Carrie（你）', bug }); head = commits.length - 1; out = false; };
+  $('#vc-out').onclick = () => { out = true; paint('像从图书馆借书：把代码借到自己电脑上改。'); };
+  $('#vc-ok').onclick = () => { commit('定速巡航：加了减速功能', false); paint('测试都通过了才提交。别人现在能用到你的新功能。'); };
+  $('#vc-bug').onclick = () => { commit('定速巡航：改了点东西（没测好）', true); paint('糟糕，这次提交带着 bug 进了 master。版本控制记下了是谁提交的。'); };
+  $('#vc-back').onclick = () => { let k = head; while (k > 0 && commits[k].bug) k--; if (k === head) { paint('当前版本没有问题，不用回滚。'); return; } head = k; paint(`回滚到 ${commits[k].h}（${commits[k].msg}）：master 又能正常工作了。有 bug 的那次提交还留在记录里，可以修好再交。`); };
+  $('#vc-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 发布阶段 ---------- */
+(function () {
+  const svg = $('#stages');
+  const S = [['alpha 版', '粗糙、bug 很多', '只在公司内部测试', 's-soft'], ['beta 版', '基本完成，没测完', '公众帮忙测（免费 QA）', 's-acc'], ['正式发布', '经过 QA 测试', '给所有用户', 's-on']];
+  S.forEach(([n, a, b, cls], i) => {
+    const x = 20 + i * 225;
+    el('rect', { x, y: 20, width: 190, height: 86, rx: 12, class: cls }, svg);
+    txt(svg, x + 95, 48, n, 't-main mid'); txt(svg, x + 95, 70, a, 't-sub mid'); txt(svg, x + 95, 90, b, 't-sub mid');
+    if (i < 2) el('path', { d: `M${x + 192},63 H${x + 222}`, class: 's-line' }, svg);
+  });
+})();
+</script>
+</body>
+</html>

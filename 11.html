@@ -1,0 +1,445 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>11 编程语言发展史 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.asm-wrap{display:grid;grid-template-columns:1fr 1.2fr;gap:16px}
+@media (max-width:760px){.asm-wrap{grid-template-columns:1fr}}
+textarea.code{width:100%;min-height:230px;font:14px/1.6 var(--mono);padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--code);color:var(--ink);resize:vertical}
+table.out{width:100%;border-collapse:collapse;font:13px var(--mono)}
+table.out th,table.out td{padding:4px 8px;border-bottom:1px solid var(--line);text-align:left}
+table.out th{background:var(--bg);font-family:inherit;font-size:12px}
+table.out td.lbl{color:var(--accent);font-weight:700}
+table.out tr.err td{color:var(--bad)}
+table.out .jmp{color:var(--on);font-weight:700}
+.inp{font:16px var(--mono);padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:260px}
+.cmp-wrap{display:grid;grid-template-columns:1fr auto 1.3fr;gap:12px;align-items:center;margin-top:12px}
+@media (max-width:700px){.cmp-wrap{grid-template-columns:1fr}}
+.cmp-wrap pre{margin:0;font:14px/1.7 var(--mono);background:var(--code);padding:10px 14px;border-radius:10px;min-height:60px}
+.arrow-big{font-size:28px;color:var(--on);text-align:center}
+.memmap{font-size:13px;color:var(--muted);margin-top:8px}
+</style>
+</head>
+<body data-ep="11">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=12" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 11 集</div>
+  <h1>编程语言发展史</h1>
+  <p class="en">The First Programming Languages</p>
+  <p class="lead">硬件只懂二进制，人却想用更像人话的方式写程序。这一集讲人们怎样一层层往上搭：助记符和汇编器、第一个编译器、FORTRAN 和 COBOL，直到今天成百上千种编程语言。</p>
+  <div class="road">
+    <span>机器码</span><i>→</i><span>伪代码</span><i>→</i><span>汇编语言 + 汇编器</span><i>→</i><span>编译器（A-0）</span><i>→</i><span>FORTRAN</span><i>→</i><span>COBOL</span><i>→</i><span>语言的黄金时代</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从硬件到软件</a></li>
+    <li><a href="#ch1">1 · 机器码与伪代码</a></li>
+    <li><a href="#ch2">2 · 汇编器</a></li>
+    <li><a href="#ch3">3 · 霍普与编译器</a></li>
+    <li><a href="#ch4">4 · 变量</a></li>
+    <li><a href="#ch5">5 · FORTRAN 与 COBOL</a></li>
+    <li><a href="#ch6">6 · 语言的黄金时代</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从硬件到"更软"的东西</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！到目前为止，这个系列大部分时间都在讲<b>硬件</b>——计算的物理部件：电和电路、寄存器和 RAM、ALU 和 CPU。但在硬件层面编程既麻烦又不灵活，所以程序员想要一种更通用的方式给计算机编程——一种你可以称之为"更软"的媒介。没错，我们要讲<b>软件</b>了！</p>
+  <p>第 8 集里，我们一步步走了一个给我们设计的 CPU 的简单程序。第一条要执行的指令，也就是内存地址 0 里的那条，是 <code>0010 1110</code>。之前说过，指令的前 4 位是操作码（opcode）。在我们假想的 CPU 上，0010 表示 LOAD_A 指令——把一个值从内存移到寄存器 A。后 4 位定义内存位置，这里是 1110，也就是十进制的 14。所以这 8 个数字真正的意思是"把地址 14 读进寄存器 A"。</p>
+  <p>我们只是在用两种不同的语言。你可以把它想成英语和摩尔斯电码："Hello"和"···· · ·−·· ·−·· −−−"意思一样——都是你好！——只是编码方式不同。英语和摩尔斯电码的复杂程度也不同：英语有 26 个字母和多得多的发音，摩尔斯电码只有点和划，但它们能传达同样的信息。计算机语言也类似。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>机器码与伪代码</h2>
+  <p>我们已经看到，计算机硬件只能处理原始的二进制指令。这是计算机处理器的"母语"，事实上，也是它唯一会说的语言。这叫<b>机器语言</b>或<b>机器码</b>（machine code）。</p>
+  <p>在计算的早期，人们得用机器码写出整个程序。更具体地说，他们会先在纸上用英语写一个高层次版本的程序，比如："从内存取下一笔销售额，然后把它加到当天、当周、当年的累计总额上，然后计算要加的税"……等等。像这样非正式的、高层次的程序描述，叫<b>伪代码</b>（pseudo-code）。然后，等程序在纸上完全想清楚后，他们再用操作码表之类的东西，费力地手工把它展开、翻译成二进制机器码。翻译完成后，程序才能被送进计算机运行。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="levels" viewBox="0 0 680 260" role="img" aria-label="同一件事的四个层级"></svg></div>
+      <figcaption>图 1　同一件事，四种写法：越往上越像人话，越往下越接近 CPU 真正执行的东西（汇编和机器码沿用第 8 集的假想 CPU）。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>助记符、汇编语言和汇编器</h2>
+  <p>可以想象，人们很快就受够了这个过程。所以到 1940 年代末、进入 50 年代，程序员开发出了稍微高层次一点、人更容易读懂的语言。操作码被赋予了简单的名字，叫<b>助记符</b>（mnemonic），后面跟着操作数，组成指令。于是程序员不必再把指令写成一堆 1 和 0，而是可以写成"LOAD_A 14"这样的东西。我们在第 8 集就用了这种助记符，因为它好懂多了！</p>
+  <p>当然，CPU 根本不知道"LOAD_A 14"是什么，它不懂基于文字的语言，只懂二进制。所以程序员想出了一个巧妙的办法：他们用二进制写了一些<b>可以反复使用的辅助程序</b>，读入文字形式的指令，自动把它们组装（assemble）成对应的二进制指令。这种程序叫——你猜到了——<b>汇编器</b>（assembler）。它读入用<b>汇编语言</b>（assembly language）写的程序，把它转换成原生的机器码。"LOAD_A 14"就是一条汇编指令的例子。</p>
+  <p>随着时间推移，汇编器有了让编程更轻松的新功能。一个很棒的功能是<b>自动算出跳转地址</b>。这是我在第 8 集用过的一个示例程序：注意 JUMP_NEGATIVE 指令跳到地址 5，普通 JUMP 跳到地址 2。问题是，如果我们在这个程序的开头再加一些代码，所有的地址都会变。想更新程序时这就太痛苦了！所以汇编器不再使用写死的跳转地址，而是让你插入可以跳转过去的小<b>标签</b>（label）。当程序被送进汇编器时，它会负责算出所有的跳转地址。</p>
+
+  <div class="card">
+    <h3>动手：一个能用的汇编器</h3>
+    <div class="asm-wrap">
+      <div>
+        <textarea class="code" id="asm-src" spellcheck="false" aria-label="汇编源代码"></textarea>
+        <div class="btns">
+          <button class="btn primary" id="asm-go">汇编 →</button>
+          <button class="btn" id="asm-ins">在开头插一行</button>
+          <button class="btn" id="asm-reset">恢复示例</button>
+        </div>
+      </div>
+      <div>
+        <table class="out"><thead><tr><th>地址</th><th>标签</th><th>汇编</th><th>机器码</th></tr></thead><tbody id="asm-out"></tbody></table>
+        <div class="readout" id="asm-labels" style="font-size:13px"></div>
+      </div>
+    </div>
+    <p class="hint">这是第 8 集的求余数程序，跳转目标写成了标签 LOOP、END。点"在开头插一行"再汇编：所有地址往后挪了一格，但你一个跳转地址都不用改</p>
+  </div>
+
+  <p>现在程序员可以把精力更多地放在编程本身，而不是底层的机械细节上，通过隐藏不必要的复杂性，能做出更复杂的东西。就像这个系列里做过很多次的那样，我们又往上爬了一层抽象。</p>
+  <p>然而，即使汇编器有自动把 JUMP 连到标签这样的好功能，汇编语言仍然只是机器码外面薄薄的一层。一般来说，每条汇编指令都直接转换成一条对应的机器指令——<b>一一对应</b>——所以它天生和底层硬件绑在一起。汇编器仍然强迫程序员去想要用哪些寄存器和内存位置。如果你突然需要多一个值，可能得改很多代码才能把它塞进去。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · 思想泡泡</div>
+  <h2>葛丽丝·霍普与第一个编译器</h2>
+  <p>这个问题没有逃过<b>葛丽丝·霍普</b>（Grace Hopper）博士的眼睛。作为美国海军军官，她是哈佛马克一号计算机最早的程序员之一，这台机器我们在第 2 集讲过。它是一头巨大的机电野兽，1944 年作为盟军战时努力的一部分建成。程序存在穿孔纸带上送进计算机。顺便说一句，你可以看到，他们给这个程序"打补丁"修 bug 的方式，就是字面意义上在纸带的孔上贴纸片。</p>
+  <p>马克一号的指令集非常原始，甚至没有 JUMP 指令。要写重复执行同一操作的代码，你得把穿孔纸带的两头粘在一起，做成一个<b>实体的循环</b>。换句话说，给马克一号编程简直是噩梦！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="tapeloop" viewBox="0 0 680 170" role="img" aria-label="马克一号的纸带循环和补丁"></svg></div>
+      <figcaption>图 2　没有 JUMP 指令，就把纸带首尾粘成一个圈；打错的孔，就贴一块纸"打补丁"（示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>战后，霍普继续在计算领域的最前沿工作。为了释放计算机的潜力，她设计了一门高级编程语言，叫"算术语言版本 0"（Arithmetic Language Version 0），简称 <b>A-0</b>。汇编语言和机器指令是直接的一一对应，但高级编程语言的一行代码，可能会变成 CPU 执行的<b>几十条</b>指令。为了完成这种复杂的翻译，霍普在 1952 年造出了<b>第一个编译器</b>（compiler）。这是一个专门的程序，把用编程语言写的"源代码"转换成低级语言，比如汇编，或者 CPU 能直接处理的二进制"机器码"。</p>
+  <p>所以，尽管编程变容易了很诱人，很多人还是对霍普的想法持怀疑态度。她曾说：</p>
+  <blockquote class="quote"><b>"我有一个能用的编译器，可没人愿意碰它。他们小心翼翼地告诉我：计算机只会做算术，不会做程序。"</b><span class="who">—— 葛丽丝·霍普</span></blockquote>
+  <p>但这是个好主意，很快就有许多人着手打造新的编程语言——今天已经有好几百种了！</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>编译器替你管寄存器：变量</h2>
+  <p>可惜 A-0 的代码一个例子都没留下来，所以我们用 Python 这门现代编程语言来举例。假设我们想把两个数加起来并保存结果。记住，用汇编代码时，我们得从内存取值、跟寄存器打交道，还有其他底层细节。但同样的程序用 Python 可以这样写：</p>
+  <pre style="font:15px var(--mono);background:var(--code);padding:12px 16px;border-radius:10px">a = 3
+b = 14
+c = a + b</pre>
+  <p>注意，这里没有寄存器或内存位置要处理——编译器会处理这些，把大量底层的、不必要的复杂性抽象掉。程序员只需要为需要的内存位置创建抽象，叫<b>变量</b>（variable），并给它们起名字。于是我们可以把两个数存进我们起了名字的变量里——这里我选了 a 和 b，但变量可以叫任何名字——然后把它们加起来，结果存进另一个我创建的变量 c。编译器在底层也许会用寄存器 A 来存 a 的值，但我不需要知道！眼不见，心不烦！</p>
+
+  <div class="card">
+    <h3>动手：一行代码，编译成好几条指令</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input class="inp" id="cc-src" value="c = a + b" aria-label="要编译的一行代码">
+      <button class="btn primary" id="cc-go">编译</button>
+      <button class="btn" data-src="c = a + b">c = a + b</button>
+      <button class="btn" data-src="total = price + tax - discount">total = price + tax − discount</button>
+      <button class="btn" data-src="x = a + b + c + d">x = a + b + c + d</button>
+    </div>
+    <div class="cmp-wrap">
+      <pre id="cc-in"></pre>
+      <div class="arrow-big">→</div>
+      <pre id="cc-out"></pre>
+    </div>
+    <div class="memmap" id="cc-map"></div>
+    <p class="hint">只支持"变量 = 变量 + 变量 − 变量…"这样的一行，编译成第 8 集那台 CPU 的汇编。注意左边一个寄存器、一个地址都没出现</p>
+  </div>
+  <div class="extra">
+    <span class="t">编译器做了哪几件事</span>
+    给每个变量挑一个内存地址（图里的"内存分配"）；决定什么时候把哪个变量读进哪个寄存器；把 + 和 − 翻译成 ADD、SUB；最后把结果存回 c 的地址。真实的编译器还会做大量优化，比如尽量让常用的变量一直待在寄存器里，少去读内存。你写的 JavaScript 也一样：浏览器里的 JS 引擎在运行时把它编译成你那台电脑 CPU 的机器码。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>FORTRAN 与 COBOL</h2>
+  <p>A-0 是一个重要的历史里程碑，但它和后来的版本并没有被广泛使用。几年后的 1957 年，IBM 发布了 <b>FORTRAN</b>，名字来自"公式翻译"（Formula Translation），它主宰了早期的计算机编程。FORTRAN 项目负责人 John Backus 说过：</p>
+  <blockquote class="quote"><b>"我的很多工作都来自懒惰。我不喜欢写程序，所以……我开始做一个编程系统，让写程序更容易。"</b><span class="who">—— John Backus</span></blockquote>
+  <p>你懂的，典型的懒人——他们总是在打造自己的编程系统。总之，平均来说，用 FORTRAN 写的程序比等价的手写汇编代码<b>短 20 倍</b>，然后由 FORTRAN 编译器把它翻译、展开成原生机器码。圈内人怀疑它的性能能不能和手写代码一样好，但程序员能更快地写出更多代码，这让它在经济上成了一个很容易做的选择：用计算时间的小小增加，换来程序员时间的大幅减少。</p>
+  <p>当然，IBM 是卖计算机的，所以起初 FORTRAN 代码只能在 IBM 计算机上编译和运行。1950 年代的大多数编程语言和编译器，也都只能在一种计算机上运行。所以如果你升级了计算机，往往还得把所有代码重写一遍！</p>
+  <p>为此，来自工业界、学术界和政府的计算机专家在 1959 年组成了一个联盟——数据系统语言委员会，我们的朋友葛丽丝·霍普担任顾问——来指导开发一种能在不同机器上通用的编程语言。成果就是高级、易用的"面向商业的通用语言"（Common Business-Oriented Language），简称 <b>COBOL</b>。</p>
+  <p>为了应对不同的底层硬件，每种计算架构都需要自己的 COBOL 编译器。但关键在于，这些编译器都能接收<b>同一份 COBOL 源代码</b>，不管它在什么计算机上运行。这个理念叫<b>"一次编写，到处运行"</b>（write once, run anywhere）。今天的大多数编程语言都是如此，这是远离汇编和机器码的好处，因为后两者仍然是特定于某种 CPU 的。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="wora" viewBox="0 0 680 220" role="img" aria-label="一次编写，到处运行"></svg></div>
+      <figcaption>图 3　同一份源代码，交给不同机器各自的编译器，变成各自 CPU 能懂的机器码。</figcaption>
+    </figure>
+  </div>
+
+  <p>这一切最大的影响，是<b>降低了计算的门槛</b>。在高级编程语言出现之前，编程是计算机专家和发烧友的专属领域，而且往往是他们的全职工作。但现在，科学家、工程师、医生、经济学家、教师，以及很多其他人，都能把计算融入自己的工作。多亏了这些语言，计算从一门繁琐深奥的学科，变成了一种通用、人人可用的工具。同时，编程的抽象也让那些计算机专家——现在叫"专业程序员"——能做出越来越复杂的程序，如果用汇编来写，那可能要几百万、几千万甚至更多行代码。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>编程语言的黄金时代</h2>
+  <p>当然，这段历史并没有在 1959 年结束。实际上，编程语言设计的黄金时代才刚刚开始，和计算机硬件的飞速进步齐头并进。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="langs" viewBox="0 0 680 200" role="img" aria-label="编程语言年表"></svg></div>
+      <figcaption>图 4　课程里提到的语言，按年代排列（只是冰山一角）。</figcaption>
+    </figure>
+  </div>
+
+  <p>1960 年代有 ALGOL、LISP 和 BASIC 这样的语言。70 年代，Pascal、C 和 Smalltalk 发布了。80 年代给我们带来了 C++、Objective-C 和 Perl。90 年代有 Python、Ruby 和 Java。新千年则见证了 Swift、C# 和 Go 的兴起——别和《冰雪奇缘》的 Let it Go 或 Pokémon Go 搞混了。其中有些你可能听着耳熟，很多今天还在用。你现在用的网页浏览器，极有可能就是用 C++ 或 Objective-C 写的。</p>
+  <p>我刚才列的只是冰山一角，带着新奇功能的语言一直在被提出来。每一门新语言都试图利用新的、巧妙的抽象，让编程的某些方面更容易或更强大，或者利用新兴的技术和平台，让更多人能更快地做出更惊人的事情。</p>
+  <p>很多人认为编程的"圣杯"是用<b>"普通的英语"</b>：你只要说出想让计算机做什么，它就能弄明白并执行。这种智能系统目前还是科幻小说里的东西，《2001 太空漫游》的粉丝们也许觉得这样也挺好。</p>
+  <div class="extra">
+    <span class="t">2017 年之后的变化</span>
+    课程制作于 2017 年。之后出现的大语言模型，已经能根据自然语言描述写出相当像样的代码——你正在读的这个图文版，正文整理、示意图和交互演示，就是由 AI（Claude）按中文要求写出来的 HTML 和 JavaScript。但请注意它没有跳过本集讲的任何一层：AI 写出的是 JavaScript 源代码，浏览器的引擎再把它编译成机器码，CPU 依然只认 0 和 1。抽象又往上加了一层，下面那些层一层都没少。
+  </div>
+  <p>现在你已经了解了编程语言，接下来几集我们会深入下去，继续帮你理解编程语言和用它们写出的软件，是怎样被用来做那些又酷又不可思议的事的。下周见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <ul class="timeline">
+    <li><span class="yr">早期</span>在纸上写伪代码，再查操作码表手工翻译成机器码</li>
+    <li><span class="yr">1940s末</span>助记符 + 汇编器：LOAD_A 14 自动变成 0010 1110；标签让汇编器自动算跳转地址</li>
+    <li><span class="yr">1944</span>哈佛马克一号：纸带程序，没有 JUMP，循环靠把纸带粘成圈</li>
+    <li><span class="yr">1952</span>葛丽丝·霍普：A-0 语言和第一个编译器，一行高级语言 → 几十条指令</li>
+    <li><span class="yr">1957</span>FORTRAN：比手写汇编短 20 倍，但起初只能在 IBM 机器上跑</li>
+    <li><span class="yr">1959</span>COBOL：每种机器有自己的编译器，同一份源码到处运行</li>
+    <li><span class="yr">1960s~</span>ALGOL、LISP、BASIC、C、C++、Python、Java、Swift、Go……</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    汇编语言和机器码一一对应，只是换了个好读的写法；编译器才真正让一行代码变成很多条指令，并替你管寄存器和内存地址（变量）。高级语言降低了门槛，也让"一次编写，到处运行"成为可能。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 汇编器和编译器有什么区别？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">汇编器把汇编语言翻译成机器码，基本是<b>一一对应</b>：一条汇编指令 → 一条机器指令，程序员仍要自己管寄存器和地址。编译器把高级语言翻译成低级语言，<b>一行可能变成几十条</b>指令，寄存器和内存位置由编译器决定。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 汇编器的"标签"解决了什么问题？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">如果跳转地址写死成数字（JUMP 2），在程序前面插入代码后所有地址都会变，得一个个改。写成标签（JUMP LOOP），由汇编器在翻译时自动算出 LOOP 现在在哪个地址。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 程序员为什么愿意用 FORTRAN，哪怕它生成的代码可能比手写汇编慢一点？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">FORTRAN 程序平均短 20 倍，写得快得多。用计算时间的小小增加换程序员时间的大幅减少，在经济上很划算。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. "一次编写，到处运行"是怎么实现的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">每种计算机架构有自己的编译器，但它们都接受同一种语言的源代码。程序员只写一份源码，各台机器用自己的编译器把它翻译成本机 CPU 的机器码。汇编和机器码则绑定在某种 CPU 上，换机器就得重写。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="10.html"><small>← 上一集</small>10 早期的编程方式</a>
+    <a class="next" href="12.html"><small>下一集 →</small>12 编程原理：语句和函数</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 11 集 The First Programming Languages（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const b8 = n => (n & 255).toString(2).padStart(8, '0');
+const b4 = n => n.toString(2).padStart(4, '0');
+const OPC = { LOAD_A: 2, LOAD_B: 1, STORE_A: 4, ADD: 8, SUB: 12, JUMP: 10, JUMP_NEG: 11, HALT: 15 };
+const REG = { A: 0, B: 1, C: 2, D: 3 };
+
+/* ---------- 四个层级 ---------- */
+(function () {
+  const svg = $('#levels');
+  const rows = [
+    ['自然语言 / 伪代码', '把 3 和 14 加起来，结果记下来', 's-soft', 't-main'],
+    ['高级语言（Python）', 'c = a + b', 's-acc', 't-mono'],
+    ['汇编语言', 'LOAD_A 14 · LOAD_B 15 · ADD B A · STORE_A 13', 's-on', 't-mono'],
+    ['机器码', '00101110 · 00011111 · 10000100 · 01001101', 's-panel', 't-mono'],
+  ];
+  rows.forEach(([name, code, cls, tc], i) => {
+    const y = 14 + i * 60;
+    el('rect', { x: 180, y, width: 480, height: 42, rx: 8, class: cls }, svg);
+    txt(svg, 168, y + 26, name, 't-main end');
+    txt(svg, 420, y + 26, code, tc + ' mid');
+    if (i < 3) {
+      el('path', { d: `M420,${y + 44} V${y + 58}`, class: 's-line' }, svg);
+      txt(svg, 430, y + 55, ['人手写', '编译器', '汇编器'][i], 't-sub');
+    }
+  });
+})();
+
+/* ---------- 汇编器 ---------- */
+(function () {
+  const SAMPLE = `      LOAD_A 14
+      LOAD_B 15
+LOOP: SUB B A
+      JUMP_NEG END
+      JUMP LOOP
+END:  ADD B A
+      STORE_A 13
+      HALT`;
+  const src = $('#asm-src');
+  src.value = SAMPLE;
+  function assemble() {
+    const lines = src.value.split('\n').map(l => l.replace(/[;#].*$/, '')).filter(l => l.trim());
+    const items = [], labels = {};
+    // 第一遍：记录标签地址
+    lines.forEach(l => {
+      let m = l.match(/^\s*([A-Za-z_]\w*)\s*:\s*(.*)$/), label = null, body = l.trim();
+      if (m) { label = m[1].toUpperCase(); body = m[2].trim(); labels[label] = items.length; }
+      if (body) items.push({ label, body });
+      else if (label) items.push({ label, body: '' });
+    });
+    // 第二遍：翻译
+    const rows = items.map((it, addr) => {
+      const p = it.body.toUpperCase().split(/[\s,]+/).filter(Boolean);
+      const op = p[0];
+      let code = null, err = null, jmp = false;
+      if (!op) err = '空行（标签后面没有指令）';
+      else if (!(op in OPC)) err = `不认识的指令 ${p[0]}`;
+      else if (op === 'HALT') code = OPC.HALT << 4;
+      else if (op === 'ADD' || op === 'SUB') {
+        if (!(p[1] in REG) || !(p[2] in REG)) err = `${op} 后面要跟两个寄存器`;
+        else code = (OPC[op] << 4) | (REG[p[1]] << 2) | REG[p[2]];
+      } else {
+        let v = p[1];
+        if (v === undefined) err = `${op} 后面缺地址`;
+        else if (/^\d+$/.test(v)) { v = +v; }
+        else if (v in labels) { jmp = true; v = labels[v]; }
+        else err = `找不到标签 ${p[1]}`;
+        if (!err && (v < 0 || v > 15)) err = `地址 ${v} 超出 4 位能表示的 0~15`;
+        if (!err) code = (OPC[op] << 4) | v;
+        it.target = jmp ? v : null;
+      }
+      return { addr, ...it, code, err, jmp };
+    });
+    $('#asm-out').innerHTML = rows.map(r => `<tr class="${r.err ? 'err' : ''}"><td>${r.addr}</td><td class="lbl">${r.label || ''}</td><td>${r.body.replace(/</g, '&lt;')}${r.jmp ? ` <span class="jmp">→ ${r.target}</span>` : ''}</td><td>${r.err ? r.err : b8(r.code).slice(0, 4) + ' ' + b8(r.code).slice(4)}</td></tr>`).join('');
+    const ls = Object.entries(labels);
+    $('#asm-labels').innerHTML = ls.length ? '汇编器算出的标签地址：' + ls.map(([k, v]) => `<b>${k}</b> = ${v}`).join('，') + (rows.length > 14 ? '　⚠ 程序太长，会盖到地址 14、15 的数据' : '') : '没有标签。';
+  }
+  $('#asm-go').onclick = assemble;
+  $('#asm-ins').onclick = () => { src.value = '      LOAD_B 15\n' + src.value; assemble(); };
+  $('#asm-reset').onclick = () => { src.value = SAMPLE; assemble(); };
+  assemble();
+})();
+
+/* ---------- 纸带循环 ---------- */
+(function () {
+  const svg = $('#tapeloop');
+  el('ellipse', { cx: 200, cy: 85, rx: 150, ry: 55, style: 'fill:none;stroke:var(--wood);stroke-width:26;opacity:.5' }, svg);
+  for (let k = 0; k < 28; k++) {
+    const a = k / 28 * Math.PI * 2;
+    const x = 200 + 150 * Math.cos(a), y = 85 + 55 * Math.sin(a);
+    if (k % 3) el('circle', { cx: x, cy: y, r: 3.2, style: 'fill:var(--ink)' }, svg);
+  }
+  el('rect', { x: 336, y: 70, width: 26, height: 32, rx: 2, style: 'fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5' }, svg);
+  txt(svg, 380, 78, '首尾粘在一起', 't-sub'); txt(svg, 380, 94, '= 循环', 't-sub');
+  el('rect', { x: 120, y: 128, width: 24, height: 20, rx: 2, style: 'fill:var(--paper);stroke:var(--on);stroke-width:2' }, svg);
+  txt(svg, 150, 166, '贴纸片补掉打错的孔 = "打补丁"', 't-sub');
+  txt(svg, 500, 60, '哈佛马克一号', 't-main');
+  txt(svg, 500, 82, '程序在穿孔纸带上', 't-sub');
+  txt(svg, 500, 100, '没有 JUMP 指令', 't-sub');
+  txt(svg, 500, 118, '今天说的"patch 补丁"', 't-sub');
+  txt(svg, 500, 136, '最早就是字面意思', 't-sub');
+})();
+
+/* ---------- 迷你编译器 ---------- */
+(function () {
+  function compile(line) {
+    const m = line.replace(/\s+/g, ' ').trim().match(/^([a-zA-Z_]\w*) ?= ?([a-zA-Z_]\w*)((?: ?[+-] ?[a-zA-Z_]\w*)*)$/);
+    if (!m) return { err: '只支持"变量 = 变量 + 变量 − 变量…"这种写法，比如 c = a + b' };
+    const dst = m[1], first = m[2];
+    const rest = [...m[3].matchAll(/([+-]) ?([a-zA-Z_]\w*)/g)].map(x => [x[1], x[2]]);
+    const vars = [];
+    [first, ...rest.map(r => r[1]), dst].forEach(v => { if (!vars.includes(v)) vars.push(v); });
+    if (vars.length > 6) return { err: '变量太多了，这台小 CPU 只有 16 个地址' };
+    const addr = Object.fromEntries(vars.map((v, i) => [v, 10 + i]));
+    const asm = [`LOAD_A ${addr[first]}     ; ${first} → 寄存器 A`];
+    rest.forEach(([op, v]) => {
+      asm.push(`LOAD_B ${addr[v]}     ; ${v} → 寄存器 B`);
+      asm.push(`${op === '+' ? 'ADD' : 'SUB'} B A      ; A ${op === '+' ? '+' : '−'}= B`);
+    });
+    asm.push(`STORE_A ${addr[dst]}    ; A → ${dst}`);
+    return { asm, addr };
+  }
+  function go() {
+    const s = $('#cc-src').value;
+    const r = compile(s);
+    $('#cc-in').textContent = s;
+    if (r.err) { $('#cc-out').textContent = r.err; $('#cc-map').textContent = ''; return; }
+    $('#cc-out').textContent = r.asm.join('\n');
+    $('#cc-map').innerHTML = `一行变成了 <b>${r.asm.length}</b> 条指令。编译器替你做的内存分配：` + Object.entries(r.addr).map(([k, v]) => `<code>${k}</code> → 地址 ${v}`).join('，');
+  }
+  $('#cc-go').onclick = go;
+  $('#cc-src').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  $$('[data-src]').forEach(b => b.onclick = () => { $('#cc-src').value = b.dataset.src; go(); });
+  go();
+})();
+
+/* ---------- 一次编写，到处运行 ---------- */
+(function () {
+  const svg = $('#wora');
+  el('rect', { x: 20, y: 75, width: 150, height: 70, rx: 10, class: 's-on' }, svg);
+  txt(svg, 95, 104, '一份 COBOL', 't-main mid'); txt(svg, 95, 124, '源代码', 't-sub mid');
+  const M = [['IBM 机器', '的 COBOL 编译器'], ['UNIVAC', '的 COBOL 编译器'], ['其他厂商', '的 COBOL 编译器']];
+  M.forEach(([m, c], i) => {
+    const y = 20 + i * 66;
+    el('path', { d: `M170,110 C210,110 220,${y + 25} 260,${y + 25}`, class: 's-thin' }, svg);
+    el('rect', { x: 260, y, width: 170, height: 50, rx: 8, class: 's-acc' }, svg);
+    txt(svg, 345, y + 22, m, 't-main mid'); txt(svg, 345, y + 40, c, 't-sub mid');
+    el('path', { d: `M430,${y + 25} H480`, class: 's-line' }, svg);
+    el('rect', { x: 480, y, width: 180, height: 50, rx: 8, class: 's-soft' }, svg);
+    txt(svg, 570, y + 22, `${m}的机器码`, 't-main mid');
+    txt(svg, 570, y + 40, ['0110 1001 …', '1100 0011 …', '0001 1110 …'][i], 't-mono mid');
+  });
+})();
+
+/* ---------- 语言年表 ---------- */
+(function () {
+  const svg = $('#langs');
+  const D = [['1950s', ['FORTRAN', 'COBOL']], ['1960s', ['ALGOL', 'LISP', 'BASIC']], ['1970s', ['Pascal', 'C', 'Smalltalk']], ['1980s', ['C++', 'Objective-C', 'Perl']], ['1990s', ['Python', 'Ruby', 'Java']], ['2000s~', ['Swift', 'C#', 'Go']]];
+  el('line', { x1: 20, y1: 40, x2: 660, y2: 40, class: 's-line' }, svg);
+  D.forEach(([era, ls], i) => {
+    const x = 70 + i * 108;
+    el('circle', { cx: x, cy: 40, r: 6, style: 'fill:var(--on)' }, svg);
+    txt(svg, x, 26, era, 't-main mid');
+    ls.forEach((l, k) => {
+      el('rect', { x: x - 46, y: 58 + k * 40, width: 92, height: 30, rx: 6, class: 's-acc' }, svg);
+      txt(svg, x, 78 + k * 40, l, 't-mono mid');
+    });
+  });
+})();
+</script>
+</body>
+</html>

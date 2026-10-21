@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>19 内存与储存介质 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.two{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.two .card{margin:0}
+@media (max-width:760px){.two{grid-template-columns:1fr}}
+.pulse{fill:var(--on);transition:opacity .2s}
+.pulse.target{fill:var(--accent)}
+.hg-tube{fill:var(--mercury);opacity:.35;stroke:var(--ink);stroke-width:2}
+.core-ring{fill:none;stroke:var(--brass);stroke-width:7;cursor:pointer;transition:stroke .2s}
+.core-ring.sel{stroke:var(--on)}
+.core-arrow{fill:var(--ink)}
+.core-wire{stroke:var(--wire);stroke-width:2;transition:stroke .2s}
+.core-wire.on{stroke:var(--on);stroke-width:3}
+.tape-ctl{display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:14px;margin-top:10px}
+.tape-ctl input[type=range]{width:240px}
+</style>
+</head>
+<body data-ep="19">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=20" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 19 集</div>
+  <h1>内存与储存介质</h1>
+  <p class="en">Memory &amp; Storage</p>
+  <p class="lead">断电就丢的叫内存，断电还在的叫存储。这一集回顾人类存放 0 和 1 的各种办法：纸上的孔、水银里的声波、磁环的方向、磁带和磁盘上的磁化，最后到没有任何会动部件的固态硬盘。</p>
+  <div class="road">
+    <span>穿孔卡</span><i>→</i><span>延迟线</span><i>→</i><span>磁芯</span><i>→</i><span>磁带 / 磁鼓</span><i>→</i><span>硬盘 / 软盘</span><i>→</i><span>光盘</span><i>→</i><span>固态</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 内存与存储</a></li>
+    <li><a href="#ch1">1 · 穿孔卡</a></li>
+    <li><a href="#ch2">2 · 延迟线存储器</a></li>
+    <li><a href="#ch3">3 · 磁芯存储器</a></li>
+    <li><a href="#ch4">4 · 磁带与磁鼓</a></li>
+    <li><a href="#ch5">5 · 硬盘与存储层次</a></li>
+    <li><a href="#ch6">6 · 软盘、光盘、固态</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>内存（memory）与存储（storage）</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！这个系列里我们多次谈到计算机内存，第 6 集还设计了一个。一般来说，计算机内存是<b>非永久</b>的：如果你的 Xbox 不小心被拔了电源、关机了，存在内存里的所有数据都会丢失。所以它叫<b>易失性</b>（volatile）存储器。</p>
+  <p>这个系列还没怎么谈过的是<b>存储</b>（storage），它有点不一样：写进存储器的数据，比如写进硬盘的，会一直留在那里，直到被覆盖或删除，即使断电也不会丢。它是<b>非易失性</b>的。</p>
+  <p>过去，易失性的内存快、非易失性的存储慢，但随着计算技术的进步，这种区别越来越不那么准确，两个词也开始混用了。今天我们觉得像这个小小的 U 盘这样的技术理所当然：它能长期可靠地存好几 GB 数据，还很便宜。但以前可不是这样。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>穿孔卡：960 位</h2>
+  <p>最早的计算机存储是穿孔纸卡，以及它的近亲穿孔纸带。到 1940 年代，穿孔卡基本统一成了 <b>80 列、12 行</b>的网格，一张卡最多能存 960 位数据。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="card80" viewBox="0 0 700 200" role="img" aria-label="80 列 12 行的穿孔卡"></svg></div>
+      <figcaption>图 1　一张标准穿孔卡：80 列 × 12 行 = 960 个孔位，每个孔位是 1 位（孔的分布为示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>据我们所知，打在穿孔卡上的最大程序是美国军方的"半自动地面防空系统"，简称 SAGE，1958 年投入使用。它的主程序存在 62,500 张穿孔卡上，大约相当于 5 MB 数据——也就是今天一张普通手机照片的大小。</p>
+  <p>几十年来，穿孔卡都是一种有用、流行的存储方式：不需要电，纸又便宜，还算耐用。但穿孔卡读得慢，而且只能写一次——打掉的孔可没法轻易补回去。所以它不太适合当<b>内存</b>：程序运行时，有些值可能只需要用零点几秒，然后就丢掉了。我们需要一种更快、更大、更灵活的计算机内存。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>延迟线存储器：把数据存在声波里</h2>
+  <p>J. Presper Eckert 在 1944 年即将完成 ENIAC 时，发明了一种早期的实用方法，叫<b>延迟线存储器</b>（Delay Line Memory），原理是这样的：拿一根管子，灌满液体，比如水银；在一端放一个扬声器，另一端放一个麦克风。扬声器发出一个脉冲时，会产生一个压力波，压力波传到管子另一端需要时间，它撞到麦克风上，又被转换回电信号。我们可以<b>利用这段传播延迟来存数据</b>！</p>
+  <p>假设有压力波代表 1，没有压力波代表 0。扬声器可以输出一串二进制，比如 1010 0111，对应的波会按顺序沿管子传下去，过一会儿撞到麦克风，又被转换回 1 和 0。如果我们做一个电路，把麦克风接回扬声器，再加一个小放大器来补偿损耗，就造出了一个存储数据的<b>环</b>。信号沿电线传播几乎是瞬间的，所以电线上任何时刻都只有一位数据；但管子里能同时存很多位！</p>
+
+  <div class="card">
+    <h3>动手：数据在水银管里转圈</h3>
+    <div class="scroll-x"><svg class="diagram" id="delay" viewBox="0 0 680 210" role="img" aria-label="延迟线存储器"></svg></div>
+    <div class="btns">
+      <button class="btn primary" data-k="0">读第 0 位</button>
+      <button class="btn" data-k="3">读第 3 位</button>
+      <button class="btn" data-k="6">读第 6 位</button>
+      <button class="btn" id="dl-pause">暂停</button>
+    </div>
+    <div class="step-text" id="dl-cap">管子里循环着 8 位：1010 0111。每一位都要转到麦克风那一端才能被读出来。</div>
+  </div>
+
+  <p>完成 ENIAC 之后，Eckert 和他的同事 John Mauchly 着手造一台更大更好的计算机，叫 <b>EDVAC</b>，用上了延迟线存储器。它一共有 128 条延迟线，每条能存 352 位，总共约 4.5 万位内存——对 1949 年来说相当不错了！这让 EDVAC 成为最早的存储程序计算机之一，第 10 集讲过。</p>
+  <p>但延迟线存储器有一个很大的缺点：任何时刻你只能从一根管子里读出<b>一位</b>数据。如果你想访问某一位，比如第 112 位，就得等它在环里转过来。这叫<b>顺序存取</b>或循环存取存储器，而我们真正想要的是<b>随机存取存储器</b>，能在任何时候访问任何一位。</p>
+  <p>提高这种存储器的密度也很困难：把波挤得更紧，就更容易混在一起。为此人们发明了新形式的延迟线存储器，比如<b>磁致伸缩延迟线</b>：用一根可以扭转的金属线，产生微小的扭转波来表示数据。把金属线绕成线圈，1 英尺 × 1 英尺的面积里能存大约 1000 位。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>磁芯存储器：磁环的方向就是 0 和 1</h2>
+  <p>然而到 1950 年代中期，延迟线存储器就基本被淘汰了，在性能、可靠性和成本上都被一位新秀超越：<b>磁芯存储器</b>，由一个个叫"磁芯"（core）的小磁性甜甜圈组成。</p>
+  <p>如果你给磁芯绕上一根导线，让电流流过导线，就能把磁芯朝某个方向磁化。关掉电流，磁芯会<b>保持</b>磁化。如果让电流反方向流过导线，磁化方向——叫<b>极性</b>——就会翻转到另一边。这样，我们就能存 1 和 0 了！</p>
+  <p>只存 1 位用处不大，所以这些小甜甜圈被排成网格：有选择行和列的导线，还有一根穿过每个磁芯、用来读或写一位的导线。</p>
+
+  <div class="card">
+    <h3>动手：在磁芯网格里写一位</h3>
+    <div class="scroll-x"><svg class="diagram" id="core" viewBox="0 0 640 350" role="img" aria-label="磁芯存储器"></svg></div>
+    <div class="btns"><button class="btn primary" id="core-w1">写入 1</button><button class="btn" id="core-w0">写入 0</button><button class="btn" id="core-r">读取</button></div>
+    <div class="step-text" id="core-cap"></div>
+    <p class="hint">点任意一个磁环选中它（行线和列线会亮起）。箭头方向 = 磁化方向：顺时针当 1，逆时针当 0</p>
+  </div>
+
+  <p>这是一块真正的磁芯存储器！每一个黄色小方格里有 32 行、32 列微小的磁芯，每个磁芯存 1 位数据，所以每个黄色方格能存 1024 位。一共有 9 个这样的方格，所以这块存储板最多能存 9216 位，大约 9 千位（kilobit）。<span class="muted" style="font-size:13px">（字幕写成"9 千字节"，原文 9 kilobytes 是口误：9216 位约 1.1 千字节。）</span></p>
+  <p>磁芯存储器第一次大规模使用，是 1953 年麻省理工学院的<b>旋风 1 号</b>（Whirlwind 1）计算机，它用的是 32 × 32 的磁芯排列，而且不是只有一层，而是叠了 16 块板，大约提供 1.6 万位存储。重要的是，和延迟线存储器不同，<b>任何一位都能在任何时候访问</b>。这是杀手级的特性，磁芯存储器从 1950 年代中期开始，成为主流的随机存取存储器技术长达二十年——尽管它通常是<b>手工编织</b>的！</p>
+  <p>它起初大约 1 美元一位，到 1970 年代降到了 1 美分左右一位。不幸的是，就算 1 美分一位，用来做存储还是不够便宜。前面说过，一张普通手机照片大约 5 MB，也就是约 4000 万位。你愿意花 40 万美元把一张照片存在磁芯存储器里吗？如果你有这么多闲钱……你知道 Crash Course 在 Patreon 上有赞助页面吗？对吧？懂的都懂。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>磁带与磁鼓</h2>
+  <p>总之，那时人们在存储技术上做了大量研究。到 1951 年，Eckert 和 Mauchly 已经创办了自己的公司，设计了一台叫 <b>UNIVAC</b> 的新计算机，它是最早进行商业销售的计算机之一。它首次推出了一种新的计算机存储：<b>磁带</b>。</p>
+  <p>磁带是一长条又薄又柔软的磁性材料，卷在卷轴上。磁带可以在一台叫<b>磁带机</b>的机器里前后移动。机器里有一个<b>写头</b>，让电流流过绕好的导线产生磁场，把磁带上的一小段磁化。电流的方向决定极性，同样非常适合存 1 和 0。还有一个单独的<b>读头</b>，可以在不破坏数据的情况下检测极性。</p>
+  <p>UNIVAC 用的是半英寸宽的磁带，有 8 条平行的数据轨道，每条每英寸能存 128 位。每卷有 1200 英尺长，也就是说能存大约 1500 万位——差不多 2 MB！虽然磁带机很贵，但磁带本身便宜又小巧，所以今天仍然用它来<b>归档</b>数据。</p>
+  <p>磁带的主要缺点是访问速度。磁带天生就是<b>顺序</b>的，你得倒带或快进才能到达想要的数据。这可能意味着为了取一个字节，要走过几百英尺的磁带，这很慢。</p>
+
+  <div class="card">
+    <h3>动手：磁带 vs 随机存取</h3>
+    <div class="scroll-x"><svg class="diagram" id="tape" viewBox="0 0 680 150" role="img" aria-label="磁带的顺序访问"></svg></div>
+    <div class="tape-ctl">
+      <label>要读的位置 <input type="range" id="tape-pos" min="0" max="1200" value="900"> <b id="tape-pos-v" style="font-family:var(--mono)"></b> 英尺处</label>
+      <button class="btn primary" id="tape-go">去读</button>
+    </div>
+    <div class="step-text" id="tape-cap"></div>
+  </div>
+
+  <p>1950、60 年代还有一种相关的流行技术，叫<b>磁鼓存储器</b>：一个金属圆筒——叫"鼓"——表面涂着用来记录数据的磁性材料。鼓一直在旋转，沿着它的长度方向排着几十个读写头，读写头等待正确的位置转到它们下面，再读或写一位数据。为了尽量缩短这种等待，磁鼓每分钟要转几千圈！到 1953 年这项技术开始腾飞时，你能买到能记录 8 万位数据的磁鼓——也就是 10 KB。但磁鼓的生产在 1970 年代停止了。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>硬盘与存储层次</h2>
+  <p>不过，磁鼓直接催生了<b>硬盘</b>的发展。硬盘和磁鼓非常相似，只是几何形状不同：不用大圆筒，而是用……硬的盘。名字就是这么来的！存储原理是一样的：盘的表面是磁性的，写头和读头可以存取 1 和 0。盘的好处是薄，所以可以把很多张叠在一起，提供大量用来存数据的表面积。</p>
+  <p>IBM 给世界上第一台带磁盘驱动器的计算机正是这么做的：<b>RAMAC 305</b>——顺便说一句，名字很酷。它有 50 张直径 24 英寸的磁盘，总容量大约 5 MB。耶！我们终于到了能存一张手机照片的技术！那一年是 1956 年。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="disk" viewBox="0 0 680 230" role="img" aria-label="硬盘结构"></svg></div>
+      <figcaption>图 2　硬盘：一叠磁盘一直在转，读写头先移到正确的盘和磁道，再等数据所在的扇区转过来——这段时间叫寻道时间。</figcaption>
+    </figure>
+  </div>
+
+  <p>要访问任何一位数据，读写头要沿着盘片叠上下移动到正确的那张盘，然后滑进两张盘之间。和磁鼓一样，磁盘在不停地转，所以读写头还得等正确的那一段转过来。RAMAC 305 平均要大约 <b>0.6 秒</b>才能访问任意一块数据，这叫<b>寻道时间</b>（seek time）。<span class="muted" style="font-size:13px">（字幕误译为"六分之一秒"，原文是十分之六秒。）</span></p>
+  <p>这对存储来说很不错，但对内存来说远远不够快，所以 RAMAC 305 还配了磁鼓存储器和磁芯存储器。这是<b>存储层次结构</b>（memory hierarchy）的一个例子：一小部分快速、昂贵的存储器，稍多一些中速、便宜一点的存储器，再加上大量慢一些、便宜的存储器。这种混合方式在成本和速度之间取得了平衡。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="pyramid" viewBox="0 0 680 260" role="img" aria-label="存储层次结构"></svg></div>
+      <figcaption>图 3　今天的存储层次（补充，数量级为大致值）：越往上越快、越贵、越小；越往下越慢、越便宜、越大。</figcaption>
+    </figure>
+  </div>
+
+  <p>硬盘迅速改进，到 1970 年代已经很普遍了。今天像这样的一块硬盘轻松就能装 1 TB 数据——一万亿字节——大约 20 万张 5 MB 的照片！这种硬盘在网上最低 40 美元就能买到，相当于每位 0.0000000005 美分，比磁芯存储器的每位 1 美分进步太多了！而且现代硬盘的平均寻道时间不到 1/100 秒。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>软盘、光盘和固态存储</h2>
+  <p>我还应该简单提一下硬盘的近亲——<b>软盘</b>。它基本上是同一个东西，只是用的磁性介质是……软的。你可能在某些应用程序里认出它就是那个"保存"图标，但它曾经是一个真实存在的物件！它主要用作便携存储，从 1970 年代中期到 90 年代中期几乎无处不在。今天它当杯垫挺不错的。密度更高的软盘，比如 Zip 磁盘，在 1990 年代中期流行起来，但不到十年就失宠了。</p>
+  <p><b>光学存储</b>在 1972 年登场，形式是 12 英寸的"激光影碟"。不过你可能更熟悉它后来更小、更流行的亲戚：<b>CD</b>（Compact Disc），以及 90 年代流行起来的 DVD。从功能上说，这些技术和硬盘、软盘很像，但它们不是用磁性存数据，而是在盘面上有很多微小的物理凹坑，让光以不同的方式反射，被光学传感器捕捉到，再解码成 1 和 0。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="optical" viewBox="0 0 680 170" role="img" aria-label="光盘的凹坑"></svg></div>
+      <figcaption>图 4　光盘截面示意：激光照在平面上反射回传感器，照到凹坑边缘时反射变化——变化与否被解码成 1 和 0。</figcaption>
+    </figure>
+  </div>
+
+  <p>然而今天，一切都在走向<b>固态</b>技术，没有任何会动的部件，比如这块硬盘和这个 U 盘。它们里面是集成电路（第 17 集讲过）。<span class="muted" style="font-size:13px">（视频这里说的是"第 15 集"，后面又说摩尔定律是"第 14 集"，按最终的集数应为第 17 集。）</span>第一批 RAM 集成电路在 1972 年上市，每位 1 美分，很快让磁芯存储器过时了。今天成本已经降得很低，机械硬盘正被非易失性的<b>固态硬盘</b>——用酷小孩的说法叫 <b>SSD</b>——取代。因为没有会动的部件，它们根本不需要"寻道"，所以 SSD 的访问时间通常不到 1/1000 秒。这很快！但它仍然比你电脑的 RAM 慢很多倍。所以今天的计算机仍然使用存储层次结构。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="cost" viewBox="0 0 700 220" role="img" aria-label="每一位存储的成本"></svg></div>
+      <figcaption>图 5　1 美元能存多少位（对数刻度，每往右一格是 100 倍）。数字来自课程。</figcaption>
+    </figure>
+  </div>
+
+  <p>从 1940 年代到现在，我们走了很远。和晶体管数量与摩尔定律很像，内存和存储技术也遵循着类似的指数趋势：从早期磁芯存储器每 MB 要几百万美元，稳步下降到 2000 年只要几美分，今天更是不到一美分的零头。而且要操心的穿孔卡也少得多了。说真的，你能想象存放 SAGE 程序的那间屋子里吹过一阵小风吗？62,500 张穿孔卡。我想都不敢想。下周见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>技术</th><th>怎么存 0 和 1</th><th>访问方式</th><th>课程里的数字</th></tr></thead>
+      <tbody>
+        <tr><td>穿孔卡</td><td>纸上有没有孔</td><td>只能写一次，读得慢</td><td>80×12 = 960 位 / 张</td></tr>
+        <tr><td>延迟线</td><td>水银里有没有压力波</td><td>顺序（等它转过来）</td><td>EDVAC 约 4.5 万位</td></tr>
+        <tr><td>磁芯</td><td>磁环的磁化方向</td><td><b>随机</b></td><td>$1 → 1¢ / 位</td></tr>
+        <tr><td>磁带</td><td>带子上一小段的磁化方向</td><td>顺序（卷带）</td><td>UNIVAC 一卷约 2 MB，至今用于归档</td></tr>
+        <tr><td>磁鼓 / 硬盘</td><td>旋转盘面上的磁化方向</td><td>寻道：移磁头 + 等旋转</td><td>RAMAC 5 MB、0.6 秒；今天 1 TB、&lt;0.01 秒</td></tr>
+        <tr><td>光盘</td><td>盘面上的凹坑反光不同</td><td>旋转 + 寻道</td><td>CD、DVD</td></tr>
+        <tr><td>固态（SSD、U 盘）</td><td>集成电路，没有会动的部件</td><td>不用寻道</td><td>&lt;0.001 秒，但仍比 RAM 慢</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    没有一种存储器又快、又大、又便宜，所以计算机一直用<b>存储层次</b>：少量又快又贵的放在最近处，大量又慢又便宜的放在后面。易失与非易失、顺序与随机，是看懂任何一种存储技术的两把尺子。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 内存（memory）和存储（storage）的区别是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">内存是易失性的，断电数据就丢（比如 RAM）；存储是非易失性的，断电后数据还在，直到被覆盖或删除（比如硬盘、U 盘）。过去还有"内存快、存储慢"的区别，现在这条界线越来越模糊。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 延迟线存储器为什么叫"顺序存取"？磁芯存储器为什么是突破？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">数据以声波的形式在管子里循环，任何时刻只能在麦克风那一端读到一位，想要某一位就得等它转过来。磁芯排成网格，靠行线、列线选中任意一个磁芯，任何一位都能随时访问——这就是随机存取。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么磁带至今仍在使用？它的缺点是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">磁带本身便宜、小巧、容量大，适合归档。缺点是顺序访问：要读某个字节，可能得卷过几百英尺的带子，很慢。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 什么是存储层次结构？为什么今天有了 SSD 还需要它？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">少量快而贵的存储 + 稍多中速的 + 大量慢而便宜的，在成本和速度间取得平衡。SSD 虽然不用寻道、不到千分之一秒，但仍比 RAM 慢很多倍，RAM 又比 CPU 缓存慢，所以各层仍然各有用处。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="18.html"><small>← 上一集</small>18 操作系统</a>
+    <a class="next" href="20.html"><small>下一集 →</small>20 文件系统</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 19 集 Memory &amp; Storage（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------- 穿孔卡 ---------- */
+(function () {
+  const svg = $('#card80');
+  el('path', { d: 'M20,20 H680 V180 H34 L20,166 Z', style: 'fill:var(--paper);stroke:var(--wood);stroke-width:1.5' }, svg);
+  let seed = 3; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  for (let c = 0; c < 80; c++) for (let r = 0; r < 12; r++) {
+    const x = 40 + c * 8, y = 30 + r * 12;
+    const hole = rnd() < 0.13 || (r === 11 - (c % 12) && c < 40);
+    el('rect', { x, y, width: 4, height: 8, rx: 1, style: `fill:${hole ? 'var(--ink)' : 'var(--line)'}` }, svg);
+  }
+  txt(svg, 40, 196, '← 80 列 →', 't-sub');
+  txt(svg, 680, 196, '每列 12 行 · 共 960 位', 't-sub end');
+})();
+
+/* ---------- 延迟线 ---------- */
+(function () {
+  const svg = $('#delay');
+  const X1 = 130, X2 = 550, Y = 70, BITS = [1, 0, 1, 0, 0, 1, 1, 1];
+  el('rect', { x: X1, y: Y - 22, width: X2 - X1, height: 44, rx: 22, class: 'hg-tube' }, svg);
+  txt(svg, (X1 + X2) / 2, Y - 30, '装满水银的管子', 't-sub mid');
+  // 扬声器、麦克风
+  el('path', { d: `M${X1 - 40},${Y - 12} h14 l16,-14 v52 l-16,-14 h-14 z`, class: 's-panel' }, svg);
+  txt(svg, X1 - 30, Y + 44, '扬声器', 't-sub mid');
+  el('circle', { cx: X2 + 26, cy: Y, r: 14, class: 's-panel' }, svg);
+  el('line', { x1: X2 + 26, y1: Y + 14, x2: X2 + 26, y2: Y + 26, class: 's-line' }, svg);
+  txt(svg, X2 + 26, Y + 44, '麦克风', 't-sub mid');
+  // 回路 + 放大器
+  el('path', { d: `M${X2 + 26},${Y + 26} V160 H${(X1 + X2) / 2 + 30}`, class: 'wire on' }, svg);
+  el('path', { d: `M${(X1 + X2) / 2 - 30},160 H${X1 - 32} V${Y + 26}`, class: 'wire on' }, svg);
+  el('path', { d: `M${(X1 + X2) / 2 + 30},142 V178 L${(X1 + X2) / 2 - 30},160 Z`, class: 's-panel' }, svg);
+  txt(svg, (X1 + X2) / 2, 196, '放大器：补偿损耗，再送回扬声器', 't-sub mid');
+  const readMark = el('rect', { x: X2 - 18, y: Y - 26, width: 18, height: 52, rx: 4, style: 'fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5' }, svg);
+  const pulses = BITS.map((b, i) => {
+    const g = el('g', {}, svg);
+    const r = el('rect', { x: -4, y: Y - 16, width: 8, height: 32, rx: 4, class: 'pulse' }, g);
+    const t = txt(g, 0, Y + 4, String(i), 't-sub mid');
+    t.style.fill = '#fff'; t.style.fontSize = '10px';
+    if (!b) { r.style.opacity = 0; t.style.fill = 'var(--muted)'; }
+    return { g, r, t, b };
+  });
+  let phase = 0, paused = false, target = null, last = performance.now(), waitStart = 0;
+  const SPEED = 0.06;              // 每秒转多少圈
+  const pos = i => ((phase + (BITS.length - i) / BITS.length) % 1);
+  function frame(t) {
+    const dt = (t - last) / 1000; last = t;
+    if (!paused) phase = (phase + dt * SPEED) % 1;
+    pulses.forEach((p, i) => {
+      const x = X1 + 10 + pos(i) * (X2 - X1 - 20);
+      p.g.setAttribute('transform', `translate(${x},0)`);
+      p.r.setAttribute('class', 'pulse' + (target === i ? ' target' : ''));
+      if (!p.b) p.r.style.opacity = target === i ? 0.35 : 0;
+    });
+    if (target != null) {
+      const left = 1 - pos(target);
+      if (left < 0.02 || left > 0.985) {
+        const waited = ((t - waitStart) / 1000).toFixed(1);
+        $('#dl-cap').innerHTML = `第 ${target} 位转到麦克风了：读到 <b>${BITS[target]}</b>。等了 ${waited} 秒（动画放慢了；真实的延迟线是微秒级，但道理一样：想要的位不在门口，就只能等）。`;
+        target = null;
+      } else {
+        $('#dl-cap').innerHTML = `想读第 ${target} 位……它还要转 ${(left * 100).toFixed(0)}% 圈才到麦克风。等着。`;
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  $$('#ch2 [data-k]').forEach(b => b.onclick = () => { target = +b.dataset.k; waitStart = performance.now(); paused = false; $('#dl-pause').textContent = '暂停'; });
+  $('#dl-pause').onclick = () => { paused = !paused; $('#dl-pause').textContent = paused ? '继续' : '暂停'; };
+  if (!reduceMotion) requestAnimationFrame(frame); else frame(performance.now());
+})();
+
+/* ---------- 磁芯 ---------- */
+(function () {
+  const svg = $('#core');
+  const N = 4, X0 = 160, Y0 = 60, S = 76;
+  const bits = [[1, 0, 0, 1], [0, 1, 0, 0], [0, 0, 1, 0], [1, 0, 0, 0]];
+  let sr = 1, sc = 2;
+  const rows = [], cols = [], rings = [], arrows = [];
+  for (let i = 0; i < N; i++) {
+    rows[i] = el('line', { x1: X0 - 50, y1: Y0 + i * S, x2: X0 + (N - 1) * S + 50, y2: Y0 + i * S, class: 'core-wire' }, svg);
+    cols[i] = el('line', { x1: X0 + i * S, y1: Y0 - 34, x2: X0 + i * S, y2: Y0 + (N - 1) * S + 34, class: 'core-wire' }, svg);
+    txt(svg, X0 - 60, Y0 + i * S + 4, `行 ${i}`, 't-sub end');
+    txt(svg, X0 + i * S, Y0 - 40, `列 ${i}`, 't-sub mid');
+  }
+  for (let i = 0; i < N; i++) {
+    rings[i] = []; arrows[i] = [];
+    for (let j = 0; j < N; j++) {
+      const cx = X0 + j * S, cy = Y0 + i * S;
+      const g = el('g', { transform: `rotate(45 ${cx} ${cy})` }, svg);
+      const ring = el('ellipse', { cx, cy, rx: 20, ry: 13, class: 'core-ring' }, g);
+      const arr = el('path', { d: '', class: 'core-arrow' }, svg);
+      ring.addEventListener('click', () => { sr = i; sc = j; paint(); say(`选中第 ${i} 行、第 ${j} 列的磁芯：只有它同时被行线和列线穿过的电流"选中"。`); });
+      rings[i][j] = ring; arrows[i][j] = [arr, cx, cy];
+    }
+  }
+  txt(svg, X0 + 1.5 * S, Y0 + (N - 1) * S + 56, '真实的磁芯板是 32 × 32 = 1024 个磁芯，这里画 4 × 4', 't-sub mid');
+  function arrowPath(cx, cy, cw) {
+    // 在环的右上方画一个指示方向的小三角
+    const x = cx + 24 * Math.cos(-Math.PI / 4), y = cy + 24 * Math.sin(-Math.PI / 4);
+    const d = cw ? 1 : -1;
+    return `M${x - 6 * d},${y - 6} L${x + 6 * d},${y} L${x - 6 * d},${y + 6} Z`;
+  }
+  function paint() {
+    rows.forEach((l, i) => l.classList.toggle('on', i === sr));
+    cols.forEach((l, j) => l.classList.toggle('on', j === sc));
+    rings.forEach((r, i) => r.forEach((ring, j) => {
+      ring.classList.toggle('sel', i === sr && j === sc);
+      const [arr, cx, cy] = arrows[i][j];
+      arr.setAttribute('d', arrowPath(cx, cy, bits[i][j]));
+      arr.style.fill = bits[i][j] ? 'var(--on)' : 'var(--muted)';
+    }));
+  }
+  const say = s => { $('#core-cap').innerHTML = s; };
+  $('#core-w1').onclick = () => { bits[sr][sc] = 1; paint(); say(`电流朝一个方向流过 → 磁芯 (${sr}, ${sc}) 被磁化成<b>顺时针</b> = 1。关掉电流，它保持不变。`); };
+  $('#core-w0').onclick = () => { bits[sr][sc] = 0; paint(); say(`电流<b>反方向</b>流过 → 极性翻转成逆时针 = 0。`); };
+  $('#core-r').onclick = () => say(`读磁芯 (${sr}, ${sc})：<b>${bits[sr][sc]}</b>。不管它在网格的哪个角落，都是立刻读到——这就是<b>随机存取</b>。`);
+  paint(); say('点一个磁环选中它，然后写入或读取。');
+})();
+
+/* ---------- 磁带 ---------- */
+(function () {
+  const svg = $('#tape');
+  let head = 0, busy = false;
+  const L = 1200, X1 = 40, X2 = 640;
+  const sx = f => X1 + f / L * (X2 - X1);
+  el('rect', { x: X1, y: 40, width: X2 - X1, height: 30, rx: 3, style: 'fill:var(--wood);opacity:.55' }, svg);
+  for (let f = 0; f <= L; f += 100) { el('line', { x1: sx(f), y1: 70, x2: sx(f), y2: 78, class: 's-thin' }, svg); txt(svg, sx(f), 92, String(f), 't-sub mid'); }
+  txt(svg, X1, 30, '一卷 1200 英尺的磁带（展开画）', 't-sub');
+  const tgt = el('rect', { x: 0, y: 38, width: 6, height: 34, style: 'fill:var(--accent)' }, svg);
+  const hd = el('g', {}, svg);
+  el('path', { d: 'M-10,110 h20 l-10,-34 z', style: 'fill:var(--on)' }, hd);
+  txt(hd, 0, 128, '读头', 't-sub mid');
+  function paint() {
+    hd.setAttribute('transform', `translate(${sx(head)},0)`);
+    tgt.setAttribute('x', sx(+$('#tape-pos').value) - 3);
+    $('#tape-pos-v').textContent = $('#tape-pos').value;
+  }
+  $('#tape-pos').oninput = paint;
+  $('#tape-go').onclick = () => {
+    if (busy) return;
+    const to = +$('#tape-pos').value, from = head, dist = Math.abs(to - from);
+    const secs = dist / 100;                // 假设每秒卷 100 英尺
+    busy = true;
+    const t0 = performance.now(), dur = Math.max(300, dist * 2);
+    function step(t) {
+      const k = Math.min(1, (t - t0) / dur);
+      head = from + (to - from) * k; paint();
+      if (k < 1) requestAnimationFrame(step);
+      else {
+        busy = false;
+        $('#tape-cap').innerHTML = `磁带要从 ${from} 英尺卷到 ${to} 英尺，走过 <b>${dist}</b> 英尺${dist ? `（假设每秒卷 100 英尺，要 ${secs.toFixed(1)} 秒）` : ''}才能读到。同样的事，在磁芯或 RAM 里：<b>直接按地址取，几乎不用等</b>。`;
+      }
+    }
+    requestAnimationFrame(step);
+  };
+  paint();
+  $('#tape-cap').innerHTML = '读头现在在开头。选一个位置，点"去读"。';
+})();
+
+/* ---------- 硬盘 ---------- */
+(function () {
+  const svg = $('#disk');
+  // 侧视：叠在一起的盘
+  for (let i = 0; i < 5; i++) {
+    const y = 40 + i * 32;
+    el('ellipse', { cx: 150, cy: y, rx: 110, ry: 14, class: 's-acc' }, svg);
+  }
+  el('line', { x1: 150, y1: 26, x2: 150, y2: 184, style: 'stroke:var(--ink);stroke-width:4' }, svg);
+  el('rect', { x: 270, y: 30, width: 14, height: 150, rx: 3, style: 'fill:var(--metal)' }, svg);
+  for (let i = 0; i < 4; i++) el('line', { x1: 277, y1: 56 + i * 32, x2: 190, y2: 56 + i * 32, style: 'stroke:var(--metal);stroke-width:3' }, svg);
+  txt(svg, 150, 210, 'RAMAC 305：50 张 24 英寸的盘（画了 5 张）', 't-sub mid');
+  txt(svg, 300, 108, '读写头沿盘片叠上下移动，', 't-sub');
+  txt(svg, 300, 124, '再滑进两张盘之间', 't-sub');
+  // 俯视
+  const cx = 540, cy = 110;
+  el('circle', { cx, cy, r: 90, class: 's-acc' }, svg);
+  el('circle', { cx, cy, r: 62, class: 's-thin' }, svg);
+  el('circle', { cx, cy, r: 34, class: 's-thin' }, svg);
+  el('circle', { cx, cy, r: 8, style: 'fill:var(--ink)' }, svg);
+  for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4; el('line', { x1: cx + 8 * Math.cos(a), y1: cy + 8 * Math.sin(a), x2: cx + 90 * Math.cos(a), y2: cy + 90 * Math.sin(a), class: 's-thin' }, svg); }
+  el('path', { d: `M${cx + 62 * Math.cos(-0.6)},${cy + 62 * Math.sin(-0.6)} A62,62 0 0 1 ${cx + 62 * Math.cos(-0.1)},${cy + 62 * Math.sin(-0.1)}`, style: 'fill:none;stroke:var(--on);stroke-width:8' }, svg);
+  el('path', { d: `M${cx + 120},${cy + 80} L${cx + 50},${cy + 40}`, style: 'stroke:var(--metal);stroke-width:5;stroke-linecap:round' }, svg);
+  txt(svg, cx + 96, cy - 80, '盘一直在转', 't-sub');
+  txt(svg, cx, 222, '① 移到正确的磁道　② 等橙色那段转过来', 't-sub mid');
+})();
+
+/* ---------- 存储层次 ---------- */
+(function () {
+  const svg = $('#pyramid');
+  const L = [['寄存器 / CPU 缓存', '纳秒级 · KB~MB', 's-on'], ['内存 RAM（易失）', '约百纳秒 · GB', 's-on'], ['固态硬盘 SSD', '< 1 毫秒 · 数百 GB~TB', 's-acc'], ['机械硬盘', '< 10 毫秒 · TB', 's-acc'], ['磁带（归档）', '秒~分钟 · 便宜、海量', 's-soft']];
+  L.forEach(([n, d, cls], i) => {
+    const w = 140 + i * 90, x = 300 - w / 2, y = 10 + i * 48;
+    el('path', { d: `M${x + 18},${y} H${x + w - 18} L${x + w},${y + 42} H${x} Z`, class: cls }, svg);
+    txt(svg, 300, y + 20, n, 't-main mid');
+    txt(svg, 300, y + 36, d, 't-sub mid');
+  });
+  el('path', { d: 'M560,240 V20', class: 's-line' }, svg);
+  el('path', { d: 'M552,32 L560,16 L568,32', class: 's-line' }, svg);
+  txt(svg, 576, 40, '更快', 't-sub'); txt(svg, 576, 58, '更贵', 't-sub'); txt(svg, 576, 76, '更小', 't-sub');
+  txt(svg, 576, 210, '更慢', 't-sub'); txt(svg, 576, 228, '更便宜', 't-sub'); txt(svg, 576, 246, '更大', 't-sub');
+})();
+
+/* ---------- 光盘 ---------- */
+(function () {
+  const svg = $('#optical');
+  let d = 'M20,60';
+  const pits = [[100, 160], [220, 260], [330, 420], [500, 540]];
+  pits.forEach(([a, b]) => { d += ` H${a} V90 H${b} V60`; });
+  d += ' H660';
+  el('path', { d: d + ' V110 H20 Z', class: 's-acc' }, svg);
+  txt(svg, 340, 135, '盘面（凹坑 pit 与平面 land）', 't-sub mid');
+  [[60, true], [160, false], [300, true]].forEach(([lx, flat]) => {
+    el('path', { d: `M${lx - 20},10 L${lx},60 L${lx + 20},10`, style: `fill:none;stroke:var(--bad);stroke-width:2;stroke-dasharray:${flat ? '0' : '4 3'}` }, svg);
+  });
+  txt(svg, 60, 160, '平面：反射回去', 't-sub mid');
+  txt(svg, 250, 160, '凹坑边缘：反射改变', 't-sub mid');
+  txt(svg, 470, 30, '光学传感器把反射的变化解码成 1 和 0', 't-sub mid');
+})();
+
+/* ---------- 成本 ---------- */
+(function () {
+  const svg = $('#cost');
+  const X0 = 230, X1 = 680, LO = 0, HI = 12;
+  const xOf = v => X0 + (Math.log10(v) - LO) / (HI - LO) * (X1 - X0);
+  for (let e = LO; e <= HI; e += 2) {
+    const x = xOf(10 ** e);
+    el('line', { x1: x, y1: 10, x2: x, y2: 180, style: 'stroke:var(--line);stroke-width:1' }, svg);
+    txt(svg, x, 198, e === 0 ? '1 位' : `10^${e}`, 't-sub mid');
+  }
+  [['磁芯，1950 年代（$1 / 位）', 1], ['磁芯，1970 年代（1¢ / 位）', 100], ['RAM 芯片，1972（1¢ / 位）', 100], ['硬盘，今天（$40 / TB）', 2e11]].forEach(([n, v], i) => {
+    const y = 20 + i * 40;
+    txt(svg, X0 - 10, y + 16, n, 't-main end');
+    el('rect', { x: X0, y, width: Math.max(4, xOf(v) - X0), height: 22, rx: 4, class: i === 3 ? 's-on' : 's-acc' }, svg);
+  });
+  txt(svg, X1, 214, '1 美元能存的位数 →', 't-sub end');
+})();
+</script>
+</body>
+</html>

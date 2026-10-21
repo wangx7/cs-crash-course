@@ -1,0 +1,526 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>03 布尔逻辑和逻辑门 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.circ-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:center}
+.gate-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.gate-grid .card{margin:0}
+@media (max-width:700px){.circ-grid,.gate-grid{grid-template-columns:1fr}}
+table.tt tbody tr{cursor:pointer}
+table.tt tbody tr:hover td{background:var(--accent-soft)}
+.lvl-band{opacity:.5}
+.sample{stroke-width:1.5;transition:cy .2s}
+.sample.ok{fill:var(--accent);stroke:var(--accent)}
+.sample.bad{fill:var(--bad);stroke:var(--bad)}
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ctl-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:12px;font-size:14px}
+.ctl-row input[type=range]{width:180px}
+.sentence{font-size:15px;padding:10px 14px;background:var(--bg);border-radius:10px;margin:8px 0}
+.sentence .v{font-family:var(--mono);font-weight:700}
+.v.t{color:var(--ok)} .v.f{color:var(--bad)}
+</style>
+</head>
+<body data-ep="3">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=4" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 3 集</div>
+  <h1>布尔逻辑和逻辑门</h1>
+  <p class="en">Boolean Logic &amp; Logic Gates</p>
+  <p class="lead">为什么计算机只用 0 和 1？怎么用几个晶体管搭出"非""与""或"？这一集我们第一次爬上"抽象"的梯子：从晶体管到逻辑门，从此可以不再想晶体管。</p>
+  <div class="road">
+    <span>二进制</span><i>→</i><span>布尔代数</span><i>→</i><span>用晶体管做 NOT / AND / OR</span><i>→</i><span>门的符号</span><i>→</i><span>XOR</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 为什么用二进制</a></li>
+    <li><a href="#ch1">1 · 布尔代数</a></li>
+    <li><a href="#ch2">2 · NOT 门</a></li>
+    <li><a href="#ch3">3 · AND 门</a></li>
+    <li><a href="#ch4">4 · OR 门</a></li>
+    <li><a href="#ch5">5 · 抽象成符号</a></li>
+    <li><a href="#ch6">6 · XOR</a></li>
+    <li><a href="#ch7">7 · 向上抽象</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>为什么用二进制</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！今天我们开始沿着<b>"抽象"的梯子</b>往上爬：不再纠缠底层细节，而是把精力用在构建更复杂的系统上。</p>
+  <p>上一集我们讲了计算机怎样从机电设备起步——那些机器一般用十进制计数，比如用齿轮的齿数来表示十进制数——后来又发展到电子计算机。晶体管能让电流通过或不通过。幸运的是，<b>只用"开"和"关"两种状态，也能表示有用的信息</b>。这种表示方式叫<b>二进制</b>，意思就是"两种状态"，就像自行车（bicycle）有两个轮子，双足动物（biped）有两条腿。</p>
+  <p>你可能觉得两种状态不算多，你说得对！但如果你只需要表示"真"和"假"，两个值就够了：电路闭合、有电流流过，代表"真"；电路断开、没有电流，代表"假"。二进制也可以写成 1 和 0，而不是 true 和 false——只是写法不同，下一集会讲更多细节。</p>
+  <p>晶体管其实不只能开和关，还可以让不同大小的电流通过。一些早期电子计算机就是<b>三进制</b>的，有 3 种状态，甚至还有<b>五进制</b>的，用 5 种状态。问题是，中间状态越多，就越难把它们区分开：如果你的手机快没电了，或者附近有人在用微波炉造成电噪声，信号就可能混在一起……而晶体管每秒要切换几百万次，这个问题只会更糟！所以我们把两种信号<b>隔得尽可能远</b>，只用"开"和"关"两种状态，尽量减少这类问题。</p>
+
+  <div class="card">
+    <h3>动手：状态越多，越怕噪声</h3>
+    <div class="scroll-x"><svg class="diagram" id="noise" viewBox="0 0 640 240" role="img" aria-label="不同进制在噪声下的误读"></svg></div>
+    <div class="ctl-row">
+      <span class="seg-btns" id="lv"><button data-n="2">2 种状态</button><button data-n="3">3 种状态</button><button data-n="5">5 种状态</button></span>
+      <label>噪声大小 <input type="range" id="nz" min="0" max="30" value="10"></label>
+    </div>
+    <div class="readout" id="nz-out"></div>
+    <p class="hint">同样的电压范围、同样的噪声，切换 2 / 3 / 5 种状态，看红点（被认错的信号）有多少</p>
+  </div>
+  <div class="extra">
+    <span class="t">图在说什么</span>
+    电压范围固定（比如 0 到 1 伏）。只有 2 种状态时，两个电平相距整整 1 伏，噪声要把信号推过中线才会认错；有 5 种状态时，相邻电平只差 0.25 伏，一点点噪声就会让接收方认成邻居。你学过通信的话，这就是"电平间距越小，同样噪声下误码率越高"。
+  </div>
+  <p>计算机使用二进制的另一个原因是：早就有一整个数学分支专门处理"真"和"假"，所有的法则和运算都已经研究好了，它就是<b>布尔代数</b>！</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>布尔代数</h2>
+  <p>"布尔"这个名字来自乔治·布尔（George Boole），一位 19 世纪自学成才的英国数学家。他想用数学方程来扩展亚里士多德基于哲学的逻辑学，用逻辑方程系统、正式地证明"真"。他在 1847 年的第一本书《逻辑的数学分析》里介绍了这套方法。</p>
+  <p>在"普通"代数里——就是你高中学的那种——变量的值是数字，可以做加法、乘法之类的运算。而在布尔代数里，<b>变量的值是 true 和 false，能做的是逻辑运算</b>。布尔代数有三个基本运算：<b>NOT、AND 和 OR</b>。它们非常有用，我们一个一个来看。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>NOT：用一个晶体管把输入反过来</h2>
+  <p><b>NOT</b> 把一个布尔值反过来：true 经过 NOT 变成 false，false 变成 true。我们可以把 NOT 的输入和输出列成一张表。</p>
+  <p>酷的地方在于，用晶体管很容易实现这个逻辑。上一集说过，晶体管就是用电控制的开关。它有三根线：两根电极和一根控制线。控制线通电时，电流就能从一个电极流到另一个电极，就像水龙头一样：打开就有水，关上就没水。</p>
+  <p>我们可以把<b>控制线当作输入</b>，把<b>下面的电极当作输出</b>。这样一个晶体管就有了一个输入和一个输出：打开输入，电流能流过，输出也是开；关掉输入，电流过不去，输出也是关。用布尔的说法：输入为真，输出为真；输入为假，输出为假。这也可以做成一张"真值表"。</p>
+
+  <div class="card">
+    <h3>先看最简单的：一个晶体管，输入 = 输出</h3>
+    <div class="circ-grid">
+      <svg class="diagram" id="buf" viewBox="0 0 360 230" role="img" aria-label="单个晶体管电路"></svg>
+      <div>
+        <table class="tt" id="buf-tt"><thead><tr><th>输入</th><th>输出</th></tr></thead><tbody></tbody></table>
+        <p class="step-text" id="buf-cap"></p>
+      </div>
+    </div>
+    <p class="hint">点左边的输入圆圈，或点表格里的行</p>
+  </div>
+
+  <p>这个电路没什么意思，因为它什么都没做：输入和输出一模一样。但我们稍微改一下就能实现 NOT：不在晶体管<b>下面</b>取输出，而是把输出线挪到晶体管<b>上面</b>。如果打开输入，晶体管让电流流过去，一直流到<b>"地"</b>（接地），输出线就分不到电流，所以输出是关。用水来比喻，接地就像家里所有的水都从一根巨大的水管流走了，你打开淋浴头，一滴水也没有。所以输入是开时，输出是关。</p>
+  <p>当输入是关时，电流没法流到地，只能流向输出线，所以输出是开。输入关，输出开。这和 NOT 的表一模一样！太棒了，我们做出了一个有点用的电路！我们叫它<b>"NOT 门"</b>。之所以叫"门"，是因为它控制着电流的路径。</p>
+
+  <div class="card">
+    <h3>动手：NOT 门（输出取在晶体管上面）</h3>
+    <div class="circ-grid">
+      <svg class="diagram" id="not" viewBox="0 0 380 260" role="img" aria-label="晶体管 NOT 门"></svg>
+      <div>
+        <table class="tt" id="not-tt"><thead><tr><th>输入</th><th>输出</th></tr></thead><tbody></tbody></table>
+        <p class="step-text" id="not-cap"></p>
+      </div>
+    </div>
+  </div>
+  <div class="extra">
+    <span class="t">图是简化过的</span>
+    真实电路里，电源和输出之间还要串一个电阻，否则输入打开时电源会直接短路到地。课程为了讲清"电流走哪条路"省略了它，这里也照样省略。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>AND：两个晶体管串起来</h2>
+  <p><b>AND</b> 有 2 个输入、1 个输出，<b>只有 2 个输入都是 true，输出才是 true</b>。你可以把它想成说真话：只有完全不撒谎，你才算诚实。</p>
+  <p>比如这句话："我叫 Carrie Anne，<b>而且</b>我穿着蓝色的衣服。"两部分都是真的，所以整句是真的。但如果我说："我叫 Carrie Anne，<b>而且</b>我穿着裤子"，那就是假的，因为我没穿裤子……或者，如果你是英国人，你会说 trousers（英式和美式英语里"裤子"的词不一样）。虽然前半句是真的，但"真 AND 假"还是假。就算把前后顺序反过来，也还是假。如果我说两件假的事，结果当然也是假。和之前一样，我们也可以给 AND 列一张表。</p>
+  <p>要实现 <b>AND 门</b>，需要把 2 个晶体管连在一起，这样就有 2 个输入和 1 个输出。如果只打开 A、不打开 B，电流到不了输出，所以输出是 false；只打开 B、不打开 A 也一样。只有 A 和 B 都打开，输出才有电流。</p>
+
+  <div class="card">
+    <h3>动手：AND 门（串联）</h3>
+    <div class="circ-grid">
+      <svg class="diagram" id="and" viewBox="0 0 380 300" role="img" aria-label="晶体管 AND 门"></svg>
+      <div>
+        <table class="tt" id="and-tt"><thead><tr><th>A</th><th>B</th><th>输出</th></tr></thead><tbody></tbody></table>
+        <p class="step-text" id="and-cap"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>OR：两个晶体管并起来</h2>
+  <p>最后一个是 <b>OR</b>：<b>2 个输入里只要有 1 个是 true，输出就是 true</b>。比如："我叫 Margaret Hamilton，<b>或者</b>我穿着蓝色衣服。"结果是 true——虽然我不是 Margaret Hamilton，但我穿着蓝色衣服，所以整句为真。对 OR 来说，2 个输入都是 true 时，输出也是 true；只有 2 个输入都是 false，OR 的结果才是 false。</p>
+  <p>用晶体管实现 <b>OR 门</b>需要多几根线：晶体管不是串联，而是<b>并联</b>，电流从左边那条线进来。如果 A 和 B 都是关，电流过不去，输出是关；如果打开 A，电流能流过，输出是开；只打开 B 也一样。只要 A <b>或</b> B 是开，输出就是开；A 和 B 都开，结果也是开。</p>
+
+  <div class="card">
+    <h3>动手：OR 门（并联）</h3>
+    <div class="circ-grid">
+      <svg class="diagram" id="or" viewBox="0 0 400 260" role="img" aria-label="晶体管 OR 门"></svg>
+      <div>
+        <table class="tt" id="or-tt"><thead><tr><th>A</th><th>B</th><th>输出</th></tr></thead><tbody></tbody></table>
+        <p class="step-text" id="or-cap"></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>抽象：把晶体管换成符号</h2>
+  <p>好，现在 NOT 门、AND 门、OR 门都搞定了，我们可以做一次<b>抽象</b>了。</p>
+  <p>NOT 门画成一个三角形，前面加个小圆点；AND 门画成一个 D 形；OR 门画成一个"太空船"形。（"D 形"和"太空船"不是标准叫法，只是我喜欢这么叫。）用这种方式表示它们，我们就能搭出更大的组件，而不会让图变得一团糟。晶体管和电线其实都还在那里，我们只是用符号来代表它们。</p>
+
+  <div class="gate-grid" id="gates"></div>
+  <p class="hint">每张卡片里的输入圆圈和表格行都可以点</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>XOR：异或</h2>
+  <p>除了前面三个，还有一个很有用的布尔运算叫<b>"异或"</b>，简称 <b>XOR</b>。XOR 和普通的 OR 很像，只有一个区别：<b>如果 2 个输入都是 true，XOR 输出 false</b>。要让 XOR 输出 true，必须一个输入是 true、另一个是 false。就像你出去吃晚饭，主菜要么配沙拉，要么配汤——可惜不能两样都要！</p>
+  <p>用晶体管直接搭 XOR 挺烧脑的，但我们可以展示怎么用前面三种基本门做出 XOR。还是 2 个输入 A 和 B，1 个输出。我们先放一个 OR 门，因为 XOR 的逻辑表和 OR 几乎一样。只有一个问题：当 A 和 B 都是 true 时，逻辑和 OR 不一样，我们需要输出 false。</p>
+
+  <div class="card">
+    <h3>动手：用 OR、AND、NOT 拼出 XOR</h3>
+    <div class="scroll-x"><svg class="diagram" id="xor" viewBox="0 0 560 230" role="img" aria-label="用基本门组成 XOR"></svg></div>
+    <div class="step-text" id="xor-cap"></div>
+    <p class="hint">点 A、B，重点看 A=1、B=1 时下面那条路怎么把结果"否决"掉</p>
+  </div>
+  <div class="extra">
+    <span class="t">这张图的连法</span>
+    字幕里没有逐句讲连法（视频里是用画面演示的），上图就是画面里的那种：<b>上路</b>是 OR，"至少有一个是 1"；<b>下路</b>是 AND 再接 NOT，"不是两个都是 1"；最后用一个 AND 把两路合起来。中间那个小拱桥表示两根线只是交叉而过，没有连在一起——课程讲 OR 门时提过这个画法。
+  </div>
+  <p>XOR 是个非常有用的组件，我们会在另一集里用到它。它太有用了，工程师也给了它专门的符号：一个 OR 门加一道"笑脸"弧线 :)</p>
+  <p>但最重要的是，我们现在可以把 XOR 放进比喻意义上的"工具箱"了，不用再操心它由哪几个门组成，那些门又由哪些晶体管组成，或者电子是怎么流过半导体的。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>再往上一层抽象</h2>
+  <p>工程师设计处理器时，很少在晶体管的层面上思考，而是用更大的组件，比如逻辑门，或者由逻辑门组成的更大的组件，这些我们以后会讲。就算是专业程序员，也很少去想他们写的逻辑在物理上是怎么实现的。</p>
+  <p>我们从电信号出发，到这里第一次表示出了数据——真和假——开始有一点"计算"的感觉了。只用这一集讲的逻辑门，我们就能判断这样复杂的语句：</p>
+  <div class="card">
+    <h3>动手：John 想不想吃比萨？</h3>
+    <div class="scroll-x"><svg class="diagram" id="pizza" viewBox="-70 0 640 270" role="img" aria-label="John 想吃比萨的逻辑电路"></svg></div>
+    <div class="sentence" id="pizza-s"></div>
+    <p class="hint">点左边四个条件</p>
+  </div>
+  <div class="extra">
+    <span class="t">分组方式</span>
+    原句是"[是 John Green] AND [下午 5 点后] OR [周末] AND [在比萨店附近]"。这里按布尔代数的惯例，<b>AND 先算、OR 后算</b>（就像先乘除后加减），也就是 (是 John 且 5 点后) 或 (周末且在比萨店附近)。
+  </div>
+  <p>我都说饿了，下周见！</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>运算</th><th>规则</th><th>晶体管怎么搭</th><th>符号</th></tr></thead>
+      <tbody>
+        <tr><td><b>NOT</b></td><td>反过来</td><td>1 个晶体管，输出取在它上面，打开就把电流引到地</td><td>三角形 + 小圆点</td></tr>
+        <tr><td><b>AND</b></td><td>全真才真</td><td>2 个晶体管<b>串联</b></td><td>D 形</td></tr>
+        <tr><td><b>OR</b></td><td>有真就真</td><td>2 个晶体管<b>并联</b></td><td>"太空船"形</td></tr>
+        <tr><td><b>XOR</b></td><td>不同才真</td><td>(A OR B) AND NOT (A AND B)</td><td>OR + 一道弧线</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    只用两种状态，是为了在噪声里也能分清信号；布尔代数早就准备好了处理两种状态的全部规则；晶体管按串联、并联、接地几种方式一连，就成了逻辑门。从此我们可以只想"门"，不想晶体管——这就是<b>抽象</b>。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 晶体管明明能让不同大小的电流通过，为什么计算机偏偏只用"开"和"关"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">状态越多，相邻状态隔得越近，电量不足或电噪声就容易把信号推成邻居，认错；晶体管每秒切换几百万次，问题更严重。两种状态隔得最远，最抗干扰。另外，布尔代数已经有了处理真 / 假的全套规则。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 同样一个晶体管，为什么"输出取在下面"是原样输出，"取在上面"就变成了 NOT？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">输出在下面时，晶体管打开，电流才能流到输出：输入开 → 输出开。输出在上面时，晶体管打开就给电流开了一条通往"地"的捷径，电流全流走，输出没电：输入开 → 输出关；晶体管关上，电流只能去输出：输入关 → 输出开。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么 AND 是串联、OR 是并联？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">串联时电流必须<b>依次</b>穿过两个晶体管，任何一个关着都过不去——"全开才通"就是 AND。并联时电流有两条路，<b>任意一条</b>通就能到输出——"有一个开就通"就是 OR。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 怎么用 AND、OR、NOT 拼出 XOR？用一句大白话说出它的意思。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">XOR = (A OR B) AND NOT (A AND B)。大白话："<b>至少有一个</b>是真，<b>并且</b>不是两个都是真"，也就是"恰好一个是真"。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="02.html"><small>← 上一集</small>02 电子计算机</a>
+    <a class="next" href="04.html"><small>下一集 →</small>04 二进制</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 3 集 Boolean Logic &amp; Logic Gates（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 噪声 ---------- */
+(function () {
+  const svg = $('#noise');
+  const X0 = 60, X1 = 620, Y0 = 200, Y1 = 30, N = 48;
+  // 固定的随机数，拖动噪声时点不会乱跳
+  let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const u = Array.from({ length: N }, rnd);
+  const z = Array.from({ length: N }, () => { const a = rnd() || 1e-9, b = rnd(); return Math.sqrt(-2 * Math.log(a)) * Math.cos(2 * Math.PI * b); });
+  let levels = 2;
+  const yOf = v => Y0 - v * (Y0 - Y1);
+  const bands = el('g', {}, svg), lines = el('g', {}, svg), pts = el('g', {}, svg);
+  el('line', { x1: X0, y1: Y0 + 10, x2: X1, y2: Y0 + 10, class: 's-thin' }, svg);
+  txt(svg, X0, 228, '时间 →（48 个信号）', 't-sub');
+  const dots = Array.from({ length: N }, (_, i) => el('circle', { cx: X0 + 6 + i * ((X1 - X0 - 12) / (N - 1)), cy: 0, r: 4.5, class: 'sample ok' }, pts));
+
+  function draw() {
+    const sigma = +$('#nz').value / 100;
+    bands.innerHTML = ''; lines.innerHTML = '';
+    for (let k = 0; k < levels; k++) {
+      const v = k / (levels - 1);
+      const lo = k === 0 ? 0 : v - .5 / (levels - 1), hi = k === levels - 1 ? 1 : v + .5 / (levels - 1);
+      el('rect', { x: X0, y: yOf(Math.min(1.08, k === levels - 1 ? 1.08 : hi)), width: X1 - X0, height: yOf(k === 0 ? -0.08 : lo) - yOf(k === levels - 1 ? 1.08 : hi), style: `fill:${k % 2 ? 'var(--accent-soft)' : 'transparent'}` }, bands);
+      el('line', { x1: X0, y1: yOf(v), x2: X1, y2: yOf(v), class: 's-dash' }, lines);
+      txt(lines, X0 - 8, yOf(v) + 4, levels === 2 ? (k ? '开 1' : '关 0') : String(k), 't-sub end');
+    }
+    let bad = 0;
+    dots.forEach((d, i) => {
+      const k = Math.min(levels - 1, Math.floor(u[i] * levels));
+      const v = k / (levels - 1);
+      const r = v + sigma * z[i];
+      const read = Math.max(0, Math.min(levels - 1, Math.round(r * (levels - 1))));
+      d.setAttribute('cy', yOf(Math.max(-0.12, Math.min(1.12, r))));
+      const ok = read === k;
+      d.setAttribute('class', 'sample ' + (ok ? 'ok' : 'bad'));
+      if (!ok) bad++;
+    });
+    $$('#lv button').forEach(b => b.classList.toggle('sel', +b.dataset.n === levels));
+    const gap = (1 / (levels - 1)).toFixed(2);
+    $('#nz-out').innerHTML = `${levels} 种状态：相邻电平相距 ${gap}，噪声 ±${sigma.toFixed(2)} 左右 → 认错了 <span class="big">${bad}</span> / ${N} 个`;
+  }
+  $$('#lv button').forEach(b => b.onclick = () => { levels = +b.dataset.n; draw(); });
+  $('#nz').oninput = draw;
+  draw();
+})();
+
+/* ---------- 通用：晶体管电路 + 真值表 ---------- */
+function circuit(id, inputs, build, compute, explain) {
+  const svg = $('#' + id), tbody = $(`#${id}-tt tbody`), cap = $(`#${id}-cap`);
+  const st = Object.fromEntries(inputs.map(k => [k, 0]));
+  const render = () => {
+    const sig = Object.assign({}, st, compute(st));
+    setSignals(svg, sig);
+    const key = inputs.map(k => st[k]).join('');
+    $$('tr', tbody).forEach(tr => tr.classList.toggle('cur', tr.dataset.k === key));
+    cap.innerHTML = explain(st, sig);
+  };
+  build(svg, k => () => { st[k] ^= 1; render(); });
+  const rows = inputs.length === 1 ? [[0], [1]] : [[0, 0], [0, 1], [1, 0], [1, 1]];
+  tbody.innerHTML = rows.map(r => {
+    const s = Object.fromEntries(inputs.map((k, i) => [k, r[i]]));
+    return `<tr data-k="${r.join('')}">${r.map(v => `<td class="num">${v}</td>`).join('')}<td class="num"><b>${compute(s).Y ? 1 : 0}</b></td></tr>`;
+  }).join('');
+  $$('tr', tbody).forEach(tr => tr.onclick = () => { inputs.forEach((k, i) => st[k] = +tr.dataset.k[i]); render(); });
+  render();
+}
+
+// 一个晶体管：输出在下面
+circuit('buf', ['A'], (svg, tog) => {
+  txt(svg, 200, 18, '+ 电源', 'power');
+  wire(svg, 'M200,26 V60', 'I');
+  transistor(svg, 200, 60, 'A');
+  wire(svg, 'M200,120 V170', 'I');
+  lampNode(svg, 200, 186, 'Y', '输出', true);
+  wire(svg, 'M75,90 H166', 'A');
+  inNode(svg, 60, 90, 'A', '输入（控制线）', tog('A'));
+}, s => ({ I: s.A, Y: s.A }), (s) => s.A
+  ? '输入开 → 晶体管导通 → 电流从上流到下 → <b>输出 1</b>。'
+  : '输入关 → 晶体管断开 → 电流过不去 → <b>输出 0</b>。');
+
+// NOT：输出在上面，晶体管通往地
+circuit('not', ['A'], (svg, tog) => {
+  txt(svg, 200, 18, '+ 电源', 'power');
+  wire(svg, 'M200,26 V70', 'P');
+  dot(svg, 200, 70, 'P');
+  wire(svg, 'M200,70 H300', 'Y');
+  lampNode(svg, 316, 70, 'Y', '输出');
+  wire(svg, 'M200,70 V96', 'G');
+  transistor(svg, 200, 96, 'A');
+  wire(svg, 'M200,156 V196', 'G');
+  ground(svg, 200, 198);
+  txt(svg, 222, 216, '地', 't-sub');
+  wire(svg, 'M75,126 H166', 'A');
+  inNode(svg, 60, 126, 'A', '输入', tog('A'));
+}, s => ({ P: 1, G: s.A, Y: !s.A }), (s) => s.A
+  ? '输入开 → 晶体管导通 → 电流全部顺着它<b>流到地</b> → 输出分不到电 → <b>输出 0</b>。'
+  : '输入关 → 通往地的路被堵住 → 电流只能流向输出 → <b>输出 1</b>。');
+
+// AND：串联
+circuit('and', ['A', 'B'], (svg, tog) => {
+  txt(svg, 220, 18, '+ 电源', 'power');
+  wire(svg, 'M220,26 V40', 'P');
+  transistor(svg, 220, 40, 'A', '晶体管 A');
+  wire(svg, 'M220,100 V140', 'I');
+  transistor(svg, 220, 140, 'B', '晶体管 B');
+  wire(svg, 'M220,200 V240', 'I');
+  lampNode(svg, 220, 256, 'Y', '输出', true);
+  wire(svg, 'M85,70 H186', 'A'); inNode(svg, 70, 70, 'A', 'A', tog('A'));
+  wire(svg, 'M85,170 H186', 'B'); inNode(svg, 70, 170, 'B', 'B', tog('B'));
+}, s => ({ P: 1, I: s.A && s.B, Y: s.A && s.B }), (s) => s.A && s.B
+  ? 'A、B 都导通 → 电流依次穿过两个晶体管 → <b>输出 1</b>。'
+  : `${!s.A && !s.B ? 'A、B 都断开' : (!s.A ? 'A 断开' : 'B 断开')} → 串联的路上只要断一处，电流就过不去 → <b>输出 0</b>。`);
+
+// OR：并联
+circuit('or', ['A', 'B'], (svg, tog) => {
+  txt(svg, 200, 18, '+ 电源', 'power');
+  wire(svg, 'M200,26 V50', 'P'); dot(svg, 200, 50, 'P');
+  wire(svg, 'M200,50 H140 V76', 'P');
+  wire(svg, 'M200,50 H260 V76', 'P');
+  transistor(svg, 140, 76, 'A', 'A');
+  transistor(svg, 260, 76, 'B', 'B', 'R');
+  wire(svg, 'M140,136 V166 H200', 'IA');
+  wire(svg, 'M260,136 V166 H200', 'IB');
+  dot(svg, 200, 166, 'Y');
+  wire(svg, 'M200,166 V200', 'Y');
+  lampNode(svg, 200, 216, 'Y', '输出', true);
+  wire(svg, 'M55,106 H106', 'A'); inNode(svg, 40, 106, 'A', 'A', tog('A'));
+  wire(svg, 'M294,106 H345', 'B'); inNode(svg, 360, 106, 'B', 'B', tog('B'));
+}, s => ({ P: 1, IA: s.A, IB: s.B, Y: s.A || s.B }), (s) => (s.A || s.B)
+  ? `${s.A && s.B ? '两条路都通' : (s.A ? '左边那条路（A）通' : '右边那条路（B）通')} → 电流有路可走 → <b>输出 1</b>。`
+  : '两条路都断开 → 电流无路可走 → <b>输出 0</b>。');
+
+/* ---------- 门的符号 ---------- */
+(function () {
+  const G = {
+    NOT: { name: '非门 NOT', desc: '三角形 + 小圆点', two: false, f: a => 1 - a },
+    AND: { name: '与门 AND', desc: '"D 形"', two: true, f: (a, b) => a & b },
+    OR: { name: '或门 OR', desc: '"太空船"形', two: true, f: (a, b) => a | b },
+    XOR: { name: '异或门 XOR', desc: 'OR + 一道"笑脸"弧线', two: true, f: (a, b) => a ^ b },
+  };
+  const host = $('#gates');
+  Object.entries(G).forEach(([type, g]) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<h3>${g.name}</h3><p class="muted" style="margin:0 0 6px;font-size:14px">符号：${g.desc}</p>
+      <svg class="diagram" viewBox="0 0 280 110"></svg>
+      <table class="tt" style="margin-top:8px"><thead><tr>${g.two ? '<th>A</th><th>B</th>' : '<th>A</th>'}<th>输出</th></tr></thead><tbody></tbody></table>`;
+    host.appendChild(card);
+    const svg = $('svg', card), tbody = $('tbody', card);
+    const st = { a: 0, b: 0 };
+    const end = type === 'OR' ? 138 : (type === 'XOR' ? 136 : 132);
+    if (g.two) { wire(svg, `M55,30 H100 V47 H${end}`, 'A'); wire(svg, `M55,85 H100 V63 H${end}`, 'B'); }
+    else wire(svg, `M55,55 H${end}`, 'A');
+    wire(svg, `M${type === 'NOT' ? 178 : 180},55 H230`, 'Y');
+    gate(svg, type, 130, 35, 'Y');
+    const render = () => {
+      const y = g.two ? g.f(st.a, st.b) : g.f(st.a);
+      setSignals(svg, { A: st.a, B: st.b, Y: y });
+      const k = g.two ? '' + st.a + st.b : '' + st.a;
+      $$('tr', tbody).forEach(tr => tr.classList.toggle('cur', tr.dataset.k === k));
+    };
+    if (g.two) { inNode(svg, 40, 30, 'A', 'A', () => { st.a ^= 1; render(); }); inNode(svg, 40, 85, 'B', 'B', () => { st.b ^= 1; render(); }); }
+    else inNode(svg, 40, 55, 'A', 'A', () => { st.a ^= 1; render(); });
+    lampNode(svg, 247, 55, 'Y', '输出');
+    const rows = g.two ? [[0, 0], [0, 1], [1, 0], [1, 1]] : [[0], [1]];
+    tbody.innerHTML = rows.map(r => `<tr data-k="${r.join('')}">${r.map(v => `<td class="num">${v}</td>`).join('')}<td class="num"><b>${g.two ? g.f(r[0], r[1]) : g.f(r[0])}</b></td></tr>`).join('');
+    $$('tr', tbody).forEach(tr => tr.onclick = () => { st.a = +tr.dataset.k[0]; if (g.two) st.b = +tr.dataset.k[1]; render(); });
+    render();
+  });
+})();
+
+/* ---------- XOR 组合 ---------- */
+(function () {
+  const svg = $('#xor');
+  const st = { a: 0, b: 0 };
+  wire(svg, 'M55,60 H90 V42 H200', 'A');
+  wire(svg, 'M90,60 V154 H200', 'A');
+  dot(svg, 90, 60, 'A');
+  wire(svg, 'M55,170 H200', 'B');
+  wire(svg, 'M140,170 V160 A6,6 0 0 0 140,148 V58 H200', 'B');
+  dot(svg, 140, 170, 'B');
+  gate(svg, 'OR', 200, 30, 'O', '或');
+  gate(svg, 'AND', 200, 142, 'D', '与');
+  wire(svg, 'M250,162 H290', 'D');
+  gate(svg, 'NOT', 290, 142, 'N', '非');
+  wire(svg, 'M250,50 H360 V97 H410', 'O');
+  wire(svg, 'M338,162 H370 V113 H410', 'N');
+  gate(svg, 'AND', 410, 85, 'Y', '与');
+  wire(svg, 'M460,105 H495', 'Y');
+  txt(svg, 300, 40, '至少有一个是 1', 't-sub');
+  txt(svg, 270, 205, '不是两个都是 1', 't-sub mid');
+  inNode(svg, 40, 60, 'A', 'A', () => { st.a ^= 1; render(); });
+  inNode(svg, 40, 170, 'B', 'B', () => { st.b ^= 1; render(); });
+  lampNode(svg, 512, 105, 'Y', '输出');
+  function render() {
+    const O = st.a | st.b, D = st.a & st.b, N = 1 - D, Y = O & N;
+    setSignals(svg, { A: st.a, B: st.b, O, D, N, Y });
+    $('#xor-cap').innerHTML = `A=${st.a}，B=${st.b}：上路 OR = ${O}；下路 AND = ${D}，经过 NOT 变成 ${N}；最后 AND(${O}, ${N}) = <b>${Y}</b>。` +
+      (st.a && st.b ? '<br>两个都是 1：OR 说"是"，但下路说"两个都是 1，不行"，结果被否决成 0。这正是 XOR 和 OR 唯一不同的地方。' : '');
+  }
+  render();
+})();
+
+/* ---------- 比萨 ---------- */
+(function () {
+  const svg = $('#pizza');
+  const st = { J: 1, F: 1, W: 0, P: 0 };
+  const names = { J: '是 John Green', F: '下午 5 点后', W: '是周末', P: '在比萨店附近' };
+  const X = 110;
+  wire(svg, `M${X + 15},40 H190 V62 H240`, 'J');
+  wire(svg, `M${X + 15},100 H190 V78 H240`, 'F');
+  wire(svg, `M${X + 15},170 H190 V192 H240`, 'W');
+  wire(svg, `M${X + 15},230 H190 V208 H240`, 'P');
+  gate(svg, 'AND', 240, 50, 'A1', '与');
+  gate(svg, 'AND', 240, 180, 'A2', '与');
+  wire(svg, 'M290,70 H330 V127 H370', 'A1');
+  wire(svg, 'M290,200 H330 V143 H370', 'A2');
+  gate(svg, 'OR', 370, 115, 'Y', '或');
+  wire(svg, 'M420,135 H480', 'Y');
+  lampNode(svg, 496, 135, 'Y', '想吃比萨', true);
+  [['J', 40], ['F', 100], ['W', 170], ['P', 230]].forEach(([k, y]) => {
+    const g = inNode(svg, X, y, k, '', () => { st[k] ^= 1; render(); });
+    txt(svg, X - 22, y + 5, names[k], 't-main end');
+  });
+  function render() {
+    const A1 = st.J & st.F, A2 = st.W & st.P, Y = A1 | A2;
+    setSignals(svg, Object.assign({ A1, A2, Y }, st));
+    const v = b => `<span class="v ${b ? 't' : 'f'}">${b ? '真' : '假'}</span>`;
+    $('#pizza-s').innerHTML = `(${names.J} ${v(st.J)} 且 ${names.F} ${v(st.F)}) = ${v(A1)}　或　(${names.W} ${v(st.W)} 且 ${names.P} ${v(st.P)}) = ${v(A2)}<br>→ "John 想吃比萨" = ${v(Y)}`;
+  }
+  render();
+})();
+</script>
+</body>
+</html>

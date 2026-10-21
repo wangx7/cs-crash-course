@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>22 命令行界面 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.kb{display:flex;flex-direction:column;gap:5px;margin-top:12px;align-items:flex-start}
+.kb .row{display:flex;gap:5px}
+.kb .k{width:40px;height:40px;border-radius:7px;border:1px solid var(--line);border-bottom-width:3px;background:var(--panel);display:flex;align-items:center;justify-content:center;font:700 15px var(--mono);transition:all .2s}
+.kb .k.hl{background:var(--on);color:#fff;border-color:var(--on)}
+.kb .k.hl2{background:var(--accent);color:#fff;border-color:var(--accent)}
+@media (max-width:560px){.kb .k{width:28px;height:32px;font-size:12px}}
+.term{background:#0f1410;color:#9df59d;font:14px/1.6 var(--mono);border-radius:12px;padding:14px 16px;min-height:300px;max-height:420px;overflow-y:auto;box-shadow:inset 0 0 30px rgba(0,0,0,.6)}
+.term .ln{white-space:pre-wrap;word-break:break-word}
+.term .in{color:#e5ffe5}
+.term .sys{color:#7fbf7f}
+.term .err{color:#ff9b8a}
+.term form{display:flex;gap:6px;margin-top:4px}
+.term input{flex:1;background:transparent;border:0;outline:none;color:#e5ffe5;font:inherit;caret-color:#9df59d}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.chips button{font:13px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chips button:hover{border-color:var(--accent)}
+</style>
+</head>
+<body data-ep="22">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=23" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 22 集</div>
+  <h1>键盘与命令行界面</h1>
+  <p class="en">Keyboards &amp; Command Line Interfaces</p>
+  <p class="lead">人怎么把想法告诉计算机？从迁就机器的穿孔纸带，到借来的打字机键盘和电报用的电传打字机，再到今天程序员天天用的命令行。这一集讲人机交互的第一个大台阶。</p>
+  <div class="road">
+    <span>机械面板</span><i>→</i><span>穿孔卡与打印</span><i>→</i><span>交互式计算</span><i>→</i><span>打字机与 QWERTY</span><i>→</i><span>电传打字机</span><i>→</i><span>命令行与终端</span><i>→</i><span>文字冒险</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 人机交互</a></li>
+    <li><a href="#ch1">1 · 迁就机器的年代</a></li>
+    <li><a href="#ch2">2 · 打字机与 QWERTY</a></li>
+    <li><a href="#ch3">3 · 十指盲打</a></li>
+    <li><a href="#ch4">4 · 电传打字机</a></li>
+    <li><a href="#ch5">5 · 命令行</a></li>
+    <li><a href="#ch6">6 · 终端与文字冒险</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>人机交互</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！我们之前谈过输入和输出，但都是计算机部件之间的，比如 RAM 输出数据，或者把指令输入 CPU。我们还没谈过来自人类的输入，也没谈过除了打孔纸卡之外，怎么把信息从计算机里取出来。</p>
+  <p>当然，有各种各样的"输入输出设备"让我们能和计算机交互，它们在人和机器之间提供了一个<b>界面</b>。今天有一整个学科专门研究这件事，叫<b>人机交互</b>（human-computer interaction）。界面对用户体验极其重要，所以接下来几集都会以它为重点。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>迁就机器的年代</h2>
+  <p>系列开头几集提过，早期的机械计算设备用齿轮、旋钮和开关这些机械结构来输入和输出，这些就是它们的交互界面。就连早期的电子计算机，比如巨人和 ENIAC，也是用一大堆机械面板和接线来配置的，输入一个程序可能就要几个星期，还不算运行时间。程序跑完后，要取出数据，最常见的办法是打印到纸上。打印机超级有用，就连查尔斯·巴贝奇都给他的差分机设计了一台——那可是 1820 年代！</p>
+  <p>然而到 1950 年代，机械输入已经被穿孔卡和磁带完全取代，但输出仍然常常是打印到纸上，再加上一大堆指示灯，在运行过程中给出实时反馈。那个时代的特点是<b>尽量迁就机器</b>，对人好不好用是次要的。穿孔纸带就是个好例子：它是为了让计算机方便读取而设计的。纸带是连续的，方便机器处理；纸孔用机械或光学的方法都很容易识别，可以编码程序和数据。但人当然不是用纸孔来思考的，所以负担落在了程序员身上：他们得花额外的时间和精力，把东西转换成计算机能理解的格式，通常还需要额外的人手和设备帮忙。</p>
+  <p>还要注意，基本上 1950 年以前的早期计算机，"输入"的概念非常原始。没错，是人负责输入程序和数据，但计算机并不会<b>交互式地</b>回应：程序一旦开始运行，就会一直跑到结束。因为机器太贵了，不能停下来等一个人慢慢敲命令、给数据，程序和数据得一次性全部放进去。</p>
+  <p>这在 1950 年代末开始改变。一方面，小型计算机变得足够便宜，让人和计算机来回交互变得可以接受——<b>交互式</b>就是人和计算机之间来回沟通。另一方面，大型计算机变得更快、更复杂，能同时支持多个程序和多个用户，也就是第 18 集讲的多任务和分时系统。但要交互地操作，计算机需要某种方式获得用户的输入，于是它借用了一种早已存在的数据录入机制：<b>键盘</b>。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>打字机与 QWERTY</h2>
+  <p>那时，打字机已经存在一段时间了，但现代打字机是克里斯托弗·莱瑟姆·肖尔斯在 1868 年发明的。虽然直到 1874 年才完成设计和制造，但之后取得了商业成功。肖尔斯的打字机用了一种不寻常的布局，叫 <b>QWERTY</b>，名字来自键盘左上角那一排按键。</p>
+  <p>为什么这样设计，有很多猜测。最流行的理论是：这样做是为了把常用的字母分开，避免打字机的连杆卡住。这个解释虽然省事，但可能是错的，或者至少不全面。事实上，QWERTY 把很多常见的字母组合放在了一起，比如 TH 和 ER。我们知道的是，肖尔斯和他的团队设计了很多版本，才逐步演化到这个布局。</p>
+
+  <div class="card">
+    <h3>动手：看看 QWERTY 真的把常见字母分开了吗</h3>
+    <span class="seg-btns" id="kb-lay"><button data-l="qwerty">QWERTY（美国）</button><button data-l="azerty">AZERTY（法国）</button><button data-l="qwertz">QWERTZ（中欧）</button></span>
+    <div class="kb" id="kb"></div>
+    <div class="btns"><button class="btn" data-p="TH">高亮 T、H</button><button class="btn" data-p="ER">高亮 E、R</button><button class="btn" data-p="ASDF">"基准键" ASDF JKL;</button></div>
+    <div class="step-text" id="kb-cap">点按钮高亮一组按键。</div>
+  </div>
+
+  <p>总之，肖尔斯的打字机很成功，其他公司很快就开始照抄他的设计。过去一个世纪里，人们发明了不少新的键盘布局，宣称有各种好处，但大家已经熟悉了 QWERTY，根本不想学新的布局。这就是经济学家所说的<b>转换成本</b>（switching barrier）。所以将近一个半世纪过去了，我们还在用 QWERTY 布局。我还应该提一下，QWERTY 并不是全世界通用的，有很多变体，比如法国的 AZERTY 布局，以及中欧常见的 QWERTZ 布局。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>十指盲打</h2>
+  <p>有意思的是，肖尔斯根本没想到打字会比手写快。手写大约每分钟 20 个词，打字机主要是为了易读和标准化，而不是速度。然而随着打字机成为办公室的标配，人们对快速打字的渴望越来越强烈。有两个重大进展释放了打字的潜力。</p>
+  <p>大约 1880 年，辛辛那提速记学院一位名叫伊丽莎白·朗利（Elizabeth Longley）的老师开始推广<b>十指打字</b>：比起一根手指打字，手指要移动的距离短得多，所以更快。几年后，盐湖城一位联邦法庭书记弗兰克·爱德华·麦格林（Frank Edward McGurrin）学会了<b>盲打</b>，打字时不用看键盘。1888 年，麦格林赢得了一场备受关注的打字速度比赛，此后"十指盲打"开始流行起来。专业打字员每分钟能打 100 个词以上，比手写快多了！而且清晰又整齐！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="speed" viewBox="0 0 680 120" role="img" aria-label="手写与打字速度"></svg></div>
+      <figcaption>图 1　每分钟能写 / 打多少个英文单词。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>电传打字机</h2>
+  <p>所以，人很擅长用打字机，但我们总不能把一台打字机塞到计算机面前，让它来打字——计算机又没有手指。早期的计算机用的是一种专门发电报用的特殊打字机，叫<b>电传打字机</b>（teletype machine）。这些是强化过的打字机，可以通过电报线发送和接收文字：按下一个字母，信号就会通过电报线发到另一端，另一端的电传打字机把它打出来。这让两个人可以远距离交流，基本上就是一个蒸汽朋克版的聊天室。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="tty" viewBox="0 0 680 200" role="img" aria-label="电传打字机接上计算机"></svg></div>
+      <figcaption>图 2　上：两台电传打字机通过电报线聊天。下：把另一端换成计算机，就有了"和计算机对话"的界面。</figcaption>
+    </figure>
+  </div>
+
+  <p>因为电传打字机本来就有电子接口，稍作修改就能用在计算机上。电传式交互界面在 1960、70 年代很常见，用起来很简单：输入一个命令，按回车，计算机就会打出回应。用户和计算机就这样来回"对话"，这叫<b>命令行界面</b>（command line interface）。直到 1980 年代，它都是最主要的人机交互方式。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>命令行：和计算机对话</h2>
+  <p>用电传打字机的命令行交互大概是这样的：用户可以输入各种各样的命令。我们来看几个。先看看当前目录里有哪些文件：输入命令 <code>ls</code>，它是 list（列出）的缩写，计算机会列出当前目录里的所有文件。如果想看 secretStarTrekDiscoveryCast.txt 里面有什么，需要用另一个命令来显示文件内容。在 Unix 里，可以用 <code>cat</code> 命令显示文件内容，cat 是 concatenate（连接）的缩写。然后要指定文件名，方法是写在 cat 命令后面——像这样传给命令的值叫<b>参数</b>（argument）。如果同一个网络里还有别人，你可以用 <code>finger</code> 命令找朋友，就像一个非常原始的"查找好友"应用。</p>
+
+  <div class="card">
+    <h3>动手：在终端里敲命令</h3>
+    <div class="term" id="term" aria-label="仿终端"></div>
+    <div class="chips" id="chips"></div>
+    <p class="hint">点上面的命令按钮，或直接在终端里输入后按回车。输入 help 看所有命令</p>
+  </div>
+  <div class="extra">
+    <span class="t">这些命令今天还能用</span>
+    你 Mac 上的"终端"就是这样一个命令行：<code>ls</code>、<code>cd</code>、<code>cat</code> 和五十年前几乎一模一样（finger 现在多半没装了）。你平时敲的 <code>pnpm dev</code>、<code>git commit</code> 也是"命令 + 参数"的格式。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>终端与文字冒险</h2>
+  <p>直到 1970 年代左右，电传打字机都是主流的交互方式。虽然屏幕早在 1950 年代就出现了，但对日常使用来说太贵，分辨率也低。然而，随着面向普通消费者的电视机开始大规模生产，加上处理器和内存的进步，到 1970 年代，用屏幕代替电传打字机变得可行了。</p>
+  <p>不过，工程师们并没有为屏幕专门做一套全新的标准，而是直接沿用了现有的电传打字机协议。屏幕就像一卷无限长的纸，除了输入和输出文字，没有别的东西。协议一样，所以计算机根本分不出连着的是纸还是屏幕。这些"虚拟电传打字机"或"玻璃电传打字机"，叫<b>终端</b>（terminal）。到 1971 年，美国大约有 7 万台电传打字机和 7 万台终端在使用。屏幕又好又快，而且灵活得多：如果你删掉一个错字，它会立刻消失。所以到 1970 年代末，屏幕成了标配。</p>
+  <p>你也许会想，命令行界面太原始了，做不了什么有意思的事。但即便只有文字，程序员们也找到了让它变得有趣的办法。早期著名的交互式文字游戏有 1977 年的 <b>Zork</b>。早期的玩家需要丰富的想象力，想象自己身处一个虚构的世界，比如"四周一片漆黑，附近可能有怪物会吃掉你"。</p>
+  <p>我们用命令行来玩玩看。和之前一样，可以用 ls 命令看看当前目录有什么，然后用 <code>cd</code> 命令进入游戏文件夹，cd 的意思是"change directory"（切换目录）。再用 ls 看看有哪些游戏。超棒！我们有 adventure！要运行这个程序，只要输入它的名字。在程序自己结束或我们主动退出之前，它会接管命令行。（上面的仿终端里也可以试——不过那是我写的一个小小的中文冒险，不是原版。）</p>
+  <p>视频里看到的，是《巨洞冒险》（Colossal Cave Adventure）的真实输出，由 Will Crowther 在 1976 年开发。在游戏里，玩家可以输入一两个词的命令，来移动角色、和其他东西互动、捡起物品等等。游戏会像旁白一样，输出你的位置，告诉你可以做什么，以及你的动作造成的结果。有些动作会导致死亡！原版只有 66 个地点可以探索，但它被广泛认为是最早的互动小说。这类纯文字游戏后来发展成多人游戏，叫 MUD（多用户地牢），是今天大型多人在线角色扮演游戏（MMORPG）的前辈。如果你想了解游戏的历史，我们有一门由 Andre Meadows 主持的游戏速成课。</p>
+  <p>命令行界面虽然简单，但非常强大。编程大部分仍然是打字的活儿，所以用命令行很自然。因此，即使在今天，大多数程序员工作时仍然在用命令行界面。用命令行也是访问远程计算机最常见的方式，比如另一个国家的服务器。如果你用的是 Windows、macOS 或 Linux，你的电脑都有命令行界面，只是你可能从来没用过。可以在 Windows 搜索栏里输入 cmd，或者在 Mac 上搜索"终端"（Terminal），然后你就可以装个 Zork 来玩了！</p>
+  <p>现在你知道早期计算的发展是怎样一直影响到今天的了。想想看，如果手机上没有 QWERTY 键盘，在 Instagram 上给照片配标题可就麻烦了。不过我们还有一个非常重要的话题没讲：美妙的<b>图形界面</b>！那是下周的主题，下周见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <ul class="timeline">
+    <li><span class="yr">1820s</span>巴贝奇给差分机设计了打印机</li>
+    <li><span class="yr">1940s</span>机械面板和插线；输入程序要几周；结果打印到纸上</li>
+    <li><span class="yr">1950s</span>穿孔卡、纸带——为机器设计；程序一旦运行就跑到底，不交互</li>
+    <li><span class="yr">1868~74</span>肖尔斯发明现代打字机，QWERTY 布局；转换成本让它沿用至今</li>
+    <li><span class="yr">1880s</span>朗利推广十指打字，麦格林盲打夺冠：每分钟 100 词以上</li>
+    <li><span class="yr">1950s末</span>计算机便宜到 / 快到可以交互；借来键盘和电报用的电传打字机</li>
+    <li><span class="yr">1960~80s</span>命令行界面：命令 + 参数，回车，计算机回应</li>
+    <li><span class="yr">1970s</span>屏幕终端沿用电传协议取代纸；1976 巨洞冒险、1977 Zork</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    交互界面从"迁就机器"走向"迁就人"：机器变便宜、变快以后，才值得停下来等人慢慢打字。命令行沿用了打字机的键盘和电报的协议，简单但强大，至今仍是程序员的主力工具。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么 1950 年以前的计算机不做"交互式"输入？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">机器太贵了，不能让它停下来等人慢慢敲命令和数据。程序和数据要一次性准备好放进去，运行起来就一直跑到结束。直到 1950 年代末，小型机足够便宜、大型机足够快（能分时），交互才变得划算。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. "QWERTY 是为了防止卡键"这个说法有什么问题？我们为什么还在用它？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">QWERTY 其实把很多常见组合放在了一起（比如 TH、ER），说明这个解释至少不全面；它是肖尔斯团队试了很多版本演化出来的。沿用至今是因为转换成本：大家已经熟悉它，不愿意重新学新布局。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 终端和电传打字机是什么关系？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">终端是"玻璃电传打字机"：用屏幕代替纸，但沿用同一套电传协议，计算机分不出连的是纸还是屏幕。屏幕更快、更灵活，删错字立刻消失，所以 1970 年代末成为标配。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>cat secretStarTrekDiscoveryCast.txt</code> 这条命令里，哪部分是命令、哪部分是参数？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">cat 是命令（显示文件内容，concatenate 的缩写），后面的文件名是传给它的参数。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="21.html"><small>← 上一集</small>21 压缩</a>
+    <a class="next" href="23.html"><small>下一集 →</small>23 屏幕与 2D 图形显示</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 22 集 Keyboards &amp; Command Line Interfaces（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 键盘 ---------- */
+(function () {
+  const L = {
+    qwerty: ['QWERTYUIOP', 'ASDFGHJKL;', 'ZXCVBNM,./'],
+    azerty: ['AZERTYUIOP', 'QSDFGHJKLM', 'WXCVBN,;:!'],
+    qwertz: ['QWERTZUIOP', 'ASDFGHJKLÖ', 'YXCVBNM,.-'],
+  };
+  let lay = 'qwerty', hl = [];
+  function paint() {
+    $('#kb').innerHTML = L[lay].map((r, i) => `<div class="row" style="margin-left:${i * 18}px">${[...r].map(c => `<div class="k ${hl.includes(c) ? 'hl' : ''}">${c}</div>`).join('')}</div>`).join('');
+    $$('#kb-lay button').forEach(b => b.classList.toggle('sel', b.dataset.l === lay));
+  }
+  $$('#kb-lay button').forEach(b => b.onclick = () => { lay = b.dataset.l; paint(); $('#kb-cap').innerHTML = lay === 'qwerty' ? 'QWERTY：美国和大部分地方用的布局。' : lay === 'azerty' ? 'AZERTY：法国常见，A 和 Q、Z 和 W 互换了位置。' : 'QWERTZ：德国等中欧国家常见，Y 和 Z 互换了位置。'; });
+  const CAP = { TH: '<b>T 和 H</b>：英语里最常见的字母组合之一（the、that、this……），在 QWERTY 上只隔一个 G，左右手轮流按。', ER: '<b>E 和 R</b>：同样极常见（her、were、er 结尾的词），在 QWERTY 上紧挨着。如果目的是"把常见组合分开防卡键"，这里就说不通。', ASDF: '十指打字的"基准键"：左手放 ASDF，右手放 JKL;，每根手指负责附近几个键，移动距离最短。' };
+  $$('[data-p]').forEach(b => b.onclick = () => { hl = b.dataset.p === 'ASDF' ? [...'ASDFJKL;'] : [...b.dataset.p]; if (lay !== 'qwerty') { lay = 'qwerty'; } paint(); $('#kb-cap').innerHTML = CAP[b.dataset.p]; });
+  paint();
+})();
+
+/* ---------- 速度 ---------- */
+(function () {
+  const svg = $('#speed');
+  const sx = v => 160 + v * 4.2;
+  [['手写', 20, 's-soft'], ['十指盲打的专业打字员', 100, 's-on']].forEach(([n, v, cls], i) => {
+    const y = 18 + i * 44;
+    txt(svg, 150, y + 18, n, 't-main end');
+    el('rect', { x: 160, y, width: sx(v) - 160, height: 26, rx: 5, class: cls }, svg);
+    txt(svg, sx(v) + 8, y + 19, v === 100 ? '100+ 词 / 分钟' : '约 20 词 / 分钟', 't-mono');
+  });
+})();
+
+/* ---------- 电传打字机 ---------- */
+(function () {
+  const svg = $('#tty');
+  const tty = (x, y, label) => { el('rect', { x, y, width: 110, height: 60, rx: 8, class: 's-panel' }, svg); el('rect', { x: x + 15, y: y - 18, width: 80, height: 22, rx: 3, style: 'fill:var(--paper);stroke:var(--wood)' }, svg); for (let i = 0; i < 3; i++) for (let j = 0; j < 8; j++) el('rect', { x: x + 10 + j * 12, y: y + 18 + i * 12, width: 9, height: 8, rx: 1, style: 'fill:var(--line)' }, svg); txt(svg, x + 55, y + 78, label, 't-sub mid'); };
+  tty(30, 30, '电传打字机 A'); tty(540, 30, '电传打字机 B');
+  el('path', { d: 'M140,60 C260,20 420,100 540,60', class: 's-dash' }, svg); txt(svg, 340, 44, '电报线：按一个字母，另一端就打出来', 't-sub mid');
+  tty(30, 130, '电传打字机 = 终端');
+  el('rect', { x: 540, y: 120, width: 110, height: 70, rx: 10, class: 's-on' }, svg); txt(svg, 595, 160, '计算机', 't-main mid');
+  el('path', { d: 'M140,155 H540', class: 's-line' }, svg); txt(svg, 340, 146, '输入命令 + 回车 → ← 计算机打出回应', 't-sub mid');
+})();
+
+/* ---------- 仿终端 ---------- */
+(function () {
+  const term = $('#term');
+  const FS = {
+    '~': { 'notes.txt': '记得：明天交周报。\n还有：别忘了变得超棒。', 'secretStarTrekDiscoveryCast.txt': '机密！下一季的演员表……\n（开玩笑的，我不知道。这只是一个示范用的文件。）', games: 'DIR' },
+    '~/games': { adventure: 'PROG', 'README.txt': '输入 adventure 开始冒险。' },
+  };
+  let cwd = '~', game = null;
+  const out = (s, cls) => { const d = document.createElement('div'); d.className = 'ln ' + (cls || ''); d.textContent = s; term.insertBefore(d, form); term.scrollTop = 1e6; };
+  const form = document.createElement('form');
+  form.innerHTML = '<span class="prompt"></span><input autocomplete="off" spellcheck="false" aria-label="输入命令">';
+  term.appendChild(form);
+  const input = $('input', form), prompt = $('.prompt', form);
+  const setPrompt = () => { prompt.textContent = game ? '>' : `carrie@unix:${cwd}$`; };
+  // 迷你文字冒险（自写）
+  const ROOMS = {
+    road: { d: '你站在一条土路的尽头，前面是一座小砖房，旁边有一条小溪流进山谷。', exits: { 北: 'house', 南: 'valley' } },
+    house: { d: '砖房里有一盏旧油灯。门在南边。', exits: { 南: 'road' }, item: '油灯' },
+    valley: { d: '山谷里，小溪钻进地下。岩石间有一个黑乎乎的洞口，可以往下走。', exits: { 北: 'road', 下: 'cave' } },
+    cave: { d: '', exits: { 上: 'valley' } },
+  };
+  let room, inv;
+  const look = () => {
+    if (room === 'cave') return out(inv.includes('油灯') ? '油灯照亮了洞穴：墙上全是闪闪发光的晶体，深处有一个宝箱！输入"打开 宝箱"。' : '四周一片漆黑。你听到附近有什么东西在动……也许该先找盏灯。（输入"上"离开）');
+    const r = ROOMS[room]; out(r.d + (r.item && !inv.includes(r.item) ? '（地上有一盏油灯，输入"拿 油灯"）' : '') + '\n出口：' + Object.keys(r.exits).join('、'));
+  };
+  function adventure(cmd) {
+    const [v, n] = cmd.trim().split(/\s+/);
+    if (!v) return;
+    if (v === '退出' || v === 'quit') { game = null; out('你离开了冒险。', 'sys'); return; }
+    if (v === '看' || v === 'look') return look();
+    if (v === '拿' && n === '油灯' && room === 'house' && !inv.includes('油灯')) { inv.push('油灯'); return out('你拿起了油灯。'); }
+    if (v === '打开' && n === '宝箱' && room === 'cave' && inv.includes('油灯')) { out('宝箱里是一张纸条："抽象就是力量。" 你赢了！🎉', 'sys'); game = null; out('（冒险结束，回到命令行）', 'sys'); return; }
+    const to = ROOMS[room].exits[v];
+    if (to) { room = to; return look(); }
+    if (room === 'cave' && !inv.includes('油灯') && v !== '上') { out('黑暗中你被一只看不见的怪物吃掉了。游戏结束。', 'err'); game = null; out('（回到命令行）', 'sys'); return; }
+    out('我不明白。试试：北、南、上、下、看、拿 油灯、退出');
+  }
+  function run(line) {
+    out((game ? '> ' : `carrie@unix:${cwd}$ `) + line, 'in');
+    if (game) { adventure(line); setPrompt(); return; }
+    const [cmd, ...args] = line.trim().split(/\s+/);
+    const dir = FS[cwd];
+    if (!cmd) return;
+    if (cmd === 'help') out('可用命令：ls　cat <文件名>　cd <目录>　cd ..　finger　clear　adventure（要先 cd games）', 'sys');
+    else if (cmd === 'ls') out(Object.keys(dir).map(k => dir[k] === 'DIR' ? k + '/' : k).join('    '));
+    else if (cmd === 'cat') { const f = args[0]; if (!f) out('cat：要给一个文件名作为参数，例如 cat notes.txt', 'err'); else if (typeof dir[f] === 'string' && !['DIR', 'PROG'].includes(dir[f])) out(dir[f]); else out(`cat: ${f}: 没有这个文件`, 'err'); }
+    else if (cmd === 'cd') { const t = args[0]; if (!t || t === '~') cwd = '~'; else if (t === '..') cwd = '~'; else if (dir[t] === 'DIR') cwd = cwd + '/' + t; else out(`cd: ${t}: 没有这个目录`, 'err'); }
+    else if (cmd === 'finger') out('Login     Name            TTY   Idle\ncarrie    Carrie Anne     tty1   0:00\nhank      Hank Green      tty3   0:12\ngrace     Grace Hopper    tty7   1:45');
+    else if (cmd === 'clear') { $$('.ln', term).forEach(d => d.remove()); }
+    else if (cmd === 'adventure' || cmd === './adventure') { if (FS[cwd].adventure) { game = true; room = 'road'; inv = []; out('== 迷你冒险（Colossal Cave Adventure 风格的小练习）==\n输入一两个词的命令：北、南、上、下、看、拿 油灯、退出', 'sys'); look(); } else out('adventure: 找不到这个程序（先 cd games）', 'err'); }
+    else out(`${cmd}: 找不到命令（输入 help 看看有哪些）`, 'err');
+    setPrompt();
+  }
+  form.onsubmit = e => { e.preventDefault(); const v = input.value; input.value = ''; run(v); };
+  term.addEventListener('click', () => input.focus({ preventScroll: true }));
+  ['ls', 'cat secretStarTrekDiscoveryCast.txt', 'finger', 'cd games', 'ls', 'adventure', '北', '拿 油灯', '南', '南', '下', '打开 宝箱', 'help'].forEach(c => {
+    const b = document.createElement('button'); b.textContent = c; b.onclick = () => run(c); $('#chips').appendChild(b);
+  });
+  out('欢迎！这是一个模拟的 Unix 命令行。输入 help 查看命令。', 'sys');
+  setPrompt();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>05 算术逻辑单元 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.circ-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:center}
+@media (max-width:760px){.circ-grid{grid-template-columns:1fr}}
+table.tt.click tbody tr{cursor:pointer}
+table.tt.click tbody tr:hover td{background:var(--accent-soft)}
+.box rect{fill:var(--panel);stroke:var(--ink);stroke-width:2;transition:all .2s}
+.box.on rect{fill:var(--on-soft);stroke:var(--on)}
+.box.active rect{stroke:var(--on);stroke-width:3}
+.box-title{font-size:13px;font-weight:700;fill:var(--ink);text-anchor:middle}
+.box-sub{font-size:11px;fill:var(--muted);text-anchor:middle}
+.port{font-size:10px;fill:var(--muted);font-family:var(--mono)}
+.pending{opacity:.2}
+.alu-v{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5}
+.flag rect{fill:var(--panel);stroke:var(--line);stroke-width:1.5;transition:all .2s}
+.flag.on rect{fill:var(--on);stroke:var(--on)}
+.flag text{font-size:12px;text-anchor:middle;fill:var(--ink)}
+.flag.on text{fill:#fff;font-weight:700}
+.alu-ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:12px;font-size:14px}
+.alu-ctl input{font:16px var(--mono);width:80px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.btn.sel{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+</style>
+</head>
+<body data-ep="5">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=6" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 5 集</div>
+  <h1>算术逻辑单元 ALU</h1>
+  <p class="en">How Computers Calculate – the ALU</p>
+  <p class="lead">ALU 是计算机的数学大脑。这一集用上一集的逻辑门，一步步搭出半加器、全加器、8 位加法器，再加上逻辑单元，拼成一个 ALU——功能和著名的英特尔 74181 差不多。</p>
+  <div class="road">
+    <span>半加器</span><i>→</i><span>全加器</span><i>→</i><span>8 位行波进位加法器</span><i>→</i><span>溢出</span><i>→</i><span>逻辑单元</span><i>→</i><span>ALU 与标志位</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 什么是 ALU</a></li>
+    <li><a href="#ch1">1 · 半加器</a></li>
+    <li><a href="#ch2">2 · 全加器</a></li>
+    <li><a href="#ch3">3 · 8 位加法器与溢出</a></li>
+    <li><a href="#ch4">4 · 算术单元的其他操作</a></li>
+    <li><a href="#ch5">5 · 逻辑单元</a></li>
+    <li><a href="#ch6">6 · ALU 的符号与标志</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>什么是 ALU</h2>
+  <p>上一集我们讲了怎样用二进制表示数字，比如二进制的 00101010 就是十进制的 42。表示和存储数字是计算机的重要功能，但真正的目标是<b>计算</b>：有结构、有目的地处理数字，比如把两个数相加。</p>
+  <p>这些运算由计算机的<b>算术逻辑单元</b>（Arithmetic and Logic Unit）来处理，不过大多数人叫它的"外号"：<b>ALU</b>。ALU 是计算机的数学大脑。等你理解了 ALU 的设计和功能，你就理解了现代计算机的一个基础部分。计算机里所有的运算<b>都由它完成</b>，所以基本上其他一切都要用到它。</p>
+  <p>先来欣赏一下这个美人：这可能是史上最有名的 ALU——<b>英特尔 74181</b>。它在 1970 年发布时，是第一个完整装进单个芯片的 ALU，这在当时是了不起的工程壮举。</p>
+  <p>今天我们要用上周学的布尔逻辑门，搭一个简单的 ALU 电路，功能和 74181 大致相同。接下来几集，我们会用它从零造出一台计算机。所以会有点复杂，但我觉得你们搞得定。</p>
+  <p>ALU 其实是两个单元合在一起：一个<b>算术单元</b>和一个<b>逻辑单元</b>。我们先讲算术单元，它负责计算机里所有的数值运算，比如加法和减法。它还做很多别的简单事情，比如给一个数加 1，这叫<b>增量运算</b>，我们之后再说。今天的重点是一切运算中的精华，几乎是计算机所做的其他所有事情的基础：<b>把两个数加起来</b>。</p>
+  <p>我们可以完全用单个晶体管来搭这个电路，但那样很快就会乱成一团。所以，就像第 3 集讲的，我们用更高一层的抽象，用逻辑门来搭组件——这里会用到 AND、OR、NOT 和 XOR。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>半加器：XOR + AND</h2>
+  <p>我们能搭出的最简单的加法电路，是把两个二进制位加在一起。所以有两个输入 A 和 B，一个输出，就是这两位的和。要说明一下：A、B 和输出都只是<b>单个位</b>。</p>
+  <p>输入只有四种可能的组合。前三种是：0 + 0 = 0，1 + 0 = 1，0 + 1 = 1。记住，在二进制里 1 和 true 相同，0 和 false 相同。所以这组输入输出正好和 <b>XOR 门</b>的逻辑一致，我们可以把 XOR 当作 1 位加法器。</p>
+  <p>但第四种组合 1 + 1 是个特例。1 + 1 显然等于 2，可二进制里没有 2 这个数字。上一集说过，结果是 0，然后把 1 进到下一列，所以和其实是二进制的 10。XOR 门的输出只对了一部分：1 + 1 输出 0。我们还需要一根额外的输出线来表示<b>进位</b>。进位只有在输入是 1 <b>和</b> 1 时才为 true，因为只有这时结果（2）超出了 1 位能存的范围——方便的是，我们正好有个门能做这件事！</p>
+
+  <div class="card">
+    <h3>动手：半加器</h3>
+    <div class="circ-grid">
+      <svg class="diagram" id="ha" viewBox="0 0 360 200" role="img" aria-label="半加器电路"></svg>
+      <div>
+        <table class="tt click" id="ha-tt"><thead><tr><th>A</th><th>B</th><th>进位</th><th>和</th></tr></thead><tbody></tbody></table>
+        <p class="step-text" id="ha-cap"></p>
+      </div>
+    </div>
+    <p class="hint">点 A、B 或表格行；重点看 1 + 1</p>
+  </div>
+
+  <p>这并不复杂，就两个逻辑门而已。但我们连这一层细节也抽象掉：把新做的<b>"半加器"</b>封装成一个独立组件，两个输入是位 A 和 B，两个输出是和与进位。这又进入了另一层抽象——呵，我好像经常这么说，不知道会不会变成一个梗。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>全加器：两个半加器 + OR</h2>
+  <p>如果想算的不止 1 + 1，就需要<b>"全加器"</b>。半加器会输出一个进位，这意味着在多列加法里，算到下一列以及之后的每一列时，我们要加的是 <b>3 个位</b>，而不是 2 个。</p>
+  <p>全加器稍微复杂一点：它有三个输入 A、B 和 C，每个都是 1 位。所以最大可能的输入是 1 + 1 + 1，等于"和 1、进位 1"，所以仍然只需要两根输出线：和与进位。</p>
+  <p>我们可以用半加器来搭全加器：先用一个半加器把 A 和 B 相加，和之前一样；然后把结果和输入 C 一起送进第二个半加器；最后用一个 OR 门检查两个进位中有没有任何一个是 true。就这样，我们做出了一个全加器！</p>
+
+  <div class="card">
+    <h3>动手：全加器</h3>
+    <div class="scroll-x"><svg class="diagram" id="fa" viewBox="0 0 580 250" role="img" aria-label="全加器电路"></svg></div>
+    <div class="circ-grid" style="margin-top:10px;align-items:start">
+      <table class="tt click" id="fa-tt"><thead><tr><th>A</th><th>B</th><th>C</th><th>合计</th><th>进位</th><th>和</th></tr></thead><tbody></tbody></table>
+      <p class="step-text" id="fa-cap" style="margin-top:0"></p>
+    </div>
+    <p class="hint">点表格任意一行，电路会设成那一行的输入。检验一下：每行"进位、和"拼起来，正好是"合计"的二进制</p>
+  </div>
+
+  <p>同样，我们可以再往上抽象一层，把全加器包装成一个独立组件：它接收三个输入，把它们加起来，输出和以及进位（如果有的话）。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>8 位行波进位加法器与溢出</h2>
+  <p>有了这些新组件，我们现在可以搭一个电路，把两个 8 位数加起来，就叫它们 A 和 B 吧。</p>
+  <p>先从 A 和 B 的第一位开始，叫 A0 和 B0。这时还没有进位要处理，因为这是第一次加法，所以可以用半加器把这两位加起来，输出叫 sum0。接着要把 A1 和 B1 加起来。上一步 A0 加 B0 可能产生了进位，所以这次要用全加器，把进位也一起输入，输出叫 sum1。然后把这个全加器的进位，接到下一个处理 A2 和 B2 的全加器上。就这样一直串成一条长链，直到 8 位全部加完。</p>
+  <p>注意进位是怎样<b>一级一级向前传</b>到后面每个加法器的，所以这叫<b>"8 位行波进位加法器"</b>（ripple carry adder）。</p>
+
+  <div class="card">
+    <h3>动手：8 位行波进位加法器</h3>
+    <div class="scroll-x"><svg class="diagram" id="rca" viewBox="0 0 780 260" role="img" aria-label="8 位行波进位加法器"></svg></div>
+    <div class="readout" id="rca-read"></div>
+    <div class="step-text" id="rca-step">点上面的 A、B 小圆圈修改每一位，或选一个预设。</div>
+    <div class="btns">
+      <button class="btn primary" id="rca-anim">▶ 逐位演示进位</button>
+      <button class="btn" data-a="42" data-b="19">42 + 19</button>
+      <button class="btn" data-a="183" data-b="19">183 + 19</button>
+      <button class="btn" data-a="255" data-b="1">255 + 1（吃豆人第 256 关）</button>
+      <button class="btn" data-a="0" data-b="0">清零</button>
+    </div>
+  </div>
+
+  <p>注意最后一个全加器有一个进位输出。如果有进位进到了第 9 位，就说明两个数的和太大，8 位装不下了。这叫<b>"溢出"</b>（overflow）。一般来说，溢出指的是加法结果太大，超出了你所用的位数能表示的范围。这通常会导致错误和意料之外的行为。</p>
+  <p>有个著名的例子：最初的街机版吃豆人用 8 位来记录你在第几关。这意味着，如果你打过了第 255 关——8 位能存的最大数——来到第 256 关，ALU 就会溢出，引发一连串错误和画面故障，让这一关根本没法通过。这个 bug 成了顶尖吃豆人玩家的"成人礼"。</p>
+  <p>如果想避免溢出，可以给电路加更多的全加器，让它能加 16 位或 32 位的数。这样溢出更难发生，代价是要用更多逻辑门。另一个缺点是，每次进位往前传都要花一点点时间。当然不算多——电子跑得很快，我们说的是十亿分之一秒的量级——但对今天这么快的计算机来说，已经足以产生影响了。所以现代计算机用的是一种稍有不同的加法电路，叫<b>"超前进位加法器"</b>（carry-look-ahead adder），它更快，但做的事情完全一样：把二进制数加起来。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>算术单元的其他操作</h2>
+  <p>ALU 的算术单元还有做其他数学运算的电路，一般总会支持这 8 种操作。和加法器一样，这些操作也都是用一个个逻辑门搭出来的。</p>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>操作</th><th>做什么</th></tr></thead>
+      <tbody>
+        <tr><td>ADD 加法</td><td>A + B</td></tr>
+        <tr><td>ADD WITH CARRY 带进位加法</td><td>A + B + 进位（把上一次加法的进位也加进来）</td></tr>
+        <tr><td>SUBTRACT 减法</td><td>A − B</td></tr>
+        <tr><td>SUBTRACT WITH BORROW 带借位减法</td><td>A − B − 借位</td></tr>
+        <tr><td>NEGATE 取负</td><td>0 − A</td></tr>
+        <tr><td>INCREMENT 增量</td><td>A + 1</td></tr>
+        <tr><td>DECREMENT 减量</td><td>A − 1</td></tr>
+        <tr><td>PASS THROUGH 直通</td><td>A 原样输出</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="font-size:13px;margin:8px 0 0">"做什么"一列是补充说明。"带进位加法"让 8 位的 ALU 也能分两次算 16 位的加法。</p>
+  </div>
+  <p>有趣的是，你可能注意到了：这里没有乘法和除法。这是因为简单的 ALU 没有专门处理它们的电路，而是<b>做一连串加法</b>来代替。假设你想算 12 × 5，这和把 12 自己加 5 次是一样的，所以要经过 ALU 5 次才能完成这一次乘法。</p>
+
+  <div class="card">
+    <h3>动手：12 × 5 = 经过 ALU 5 次</h3>
+    <div class="readout" id="mul-read">累加器：<span class="big">0</span></div>
+    <div class="btns"><button class="btn primary" id="mul-next">再加一次 12</button><button class="btn" id="mul-reset">重来</button></div>
+  </div>
+
+  <p>很多简单的处理器都是这样做乘法的，比如恒温器、电视遥控器和微波炉里的处理器。慢是慢，但能把活干完。然而更高级的处理器，比如笔记本和智能手机里的，算术单元里有<b>专门做乘法的电路</b>。你也许猜到了，这个电路比加法复杂——没有什么魔法，只是要用多得多的逻辑门，所以便宜的处理器没有这项功能。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>逻辑单元</h2>
+  <p>好了，接下来讲 ALU 的另一半：<b>逻辑单元</b>。它不做算术运算，而是做……逻辑运算，比如之前讲过的 AND、OR 和 NOT。它也能做一些简单的数值测试，比如检查一个数是不是负数。</p>
+  <p>例如，这是一个检测 ALU 输出是不是 0 的电路。它用一堆 OR 门来看有没有哪一位是 1。哪怕只有一位是 1，我们就知道这个数不可能是 0；然后用最后一个 NOT 门把结果反过来，这样<b>只有输入的数是 0 时，输出才是 1</b>。</p>
+
+  <div class="card">
+    <h3>动手：判零电路</h3>
+    <div class="scroll-x"><svg class="diagram" id="zero" viewBox="0 0 620 270" role="img" aria-label="判零电路"></svg></div>
+    <div class="step-text" id="zero-cap"></div>
+    <p class="hint">点左边 8 个位；把它们全部关掉，看最右边的灯</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>ALU 的符号、操作码和标志</h2>
+  <p>以上就是 ALU 组成的高层概览。我们甚至从零搭出了几个主要部件，比如行波进位加法器。你也看到了，它们只是一大堆逻辑门巧妙地连在一起而已。</p>
+  <p>让我们回到开头你那么欣赏的那个 ALU：英特尔 74181。和我们今天做的 8 位 ALU 不同，74181 只能处理 4 位输入。也就是说——<b>你用你的脑子，造出了一个比那个超有名的 ALU 还强一倍的 ALU！</b>嗯……差不多吧。我们并没有把它完整造出来，但你明白了整体的想法。74181 用了大约 70 个逻辑门，而且不能做乘除。但它是小型化道路上的一大步，为更强大、更便宜的计算机打开了大门。</p>
+  <p>这个 4 位 ALU 电路已经够复杂了，而我们的 8 位 ALU 要完整搭出来需要数百个逻辑门。工程师在使用 ALU 时可不想看到那么多复杂细节，所以他们发明了一个特殊符号把它整个包起来，看起来像一个大大的 <b>"V"</b>。又一层抽象！</p>
+  <p>我们的 8 位 ALU 有两个输入 A 和 B，每个都是 8 位。我们还需要一种方式告诉 ALU 该做什么运算，比如加法还是减法，为此我们用一个 4 位的<b>操作码</b>（operation code）。以后的课程会细讲，简单说，1000 可能是加法命令，1100 是减法命令。操作码告诉 ALU 要做什么运算，A 和 B 运算的结果从一个 8 位输出送出来。</p>
+  <p>ALU 还会输出一系列<b>标志</b>（Flag），它们是 1 位的输出，代表特定的状态：</p>
+  <ul>
+    <li><b>零标志</b>：比如两个数相减结果为 0，我们前面做的判零电路就会把零标志设为 true（1）。想判断两个数是否相等时，这非常有用。</li>
+    <li><b>负标志</b>：如果想知道 A 是否小于 B，可以用 ALU 算 A 减 B，看负标志是不是 true。如果是，就知道 A 比 B 小。</li>
+    <li><b>溢出标志</b>：还有一根线连在加法器的进位输出上，所以如果发生溢出，我们就会知道。</li>
+  </ul>
+  <p>更高级的 ALU 会有更多标志，但这 3 个是通用的，也最常用。实际上，以后的课程里我们很快就会用到它们。</p>
+
+  <div class="card">
+    <h3>动手：用一用这个 ALU</h3>
+    <div class="scroll-x"><svg class="diagram" id="alu" viewBox="0 0 640 270" role="img" aria-label="ALU 符号与标志"></svg></div>
+    <div class="alu-ctl">
+      <label>A <input type="number" id="alu-a" min="0" max="255" value="9"></label>
+      <label>B <input type="number" id="alu-b" min="0" max="255" value="9"></label>
+      <span>操作码：</span>
+      <button class="btn sel" data-op="add">1000 加法</button>
+      <button class="btn" data-op="sub">1100 减法</button>
+    </div>
+    <div class="step-text" id="alu-cap"></div>
+    <p class="hint">试试：A=B 做减法看零标志；A&lt;B 做减法看负标志；200 + 100 看溢出标志</p>
+  </div>
+  <div class="extra">
+    <span class="t">这里的标志按课程的简化来设</span>
+    演示里把 A、B 当作 0~255 的无符号数：减法结果小于 0 就设负标志，加法超过 255 就设溢出标志。真实 CPU 会把"无符号的进位"和"有符号的溢出"分成两个标志，这些细节不影响理解 ALU 在做什么。
+  </div>
+
+  <p>现在你知道计算机是怎样不靠齿轮和杠杆，用数字电路完成所有基本数学运算的了。两集之后我们造 CPU 时会用到这个 ALU。但在那之前，计算机还需要一些<b>记忆</b>！我们下周讲。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <div class="road" style="margin:8px 0 18px">
+    <span>XOR + AND = 半加器</span><i>→</i><span>2 个半加器 + OR = 全加器</span><i>→</i><span>1 半加器 + 7 全加器 = 8 位加法器</span><i>→</i><span>+ 其他运算 + 逻辑单元 = ALU</span>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    ALU = 算术单元 + 逻辑单元。输入 A、B 和一个操作码，输出结果和几个标志（零、负、溢出）。它里面没有任何"懂数学"的东西，只是几百个逻辑门按巧妙的方式连在一起；每包一层，就又多一层抽象。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 半加器为什么正好是"一个 XOR + 一个 AND"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">两个 1 位数相加只有 4 种情况。"和"那一位是 0、1、1、0，正是 XOR 的真值表；"进位"只有 1+1 时为 1，正是 AND 的真值表。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 8 位加法器里，为什么第一位用半加器，后面七位都用全加器？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">最低位没有从右边传来的进位，只需加 2 个位；之后每一位都可能收到右边的进位，要加 3 个位（A、B、进位），所以要用全加器。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 什么是溢出？吃豆人第 256 关为什么会坏？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">结果太大，超出了所用位数能表示的范围。关卡数用 8 位存，最大 255；255 + 1 在 8 位里会变成 0，进位从第 9 位"溢"了出去，程序拿到错误的数，就出现了一连串故障。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 怎么只用 ALU 判断 A 是否等于 B、A 是否小于 B？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">让 ALU 算 A − B：结果为 0，零标志亮，说明 A = B；结果为负，负标志亮，说明 A &lt; B。所以比较大小其实是做一次减法、看标志。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="04.html"><small>← 上一集</small>04 二进制</a>
+    <a class="next" href="06.html"><small>下一集 →</small>06 寄存器和内存</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 5 集 How Computers Calculate – the ALU（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+function box(svg, x, y, w, h, title, sub, sig) {
+  const g = el('g', { class: 'box', 'data-sig': sig || '' }, svg);
+  el('rect', { x, y, width: w, height: h, rx: 10 }, g);
+  txt(g, x + w / 2, y + h / 2 - (sub ? 2 : -4), title, 'box-title');
+  if (sub) txt(g, x + w / 2, y + h / 2 + 14, sub, 'box-sub');
+  return g;
+}
+function tableDemo(tbodySel, inputs, f, cols, onSet) {
+  const tbody = $(tbodySel);
+  const n = inputs.length, rows = [];
+  for (let k = 0; k < 2 ** n; k++) rows.push(Array.from({ length: n }, (_, i) => (k >> (n - 1 - i)) & 1));
+  tbody.innerHTML = rows.map(r => `<tr data-k="${r.join('')}">${r.map(v => `<td class="num">${v}</td>`).join('')}${cols(r).map(v => `<td class="num"><b>${v}</b></td>`).join('')}</tr>`).join('');
+  $$('tr', tbody).forEach(tr => tr.onclick = () => onSet(tr.dataset.k.split('').map(Number)));
+  return key => $$('tr', tbody).forEach(tr => tr.classList.toggle('cur', tr.dataset.k === key));
+}
+
+/* ---------- 半加器 ---------- */
+(function () {
+  const svg = $('#ha');
+  const st = { A: 0, B: 0 };
+  wire(svg, 'M55,50 H90 V42 H180', 'A');
+  wire(svg, 'M90,50 V132 H180', 'A'); dot(svg, 90, 50, 'A');
+  wire(svg, 'M55,150 H120 V148 H180', 'B');
+  wire(svg, 'M130,148 V138 A6,6 0 0 0 130,126 V58 H180', 'B'); dot(svg, 130, 148, 'B');
+  gate(svg, 'XOR', 180, 30, 'S', 'XOR');
+  gate(svg, 'AND', 180, 120, 'C', 'AND');
+  wire(svg, 'M230,50 H290', 'S'); wire(svg, 'M230,140 H290', 'C');
+  lampNode(svg, 306, 50, 'S', '和');
+  lampNode(svg, 306, 140, 'C', '进位');
+  const mark = tableDemo('#ha-tt tbody', ['A', 'B'], null, r => [r[0] & r[1], r[0] ^ r[1]], r => { st.A = r[0]; st.B = r[1]; render(); });
+  inNode(svg, 40, 50, 'A', 'A', () => { st.A ^= 1; render(); });
+  inNode(svg, 40, 150, 'B', 'B', () => { st.B ^= 1; render(); });
+  function render() {
+    const S = st.A ^ st.B, C = st.A & st.B;
+    setSignals(svg, { A: st.A, B: st.B, S, C });
+    mark('' + st.A + st.B);
+    $('#ha-cap').innerHTML = `${st.A} + ${st.B} = ${st.A + st.B}，二进制写作 <b>${C}${S}</b>：进位 ${C}，和 ${S}。` + (C ? '<br>XOR 给出的 0 只对了一半，AND 补上了那个进位。' : '');
+  }
+  render();
+})();
+
+/* ---------- 全加器 ---------- */
+(function () {
+  const svg = $('#fa');
+  const st = { A: 0, B: 0, C: 0 };
+  wire(svg, 'M55,55 H120', 'A');
+  wire(svg, 'M55,100 H120', 'B');
+  wire(svg, 'M55,200 H300', 'Ci');
+  box(svg, 120, 35, 100, 85, '半加器 ①', 'A + B', 'H1');
+  box(svg, 300, 130, 100, 90, '半加器 ②', 'P + C', 'H2');
+  txt(svg, 226, 54, 'P', 'port'); txt(svg, 226, 100, '进位₁', 'port');
+  wire(svg, 'M220,60 H260 V145 H300', 'P');
+  wire(svg, 'M220,105 H254 A6,6 0 0 1 266,105 H430 V192 H450', 'C1');
+  wire(svg, 'M400,150 H424 A6,6 0 0 1 436,150 H505', 'S');
+  wire(svg, 'M400,200 H420 V208 H450', 'C2');
+  txt(svg, 404, 194, '进位₂', 'port');
+  gate(svg, 'OR', 450, 180, 'Co', 'OR');
+  wire(svg, 'M500,200 H505', 'Co');
+  lampNode(svg, 521, 150, 'S', '和');
+  lampNode(svg, 521, 200, 'Co', '进位', true);
+  const mark = tableDemo('#fa-tt tbody', ['A', 'B', 'C'], null, r => { const s = r[0] + r[1] + r[2]; return [s, s >> 1, s & 1]; }, r => { st.A = r[0]; st.B = r[1]; st.C = r[2]; render(); });
+  inNode(svg, 40, 55, 'A', 'A', () => { st.A ^= 1; render(); });
+  inNode(svg, 40, 100, 'B', 'B', () => { st.B ^= 1; render(); });
+  inNode(svg, 40, 200, 'Ci', 'C 进位', () => { st.C ^= 1; render(); });
+  function render() {
+    const P = st.A ^ st.B, C1 = st.A & st.B, S = P ^ st.C, C2 = P & st.C, Co = C1 | C2;
+    setSignals(svg, { A: st.A, B: st.B, Ci: st.C, P, C1, S, C2, Co, H1: P || C1, H2: S || C2 });
+    mark('' + st.A + st.B + st.C);
+    $('#fa-cap').innerHTML = `① ${st.A} + ${st.B}：P = ${P}，进位₁ = ${C1}<br>② ${P} + ${st.C}：和 = ${S}，进位₂ = ${C2}<br>OR(${C1}, ${C2}) = 进位 <b>${Co}</b>　→ ${st.A}+${st.B}+${st.C} = ${st.A + st.B + st.C} = 二进制 <b>${Co}${S}</b>`;
+  }
+  render();
+})();
+
+/* ---------- 8 位行波进位加法器 ---------- */
+(function () {
+  const svg = $('#rca');
+  let A = 42, B = 19, shown = 8;       // shown：已经算到第几位（动画用）
+  const X = i => 690 - i * 86;          // 第 i 位方框的左边 x
+  const boxes = [], sums = [], aN = [], bN = [], carryW = [];
+  let busy = false;
+  txt(svg, 20, 30, 'A', 'node-label'); txt(svg, 20, 64, 'B', 'node-label');
+  for (let i = 0; i < 8; i++) {
+    const x = X(i);
+    wire(svg, `M${x + 20},44 V96`, 'a' + i);
+    wire(svg, `M${x + 50},76 V96`, 'b' + i);
+    boxes[i] = box(svg, x, 96, 70, 56, i === 0 ? '半加器' : '全加器', `第 ${i} 位`, 'x' + i);
+    wire(svg, `M${x + 35},152 V196`, 's' + i);
+    sums[i] = lampNode(svg, x + 35, 212, 's' + i, 'sum' + i, true);
+    aN[i] = inNode(svg, x + 20, 30, 'a' + i, '', () => { if (!busy) { A ^= 1 << i; shown = 8; render(); } });
+    bN[i] = inNode(svg, x + 50, 64, 'b' + i, '', () => { if (!busy) { B ^= 1 << i; shown = 8; render(); } });
+    $$('circle', aN[i]).forEach(c => c.setAttribute('r', 11)); $$('circle', bN[i]).forEach(c => c.setAttribute('r', 11));
+    // 进位：从第 i 位左侧到第 i+1 位右侧
+    carryW[i] = wire(svg, i < 7 ? `M${x},124 H${X(i + 1) + 70}` : `M${x},124 H40`, 'c' + i);
+  }
+  lampNode(svg, 26, 124, 'c7', '溢出', true);
+  function render(activeCol) {
+    const sig = {};
+    let carry = 0;
+    for (let i = 0; i < 8; i++) {
+      const a = (A >> i) & 1, b = (B >> i) & 1;
+      const s = a ^ b ^ carry, c = (a & b) | (carry & (a ^ b));
+      sig['a' + i] = a; sig['b' + i] = b;
+      const done = i < shown;
+      sig['s' + i] = done && s; sig['c' + i] = done && c; sig['x' + i] = 0;
+      boxes[i].classList.toggle('pending', !done);
+      boxes[i].classList.toggle('active', i === activeCol);
+      sums[i].style.opacity = done ? 1 : .25;
+      carry = c;
+    }
+    setSignals(svg, sig);
+    const sum = A + B, res = sum & 255, of = sum > 255;
+    $('#rca-read').innerHTML = `A = ${A.toString(2).padStart(8, '0')} (${A})　B = ${B.toString(2).padStart(8, '0')} (${B})<br>和 = <span class="big">${res.toString(2).padStart(8, '0')}</span> (${res})${of ? '　<b style="color:var(--bad)">溢出！真正的和是 ' + sum + '，8 位装不下</b>' : ''}`;
+  }
+  async function anim() {
+    if (busy) return; busy = true;
+    $$('#ch3 .btn').forEach(b => b.disabled = true);
+    let carry = 0;
+    for (let i = 0; i <= 8; i++) {
+      shown = i; render(i);
+      if (i < 8) {
+        const a = (A >> i) & 1, b = (B >> i) & 1;
+        const s = a ^ b ^ carry, c = (a & b) | (carry & (a ^ b));
+        $('#rca-step').innerHTML = `第 ${i} 位：${a} + ${b}${i ? ' + 进位 ' + carry : ''} → sum${i} = <b>${s}</b>${c ? '，进位 1 传给' + (i < 7 ? '第 ' + (i + 1) + ' 位' : '"溢出"灯') : ''}`;
+        carry = c;
+        await sleep(750);
+      }
+    }
+    shown = 8; render();
+    $('#rca-step').innerHTML = carry ? '8 位算完了，但最后还有一个进位冲出了第 8 位——<b>溢出</b>。' : '8 位算完了。注意每一位都要等右边的进位到了才能算出最终结果——这就是"行波"。';
+    busy = false; $$('#ch3 .btn').forEach(b => b.disabled = false);
+  }
+  $('#rca-anim').onclick = anim;
+  $$('#ch3 [data-a]').forEach(b => b.onclick = () => { if (busy) return; A = +b.dataset.a; B = +b.dataset.b; shown = 8; render(); $('#rca-step').textContent = A === 255 && B === 1 ? '255 + 1：所有位都变成 0，进位一路传到最左边，冲了出去。点"逐位演示"看看。' : '点"逐位演示进位"看进位怎么传。'; });
+  render();
+})();
+
+/* ---------- 12 × 5 ---------- */
+(function () {
+  let n = 0;
+  const show = () => {
+    const steps = Array.from({ length: n }, () => '12').join(' + ');
+    $('#mul-read').innerHTML = `第 ${n} 次经过 ALU：${n ? steps + ' = ' : ''}<span class="big">${12 * n}</span>${n === 5 ? '　✓ 12 × 5 = 60，用了 5 次加法' : ''}`;
+    $('#mul-next').disabled = n >= 5;
+  };
+  $('#mul-next').onclick = () => { n++; show(); };
+  $('#mul-reset').onclick = () => { n = 0; show(); };
+  show();
+})();
+
+/* ---------- 判零电路 ---------- */
+(function () {
+  const svg = $('#zero');
+  const bits = [0, 0, 1, 0, 0, 0, 0, 0];
+  const Y = i => 25 + i * 30;
+  for (let k = 0; k < 4; k++) {
+    const y0 = Y(2 * k), y1 = Y(2 * k + 1), gy = (y0 + y1) / 2 - 20;
+    wire(svg, `M75,${y0} H120 V${gy + 12} H150`, 'b' + (2 * k));
+    wire(svg, `M75,${y1} H120 V${gy + 28} H150`, 'b' + (2 * k + 1));
+    gate(svg, 'OR', 150, gy, 'o1' + k, 'OR');
+  }
+  const L1 = k => (Y(2 * k) + Y(2 * k + 1)) / 2;
+  for (let k = 0; k < 2; k++) {
+    const gy = (L1(2 * k) + L1(2 * k + 1)) / 2 - 20;
+    wire(svg, `M200,${L1(2 * k)} H230 V${gy + 12} H260`, 'o1' + (2 * k));
+    wire(svg, `M200,${L1(2 * k + 1)} H230 V${gy + 28} H260`, 'o1' + (2 * k + 1));
+    gate(svg, 'OR', 260, gy, 'o2' + k, 'OR');
+  }
+  const L2 = k => (L1(2 * k) + L1(2 * k + 1)) / 2;
+  const gy3 = (L2(0) + L2(1)) / 2 - 20;
+  wire(svg, `M310,${L2(0)} H340 V${gy3 + 12} H370`, 'o20');
+  wire(svg, `M310,${L2(1)} H340 V${gy3 + 28} H370`, 'o21');
+  gate(svg, 'OR', 370, gy3, 'o3', 'OR');
+  txt(svg, 395, gy3 - 8, '有没有哪一位是 1？', 't-sub mid');
+  wire(svg, `M420,${gy3 + 20} H460`, 'o3');
+  gate(svg, 'NOT', 460, gy3, 'z', 'NOT');
+  wire(svg, `M508,${gy3 + 20} H545`, 'z');
+  lampNode(svg, 562, gy3 + 20, 'z', '零标志', true);
+  bits.forEach((_, i) => inNode(svg, 60, Y(i), 'b' + i, '', () => { bits[i] ^= 1; render(); }));
+  $$('#zero .in-node circle').forEach(c => c.setAttribute('r', 12));
+  function render() {
+    const sig = {};
+    bits.forEach((b, i) => sig['b' + i] = b);
+    const o1 = [0, 1, 2, 3].map(k => bits[2 * k] | bits[2 * k + 1]);
+    o1.forEach((v, k) => sig['o1' + k] = v);
+    const o2 = [o1[0] | o1[1], o1[2] | o1[3]];
+    sig.o20 = o2[0]; sig.o21 = o2[1];
+    sig.o3 = o2[0] | o2[1]; sig.z = 1 - sig.o3;
+    setSignals(svg, sig);
+    $('#zero-cap').innerHTML = sig.z ? '8 位全是 0 → 所有 OR 都输出 0 → NOT 把它翻成 1 → <b>零标志 = 1</b>：这个数是 0。'
+      : `有位是 1 → OR 一路传上去输出 1 → NOT 翻成 0 → <b>零标志 = 0</b>：这个数（${parseInt(bits.slice().reverse().join(''), 2)}）不是 0。`;
+  }
+  render();
+})();
+
+/* ---------- ALU ---------- */
+(function () {
+  const svg = $('#alu');
+  let op = 'add';
+  el('path', { d: 'M190,40 H290 L320,90 L350,40 H450 L380,190 H260 Z', class: 'alu-v' }, svg);
+  txt(svg, 320, 150, 'ALU', 'box-title');
+  txt(svg, 240, 30, 'A（8 位）', 't-main mid'); txt(svg, 400, 30, 'B（8 位）', 't-main mid');
+  const aT = txt(svg, 240, 64, '', 't-mono mid'), bT = txt(svg, 400, 64, '', 't-mono mid');
+  el('path', { d: 'M100,120 H222', class: 'wire on' }, svg);
+  txt(svg, 20, 112, '操作码（4 位）', 't-main');
+  const opT = txt(svg, 20, 136, '', 't-mono t-acc');
+  el('path', { d: 'M320,190 V222', class: 'wire on' }, svg);
+  txt(svg, 320, 242, '输出（8 位）', 't-sub mid');
+  const outT = txt(svg, 320, 262, '', 't-mono mid t-on');
+  outT.style.fontSize = '16px';
+  const flags = [['零', 'Z'], ['负', 'N'], ['溢出', 'O']].map(([name, k], i) => {
+    const g = el('g', { class: 'flag' }, svg);
+    const y = 90 + i * 40;
+    el('path', { d: `M${400 - i * 6},${130 + i * 10} H500 V${y + 14} H520`, class: 'wire', 'data-flag': k }, svg);
+    el('rect', { x: 520, y, width: 90, height: 28, rx: 6 }, g);
+    txt(g, 565, y + 18, name + '标志', '');
+    return g;
+  });
+  txt(svg, 565, 76, '标志（各 1 位）', 't-sub mid');
+  function render() {
+    const a = Math.max(0, Math.min(255, +$('#alu-a').value | 0)), b = Math.max(0, Math.min(255, +$('#alu-b').value | 0));
+    const raw = op === 'add' ? a + b : a - b;
+    const res = ((raw % 256) + 256) % 256;
+    const Z = res === 0 ? 1 : 0;
+    const N = op === 'sub' && raw < 0 ? 1 : 0, O = op === 'add' && raw > 255 ? 1 : 0;
+    aT.textContent = a.toString(2).padStart(8, '0'); bT.textContent = b.toString(2).padStart(8, '0');
+    opT.textContent = op === 'add' ? '1000（加法）' : '1100（减法）';
+    outT.textContent = `${res.toString(2).padStart(8, '0')} = ${res}`;
+    [Z, N, O].forEach((v, i) => {
+      flags[i].classList.toggle('on', !!v);
+      svg.querySelector(`[data-flag="${'ZNO'[i]}"]`).classList.toggle('on', !!v);
+    });
+    $$('#ch6 [data-op]').forEach(x => x.classList.toggle('sel', x.dataset.op === op));
+    let s = `${a} ${op === 'add' ? '+' : '−'} ${b} = ${raw}，8 位输出 ${res}。`;
+    if (Z) s += ' <b>零标志亮</b>' + (op === 'sub' ? '：A 等于 B。' : '：结果是 0。');
+    if (N) s += ' <b>负标志亮</b>：结果是负的，说明 A 小于 B。';
+    if (O) s += ' <b>溢出标志亮</b>：和超过 255，8 位装不下，加法器的最后一个进位冲了出来。';
+    $('#alu-cap').innerHTML = s;
+  }
+  $('#alu-a').oninput = $('#alu-b').oninput = render;
+  $$('#ch6 [data-op]').forEach(x => x.onclick = () => { op = x.dataset.op; render(); });
+  render();
+})();
+</script>
+</body>
+</html>

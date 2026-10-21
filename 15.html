@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>15 阿兰·图灵 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.tape{display:flex;gap:3px;justify-content:center;margin:34px 0 6px;position:relative}
+.tape div{width:42px;height:46px;border:2px solid var(--ink);border-radius:6px;background:var(--panel);display:flex;align-items:center;justify-content:center;font:700 20px var(--mono);position:relative}
+.tape div.blank{color:var(--line)}
+.tape div.head{border-color:var(--on);background:var(--on-soft)}
+.tape div.head::before{content:"▼ 读写头";position:absolute;top:-26px;font:600 12px inherit;color:var(--on);white-space:nowrap}
+.tape div.written{color:var(--ok)}
+.tm-state{text-align:center;font-size:15px;margin:8px 0}
+.tm-state b{font:700 16px var(--mono);padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.tm-state b.halt{background:var(--ok-soft);color:var(--ok)}
+table.rules td,table.rules th{padding:5px 10px}
+table.rules tr.cur td{background:var(--on-soft);font-weight:700}
+.ctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:14px;margin-top:10px}
+.ctl input{font:16px var(--mono);width:120px;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.enig{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:700px){.enig{grid-template-columns:1fr}}
+.enig textarea{width:100%;min-height:70px;font:18px var(--mono);letter-spacing:2px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:var(--code);color:var(--ink);text-transform:uppercase}
+.rotors{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.rotors select{font:16px var(--mono);padding:4px 6px;border-radius:7px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.pairs{font:14px var(--mono);margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.pairs span{padding:2px 6px;border-radius:5px;background:var(--bg)}
+.pairs span.bad{background:var(--bad-soft);color:var(--bad)}
+.choice{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+</style>
+</head>
+<body data-ep="15">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=16" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 15 集</div>
+  <h1>阿兰·图灵</h1>
+  <p class="en">Alan Turing</p>
+  <p class="lead">计算机科学之父。他用一台想象出来的机器回答了"计算能做什么、不能做什么"，在战争中帮助破解了英格玛密码，又提出了判断机器是否智能的测试——最后却被他效力的国家迫害致死。</p>
+  <div class="road">
+    <span>可判定性问题</span><i>→</i><span>图灵机</span><i>→</i><span>图灵完备</span><i>→</i><span>停机问题</span><i>→</i><span>英格玛与 Bombe</span><i>→</i><span>图灵测试</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 可判定性问题</a></li>
+    <li><a href="#ch1">1 · 图灵机</a></li>
+    <li><a href="#ch2">2 · 图灵完备</a></li>
+    <li><a href="#ch3">3 · 停机问题</a></li>
+    <li><a href="#ch4">4 · 英格玛</a></li>
+    <li><a href="#ch5">5 · 图灵测试</a></li>
+    <li><a href="#ch6">6 · 图灵的结局</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>可判定性问题</h2>
+  <p>前几集我们讲了一些基础，比如函数、算法和数据结构。今天，我们来认识一位对计算机理论贡献巨大的人：<b>计算机科学之父</b>，长得不太像本尼（本尼迪克特·康伯巴奇）的<b>阿兰·图灵</b>。</p>
+  <p>阿兰·马西森·图灵 1912 年生于伦敦，从小就展现出惊人的数学和科学天赋。<span class="muted" style="font-size:13px">（字幕写成 1921 年，原文是 1912 年。）</span>他在计算机科学上的贡献始于 1935 年，当时他是剑桥国王学院的硕士生。他着手解决德国数学家大卫·希尔伯特提出的一个问题，叫 Entscheidungsproblem，也就是<b>"可判定性问题"</b>：是否存在一种算法，输入一个形式逻辑语句，就能输出准确的"是"或"否"？</p>
+  <p>如果这样的算法存在，我们就能用它回答比如"是否存在一个比所有数都大的数"这样的问题。不，没有这样的数，这个我们知道答案。但还有很多其他数学问题，我们想知道答案。所以如果这种算法存在，我们想知道。</p>
+  <p>美国数学家<b>阿隆佐·丘奇</b>在 1935 年首先给出了解答。他开发了一套叫 <b>Lambda 演算</b>的数学表达系统，证明了这样的算法不存在。虽然 Lambda 演算能表示任何计算，但它用的数学技巧很难理解和运用。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>图灵机</h2>
+  <p>与此同时，在大西洋的另一边，阿兰·图灵想出了自己解决可判定性问题的办法：他提出了一种假想的计算机，今天叫<b>图灵机</b>（Turing Machine）。图灵机提供了一个简单而强大的数学计算模型。虽然用的数学完全不同，但它在计算能力上和 Lambda 演算是等价的。而且因为它更简单，它在新兴的计算机领域更受欢迎。事实上，它简单到我现在就能给你解释清楚。</p>
+  <p>图灵机是一台理论上的计算设备。它有一条<b>无限长的纸带</b>，分成一个个格子，每个格子可以存一个符号；还有一个<b>读写头</b>，可以读、写纸带上的符号，并在纸带上左右移动。<span class="muted" style="font-size:13px">（中文字幕漏了这一句，按视频补上。）</span>还有一个<b>状态变量</b>，保存机器当前状态的信息。还有一组<b>规则</b>，描述机器要做什么：根据当前状态和读写头正在读的符号，规则决定机器的动作，可能是往纸带上写一个符号，或者改变状态，或者把读写头移动一格，或者这些动作的组合。</p>
+  <p>为了更好地理解，我们来看一个简单的例子：让图灵机读一个以 0 结尾的字符串，并判断其中 1 的个数是不是偶数。如果是，就在纸带上写一个 1；如果不是，就写一个 0。</p>
+  <p>首先定义图灵机的规则。如果当前状态是"偶数"、当前符号是 1，就把状态更新为"奇数"，读写头向右移动。如果当前状态是"偶数"、当前符号是 0，意味着到了字符串的结尾，那么在纸带上写一个 1，并把状态改成"停机"（halt）——状态改为停机，是因为图灵机已经完成了计算。还需要两条规则来处理状态为"奇数"的情况：一条处理"奇数 + 纸带上是 0"，一条处理"奇数 + 纸带上是 1"。最后，我们要决定机器的初始状态，这里定为"偶数"。</p>
+  <p>定义好了初始状态和规则，就相当于写好了一个程序，现在可以给它输入了。假设在纸带上放"1 1 0"，有两个 1，是偶数。（如果"偶数"对你来说是新概念，也许我们该开一门数学速成课。）注意，这些规则只会让读写头向右移动，所以纸带的其他部分无关紧要，为了简单就留空了。</p>
+
+  <div class="card">
+    <h3>动手：图灵机，数 1 的个数是不是偶数</h3>
+    <div class="tape" id="tape"></div>
+    <div class="tm-state">状态：<b id="tm-st"></b></div>
+    <div style="overflow-x:auto">
+      <table class="tt rules" id="rules" style="margin:8px auto">
+        <thead><tr><th>当前状态</th><th>读到</th><th>写</th><th>移动</th><th>新状态</th></tr></thead>
+        <tbody>
+          <tr data-k="偶数1"><td>偶数</td><td class="num">1</td><td>—</td><td>右移</td><td>奇数</td></tr>
+          <tr data-k="偶数0"><td>偶数</td><td class="num">0</td><td class="num">1</td><td>—</td><td>停机</td></tr>
+          <tr data-k="奇数1"><td>奇数</td><td class="num">1</td><td>—</td><td>右移</td><td>偶数</td></tr>
+          <tr data-k="奇数0"><td>奇数</td><td class="num">0</td><td class="num">0</td><td>—</td><td>停机</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="step-text" id="tm-cap"></div>
+    <div class="ctl">
+      <label>纸带输入 <input id="tm-in" value="110" aria-label="纸带输入"></label>
+      <button class="btn primary" id="tm-step">执行一步</button>
+      <button class="btn" id="tm-load">放上纸带 / 重来</button>
+    </div>
+    <p class="hint">输入由 1 组成、以 0 结尾的串，比如 1110 或 11110</p>
+  </div>
+
+  <p>图灵机准备好了，开始吧！机器的初始状态是"偶数"，看到的第一个符号是 1，符合最上面那条规则，于是执行对应的动作：状态更新为"奇数"，读写头向右移动一格。然后又看到一个 1，但机器状态是"奇数"，所以执行第三条规则，状态变回"偶数"，读写头再右移一格。现在看到 0，状态是"偶数"，所以执行第二条规则：在纸带上写 1，表示"真"，确实有偶数个 1。然后机器停机。这就是图灵机的工作原理，很简单对吧？</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>图灵完备</h2>
+  <p>你可能会想，这有什么大不了的？图灵证明了：这台简单的假想机器，只要有足够的时间和内存，<b>可以执行任何计算</b>。它是一台<b>通用计算机</b>。刚才的程序只是个简单例子，只要有足够多的规则、状态和纸带，你可以造出任何东西——网页浏览器、《魔兽世界》，什么都行！当然，这样做效率极低，但理论上是可行的。</p>
+  <p>所以图灵机是一个非常强大的计算模型。事实上，就"什么能计算、什么不能计算"而言，<b>没有任何计算机比图灵机更强大</b>。和图灵机一样强大的东西，叫<b>"图灵完备"</b>（Turing Complete）。每一个现代计算系统——笔记本电脑、智能手机，甚至微波炉和恒温器里的小电脑——都是图灵完备的。</p>
+  <div class="extra">
+    <span class="t">和前几集连起来</span>
+    第 8 集那台假想 CPU，只要内存足够大，就能模拟这台图灵机：纸带是内存，读写头是一个存地址的寄存器，规则表就是一串 if 和 JUMP。反过来，图灵机也能模拟那台 CPU。它们能算的东西一样多，只是快慢差了无数倍——这就是"图灵完备"的意思。JavaScript 也是图灵完备的。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>停机问题</h2>
+  <p>为了回答可判定性问题，图灵把他的图灵机用在一个有趣的计算问题上：<b>停机问题</b>（halting problem）。简单说就是："给定一台图灵机的描述和输入纸带，是否存在一个算法，能判断这台机器是会永远算下去，还是会在某个时刻停机？"</p>
+  <p>我们知道输入 1 1 0 时，我们的图灵机会停机，因为刚刚走过这个例子，它确实停了。但如果是更复杂的问题呢？有没有办法在不运行它的情况下，弄清楚它会不会停机？有些程序可能要运行好几年，所以在运行之前就知道它会不会给出结果，是很有用的。否则你只能等啊等，一直担心它到底会不会出结果；等几十年后人都老了，只好按下强制结束。好悲伤！</p>
+  <p>图灵用一个巧妙的逻辑矛盾，证明了停机问题<b>无法解决</b>。我们来看看他的推理。想象有一台假想的图灵机，输入是一个程序的描述加上纸带上的数据，输出"是"表示会停机，输出"否"表示不会。我给这台机器起个有趣的名字，叫 <b>H</b>，取"停机"（Halt）的第一个字母。别管它具体怎么工作，假设这样的机器存在就好，毕竟重点是推理。</p>
+  <p>图灵推理说：只要能找到一个程序，让 H 无法正确判断它会不会停机，就说明停机问题无法解决。为了找到这样的程序，图灵用 H 设计了另一台图灵机：如果 H 说程序会停机，新机器就<b>永远运行</b>下去（也就是不停机）；如果 H 的结果是"否"，代表不会停机，新机器就输出"否"然后<b>停机</b>。本质上，这是一台和 H 输出相反的机器：程序不停机，它就停机；程序停机，它就永远运行下去。我们还需要在这台新机器前面加一个<b>分离器</b>，让它只接收一个输入，再把这个输入同时作为"程序"和"输入"传给 H。我们把这台新机器叫<b>"异魔"</b>（Bizarro）。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="bizarro" viewBox="0 0 680 230" role="img" aria-label="异魔机器的结构"></svg></div>
+      <figcaption>图 1　异魔 = 分离器 + H + "反着来"的部分。</figcaption>
+    </figure>
+    <h3 style="margin-top:14px">动手：把异魔自己喂给它</h3>
+    <p style="margin:0;font-size:15px">问 H："异魔以自己为输入时，会停机吗？" H 必须回答一个。你替 H 选：</p>
+    <div class="choice"><button class="btn" id="hp-yes">H 回答：会停机</button><button class="btn" id="hp-no">H 回答：不会停机</button></div>
+    <div class="step-text" id="hp-cap">选一个看看。</div>
+  </div>
+
+  <p>到目前为止，这台机器似乎说得通，对吧？接下来会变得相当复杂，请耐心听我说一下。看看把异魔<b>自己的描述</b>作为输入交给异魔会发生什么：这意味着我们在问 H，异魔对它自己求值时会怎样。如果 H 说异魔会停机，那么异魔就会进入无限循环，于是不会停机；如果 H 说异魔不会停机，那么异魔就输出"否"然后停机。所以 H 不可能正确判定这个停机问题，因为<b>根本没有正确答案</b>。这是一个悖论，意味着停机问题不能用图灵机解决。</p>
+  <p>还记得吗：图灵证明了图灵机可以实现任何计算。而停机问题证明了，<b>不是所有问题都能用计算解决</b>。哇，这真难懂，我自己可能都得再看一遍。长话短说，丘奇和图灵证明了计算机的能力是有极限的：无论有多少时间或内存，有些问题计算机就是解决不了。丘奇和图灵证明了计算的极限，开启了可计算性理论，今天称为<b>"丘奇-图灵论题"</b>。</p>
+  <div class="extra">
+    <span class="t">现实中的影子</span>
+    这就是为什么没有任何工具能完美地告诉你"这段代码会不会死循环"，也没有杀毒软件能完美判断"这个程序会不会做坏事"——它们只能在大多数常见情况下给出判断，总有判断不了的情况。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>布莱切利园与英格玛</h2>
+  <p>那是 1936 年，图灵只有 24 岁，职业生涯才刚刚开始。1936 年到 1938 年，他在丘奇的指导下在普林斯顿获得博士学位，毕业后回到剑桥。1939 年后不久，英国卷入第二次世界大战，图灵的才华很快被投入到战争中。事实上，在战争开始前一年，他就已经在英国政府的密码破译学校兼职了，那是一个位于<b>布莱切利园</b>的密码破译组织。他的工作之一是破解德国的通信，尤其是用<b>英格玛机</b>（Enigma）加密的信息。</p>
+  <p>简单说，英格玛机会把明文打乱。如果你输入 H-E-L-L-O，机器可能输出 X-W-D-B-J，这个过程叫<b>加密</b>。文字不是随便打乱的，加密方式由机器顶部那一组<b>转子</b>的方向决定，每个转子可以转到 26 个可能的位置之一。机器前面还有一块<b>插线板</b>，可以把两个字母对调。总共有数十亿种可能的设置。如果你有一台英格玛机，并且知道正确的转子和插线板设置，输入 X-W-D-B-J，机器就会输出 hello，把消息解密出来。</p>
+
+  <div class="card">
+    <h3>动手：一台英格玛机</h3>
+    <div class="rotors">
+      <span>三个转子的起始位置：</span>
+      <select id="r-l" aria-label="左转子"></select><select id="r-m" aria-label="中转子"></select><select id="r-r" aria-label="右转子"></select>
+    </div>
+    <div class="enig" style="margin-top:10px">
+      <div><p class="muted" style="margin:0 0 4px;font-size:13px">输入</p><textarea id="en-in" spellcheck="false">HELLO</textarea></div>
+      <div><p class="muted" style="margin:0 0 4px;font-size:13px">输出</p><textarea id="en-out" readonly></textarea></div>
+    </div>
+    <div class="btns"><button class="btn primary" id="en-swap">把输出放回输入（同样设置）</button><button class="btn" id="en-long">输入一长串 A</button></div>
+    <div class="pairs" id="en-pairs"></div>
+    <div class="step-text" id="en-cap"></div>
+    <p class="hint">这是按真实英格玛 I 型的转子 I、II、III 和反射器 B 接线实现的（省略了插线板）。所以 HELLO 不会正好变成课程里举例的 XWDBJ</p>
+  </div>
+
+  <p>当然，德军不会把机器设置发到推特上，盟军只能自己破译。数十亿种组合，根本不可能手工一一尝试。幸运的是，英格玛机和它的操作员都不完美。一个大缺陷是：<b>一个字母加密后永远不会变成它自己</b>，H 加密后绝不会是 H。</p>
+  <p>图灵在此前波兰破译专家成果的基础上继续研究，设计了一台机电计算机，叫 <b>Bombe</b>。它利用这个缺陷，对一段加密消息尝试很多种设置组合；如果发现某种组合会让某个字母解密后和原来一样——我们知道英格玛机绝不会这样——就跳过这个组合，接着试下一个。Bombe 大大缩小了搜索范围，让破译人员可以把精力集中在更有可能的组合上，比如在解码出的文本里找常见的德语单词。</p>
+  <div class="extra">
+    <span class="t">这个缺陷从哪来</span>
+    看上面模拟器里的"反射器"：电流从键盘进去，穿过三个转子，被反射器折回，再反着穿过转子出来。反射器把字母两两配对、没有任何字母和自己配对，所以出来的字母一定和进去的不同。这个设计让"同样设置再按一遍就能解密"变得很方便，却也送给了破译者一条线索：如果猜测某段密文对应某个常见单词（比如德军电报开头常见的"天气预报"），只要有任何一个字母和密文同位置的字母相同，这个猜测的位置就一定是错的。
+  </div>
+  <p>德国人时不时会怀疑有人在破解，于是升级英格玛机，比如加一个转子，创造更多可能的组合，他们甚至造了全新的加密机。整个战争期间，图灵和他在布莱切利园的同事都在努力破解这些加密。解密出的德国情报给了盟军很多优势，一些史学家认为，他们让战争缩短了好几年。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>图灵测试</h2>
+  <p>战后，图灵回到学术界，为许多早期计算机工作做出了贡献，比如曼彻斯特 1 号，一台早期有影响力的存储程序计算机。但他战后最有名的贡献是在<b>人工智能</b>领域——这个领域很新，直到 1956 年才有了名字。这个话题很大，我们以后再谈（第 34 集）。</p>
+  <p>1950 年，图灵设想未来的计算机拥有和人类一样的智力，或者至少和人难以区分。图灵提出：如果一台计算机能骗过人类，让人相信它是人类，它就应该被认为是有智能的。这成了一种智能测试的基础，今天叫<b>"图灵测试"</b>。想象你在和两个人交流，不是面对面说话，而是来回发消息。你可以问任何问题，然后收到回答。但其中一个是计算机。如果你分不出哪个是人、哪个是计算机，那么这台计算机就通过了图灵测试。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="ttest" viewBox="0 0 680 200" role="img" aria-label="图灵测试"></svg></div>
+      <figcaption>图 2　图灵测试：评判者只能通过文字和两个对象交流，分不出谁是机器，机器就算通过。</figcaption>
+    </figure>
+  </div>
+
+  <p>这个测试的一个现代版本叫"全自动区分计算机和人类的公开图灵测试"（Completely Automated Public Turing test to tell Computers and Humans Apart），简称<b>验证码</b>（CAPTCHA），常用来防止机器人在网上发垃圾信息之类的。我承认，有时候我也认不出那些扭来扭去的东西是什么字。这是不是意味着我是计算机？</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>图灵的结局</h2>
+  <p>通常这个系列不会深入历史人物的个人生活。但图灵的故事和悲剧密不可分，所以值得一提。在图灵那个时代，同性恋在英国和世界大部分地方都是违法的。1952 年，警方调查他家的一起入室盗窃案时，他的性取向暴露给了当局，他被以"严重猥亵罪"起诉。图灵被定罪，面临两个选择：坐牢，或者接受压制性欲的激素治疗。他选择了后者，部分原因是为了继续他的学术工作。但这些药物改变了他的情绪和性格。尽管确切的情况永远无法知晓，图灵在 1954 年服毒自尽，年仅 41 岁。</p>
+  <p>因为图灵对计算机科学的巨大贡献，很多东西以他的名字命名，其中最有名的是<b>图灵奖</b>，计算机领域的最高荣誉，相当于物理、化学等其他领域的诺贝尔奖。尽管英年早逝，图灵激励了第一代计算机科学家，为我们今天享受的数字时代奠定了关键的基础。下周见。</p>
+  <div class="extra">
+    <span class="t">后来</span>
+    2009 年，英国首相代表政府为图灵受到的对待正式道歉；2013 年，英国女王追授赦免。2021 年起，英国 50 英镑钞票印上了图灵的头像。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <ul class="timeline">
+    <li><span class="yr">1912</span>图灵生于伦敦</li>
+    <li><span class="yr">1935~36</span>丘奇用 Lambda 演算、图灵用图灵机，各自证明"可判定性问题"的算法不存在；图灵证明停机问题无解</li>
+    <li><span class="yr">1936~38</span>在普林斯顿随丘奇读博</li>
+    <li><span class="yr">1939~45</span>布莱切利园：设计 Bombe，利用"字母不会加密成自己"破解英格玛</li>
+    <li><span class="yr">1950</span>提出图灵测试</li>
+    <li><span class="yr">1952</span>因同性恋被定罪，被迫接受激素治疗</li>
+    <li><span class="yr">1954</span>去世，年仅 41 岁</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    图灵机只有纸带、读写头、状态和规则表，却能完成任何可以计算的事——今天所有计算机都"图灵完备"。但停机问题证明：有些问题，任何计算机、给多少时间和内存都解决不了。计算既强大，又有极限。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 图灵机由哪几部分组成？它每一步做什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">无限长的纸带（分成格子，每格一个符号）、读写头、状态变量、规则表。每一步根据"当前状态 + 读写头读到的符号"查规则，执行：写符号、改状态、移动读写头中的一项或几项。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. "图灵完备"是什么意思？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">和图灵机一样强大：只要时间和内存足够，能完成任何可计算的计算。就"能算什么"而言，没有计算机比图灵机更强。笔记本、手机、微波炉里的小电脑都是图灵完备的。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 用自己的话复述：为什么判断"任意程序会不会停机"的机器 H 不可能存在？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">假设 H 存在，就能造出异魔：把输入交给 H，H 说"会停"它就死循环，H 说"不会停"它就停。把异魔自己喂给异魔：H 说会停 → 它不停；H 说不会停 → 它停。H 怎么答都错，所以 H 不可能存在。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 英格玛的哪个缺陷被 Bombe 利用了？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">一个字母加密后永远不会变成它自己。Bombe 尝试各种设置时，只要发现某个字母解密后和原来相同，就知道这个设置不可能，直接跳过，大大缩小了搜索范围。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="14.html"><small>← 上一集</small>14 数据结构</a>
+    <a class="next" href="16.html"><small>下一集 →</small>16 软件工程</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 15 集 Alan Turing（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 图灵机 ---------- */
+(function () {
+  const RULES = { '偶数1': [null, 1, '奇数'], '偶数0': ['1', 0, '停机'], '奇数1': [null, 1, '偶数'], '奇数0': ['0', 0, '停机'] };
+  let tape, head, state, written, steps;
+  function load() {
+    let s = ($('#tm-in').value || '110').replace(/[^01]/g, '');
+    if (!s.endsWith('0')) s += '0';
+    $('#tm-in').value = s;
+    tape = [' ', ...s.split(''), ' ', ' ']; head = 1; state = '偶数'; written = -1; steps = 0;
+    paint(null, '纸带放好了，读写头在第一个符号上，初始状态"偶数"。点"执行一步"。');
+  }
+  function paint(rule, msg) {
+    $('#tape').innerHTML = tape.map((c, i) => `<div class="${c === ' ' ? 'blank' : ''} ${i === head && state !== '停机' ? 'head' : ''} ${i === written ? 'written head' : ''}">${c === ' ' ? '·' : c}</div>`).join('');
+    const b = $('#tm-st'); b.textContent = state; b.className = state === '停机' ? 'halt' : '';
+    $$('#rules tbody tr').forEach(tr => tr.classList.toggle('cur', tr.dataset.k === rule));
+    $('#tm-cap').innerHTML = msg;
+    $('#tm-step').disabled = state === '停机';
+  }
+  $('#tm-step').onclick = () => {
+    if (state === '停机') return;
+    const sym = tape[head], k = state + sym, r = RULES[k];
+    if (!r) { paint(null, `读到"${sym === ' ' ? '空白' : sym}"，没有对应的规则——输入要以 0 结尾。`); return; }
+    steps++;
+    const [w, mv, ns] = r;
+    let msg = `状态"${state}" + 读到 ${sym} → 用这条规则：`;
+    if (w !== null) { tape[head] = w; written = head; msg += `写入 ${w}，`; }
+    if (mv) { head++; msg += '读写头右移，'; }
+    msg += `状态变成"${ns}"。`;
+    const old = state; state = ns;
+    if (ns === '停机') {
+      const ones = tape.filter(c => c === '1').length - (w === '1' ? 1 : 0);
+      msg += `<br>机器停了，纸带上写下 <b>${w}</b>：输入里有 ${ones} 个 1，是<b>${w === '1' ? '偶数' : '奇数'}</b>。一共 ${steps} 步。`;
+    }
+    paint(k, msg);
+  };
+  $('#tm-load').onclick = load;
+  load();
+})();
+
+/* ---------- 异魔 ---------- */
+(function () {
+  const svg = $('#bizarro');
+  const defs = el('defs', {}, svg); const m = el('marker', { id: 'bzA', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto' }, defs); el('path', { d: 'M0,0 L10,5 L0,10 z', style: 'fill:var(--ink)' }, m);
+  const A = d => el('path', { d, class: 's-line', 'marker-end': 'url(#bzA)' }, svg);
+  el('rect', { x: 120, y: 20, width: 540, height: 190, rx: 14, class: 's-dash' }, svg);
+  txt(svg, 390, 40, '异魔 Bizarro', 't-main mid');
+  txt(svg, 20, 112, '一个输入', 't-sub'); A('M70,118 H146');
+  el('rect', { x: 150, y: 90, width: 80, height: 56, rx: 8, class: 's-soft' }, svg); txt(svg, 190, 122, '分离器', 't-sub mid');
+  A('M230,108 C250,108 252,100 276,100'); A('M230,128 C250,128 252,136 276,136');
+  txt(svg, 252, 90, '当程序', 't-sub mid'); txt(svg, 252, 156, '当输入', 't-sub mid');
+  el('rect', { x: 280, y: 80, width: 120, height: 76, rx: 10, class: 's-acc' }, svg);
+  txt(svg, 340, 112, 'H', 't-main mid'); txt(svg, 340, 132, '会停机吗？', 't-sub mid');
+  A('M400,100 H470'); txt(svg, 435, 92, '是', 't-sub mid');
+  A('M400,138 H470'); txt(svg, 435, 156, '否', 't-sub mid');
+  el('rect', { x: 474, y: 76, width: 170, height: 40, rx: 8, class: 's-on' }, svg); txt(svg, 559, 101, '永远循环，不停机', 't-sub mid');
+  el('rect', { x: 474, y: 120, width: 170, height: 40, rx: 8, class: 's-on' }, svg); txt(svg, 559, 145, '输出"否"，然后停机', 't-sub mid');
+  txt(svg, 390, 196, '和 H 的回答反着来', 't-sub mid t-on');
+  const say = s => { $('#hp-cap').innerHTML = s; };
+  $('#hp-yes').onclick = () => say('H 说"异魔会停机" → 异魔收到"是" → <b>进入无限循环，不停机</b>。<br>H 说它会停，它偏偏不停：<b style="color:var(--bad)">H 错了。</b>');
+  $('#hp-no').onclick = () => say('H 说"异魔不会停机" → 异魔收到"否" → <b>输出"否"然后停机</b>。<br>H 说它不会停，它偏偏停了：<b style="color:var(--bad)">H 又错了。</b><br>两种回答都错，所以能正确判断所有程序的 H 不可能存在。');
+})();
+
+/* ---------- 英格玛 ---------- */
+(function () {
+  const AB = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const ROT = [['EKMFLGDQVZNTOWYHXUSPAIBRCJ', 'Q'], ['AJDKSIRUXBLHWTMCQGZNPYFVOE', 'E'], ['BDFHJLCPRTXVZNYEIWGAKMUSQO', 'V']]; // I, II, III（左 → 右）
+  const REF = 'YRUHQSLDPXNGOKMIEBFZCWVJAT';
+  ['#r-l', '#r-m', '#r-r'].forEach(id => { $(id).innerHTML = [...AB].map(c => `<option>${c}</option>`).join(''); });
+  const fwd = (w, c, p) => (AB.indexOf(w[(c + p) % 26]) - p + 26) % 26;
+  const bwd = (w, c, p) => (w.indexOf(AB[(c + p) % 26]) - p + 26) % 26;
+  function encrypt(text, start) {
+    let [l, m, r] = start.slice();
+    let out = '';
+    for (const ch of text.toUpperCase()) {
+      const c0 = AB.indexOf(ch);
+      if (c0 < 0) { out += ch; continue; }
+      // 转子步进（含"双步进"）
+      const mAtNotch = AB[m] === ROT[1][1], rAtNotch = AB[r] === ROT[2][1];
+      if (mAtNotch) { m = (m + 1) % 26; l = (l + 1) % 26; }
+      else if (rAtNotch) m = (m + 1) % 26;
+      r = (r + 1) % 26;
+      let c = c0;
+      c = fwd(ROT[2][0], c, r); c = fwd(ROT[1][0], c, m); c = fwd(ROT[0][0], c, l);
+      c = AB.indexOf(REF[c]);
+      c = bwd(ROT[0][0], c, l); c = bwd(ROT[1][0], c, m); c = bwd(ROT[2][0], c, r);
+      out += AB[c];
+    }
+    return out;
+  }
+  function run() {
+    const start = ['#r-l', '#r-m', '#r-r'].map(id => AB.indexOf($(id).value));
+    const inp = $('#en-in').value.toUpperCase().replace(/[^A-Z ]/g, '');
+    const out = encrypt(inp, start);
+    $('#en-out').value = out;
+    const pairs = [...inp].map((c, i) => [c, out[i]]).filter(([c]) => c !== ' ');
+    const same = pairs.filter(([a, b]) => a === b).length;
+    $('#en-pairs').innerHTML = pairs.slice(0, 40).map(([a, b]) => `<span class="${a === b ? 'bad' : ''}">${a}→${b}</span>`).join('');
+    const rep = (() => { const m = {}; pairs.forEach(([a, b]) => { (m[a] = m[a] || new Set()).add(b); }); return Object.entries(m).filter(([, s]) => s.size > 1).map(([k, s]) => `${k} → ${[...s].join('/')}`).slice(0, 3); })();
+    $('#en-cap').innerHTML = `${pairs.length} 个字母里，加密成自己的有 <b>${same}</b> 个——永远是 0。` + (rep.length ? `<br>同一个字母每次加密结果都不同（转子每按一次键就转一格）：${rep.join('；')}。` : '');
+  }
+  $('#en-in').oninput = run;
+  ['#r-l', '#r-m', '#r-r'].forEach(id => $(id).onchange = run);
+  $('#en-swap').onclick = () => { $('#en-in').value = $('#en-out').value; run(); $('#en-cap').innerHTML += '<br>用同样的起始位置把密文再输一遍，就得到了原文——英格玛加密和解密是同一个操作。'; };
+  $('#en-long').onclick = () => { $('#en-in').value = 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA'; run(); };
+  run();
+})();
+
+/* ---------- 图灵测试 ---------- */
+(function () {
+  const svg = $('#ttest');
+  el('rect', { x: 260, y: 60, width: 160, height: 80, rx: 12, class: 's-acc' }, svg);
+  txt(svg, 340, 96, '评判者', 't-main mid'); txt(svg, 340, 116, '只能看文字', 't-sub mid');
+  el('rect', { x: 30, y: 20, width: 140, height: 60, rx: 10, class: 's-panel' }, svg); txt(svg, 100, 56, '对象 A', 't-main mid');
+  el('rect', { x: 30, y: 120, width: 140, height: 60, rx: 10, class: 's-panel' }, svg); txt(svg, 100, 156, '对象 B', 't-main mid');
+  el('path', { d: 'M170,50 C210,50 220,90 258,90', class: 's-dash' }, svg);
+  el('path', { d: 'M170,150 C210,150 220,110 258,110', class: 's-dash' }, svg);
+  txt(svg, 210, 40, '来回发消息', 't-sub mid');
+  el('rect', { x: 470, y: 50, width: 190, height: 100, rx: 10, class: 's-soft' }, svg);
+  txt(svg, 565, 80, '一个是人，一个是机器', 't-sub mid');
+  txt(svg, 565, 104, '分不出来？', 't-main mid');
+  txt(svg, 565, 128, '→ 机器通过测试', 't-sub mid t-on');
+  el('path', { d: 'M420,100 H466', class: 's-line' }, svg);
+})();
+</script>
+</body>
+</html>

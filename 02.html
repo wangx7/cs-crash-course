@@ -1,0 +1,657 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>02 电子计算机 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.demo-grid{display:grid;grid-template-columns:3fr 2fr;gap:16px;align-items:center}
+@media (max-width:700px){.demo-grid{grid-template-columns:1fr}}
+.core{fill:var(--metal)}
+.armature{stroke:var(--metal);stroke-width:7;stroke-linecap:round;transition:transform .25s ease}
+.field{fill:none;stroke:var(--accent);stroke-width:1.5;stroke-dasharray:4 4;opacity:0;transition:opacity .3s}
+.field.on{opacity:.8}
+.contact{fill:var(--ink)}
+.bat{stroke:var(--ink);stroke-width:3}
+.bat-s{stroke:var(--ink);stroke-width:5}
+.blade{stroke:var(--ink);stroke-width:3.5;stroke-linecap:round;transition:transform .2s}
+.blade.on{stroke:var(--on)}
+.hit{fill:transparent;cursor:pointer}
+.lamp circle{fill:var(--panel);stroke:var(--ink);stroke-width:2;transition:all .2s}
+.lamp path{fill:none;stroke:var(--muted);stroke-width:1.5}
+.lamp.on circle{fill:var(--on);stroke:var(--on);filter:drop-shadow(0 0 10px var(--on-glow))}
+.lamp.on path{stroke:#fff}
+.handle{transition:transform .3s ease}
+.water{fill:var(--accent);opacity:0;transition:opacity .25s}
+.water.on{opacity:.7}
+.pipe{fill:var(--panel);stroke:var(--ink);stroke-width:2}
+.glass{fill:var(--accent-soft);stroke:var(--muted);stroke-width:2}
+.electrode{fill:var(--metal)}
+.heater{fill:none;stroke:var(--muted);stroke-width:2}
+.heater.on{stroke:var(--on);filter:drop-shadow(0 0 4px var(--on-glow))}
+.grid-line{stroke:var(--ink);stroke-width:2.5;stroke-dasharray:6 5}
+.e-dot{fill:var(--accent)}
+.semi{fill:var(--bg);stroke:var(--ink);stroke-width:2}
+.channel{fill:var(--on-soft);opacity:0;transition:opacity .3s}
+.channel.on{opacity:1}
+.charge{font-family:var(--mono);font-weight:700;font-size:18px;text-anchor:middle}
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;margin-right:8px}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ctl-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:12px}
+.range-row{display:grid;grid-template-columns:110px 1fr 80px;align-items:center;gap:10px;margin:8px 0;font-size:15px}
+.range-row input{width:100%}
+.range-row b{font-family:var(--mono)}
+table.cmp{width:100%}
+table.cmp td{text-align:left}
+</style>
+</head>
+<body data-ep="2">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=3" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 2 集</div>
+  <h1>电子计算机</h1>
+  <p class="en">Electronic Computing</p>
+  <p class="lead">计算机的"大脑"是成千上万个开关。这一集讲开关的三次换代：会动的继电器、发光的真空管、固态的晶体管。每一代都更快、更可靠、更小。</p>
+  <div class="road">
+    <span>继电器</span><i>→</i><span>真空管</span><i>→</i><span>晶体管</span><i>→</i><span>硅谷</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 规模爆炸</a></li>
+    <li><a href="#ch1">1 · 马克一号与继电器</a></li>
+    <li><a href="#ch2">2 · 继电器的问题</a></li>
+    <li><a href="#ch3">3 · 真空管</a></li>
+    <li><a href="#ch4">4 · 巨人与 ENIAC</a></li>
+    <li><a href="#ch5">5 · 晶体管</a></li>
+    <li><a href="#ch6">6 · 硅谷</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>规模爆炸</h2>
+  <p>上一集讲到 20 世纪初。那时早期的专用计算设备，比如制表机，给政府和企业帮了大忙：它们辅助、有时甚至替代了机械重复的人工劳动。</p>
+  <p>然而人类社会的规模仍在以前所未有的速度增长。20 世纪上半叶，世界人口几乎翻了一倍；一战动员了 7000 万人，二战卷入了 1 亿多人。全球贸易和运输网络前所未有地连在一起，工程和科学的复杂程度也达到新高——我们甚至开始认真考虑造访其他行星。</p>
+  <p>正是复杂度、官僚体系、最终是<b>数据</b>的爆炸，推动了对自动化和计算越来越大的需求。很快，柜子大小的机电计算机长成了房间大小的庞然大物，维护昂贵，还容易出错。但也正是这些机器，为后来的创新铺好了舞台。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>哈佛马克一号与继电器</h2>
+  <p>史上最大的机电计算机之一是<b>哈佛马克一号</b>（Harvard Mark I），由 IBM 在 1944 年为二战中的同盟国建造完成。它有 76.5 万个组件、300 万个连接点和 500 英里长的导线。为了让内部的机械装置保持同步，它用了一根贯穿整台机器、长 50 英尺的传动轴，由一台 5 马力的电机驱动。这项技术最早的用途之一，是为"曼哈顿计划"跑模拟。</p>
+  <p>这些机电巨兽的"大脑"是<b>继电器</b>：<b>用电控制的机械开关</b>。继电器里有一根<b>控制线</b>，决定电路是断开还是闭合。控制线连着继电器里的一个线圈，当电流流过线圈时，会产生电磁场，把继电器里的一根金属臂吸过去，"啪"地合上，接通电路。</p>
+  <p>你可以把继电器想象成一个<b>水龙头</b>：控制线就像水龙头的把手。打开水龙头，水就从管子里流出来；关上，水流就停了。继电器做的是同一件事，只不过控制的是电子而不是水。</p>
+
+  <div class="card">
+    <h3>动手：继电器 = 用电控制的开关</h3>
+    <div class="demo-grid">
+      <figure><svg class="diagram" id="relay" viewBox="0 0 400 250" role="img" aria-label="继电器原理"></svg><figcaption>继电器（点左边的开关）</figcaption></figure>
+      <figure><svg class="diagram" id="faucet" viewBox="0 0 260 250" role="img" aria-label="水龙头类比"></svg><figcaption>水龙头类比（和左边联动）</figcaption></figure>
+    </div>
+    <div class="step-text" id="relay-step"></div>
+    <p class="hint">点左边电路里的开关，或者点水龙头把手</p>
+  </div>
+
+  <p>被控制的那个电路可以再连到其他电路上，或者连到电机之类的东西，比如让齿轮上的计数加 1——就像上一集 Hollerith 的制表机那样。</p>
+  <div class="extra">
+    <span class="t">为什么"用电控制开关"这么关键</span>
+    手按的开关需要人；继电器的开关由<b>另一根线上的电</b>控制，而它自己的输出又可以去控制下一个继电器。于是开关可以一级一级串起来，自动地互相控制——这正是后面用开关搭出逻辑门、加法器、CPU 的前提。后面的真空管和晶体管，都是在做"同一件事，但更好"。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>继电器的问题：慢、会坏、还招虫子</h2>
+  <p>不幸的是，继电器里的金属臂<b>有质量</b>，所以没法在断开和闭合之间瞬间切换。1940 年代一个好的继电器，一秒钟大概能来回翻转 50 次。这听起来好像挺快，但对于解决复杂的大问题来说还远远不够。</p>
+  <p>哈佛马克一号一秒钟能做 3 次加法或减法；一次乘法要 6 秒，一次除法要 15 秒；更复杂的运算，比如三角函数，可能要一分钟以上。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 640 210" role="img" aria-label="马克一号各种运算耗时">
+        <line x1="150" y1="20" x2="150" y2="170" class="s-thin"/>
+        <g>
+          <text x="140" y="44" class="t-main end">加法 / 减法</text>
+          <rect x="150" y="30" width="4" height="22" rx="2" class="s-on"/>
+          <text x="162" y="46" class="t-mono">约 0.33 秒（每秒 3 次）</text>
+          <text x="140" y="84" class="t-main end">乘法</text>
+          <rect x="150" y="70" width="44" height="22" rx="4" class="s-on"/>
+          <text x="202" y="86" class="t-mono">6 秒</text>
+          <text x="140" y="124" class="t-main end">除法</text>
+          <rect x="150" y="110" width="110" height="22" rx="4" class="s-on"/>
+          <text x="268" y="126" class="t-mono">15 秒</text>
+          <text x="140" y="164" class="t-main end">三角函数</text>
+          <rect x="150" y="150" width="440" height="22" rx="4" style="fill:var(--bad-soft);stroke:var(--bad);stroke-width:2"/>
+          <text x="590" y="166" class="t-mono end" style="fill:var(--bad)">1 分钟以上 →</text>
+        </g>
+        <g class="t-sub">
+          <text x="150" y="196" class="t-sub mid">0</text>
+          <text x="223" y="196" class="t-sub mid">10 秒</text>
+          <text x="370" y="196" class="t-sub mid">30 秒</text>
+          <text x="590" y="196" class="t-sub mid">60 秒</text>
+        </g>
+      </svg>
+      </div>
+      <figcaption>图 1　哈佛马克一号做一次运算要多久（横轴按秒等比例）。</figcaption>
+    </figure>
+  </div>
+
+  <p>除了切换慢，另一个限制是<b>磨损</b>。任何会动的机械都会随时间磨损：有的部件会彻底坏掉，有的会变黏、变慢，变得不可靠。而且继电器越多，出故障的概率也越大。哈佛马克一号大约有 3500 个继电器。就算假设一个继电器能用 10 年，也意味着<b>平均每天都得换一个坏掉的继电器</b>！如果你正在跑一个重要的、要算好几天的计算，这就是个大问题。</p>
+
+  <div class="card">
+    <h3>动手：机器越大，坏得越勤</h3>
+    <div class="range-row"><span>继电器数量</span><input type="range" id="rl-n" min="100" max="20000" step="100" value="3500"><b id="rl-n-v"></b></div>
+    <div class="range-row"><span>每个能用</span><input type="range" id="rl-y" min="1" max="30" step="1" value="10"><b id="rl-y-v"></b></div>
+    <div class="readout" id="rl-out"></div>
+    <p class="hint">默认值就是马克一号：3500 个继电器、假设每个用 10 年</p>
+  </div>
+
+  <p>工程师要对付的还不止这些。这些巨大、黑暗又温暖的机器还会<b>招虫子</b>。1947 年 9 月，哈佛马克二号的操作员从一个出故障的继电器里取出了一只死飞蛾。Grace Hopper（以后的课程还会讲到她）说过：</p>
+  <blockquote class="quote"><b>"从那以后，每当电脑出了问题，我们就说它里面有 bug（虫子）。"</b><span class="who">—— Grace Hopper</span></blockquote>
+  <p>这就是计算机术语 <b>"bug"</b> 的由来。</p>
+  <p>显然，计算要想再往前走，就需要一种<b>比机电继电器更快、更可靠的替代品</b>。幸运的是，这种替代品早已存在！</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>真空管：没有会动的零件</h2>
+  <p>1904 年，英国物理学家约翰·安布罗斯·弗莱明发明了一种新的电子元件，叫<b>热电子管</b>（thermionic valve）：把两个电极封在一个密闭的玻璃泡里——这就是世界上第一个<b>真空管</b>。</p>
+  <p>其中一个电极可以被加热，加热后会发射电子，这个过程叫<b>热电子发射</b>。另一个电极则可以吸引这些电子，形成我们"电龙头"里的电流——但前提是它<b>带正电</b>。如果它带负电或不带电，电子就不会被吸引着穿过真空，也就没有电流。这种<b>只允许电流单向流动</b>的元件叫<b>二极管</b>。</p>
+  <p>但我们真正需要的，是一个能把电流<b>打开和关上</b>的开关。幸运的是，不久之后的 1906 年，美国发明家李·德富雷斯特在弗莱明设计的两个电极之间，加了第三个<b>"控制"电极</b>。给控制电极加正电荷，电子会像以前一样流过去；但如果给它加负电荷，就会<b>阻止</b>电子流动。所以，通过操纵控制线，就能断开或闭合电路。</p>
+
+  <div class="card">
+    <h3>动手：二极管和三极管</h3>
+    <div class="scroll-x"><svg class="diagram" id="tube" viewBox="0 0 520 300" role="img" aria-label="真空管原理"></svg></div>
+    <div class="ctl-row">
+      <span class="seg-btns" id="tube-mode"><button data-m="2">二极管（1904）</button><button data-m="3">三极管（1906）</button></span>
+      <button class="btn" id="tube-anode"></button>
+      <button class="btn" id="tube-grid"></button>
+    </div>
+    <div class="step-text" id="tube-step"></div>
+    <p class="hint">蓝色小点是电子。先在二极管里切换上面电极的正负，再切到三极管，切换中间的控制电极</p>
+  </div>
+
+  <p>这和继电器的功能几乎一样——但重要的是，<b>真空管里没有会动的零件</b>。这意味着磨损更少，更重要的是，它每秒可以开关<b>数千次</b>。这种<b>三极真空管</b>后来成了无线电、长途电话以及其他许多电子设备的基础，持续了将近半个世纪。</p>
+  <p>我得说明一下，真空管并不完美：它们有点脆弱，而且会像灯泡一样烧坏。但比起机械继电器，它们是巨大的进步。另外，真空管起初很贵：一台收音机通常只用一个，可一台计算机可能需要成百上千个电子开关。不过到了 1940 年代，真空管的成本和可靠性已经改进到能用在计算机里了……至少对政府这样财力雄厚的人来说是这样。</p>
+  <p>这标志着计算机从<b>机电式</b>转向了<b>电子式</b>。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · 思想泡泡</div>
+  <h2>巨人计算机与 ENIAC</h2>
+  <p>第一台大规模使用真空管做计算的机器是<b>巨人 1 号</b>（Colossus Mk 1），由工程师 Tommy Flowers 设计，1943 年 12 月完工。巨人计算机安装在英国的布莱切利园，用来帮助破解纳粹的通信。</p>
+  <p>这听起来可能有点耳熟，因为两年前，常被称为"计算机科学之父"的阿兰·图灵也在布莱切利园造了一台机电装置，叫 <b>Bombe</b>。它是为破解纳粹的恩尼格玛（Enigma）密码而设计的机电机器，但严格来说 Bombe 不算计算机。图灵的贡献我们以后再讲。</p>
+  <p>总之，第一版巨人计算机有 1600 个真空管，一共造了 10 台来帮助破译密码。巨人计算机被认为是<b>第一台可编程的电子计算机</b>。编程的方法是把几百根电线插进插线板，有点像老式的电话交换机，以便让计算机执行正确的操作。所以它虽然"可编程"，但仍然得为某一项特定的计算专门配置。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="plug" viewBox="0 0 600 220" role="img" aria-label="插线板编程示意"></svg>
+      </div>
+      <figcaption>图 2　插线板编程示意：用电线把插孔两两连起来，决定信号怎么走。换一个任务，就得拔掉重插。</figcaption>
+    </figure>
+  </div>
+
+  <p>接着登场的是<b>电子数值积分计算机</b>，也就是 <b>ENIAC</b>，几年后的 1946 年在宾夕法尼亚大学建成。它由 John Mauchly 和 J. Presper Eckert 设计，是世界上<b>第一台真正通用的、可编程的电子计算机</b>。</p>
+  <p>ENIAC 每秒能做 5000 次十位数的加法或减法，比之前任何机器都快得多得多。它运行了十年，据估计，它做过的算术运算比到那时为止全人类做过的还多。但用了那么多真空管，故障很常见，ENIAC 通常运行半天左右就会坏一次。</p>
+  <div class="extra">
+    <span class="t">对比一下</span>
+    马克一号每秒 3 次加法，ENIAC 每秒 5000 次，快了一千多倍——几乎全部来自开关的换代：会动的金属臂换成了没有运动部件的真空管。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>晶体管：固态的开关</h2>
+  <p>到了 1950 年代，就连真空管计算机也到达了极限。美国空军的 AN/FSQ-7 计算机于 1955 年完成，它是"SAGE"防空计算机系统的一部分（以后的课程还会讲到）。为了降低成本、缩小体积，同时提高可靠性和速度，需要一种全新的电子开关。</p>
+  <p>1947 年，贝尔实验室的科学家 John Bardeen、Walter Brattain 和 William Shockley 发明了<b>晶体管</b>，一个全新的计算时代由此诞生！</p>
+  <p>晶体管背后的物理相当复杂，牵涉到量子力学，所以我们只讲基础。晶体管和继电器、真空管一样，<b>是一个开关，可以通过控制线加电来打开或关上</b>。通常，晶体管有两个电极，中间隔着一种材料，这种材料有时候导电，有时候不导电——这叫<b>半导体</b>。在这里，控制线连到一个叫<b>"栅极"（gate）</b>的电极上。改变栅极的电荷，就能控制半导体材料的导电性，让电流通过或者停下——就像前面的水龙头比喻。</p>
+
+  <div class="card">
+    <h3>动手：给栅极加电</h3>
+    <div class="scroll-x"><svg class="diagram" id="tr" viewBox="0 0 520 250" role="img" aria-label="晶体管原理"></svg></div>
+    <div class="step-text" id="tr-step"></div>
+    <p class="hint">点上面的"栅极"开关</p>
+  </div>
+  <div class="extra">
+    <span class="t">图是简化过的</span>
+    这张图画的是"栅极加电 → 下方半导体里出现一条能导电的通道"这个核心想法，接近今天芯片里最常见的 MOS 晶体管。贝尔实验室 1947 年的第一个晶体管结构不一样，但"用一个电极的电荷控制半导体通不通电"这件事是一样的。
+  </div>
+
+  <p>就连贝尔实验室的第一个晶体管也展现出巨大的潜力：它每秒可以开关 <b>10,000 次</b>。而且，真空管是玻璃做的，里面的零件悬空、易碎；晶体管却是<b>固体材料</b>，叫作<b>固态元件</b>。</p>
+  <p>几乎是一开始，晶体管就能做得比最小的继电器或真空管还小。这让计算机变得小得多、便宜得多，比如 1957 年发布的 <b>IBM 608</b>——第一台完全用晶体管、并且在市场上买得到的计算机。它有 3000 个晶体管，每秒能做 4500 次加法，或者 80 次左右的乘法或除法。IBM 很快把所有计算产品都转向了晶体管，把晶体管计算机带进了办公室，最终带进了家庭。</p>
+  <p>今天，计算机里的晶体管小于 50 纳米——作为参照，一张纸的厚度大约是 10 万纳米。它们不仅小得不可思议，而且超级快：每秒能切换上百万次，还能工作几十年。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="scale" viewBox="0 0 640 250" role="img" aria-label="纸的厚度和晶体管大小对比"></svg>
+      </div>
+      <figcaption>图 3　逐级放大：一张纸的厚度里，能并排放下约 2000 个 50 纳米的晶体管。</figcaption>
+    </figure>
+  </div>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="speed" viewBox="0 0 700 230" role="img" aria-label="三代开关的速度对比"></svg>
+      </div>
+      <figcaption>图 4　三代开关每秒能开关多少次。注意横轴是<b>对数刻度</b>：每往右一大格就是 10 倍。</figcaption>
+    </figure>
+  </div>
+  <div class="extra">
+    <span class="t">今天其实更快</span>
+    课程说今天的晶体管"每秒能切换上百万次"，这是保守的说法。今天 CPU 的时钟频率是几 GHz，也就是每秒几十亿次，晶体管本身的开关速度还要更快。第 7 集讲时钟的时候会再遇到这个数字。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>硅谷</h2>
+  <p>很多晶体管和半导体的研发，发生在加州旧金山和圣何塞之间的圣克拉拉谷。由于制造半导体最常用的材料是<b>硅</b>，这个地区很快就被称为<b>"硅谷"</b>。</p>
+  <p>就连 William Shockley 也搬了过去，创办了肖克利半导体公司；它的员工后来创办了仙童半导体；仙童的员工后来又创办了英特尔——当今世界上最大的计算机芯片制造商。</p>
+  <div class="road" style="margin:18px 0">
+    <span>贝尔实验室：发明晶体管</span><i>→</i><span>肖克利半导体</span><i>→</i><span>仙童半导体</span><i>→</i><span><b>英特尔</b></span>
+  </div>
+  <p>好了，我们从继电器走到真空管，又走到晶体管，已经能让电路开关得非常、非常、非常快了。但是，<b>我们怎么用晶体管真正去算东西呢？</b>尤其是在没有电机和齿轮的情况下？这就是接下来几集要讲的内容。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt cmp">
+      <thead><tr><th></th><th>继电器</th><th>真空管</th><th>晶体管</th></tr></thead>
+      <tbody>
+        <tr><th>怎么控制</th><td>线圈通电 → 电磁铁吸动金属臂</td><td>控制电极带正电放行电子、带负电挡住电子</td><td>改变栅极电荷 → 控制半导体导不导电</td></tr>
+        <tr><th>会动的零件</th><td>有（金属臂）</td><td>没有</td><td>没有（固态）</td></tr>
+        <tr><th>每秒开关</th><td>约 50 次</td><td>数千次</td><td>第一个就有 1 万次，今天快得多</td></tr>
+        <tr><th>主要毛病</th><td>慢、磨损、招虫子</td><td>易碎、会烧坏、贵</td><td>——</td></tr>
+        <tr><th>代表机器</th><td>哈佛马克一号（1944）<br>每秒 3 次加法</td><td>巨人 1 号（1943）<br>ENIAC（1946）每秒 5000 次加法</td><td>IBM 608（1957）<br>每秒 4500 次加法</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    三代开关做的是<b>同一件事</b>：用一根控制线上的电，去控制另一条电路的通断。换代换掉的是"怎么做到"：从会动、会磨损的金属臂，到没有运动部件的真空管，再到又小又快的固态晶体管。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 继电器、真空管、晶体管有什么共同点？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它们都是<b>用电控制的开关</b>：有一根控制线，控制线上的电决定另一条电路是通还是断。所以一个开关的输出可以去控制下一个开关。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 继电器为什么快不起来？为什么机器越大越容易坏？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">金属臂<b>有质量</b>，移动需要时间，好的继电器每秒也只能翻转约 50 次；会动的零件还会<b>磨损</b>。继电器越多，总的故障率越高：3500 个、每个能用 10 年，算下来平均每天坏一个。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 二极管和三极管差在哪？为什么计算需要的是三极管？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">二极管只有两个电极，只能让电流单向流动。三极管多了一个<b>控制电极</b>：加正电荷放行电子，加负电荷挡住电子，于是能用控制线<b>打开和关上</b>电流——这才是开关，计算需要的是开关。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 巨人计算机号称"可编程"，为什么课程又说它"仍然要为特定计算专门配置"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它的"编程"是<b>往插线板上插几百根电线</b>，相当于把电路连法改掉。想换一个任务，就得拔掉重插。这和今天把程序作为数据存进内存、换程序不用动硬件，差别很大。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="01.html"><small>← 上一集</small>01 计算机早期历史</a>
+    <a class="next" href="03.html"><small>下一集 →</small>03 布尔逻辑和逻辑门</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 2 集 Electronic Computing（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function battery(svg, x, y, vertical) {
+  if (vertical) {
+    el('line', { x1: x - 14, y1: y, x2: x + 14, y2: y, class: 'bat' }, svg);
+    el('line', { x1: x - 7, y1: y + 10, x2: x + 7, y2: y + 10, class: 'bat-s' }, svg);
+  }
+}
+function lamp(svg, cx, cy) {
+  const g = el('g', { class: 'lamp' }, svg);
+  el('circle', { cx, cy, r: 14 }, g);
+  el('path', { d: `M${cx - 6},${cy + 4} l3,-8 l3,8 l3,-8 l3,8` }, g);
+  return g;
+}
+
+/* 电子动画：在一组路径上移动的小点 */
+function particles(svg, n, spawn, stepFn) {
+  const dots = [];
+  for (let i = 0; i < n; i++) {
+    const p = spawn(i, true);
+    p.el = el('circle', { r: 3.2, class: 'e-dot', cx: p.x, cy: p.y }, svg);
+    dots.push(p);
+  }
+  let last = performance.now();
+  function frame(t) {
+    const dt = Math.min(50, t - last) / 16.7; last = t;
+    dots.forEach((p, i) => {
+      if (stepFn(p, dt) === 'respawn') Object.assign(p, spawn(i, false));
+      p.el.setAttribute('cx', p.x); p.el.setAttribute('cy', p.y);
+      p.el.style.opacity = p.hidden ? 0 : 1;
+    });
+    requestAnimationFrame(frame);
+  }
+  if (!reduceMotion) requestAnimationFrame(frame);
+  else dots.forEach(p => { p.el.setAttribute('cx', p.x); p.el.setAttribute('cy', p.y); });
+  return dots;
+}
+
+/* ---------- 继电器 + 水龙头 ---------- */
+(function () {
+  const svg = $('#relay'), fsvg = $('#faucet');
+  let on = false;
+  const ctl = [], out = [];
+  const W = (d, arr) => { const p = el('path', { d, class: 'wire' }, svg); arr.push(p); return p; };
+
+  // 控制电路（左）
+  battery(svg, 40, 150, true);
+  txt(svg, 40, 182, '电池', 't-sub mid');
+  W('M40,150 V110 H62', ctl); W('M102,110 H150 V102 H158', ctl); W('M158,168 V220 H40 V160', ctl);
+  el('circle', { cx: 62, cy: 110, r: 3.5, class: 'contact' }, svg);
+  el('circle', { cx: 102, cy: 110, r: 3.5, class: 'contact' }, svg);
+  const blade = el('line', { x1: 62, y1: 110, x2: 102, y2: 110, class: 'blade' }, svg);
+  txt(svg, 82, 134, '控制开关', 't-sub mid');
+  const hit = el('rect', { x: 56, y: 80, width: 52, height: 40, class: 'hit' }, svg);
+  hit.addEventListener('click', () => { on = !on; paint(); });
+
+  // 线圈 + 铁芯
+  el('rect', { x: 162, y: 92, width: 20, height: 82, rx: 3, class: 'core' }, svg);
+  let coil = 'M158,102';
+  for (let y = 102; y < 166; y += 8) coil += ` L186,${y + 4} L158,${y + 8}`;
+  W(coil, ctl);
+  const field = el('g', { class: 'field' }, svg);
+  el('ellipse', { cx: 172, cy: 133, rx: 32, ry: 52 }, field);
+  el('ellipse', { cx: 172, cy: 133, rx: 46, ry: 66 }, field);
+  txt(svg, 172, 196, '线圈', 't-sub mid');
+  txt(svg, 30, 30, '控制电路', 't-acc');
+
+  // 被控制的电路（右）
+  W('M140,80 V30 H330 V46', out);
+  battery(svg, 330, 46, true);
+  W('M330,56 V126', out);
+  const lp = lamp(svg, 330, 140);
+  txt(svg, 352, 144, '灯/电机', 't-sub');
+  W('M330,154 V214 H262 V86', out);
+  el('rect', { x: 254, y: 82, width: 16, height: 6, rx: 1, class: 'contact' }, svg);
+  el('circle', { cx: 140, cy: 80, r: 5, class: 'contact' }, svg);
+  const arm = el('line', { x1: 140, y1: 80, x2: 264, y2: 80, class: 'armature' }, svg);
+  arm.style.transformOrigin = '140px 80px';
+  txt(svg, 210, 64, '金属臂', 't-sub mid');
+  txt(svg, 250, 20, '被控制的电路', 't-acc');
+
+  // 水龙头
+  el('rect', { x: 0, y: 70, width: 110, height: 22, class: 'pipe' }, fsvg);
+  el('path', { d: 'M110,62 H160 V120 H138 V92 H110 Z', class: 'pipe' }, fsvg);
+  const water = el('rect', { x: 141, y: 120, width: 16, height: 86, class: 'water' }, fsvg);
+  el('path', { d: 'M90,206 H210 V222 H90 Z', class: 'pipe' }, fsvg);
+  const handle = el('g', { class: 'handle' }, fsvg);
+  el('rect', { x: 130, y: 40, width: 10, height: 24, class: 'pipe' }, handle);
+  el('rect', { x: 100, y: 30, width: 70, height: 12, rx: 6, style: 'fill:var(--accent);cursor:pointer' }, handle);
+  handle.style.transformOrigin = '135px 52px';
+  handle.addEventListener('click', () => { on = !on; paint(); });
+  txt(fsvg, 135, 18, '把手 = 控制线', 't-sub mid');
+  txt(fsvg, 175, 170, '水流 = 电流', 't-sub');
+  txt(fsvg, 10, 112, '水管 = 电路', 't-sub');
+
+  function paint() {
+    blade.setAttribute('transform', on ? '' : 'rotate(-32 62 110)');
+    blade.classList.toggle('on', on);
+    ctl.forEach(p => p.classList.toggle('on', on));
+    out.forEach(p => p.classList.toggle('on', on));
+    field.classList.toggle('on', on);
+    arm.style.transform = on ? '' : 'rotate(-9deg)';
+    lp.classList.toggle('on', on);
+    water.classList.toggle('on', on);
+    handle.style.transform = on ? 'rotate(-35deg)' : '';
+    $('#relay-step').innerHTML = on
+      ? '控制开关闭合 → 电流流过<b>线圈</b> → 产生<b>电磁场</b>（蓝色虚线）→ 吸下<b>金属臂</b> → 右边电路接通 → <b>灯亮</b>。'
+      : '控制开关断开 → 线圈没有电流 → 没有磁力 → 金属臂弹起 → 右边电路断开 → 灯灭。';
+  }
+  paint();
+})();
+
+/* ---------- 故障计算 ---------- */
+(function () {
+  const n = $('#rl-n'), y = $('#rl-y');
+  function upd() {
+    const N = +n.value, Y = +y.value;
+    const perDay = N / (Y * 365);
+    $('#rl-n-v').textContent = N.toLocaleString();
+    $('#rl-y-v').textContent = Y + ' 年';
+    const every = perDay >= 1 ? `每天坏 <span class="big">${perDay.toFixed(1)}</span> 个` : `每 <span class="big">${(1 / perDay).toFixed(1)}</span> 天坏 1 个`;
+    $('#rl-out').innerHTML = `${N.toLocaleString()} ÷ (${Y} 年 × 365 天) ≈ ${every}`;
+  }
+  n.oninput = y.oninput = upd; upd();
+})();
+
+/* ---------- 真空管 ---------- */
+(function () {
+  const svg = $('#tube');
+  const st = { mode: '2', anode: false, grid: true };
+  el('path', { d: 'M150,40 Q150,14 210,14 Q270,14 270,40 V250 Q270,272 210,272 Q150,272 150,250 Z', class: 'glass' }, svg);
+  txt(svg, 285, 30, '玻璃泡（里面抽成真空）', 't-sub');
+  // 阳极
+  el('rect', { x: 165, y: 50, width: 90, height: 10, rx: 2, class: 'electrode' }, svg);
+  const anodeSign = txt(svg, 210, 44, '', 'charge');
+  txt(svg, 285, 60, '上电极（吸引电子）', 't-sub');
+  // 阴极 + 加热丝
+  el('rect', { x: 170, y: 220, width: 80, height: 10, rx: 2, class: 'electrode' }, svg);
+  const heater = el('path', { d: 'M178,244 l8,-8 l8,8 l8,-8 l8,8 l8,-8 l8,8 l8,-8 l8,8', class: 'heater on' }, svg);
+  txt(svg, 285, 230, '下电极（被加热，发射电子）', 't-sub');
+  txt(svg, 285, 248, '加热丝', 't-sub');
+  // 控制栅
+  const grid = el('g', {}, svg);
+  el('line', { x1: 160, y1: 140, x2: 260, y2: 140, class: 'grid-line' }, grid);
+  const gridSign = txt(grid, 138, 146, '', 'charge');
+  txt(grid, 285, 144, '控制电极（栅极）', 't-sub t-acc');
+  // 外电路
+  const ext = [];
+  ext.push(el('path', { d: 'M210,50 V4 H460 V110', class: 'wire' }, svg));
+  ext.push(el('path', { d: 'M460,166 V290 H210 V272', class: 'wire' }, svg));
+  battery(svg, 460, 110, true);
+  const lp = lamp(svg, 460, 146);
+  txt(svg, 480, 150, '灯', 't-sub');
+
+  function canReach() { return st.anode && (st.mode === '2' || !st.grid); }
+  const ps = particles(svg, 22, (i, init) => ({
+    x: 178 + Math.random() * 64, y: init ? 150 + Math.random() * 64 : 214, vy: -(1.2 + Math.random() * 1.4), back: false, hidden: false,
+  }), (p, dt) => {
+    const blockAt = st.mode === '3' && st.grid ? 150 : null;
+    if (!st.anode) {                 // 上电极不吸引：电子在阴极附近徘徊
+      p.y += (Math.random() - .5) * 2 * dt; p.y = Math.min(214, Math.max(196, p.y));
+      p.x += (Math.random() - .5) * 1.5 * dt; p.x = Math.min(244, Math.max(176, p.x));
+      return;
+    }
+    if (blockAt && !p.back && p.y <= blockAt) p.back = true;
+    p.y += (p.back ? Math.abs(p.vy) : p.vy) * dt;
+    if (p.back && p.y >= 214) return 'respawn';
+    if (p.y <= 62) return 'respawn';
+  });
+
+  function paint() {
+    $$('#tube-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === st.mode));
+    grid.style.display = st.mode === '3' ? '' : 'none';
+    $('#tube-grid').style.display = st.mode === '3' ? '' : 'none';
+    anodeSign.textContent = st.anode ? '+' : '−';
+    anodeSign.style.fill = st.anode ? 'var(--on)' : 'var(--muted)';
+    gridSign.textContent = st.grid ? '−' : '+';
+    gridSign.style.fill = st.grid ? 'var(--accent)' : 'var(--on)';
+    $('#tube-anode').textContent = st.anode ? '上电极：带正电（点击改为负）' : '上电极：带负电（点击改为正）';
+    $('#tube-grid').textContent = st.grid ? '控制电极：负电（点击改为正）' : '控制电极：正电（点击改为负）';
+    const flow = canReach();
+    ext.forEach(w => w.classList.toggle('on', flow));
+    lp.classList.toggle('on', flow);
+    let s;
+    if (st.mode === '2') s = st.anode
+      ? '上电极带<b>正电</b>，把下电极发射出的电子吸过去 → 有电流 → 灯亮。'
+      : '上电极带负电，电子不会被吸引穿过真空，只在下电极附近打转 → 没有电流。电流只能单向流动，这就是<b>二极管</b>。';
+    else if (!st.anode) s = '上电极没有带正电，无论控制电极怎么设，电子都过不去。先把上电极改成正电。';
+    else s = st.grid
+      ? '控制电极带<b>负电</b>，把飞上来的电子推回去 → 电流被切断 → 灯灭。'
+      : '控制电极带<b>正电</b>，电子穿过它飞向上电极 → 电流通过 → 灯亮。<b>通过控制线就能开关电流——这就是开关。</b>';
+    $('#tube-step').innerHTML = s;
+  }
+  $$('#tube-mode button').forEach(b => b.onclick = () => { st.mode = b.dataset.m; if (st.mode === '3') st.anode = true; paint(); });
+  $('#tube-anode').onclick = () => { st.anode = !st.anode; paint(); };
+  $('#tube-grid').onclick = () => { st.grid = !st.grid; paint(); };
+  paint();
+})();
+
+/* ---------- 插线板 ---------- */
+(function () {
+  const svg = $('#plug');
+  el('rect', { x: 20, y: 14, width: 560, height: 192, rx: 10, class: 's-panel' }, svg);
+  const hole = (c, r) => [60 + c * 60, 46 + r * 44];
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 9; c++) {
+    const [x, y] = hole(c, r);
+    el('circle', { cx: x, cy: y, r: 7, style: 'fill:var(--bg);stroke:var(--ink);stroke-width:1.5' }, svg);
+  }
+  const cables = [[[0, 0], [3, 2], 'var(--on)'], [[1, 3], [5, 0], 'var(--accent)'], [[4, 1], [8, 3], 'var(--ok)'], [[2, 1], [6, 2], 'var(--bad)'], [[7, 0], [8, 1], 'var(--brass)']];
+  cables.forEach(([a, b, color]) => {
+    const [x1, y1] = hole(...a), [x2, y2] = hole(...b);
+    const sag = 24 + Math.abs(x2 - x1) * .06;
+    el('path', { d: `M${x1},${y1} C${x1},${y1 + sag} ${x2},${y2 + sag} ${x2},${y2}`, style: `fill:none;stroke:${color};stroke-width:4;stroke-linecap:round;opacity:.9` }, svg);
+    [[x1, y1], [x2, y2]].forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 5, style: `fill:${color}` }, svg));
+  });
+})();
+
+/* ---------- 晶体管 ---------- */
+(function () {
+  const svg = $('#tr');
+  let on = false;
+  el('rect', { x: 80, y: 120, width: 300, height: 70, class: 'semi' }, svg);
+  txt(svg, 230, 176, '半导体（有时导电，有时不导电）', 't-sub mid');
+  const channel = el('rect', { x: 130, y: 121, width: 200, height: 20, class: 'channel' }, svg);
+  el('rect', { x: 80, y: 96, width: 50, height: 70, rx: 3, class: 'electrode' }, svg);
+  el('rect', { x: 330, y: 96, width: 50, height: 70, rx: 3, class: 'electrode' }, svg);
+  txt(svg, 105, 88, '电极', 't-sub mid'); txt(svg, 355, 88, '电极', 't-sub mid');
+  el('rect', { x: 150, y: 108, width: 160, height: 8, style: 'fill:var(--line)' }, svg);
+  const gate = el('rect', { x: 150, y: 90, width: 160, height: 18, rx: 2, class: 's-panel' }, svg);
+  const gateLabel = txt(svg, 230, 104, '栅极 gate', 't-sub mid');
+  // 控制线 + 开关
+  const gw = [el('path', { d: 'M230,90 V40 H200', class: 'wire' }, svg)];
+  el('circle', { cx: 200, cy: 40, r: 3.5, class: 'contact' }, svg);
+  el('circle', { cx: 160, cy: 40, r: 3.5, class: 'contact' }, svg);
+  const blade = el('line', { x1: 160, y1: 40, x2: 200, y2: 40, class: 'blade' }, svg);
+  gw.push(el('path', { d: 'M160,40 H40 V60', class: 'wire' }, svg));
+  battery(svg, 40, 60, true);
+  txt(svg, 180, 22, '控制线', 't-sub mid t-acc');
+  txt(svg, 40, 96, '控制电压', 't-sub mid');
+  const hit = el('rect', { x: 150, y: 10, width: 60, height: 44, class: 'hit' }, svg);
+  hit.addEventListener('click', () => { on = !on; paint(); });
+  // 被控制的电路
+  const ow = [el('path', { d: 'M105,166 V230 H250', class: 'wire' }, svg), el('path', { d: 'M278,230 H460 V150', class: 'wire' }, svg), el('path', { d: 'M460,122 V30 H355 V96', class: 'wire' }, svg)];
+  el('line', { x1: 250, y1: 218, x2: 250, y2: 242, class: 'bat' }, svg);
+  el('line', { x1: 262, y1: 224, x2: 262, y2: 236, class: 'bat-s' }, svg);
+  el('path', { d: 'M262,230 H278', class: 'wire' }, svg);
+  const lp = lamp(svg, 460, 136);
+  txt(svg, 480, 140, '灯', 't-sub');
+
+  particles(svg, 12, (i, init) => ({ x: init ? 132 + Math.random() * 196 : 132, y: 126 + Math.random() * 10, hidden: false }), (p, dt) => {
+    p.hidden = !on;
+    if (!on) return;
+    p.x += 2.2 * dt;
+    if (p.x > 328) return 'respawn';
+  });
+
+  function paint() {
+    blade.setAttribute('transform', on ? '' : 'rotate(-32 160 40)');
+    blade.classList.toggle('on', on);
+    gw.forEach(w => w.classList.toggle('on', on));
+    ow.forEach(w => w.classList.toggle('on', on));
+    channel.classList.toggle('on', on);
+    lp.classList.toggle('on', on);
+    gateLabel.textContent = on ? '栅极 gate（加了电 +）' : '栅极 gate';
+    gateLabel.style.fill = on ? 'var(--on)' : '';
+    $('#tr-step').innerHTML = on
+      ? '栅极加电 → 下面的半导体变得<b>能导电</b>（橙色通道）→ 电子从左电极流到右电极 → 灯亮。'
+      : '栅极没电 → 两个电极之间的半导体<b>不导电</b> → 电流过不去 → 灯灭。';
+  }
+  paint();
+})();
+
+/* ---------- 尺度 ---------- */
+(function () {
+  const svg = $('#scale');
+  // 第一行：纸
+  txt(svg, 20, 30, '一张纸的厚度 ≈ 100,000 纳米', 't-main');
+  el('rect', { x: 20, y: 42, width: 600, height: 24, rx: 3, class: 'card-paper', style: 'fill:var(--paper);stroke:var(--wood);stroke-width:1.5' }, svg);
+  el('rect', { x: 20, y: 42, width: 6, height: 24, style: 'fill:var(--on)' }, svg);
+  // 放大线
+  el('path', { d: 'M20,66 L20,112 M26,66 L620,112', class: 's-dash' }, svg);
+  txt(svg, 40, 92, '取其中 1/100 放大', 't-sub');
+  // 第二行：1000 纳米
+  el('rect', { x: 20, y: 112, width: 600, height: 24, rx: 3, style: 'fill:var(--paper);stroke:var(--wood);stroke-width:1.5' }, svg);
+  txt(svg, 320, 160, '放大后的这一段 = 1,000 纳米，正好并排放下 20 个 50 纳米的晶体管', 't-sub mid');
+  for (let i = 0; i < 20; i++) el('rect', { x: 22 + i * 30, y: 114, width: 26, height: 20, rx: 3, class: 's-on' }, svg);
+  txt(svg, 20, 196, '100,000 ÷ 50 = 2,000：一张纸的厚度里，能并排放约 2,000 个晶体管。', 't-main');
+  txt(svg, 20, 220, '（第一张图里的橙色小块是放大的那一段，本身已经细得看不清了）', 't-sub');
+})();
+
+/* ---------- 速度（对数） ---------- */
+(function () {
+  const svg = $('#speed');
+  const X0 = 190, X1 = 610, DEC = 7;
+  const xOf = v => X0 + Math.log10(v) / DEC * (X1 - X0);
+  for (let d = 0; d <= DEC; d++) {
+    const x = X0 + d / DEC * (X1 - X0);
+    el('line', { x1: x, y1: 18, x2: x, y2: 186, style: 'stroke:var(--line);stroke-width:1' }, svg);
+    txt(svg, x, 204, d === 0 ? '1' : '10' + '⁰¹²³⁴⁵⁶⁷'[d], 't-sub mid');
+  }
+  txt(svg, X1, 222, '每秒开关次数', 't-sub end');
+  [['继电器（1940 年代）', 50, '约 50 次'], ['真空管', 3000, '数千次'], ['第一个晶体管（1947）', 1e4, '1 万次'], ['今天的晶体管', 1e6, '百万次以上 →']].forEach(([name, v, label], i) => {
+    const y = 30 + i * 40;
+    txt(svg, X0 - 10, y + 16, name, 't-main end');
+    el('rect', { x: X0, y, width: xOf(v) - X0, height: 24, rx: 4, class: i === 3 ? 's-on' : 's-acc' }, svg);
+    txt(svg, xOf(v) + 8, y + 17, label, 't-mono');
+  });
+})();
+</script>
+</body>
+</html>

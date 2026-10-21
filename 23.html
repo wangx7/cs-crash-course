@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>23 屏幕与 2D 图形显示 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+canvas.crt{background:#071007;border-radius:14px;display:block;width:100%;max-width:520px;box-shadow:inset 0 0 40px rgba(0,0,0,.8)}
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:720px){.cg{grid-template-columns:1fr}}
+.buf{display:grid;grid-template-columns:repeat(16,1fr);gap:2px;font:12px var(--mono)}
+.buf span{background:var(--panel);border:1px solid var(--line);border-radius:3px;text-align:center;padding:2px 0}
+.buf span.hl{border-color:var(--on);background:var(--on-soft)}
+.rom{display:inline-grid;grid-template-columns:repeat(8,14px);gap:2px;padding:6px;background:var(--bg);border-radius:8px}
+.rom i{width:14px;height:14px;border-radius:2px;background:var(--line)}
+.rom i.on{background:var(--ok)}
+.inp{font:16px var(--mono);padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:100%;max-width:340px}
+.vec{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start}
+@media (max-width:720px){.vec{grid-template-columns:1fr}}
+.cmds{font:14px/1.9 var(--mono);background:var(--code);border-radius:10px;padding:8px 0;min-width:220px}
+.cmds div{padding:0 12px;border-left:3px solid transparent}
+.cmds div.cur{background:var(--on-soft);border-left-color:var(--on)}
+.cmds div.done{color:var(--muted)}
+.fbwrap{display:grid;grid-template-columns:1.1fr 1fr;gap:16px;align-items:start}
+@media (max-width:760px){.fbwrap{grid-template-columns:1fr}}
+canvas.fb{width:100%;image-rendering:pixelated;border-radius:8px;background:#000}
+pre.code{margin:0;font:13px/1.6 var(--mono);background:var(--code);padding:10px 12px;border-radius:10px;overflow-x:auto;min-height:150px}
+</style>
+</head>
+<body data-ep="23">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=24" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 23 集</div>
+  <h1>屏幕与 2D 图形显示</h1>
+  <p class="en">Screens &amp; 2D Graphics</p>
+  <p class="lead">早期屏幕连字都显示不清，内存又贵得存不下几个像素。这一集讲工程师们想出的几种画面方案：字符生成器、矢量图形，直到每个像素都对应内存里的位——以及第一批图形程序 Spacewar! 和 Sketchpad。</p>
+  <div class="road">
+    <span>CRT</span><i>→</i><span>矢量 / 光栅扫描</span><i>→</i><span>字符生成器</span><i>→</i><span>矢量图形</span><i>→</i><span>Spacewar! 与 Sketchpad</span><i>→</i><span>位图与帧缓冲</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 早期屏幕</a></li>
+    <li><a href="#ch1">1 · CRT 与扫描</a></li>
+    <li><a href="#ch2">2 · 字符生成器</a></li>
+    <li><a href="#ch3">3 · 矢量图形</a></li>
+    <li><a href="#ch4">4 · Sketchpad</a></li>
+    <li><a href="#ch5">5 · 位图与帧缓冲</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>早期的屏幕：看临时值</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！这台 1960 年的 PDP-1 是早期图形计算机的一个好例子。你可以看到，左边是柜子大小的计算机，中间是电传打字机，右边是一个圆形的屏幕。注意它们是分开的，因为当时文本任务和图形任务往往是分开处理的。事实上，早期的屏幕根本显示不了清晰的文字，而打印到纸上的对比度和分辨率要高得多。</p>
+  <p>早期屏幕的典型用途是跟踪程序运行时的状态，比如寄存器里的值。如果用打印机一遍又一遍地打出来，就没什么意义了，既浪费纸又慢。屏幕却能快速更新，非常适合显示这种临时的值。不过屏幕很少用来输出计算结果，结果通常还是打印到纸上，或者其他更持久的介质上。但屏幕实在太有用了，到 1960 年代，人们开始用它做各种很酷的事。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>阴极射线管、矢量扫描和光栅扫描</h2>
+  <p>几十年间出现了很多种显示技术，但最早、最有影响力的是<b>阴极射线管</b>（Cathode Ray Tube），简称 <b>CRT</b>。它的原理是把电子射向涂有<b>磷光体</b>的屏幕，电子撞到涂层时，会让它发光零点几秒。因为电子是带电粒子，可以用磁场控制它的路径：屏幕里用金属板或线圈，把电子引导到想要的位置，上下左右都行。</p>
+  <p>既然能这样控制，就有两种画图的方法。第一种，引导电子束把形状描出来，这叫<b>矢量扫描</b>（vector scanning）。因为发光只持续一小会儿，只要重复得足够快，就能得到清晰的图像。第二种，按固定的路径，从上到下、从左到右一行行扫过去，不断重复，只在特定的点打开电子束来画出图形，这叫<b>光栅扫描</b>（raster scanning）。用这种方法，可以用很多小线段画出形状，甚至文字。</p>
+
+  <div class="card">
+    <h3>动手：两种扫描方式</h3>
+    <span class="seg-btns" id="scan-mode"><button data-m="vector">矢量扫描</button><button data-m="raster">光栅扫描</button></span>
+    <span class="seg-btns" id="scan-speed" style="margin-left:6px"><button data-s="slow">慢放</button><button data-s="fast">快速（像真的一样）</button></span>
+    <canvas class="crt" id="crt" width="520" height="300" style="margin-top:10px"></canvas>
+    <div class="step-text" id="scan-cap"></div>
+  </div>
+
+  <p>最终，随着显示技术的进步，我们终于能在屏幕上显示清晰的点，叫<b>像素</b>（pixel）。<b>液晶显示器</b>（LCD）和以前的技术相当不同，但 LCD 也用光栅扫描，每秒多次更新每个像素里红绿蓝的亮度。</p>
+  <p>有意思的是，很多早期计算机并不用像素——不是技术上做不到，而是因为像素太占内存了。一张 200 × 200 像素的图像有 40,000 个像素。哪怕每个像素只用一个位来表示黑或白，连灰度都没有，也要占 40,000 位内存，比 PDP-1 全部内存的一半还多！所以计算机科学家和工程师们得想出一些技巧来渲染图形，直到内存发展到够用为止。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="memcmp" viewBox="0 0 680 160" role="img" aria-label="三种方案的内存占用"></svg></div>
+      <figcaption>图 1　同样一块屏幕，三种画法要占多少内存（数字来自课程）。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>字符生成器和屏幕缓冲区</h2>
+  <p>所以，早期计算机不存大量的像素值，而是存<b>字符</b>，最典型的是 80 × 25 个字符，总共 2000 个。如果每个字符用 8 位表示，比如用 ASCII，总共只需要 16,000 位，这个大小合理多了。为此，计算机需要额外的硬件，从内存里读出字符，把它们转换成光栅图形，才能显示到屏幕上。这种硬件叫<b>字符生成器</b>（character generator），基本上可以算是第一代显卡。</p>
+  <p>它内部有一小块<b>只读存储器</b>（Read Only Memory），简称 <b>ROM</b>，存着每个字符的图形，叫<b>点阵图案</b>（dot matrix pattern）。如果显卡看到一个 8 位二进制码，发现它是字母 K，就会把字母 K 的点阵图案用光栅扫描画到屏幕上合适的位置。为此，字符生成器会访问内存中一块专门为图形保留的特殊区域，叫<b>屏幕缓冲区</b>（screen buffer）。程序想在屏幕上显示文字时，只要修改这块区域里的值就行。</p>
+
+  <div class="card">
+    <h3>动手：程序只改屏幕缓冲区，字符生成器负责画</h3>
+    <input class="inp" id="cg-in" value="HELLO KITTY" maxlength="32" aria-label="写进屏幕缓冲区的文字">
+    <div class="cg" style="margin-top:12px">
+      <div>
+        <p class="muted" style="margin:0 0 6px;font-size:13px">内存里的屏幕缓冲区（存的是 ASCII 码）</p>
+        <div class="buf" id="cg-buf"></div>
+        <p class="muted" style="margin:12px 0 6px;font-size:13px">ROM 里字母 <b id="cg-ch"></b> 的点阵图案（点缓冲区的格子换一个）</p>
+        <div class="rom" id="cg-rom"></div>
+      </div>
+      <div>
+        <p class="muted" style="margin:0 0 6px;font-size:13px">屏幕上看到的</p>
+        <canvas class="crt" id="cg-screen" width="384" height="96"></canvas>
+      </div>
+    </div>
+    <p class="hint">这里的点阵图案是用浏览器字体现场生成的，模拟 ROM 的作用</p>
+  </div>
+
+  <p>这个方案用的内存少得多，但也意味着只能在屏幕上画字符。即便有这样的限制，人们还是用 <b>ASCII 艺术</b>发挥了很多创意。也有人用字符来模仿图形界面，用下划线和加号画出方框、线条和其他简单形状。但字符集实在太小，做不了什么复杂的东西，所以人们对 ASCII 做了各种扩展，加入了新的字符，比如 DOS 用的 IBM CP437 字符集。在一些系统上，还可以用额外的位定义字体颜色和背景颜色，做出这样的 DOS 界面——这个界面只用了刚才提到的那套字符集。</p>
+  <pre style="font:14px/1.25 var(--mono);background:#0b2a6b;color:#e8eefc;padding:12px 16px;border-radius:10px;overflow-x:auto">╔══════════════ 文件管理 ══════════════╗
+║  [ 打开 ]   [ 保存 ]   [ 退出 ]      ║
+║──────────────────────────────────────║
+║  ► report.txt          12,480 字节   ║
+║    cat.bmp             49,206 字节   ║
+║    theme.wav            6,444 字节   ║
+╚══════════════════════════════════════╝</pre>
+  <p class="muted" style="font-size:13px">用制表符字符"画"出来的界面（示意）：没有一个像素是单独画的，全是字符。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>矢量图形</h2>
+  <p>字符生成器是一种省内存的技巧，但它没办法画任意形状。而能画任意形状很重要，因为电路设计、建筑平面图、地图，很多东西都不是文字！为了画任意形状、同时又不吃掉所有内存，计算机科学家们用了 CRT 上的<b>矢量模式</b>。概念非常简单：一切都由线组成，没有"文字"这回事。如果要显示文字，就用线条把它画出来。只有线条，别的什么都没有。明白了吗？好，我们来看个实例。</p>
+  <p>假设这个视频画面是一个笛卡尔平面，宽 200 个单位，高 100 个单位，原点 (0,0) 在左上角。我们可以用下面这些矢量命令画形状，这些命令来自 Vectrex，一个早期的矢量显示系统。首先是 RESET，它会清空屏幕，把电子枪的绘图点移到坐标 (0,0)，并把线的亮度设为 0。然后 MOVE_TO 50 50，把绘图点移到 (50, 50)；INTENSITY 100，把亮度设为 100。现在亮度提高了，移动到 (100, 50)，然后 (60, 75)，然后回到 (50, 50)。最后把亮度设回 0。酷，我们画出了一个三角形！</p>
+
+  <div class="card">
+    <h3>动手：执行矢量命令</h3>
+    <div class="vec">
+      <div class="cmds" id="vec-cmds"></div>
+      <canvas class="crt" id="vec" width="400" height="200"></canvas>
+    </div>
+    <div class="step-text" id="vec-cap"></div>
+    <div class="btns"><button class="btn primary" id="vec-next">执行下一条</button><button class="btn" id="vec-reset">重来</button></div>
+  </div>
+
+  <p>这些命令只占 160 位，比存一个庞大的像素矩阵好多了。就像之前字符生成器把内存里的字符转成图形一样，这些矢量指令也存在内存里，由矢量图形卡把它们画到屏幕上。屏幕缓冲区里可以按顺序存几百条命令，画出复杂的图形——全都是线段！因为这些矢量都在内存里，程序可以更新它们的值，让图形随时间变化——<b>动画</b>！</p>
+  <p>最早的电子游戏之一 <b>Spacewar!</b>（太空大战）就是 1962 年在 PDP-1 上用矢量图形做出来的。它启发了后来的很多游戏，比如《爆破彗星》（Asteroids），甚至第一款商业街机游戏《Computer Space》。<span class="muted" style="font-size:13px">（字幕把它译成了"太空大战"，和 Spacewar! 重名了。）</span></p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>Sketchpad 和光笔</h2>
+  <p>1962 年也是另一个重大里程碑：<b>Sketchpad</b> 诞生了。它是一个用于<b>计算机辅助设计</b>（CAD）的交互式图形界面，被广泛认为是第一个完整的图形程序。它的发明者<b>伊万·萨瑟兰</b>（Ivan Sutherland）后来因此获得了图灵奖。</p>
+  <p>为了和图形界面交互，Sketchpad 用了一种刚发明不久的输入设备：<b>光笔</b>（light pen）。它就是一支用线连着计算机的触控笔，笔尖有一个光线传感器，能检测到显示器的刷新。通过判断刷新发生的时间，计算机就能知道笔的位置。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="pen" viewBox="0 0 680 220" role="img" aria-label="光笔如何定位"></svg></div>
+      <figcaption>图 2　光笔定位的原理（示意）：电子束按固定顺序扫过屏幕，笔尖"看到"亮光的那一刻，计算机就知道电子束当时扫到哪里——那就是笔的位置。</figcaption>
+    </figure>
+  </div>
+
+  <p>有了光笔和各种按钮，用户可以画线和其他简单形状。Sketchpad 能让线条完美平行、长度相同、精确垂直成 90 度，甚至能动态缩放。这些在纸上很费力，在计算机上却非常简单！用户还可以保存设计结果，以后再用，甚至和别人分享。你可以有一整个库，里面放着电子元件、家具之类的东西，直接拖进来用。</p>
+  <p>今天看来这似乎很普通，但在 1962 年，计算机还是吃纸带、柜子大小的庞然大物。Sketchpad 和光笔让人大开眼界，它们代表了人机交互方式的一个关键转折点：计算机不再只是关在门后面负责算数的机器，它可以成为<b>帮人做事的助手</b>。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>位图显示与帧缓冲区</h2>
+  <p>最早使用真正像素的计算机和显示器出现在 1960 年代末：内存里的位对应屏幕上的像素，这叫<b>位图显示</b>（bitmapped display）。现在我们可以画任意图形了。你可以把图形想成一个巨大的像素值矩阵。和之前一样，计算机把像素数据存在内存中一块特殊的区域，叫<b>帧缓冲区</b>（frame buffer）。早期这些数据存在计算机的内存里，后来存在高速的<b>视频内存</b>（VRAM）里，VRAM 就在显卡上，访问更快——今天就是这样做的。</p>
+  <p>在 8 位灰度屏幕上，可用的颜色从 0 强度（黑色）到 255 强度（白色）。其实更像绿色或橙色，因为许多早期显示器显示不了白色。假设这个视频在一块低分辨率的位图屏幕上，分辨率是 60 × 35 像素。</p>
+
+  <div class="card">
+    <h3>动手：往帧缓冲区里写像素</h3>
+    <div class="fbwrap">
+      <canvas class="fb" id="fb" width="60" height="35"></canvas>
+      <div><pre class="code" id="fb-code"></pre><div class="step-text" id="fb-cap" style="margin-top:8px"></div></div>
+    </div>
+    <div class="btns">
+      <button class="btn" data-s="0">① 设一个像素</button>
+      <button class="btn" data-s="1">② 画一条线</button>
+      <button class="btn" data-s="2">③ 画灰色矩形</button>
+      <button class="btn" data-s="3">④ 用函数再画一个</button>
+      <button class="btn primary" data-s="4">⑤ 乒乓球！</button>
+      <button class="btn" data-s="clear">清屏</button>
+    </div>
+    <p class="hint">左边每个格子就是帧缓冲区里的一个值：0 = 黑，255 = 最亮（这里用老显示器的绿色显示）</p>
+  </div>
+
+  <p>如果想把 (10, 10) 处的像素设为白色，可以用这样的代码。如果想画一条线，比如从 (30, 0) 到 (30, 35)，可以用一个循环把一整列像素都设为白色。如果想画更复杂的图形，比如矩形，需要四个值：起点的 X 坐标、起点的 Y 坐标、宽度和高度。到目前为止只用了白色，这次画矩形试试灰色：灰色在 0 和 255 中间，所以用 127。然后用两个循环，一个套在另一个里面，外层每跑一次，内层就跑很多次，这样就画出一个矩形，计算机画的时候用我们指定的颜色 127。我们把它包装成一个"画矩形"函数。假设要在屏幕另一边画第二个矩形，这次也许是黑色的，直接调用画矩形函数就行了，超棒！</p>
+  <p>和前面说的其他方案一样，程序可以操作帧缓冲区里的像素数据，做出交互式图形。乒乓球时间！当然，程序员不会浪费时间从零开始写绘图函数，而是用预先写好的函数来画直线、曲线、形状、文字等等。又一层新抽象！</p>
+  <p>位图的灵活性为交互式计算打开了全新的可能，但它高昂的成本持续了十几年。上一集提到，1971 年整个美国大约只有 7 万台电传打字机和 7 万台终端，而令人惊讶的是，有交互式图形屏幕的计算机只有大约 1000 台。这可不多！但 Sketchpad 和 Spacewar! 这样的先驱推动了图形界面的发展，帮助普及了计算机显示器，图形界面的曙光由此出现。我们下周讲图形界面，下周见！</p>
+  <div class="extra">
+    <span class="t">你写的前端就在操作帧缓冲区的"上层"</span>
+    HTML 里的 <code>&lt;canvas&gt;</code> 就是一块帧缓冲区：<code>ctx.fillRect(x, y, w, h)</code> 就是课程里那个"画矩形函数"，<code>getImageData</code> 能读出每个像素的 RGBA 值（上面这块 60 × 35 的屏幕就是这么实现的）。而 CSS 写的那些 div，最终也是浏览器替你算好每个像素、写进显卡的帧缓冲区。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>方案</th><th>内存里存什么</th><th>优点</th><th>局限</th></tr></thead>
+      <tbody>
+        <tr><td>字符生成器</td><td>屏幕缓冲区里的字符码（80×25 × 8 位 = 16,000 位）</td><td>省内存；ROM 里存点阵图案</td><td>只能显示字符（ASCII 艺术、CP437 扩展）</td></tr>
+        <tr><td>矢量图形</td><td>一串画线命令（三角形约 160 位）</td><td>能画任意线条；改命令就是动画（Spacewar!）</td><td>只有线条</td></tr>
+        <tr><td>位图 / 帧缓冲区</td><td>每个像素一个值（200×200 黑白 = 40,000 位）</td><td>能画任何东西</td><td>太占内存，贵了十几年；1971 年全美只有约 1000 台</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    屏幕显示的核心矛盾是"想画的东西"和"内存够不够"：字符生成器只存字符，矢量图形只存线条，位图终于每个像素都存——内存变便宜以后，位图成了今天的标准。Sketchpad 则第一次让计算机成为帮人画图的助手。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 矢量扫描和光栅扫描有什么不同？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">矢量扫描让电子束沿着图形的轮廓去描；光栅扫描让电子束按固定路线从上到下、从左到右一行行扫，只在需要亮的点打开电子束。两者都要重复得足够快，因为磷光体只亮一小会儿。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 为什么早期计算机不直接用像素？字符生成器怎么解决的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">像素太占内存：200×200 黑白就要 40,000 位，超过 PDP-1 内存的一半。字符生成器只在屏幕缓冲区里存字符码（80×25×8 = 16,000 位），ROM 里存每个字符的点阵图案，显示时由硬件转成光栅图形。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 光笔怎么知道自己指在屏幕的哪里？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">笔尖的光线传感器能检测到屏幕刷新时的亮光。电子束按已知的顺序和时间扫过屏幕，计算机根据传感器"看到"亮光的时刻，就知道电子束当时在哪个位置，也就是笔的位置。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 什么是帧缓冲区？画一个矩形需要哪四个值？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">内存（后来是显卡上的 VRAM）中专门存放每个像素值的区域，改它就改了屏幕。矩形需要起点 X、起点 Y、宽度、高度，再用两层循环把范围内的像素设成指定颜色。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="22.html"><small>← 上一集</small>22 命令行界面</a>
+    <a class="next" href="24.html"><small>下一集 →</small>24 冷战和消费主义</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 23 集 Screens &amp; 2D Graphics（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const reduceMotion = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+const GREEN = 'rgb(120,255,140)';
+
+/* ---------- 扫描方式 ---------- */
+(function () {
+  const cv = $('#crt'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  let mode = 'vector', speed = 'slow', t = 0;
+  const TRI = [[150, 230], [370, 230], [260, 60]];
+  const inTri = (x, y) => { const [a, b, c] = TRI; const s = (p, q, r) => (q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0]); const d1 = s(a, b, [x, y]), d2 = s(b, c, [x, y]), d3 = s(c, a, [x, y]); return !((d1 < 0 || d2 < 0 || d3 < 0) && (d1 > 0 || d2 > 0 || d3 > 0)); };
+  const onEdge = (x, y) => inTri(x, y) && (!inTri(x - 4, y) || !inTri(x + 4, y) || !inTri(x, y - 4) || !inTri(x, y + 4));
+  function frame() {
+    ctx.fillStyle = 'rgba(7,16,7,' + (speed === 'slow' ? (mode === 'raster' ? 0.015 : 0.06) : 0.25) + ')'; ctx.fillRect(0, 0, W, H);
+    const steps = mode === 'raster' ? (speed === 'slow' ? 14 : 700) : (speed === 'slow' ? 1 : 40);
+    for (let k = 0; k < steps; k++) {
+      t++;
+      if (mode === 'vector') {
+        const L = 3, per = 120, p = (t % (L * per)) / per, i = Math.floor(p), f = p - i;
+        const [x1, y1] = TRI[i], [x2, y2] = TRI[(i + 1) % 3];
+        const x = x1 + (x2 - x1) * f, y = y1 + (y2 - y1) * f;
+        ctx.fillStyle = GREEN; ctx.beginPath(); ctx.arc(x, y, 3, 0, 7); ctx.fill();
+        if (speed === 'slow' && k === 0) { ctx.strokeStyle = 'rgba(255,255,255,.25)'; ctx.beginPath(); ctx.moveTo(W / 2, H + 10); ctx.lineTo(x, y); ctx.stroke(); }
+      } else {
+        const cols = 104, rows = 60, idx = t % (cols * rows), r = Math.floor(idx / cols), c = idx % cols;
+        const x = c * 5 + 2, y = r * 5 + 2;
+        if (inTri(x, y)) { ctx.fillStyle = GREEN; ctx.fillRect(x - 2, y - 2, 4, 4); }
+        else if (speed === 'slow') { ctx.fillStyle = 'rgba(255,255,255,.18)'; ctx.fillRect(x - 1, y - 1, 2, 2); }
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+  function setCap() {
+    $$('#scan-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    $$('#scan-speed button').forEach(b => b.classList.toggle('sel', b.dataset.s === speed));
+    $('#scan-cap').innerHTML = mode === 'vector' ? '<b>矢量扫描</b>：电子束沿三角形的三条边描过去。磷光体只亮一小会儿就暗下去（看拖尾），所以要一遍遍重复描。' : '<b>光栅扫描</b>：电子束不管画什么，都按固定路线从左到右、从上到下扫遍整个屏幕，只在三角形内部的点打开电子束（慢放时灰点是"经过但不亮"的位置）。';
+  }
+  $$('#scan-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; t = 0; ctx.fillStyle = '#071007'; ctx.fillRect(0, 0, W, H); setCap(); });
+  $$('#scan-speed button').forEach(b => b.onclick = () => { speed = b.dataset.s; setCap(); });
+  setCap();
+  function still() {   // 系统要求减少动画时：直接画出结果
+    ctx.fillStyle = '#071007'; ctx.fillRect(0, 0, W, H); ctx.fillStyle = GREEN;
+    if (mode === 'vector') { ctx.strokeStyle = GREEN; ctx.lineWidth = 4; ctx.beginPath(); TRI.forEach(([x, y], i) => i ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.closePath(); ctx.stroke(); }
+    else for (let y = 2; y < H; y += 5) for (let x = 2; x < W; x += 5) if (inTri(x, y)) ctx.fillRect(x - 2, y - 2, 4, 4);
+  }
+  if (!reduceMotion) frame();
+  else { still(); $$('#scan-mode button').forEach(b => b.addEventListener('click', still)); }
+})();
+
+/* ---------- 内存对比 ---------- */
+(function () {
+  const svg = $('#memcmp');
+  const D = [['位图：200×200 黑白', 40000, 's-on', '40,000 位（超过 PDP-1 内存的一半）'], ['字符：80×25 × 8 位', 16000, 's-acc', '16,000 位'], ['矢量：画一个三角形', 160, 's-soft', '160 位']];
+  D.forEach(([n, v, cls, l], i) => {
+    const y = 16 + i * 44;
+    txt(svg, 190, y + 18, n, 't-main end');
+    el('rect', { x: 200, y, width: Math.max(3, v / 40000 * 300), height: 26, rx: 5, class: cls }, svg);
+    txt(svg, 200 + Math.max(3, v / 40000 * 300) + 8, y + 18, l, 't-mono');
+  });
+})();
+
+/* ---------- 字符生成器 ---------- */
+(function () {
+  const COLS = 16, ROWS = 2, CW = 8, CH = 12;
+  const off = document.createElement('canvas'); off.width = CW; off.height = CH;
+  const octx = off.getContext('2d');
+  const ROM = {};
+  function glyph(c) {
+    if (ROM[c]) return ROM[c];
+    octx.fillStyle = '#000'; octx.fillRect(0, 0, CW, CH); octx.fillStyle = '#fff'; octx.font = 'bold 11px monospace'; octx.textBaseline = 'top'; octx.fillText(c, 1, 0);
+    const d = octx.getImageData(0, 0, CW, CH).data, g = [];
+    for (let y = 0; y < CH; y++) { const row = []; for (let x = 0; x < CW; x++) row.push(d[(y * CW + x) * 4] > 110 ? 1 : 0); g.push(row); }
+    return (ROM[c] = g);
+  }
+  const scr = $('#cg-screen').getContext('2d');
+  let sel = 0;
+  function paint() {
+    const s = $('#cg-in').value.toUpperCase().padEnd(COLS * ROWS, ' ').slice(0, COLS * ROWS);
+    $('#cg-buf').innerHTML = [...s].map((c, i) => `<span data-i="${i}" class="${i === sel ? 'hl' : ''}" title="${c === ' ' ? '空格' : c}">${c.charCodeAt(0)}</span>`).join('');
+    $$('#cg-buf span').forEach(sp => sp.onclick = () => { sel = +sp.dataset.i; paint(); });
+    scr.fillStyle = '#071007'; scr.fillRect(0, 0, 384, 96);
+    [...s].forEach((c, i) => {
+      const g = glyph(c), ox = (i % COLS) * 24, oy = Math.floor(i / COLS) * 48;
+      g.forEach((row, y) => row.forEach((v, x) => { if (v) { scr.fillStyle = i === sel ? 'rgb(255,190,80)' : GREEN; scr.fillRect(ox + x * 3, oy + y * 3 + 6, 2.4, 2.4); } }));
+    });
+    const c = s[sel]; $('#cg-ch').textContent = c === ' ' ? '（空格）' : c;
+    $('#cg-rom').innerHTML = glyph(c).slice(0, 12).map(r => r.map(v => `<i class="${v ? 'on' : ''}"></i>`).join('')).join('');
+  }
+  $('#cg-in').oninput = () => { sel = Math.min(sel, $('#cg-in').value.length); paint(); };
+  sel = 6; paint();
+})();
+
+/* ---------- 矢量命令 ---------- */
+(function () {
+  const cv = $('#vec'), ctx = cv.getContext('2d');
+  const CMDS = ['RESET', 'MOVE_TO 50 50', 'INTENSITY 100', 'MOVE_TO 100 50', 'MOVE_TO 60 75', 'MOVE_TO 50 50', 'INTENSITY 0'];
+  let k, pos, inten, lines;
+  const S = 2;
+  function draw() {
+    ctx.fillStyle = '#071007'; ctx.fillRect(0, 0, 400, 200);
+    ctx.strokeStyle = 'rgba(255,255,255,.08)'; for (let x = 0; x <= 200; x += 25) { ctx.beginPath(); ctx.moveTo(x * S, 0); ctx.lineTo(x * S, 200); ctx.stroke(); } for (let y = 0; y <= 100; y += 25) { ctx.beginPath(); ctx.moveTo(0, y * S); ctx.lineTo(400, y * S); ctx.stroke(); }
+    ctx.strokeStyle = GREEN; ctx.lineWidth = 3; ctx.shadowColor = GREEN; ctx.shadowBlur = 8;
+    lines.forEach(([a, b]) => { ctx.beginPath(); ctx.moveTo(a[0] * S, a[1] * S); ctx.lineTo(b[0] * S, b[1] * S); ctx.stroke(); });
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = inten ? GREEN : 'rgba(255,190,80,.9)'; ctx.beginPath(); ctx.arc(pos[0] * S, pos[1] * S, 5, 0, 7); ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.font = '11px monospace'; ctx.fillText('(0,0)', 4, 12); ctx.fillText('200×100', 340, 194);
+    $('#vec-cmds').innerHTML = CMDS.map((c, i) => `<div class="${i === k ? 'cur' : i < k ? 'done' : ''}">${c}</div>`).join('');
+  }
+  function reset() { k = -1; pos = [0, 0]; inten = 0; lines = []; draw(); $('#vec-cap').innerHTML = '点"执行下一条"。黄点是电子枪当前对准的位置。'; $('#vec-next').disabled = false; }
+  $('#vec-next').onclick = () => {
+    k++;
+    const [op, a, b] = CMDS[k].split(' ');
+    let msg = '';
+    if (op === 'RESET') { pos = [0, 0]; inten = 0; lines = []; msg = 'RESET：清屏，绘图点回到 (0,0)，亮度设为 0。'; }
+    else if (op === 'INTENSITY') { inten = +a; msg = `INTENSITY ${a}：亮度设为 ${a}。` + (+a ? '之后移动时会留下亮线。' : '画完了，关掉电子束。'); }
+    else if (op === 'MOVE_TO') { const to = [+a, +b]; if (inten) lines.push([pos, to]); msg = `MOVE_TO ${a} ${b}：电子束移到 (${a}, ${b})` + (inten ? '，亮度不为 0，沿路画出一条线。' : '，亮度是 0，只移动不画。'); pos = to; }
+    draw();
+    if (k === CMDS.length - 1) { msg += '<br>一个三角形！7 条命令约 160 位，远比存一整屏像素省内存。'; $('#vec-next').disabled = true; }
+    $('#vec-cap').innerHTML = msg;
+  };
+  $('#vec-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 光笔 ---------- */
+(function () {
+  const svg = $('#pen');
+  el('rect', { x: 30, y: 20, width: 300, height: 180, rx: 14, style: 'fill:#071007' }, svg);
+  for (let r = 0; r < 9; r++) el('path', { d: `M45,${35 + r * 18} H315`, style: `stroke:${r === 5 ? 'rgb(120,255,140)' : 'rgba(255,255,255,.15)'};stroke-width:${r === 5 ? 3 : 1}` }, svg);
+  el('circle', { cx: 210, cy: 125, r: 8, style: 'fill:rgb(255,190,80)' }, svg);
+  el('path', { d: 'M210,125 L290,40', style: 'stroke:var(--ink);stroke-width:8;stroke-linecap:round' }, svg);
+  el('path', { d: 'M290,40 C320,10 360,30 380,60', class: 's-thin' }, svg);
+  txt(svg, 380, 74, '连到计算机', 't-sub');
+  txt(svg, 400, 110, '电子束按固定顺序扫屏幕，计算机知道', 't-sub');
+  txt(svg, 400, 128, '"第几微秒 → 扫到第几行第几列"。', 't-sub');
+  txt(svg, 400, 156, '笔尖传感器在第 6 行、偏右的位置', 't-sub');
+  txt(svg, 400, 174, '"看到"亮光 → 笔就在那里。', 't-sub t-on');
+})();
+
+/* ---------- 帧缓冲区 ---------- */
+(function () {
+  const W = 60, H = 35;
+  const fb = new Uint8Array(W * H);
+  const ctx = $('#fb').getContext('2d');
+  const img = ctx.createImageData(W, H);
+  let anim = null;
+  function show() { for (let i = 0; i < W * H; i++) { const v = fb[i]; img.data[i * 4] = v * .45; img.data[i * 4 + 1] = v; img.data[i * 4 + 2] = v * .55; img.data[i * 4 + 3] = 255; } ctx.putImageData(img, 0, 0); }
+  const set = (x, y, v) => { if (x >= 0 && x < W && y >= 0 && y < H) fb[y * W + x] = v; };
+  const drawRect = (x, y, w, h, c) => { for (let i = x; i < x + w; i++) for (let j = y; j < y + h; j++) set(i, j, c); };
+  const CODE = [
+    'setPixel(10, 10, 255)',
+    'for (y = 0; y < 35; y++)\n  setPixel(30, y, 255)',
+    'for (x = 12; x < 12 + 14; x++)\n  for (y = 18; y < 18 + 10; y++)\n    setPixel(x, y, 127)',
+    'function drawRect(x, y, w, h, c)\n  for (i = x; i < x + w; i++)\n    for (j = y; j < y + h; j++)\n      setPixel(i, j, c)\n\ndrawRect(40, 5, 12, 20, 255)\ndrawRect(43, 8, 6, 14, 0)   // 黑色',
+    '// 每一帧：清屏、画两个球拍和球、\n// 球碰到边就反弹——全是改帧缓冲区里的数字',
+  ];
+  const CAP = ['把 (10, 10) 处的值设为 255：一个最亮的像素。', '一个循环：x 固定为 30，y 从 0 到 34，整列都设成 255——一条竖线。', '矩形要四个值：起点 x、起点 y、宽、高。两层循环，颜色用 127（0 和 255 的一半）——灰色。', '把画矩形包装成函数，在另一边再画两个：一个亮的，再在里面画一个颜色为 0 的黑色矩形。', '乒乓球！程序每秒几十次改写帧缓冲区，画面就动起来了。'];
+  function stopAnim() { if (anim) { cancelAnimationFrame(anim); anim = null; } }
+  $$('#ch5 [data-s]').forEach(b => b.onclick = () => {
+    const s = b.dataset.s;
+    if (s === 'clear') { stopAnim(); fb.fill(0); show(); $('#fb-code').textContent = 'clear()'; $('#fb-cap').textContent = '所有值设回 0：全黑。'; return; }
+    const i = +s;
+    stopAnim();
+    if (i === 0) set(10, 10, 255);
+    if (i === 1) for (let y = 0; y < H; y++) set(30, y, 255);
+    if (i === 2) drawRect(12, 18, 14, 10, 127);
+    if (i === 3) { drawRect(40, 5, 12, 20, 255); drawRect(43, 8, 6, 14, 0); }
+    if (i === 4) {
+      let bx = 30, by = 17, vx = .6, vy = .45, p1 = 15, p2 = 15;
+      const loop = () => {
+        fb.fill(0);
+        bx += vx; by += vy;
+        if (by < 0 || by > H - 2) vy = -vy;
+        p1 += Math.sign(by - p1 - 3) * .35; p2 += Math.sign(by - p2 - 3) * .35;
+        if (bx < 3 && Math.abs(by - p1 - 3) < 5) vx = Math.abs(vx);
+        if (bx > W - 5 && Math.abs(by - p2 - 3) < 5) vx = -Math.abs(vx);
+        if (bx < 0 || bx > W) { bx = 30; by = 17; }
+        drawRect(1, Math.round(p1), 2, 7, 255); drawRect(W - 3, Math.round(p2), 2, 7, 255);
+        for (let y = 0; y < H; y += 3) set(30, y, 90);
+        drawRect(Math.round(bx), Math.round(by), 2, 2, 255);
+        show(); anim = requestAnimationFrame(loop);
+      };
+      loop();
+    }
+    show();
+    $('#fb-code').textContent = CODE[i];
+    $('#fb-cap').innerHTML = CAP[i];
+  });
+  show(); $('#fb-code').textContent = '// 点下面的按钮运行代码'; $('#fb-cap').textContent = '帧缓冲区：60 × 35 = 2100 个值，全是 0。';
+})();
+</script>
+</body>
+</html>

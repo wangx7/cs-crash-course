@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>24 冷战和消费主义 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tl{list-style:none;margin:12px 0 0;padding:0;position:relative}
+.tl::before{content:"";position:absolute;left:62px;top:0;bottom:0;width:2px;background:var(--line)}
+.tl li{display:grid;grid-template-columns:52px 20px 1fr;gap:6px;align-items:start;padding:6px 0;transition:opacity .2s}
+.tl li.dim{opacity:.18}
+.tl .yr{font:700 14px var(--mono);text-align:right;padding-top:2px}
+.tl .dot{width:12px;height:12px;border-radius:50%;margin:5px 0 0 4px;position:relative;z-index:1}
+.tl li.gov .dot{background:var(--accent)}
+.tl li.con .dot{background:var(--on)}
+.tl .tx{font-size:15px}
+.tl .tx small{display:block;color:var(--muted);font-size:12px}
+.memex{display:grid;grid-template-columns:1fr 1.4fr;gap:16px}
+@media (max-width:720px){.memex{grid-template-columns:1fr}}
+.doc{border:1px solid var(--line);border-radius:10px;padding:12px 14px;background:var(--panel);font-size:14px;min-height:150px}
+.doc h4{margin:0 0 6px;font-size:15px}
+.doc a{cursor:pointer;text-decoration:underline;text-decoration-style:dotted}
+.trail{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.trail span{padding:3px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
+.trail i{font-style:normal;color:var(--muted)}
+.req{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.req div{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)}
+.req b{display:block;font-size:16px;margin-bottom:4px}
+.req small{color:var(--muted)}
+@media (max-width:640px){.req{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-ep="24">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=25" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 24 集</div>
+  <h1>冷战和消费主义</h1>
+  <p class="en">The Cold War and Consumerism</p>
+  <p class="lead">前 23 集讲的很多东西——编程语言、集成电路、操作系统、屏幕——大多诞生在 1940 到 1970 年代这三十年里。这一集暂时放下电路和算法，看看是什么力量推着计算机在这三十年里从一屋子大小变成小孩手里的玩具。</p>
+  <div class="road">
+    <span>冷战与政府资助</span><i>→</i><span>UNIVAC</span><i>→</i><span>Memex</span><i>→</i><span>晶体管收音机</span><i>→</i><span>太空竞赛</span><i>→</i><span>日本电子业崛起</span><i>→</i><span>计算器与家用电脑</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 这三十年</a></li>
+    <li><a href="#ch1">1 · 冷战与政府资金</a></li>
+    <li><a href="#ch2">2 · Memex 与 NSF</a></li>
+    <li><a href="#ch3">3 · 晶体管收音机</a></li>
+    <li><a href="#ch4">4 · 太空竞赛</a></li>
+    <li><a href="#ch5">5 · 日美此消彼长</a></li>
+    <li><a href="#ch6">6 · 走进家庭</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>这三十年</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！之前我们从人类文明的曙光讲起（第 1 集），一直讲到 1940 年代中期电子计算机的诞生。过去 23 集里讲的很多东西，比如编程语言和编译器、算法和集成电路、软盘和操作系统、电传打字机和屏幕，全都出现在 1940 到 1970 年代这大约三十年间。那时还没有苹果和微软，也没有推特、谷歌或者 Uber，个人电脑的时代还没到来。万维网、无人驾驶汽车、虚拟现实这些话题，这个系列的后半部分会讲。</p>
+  <p>今天，我们不谈电路和算法，来聊聊这个影响巨大的时代。重点会放在冷战、太空竞赛、全球化，以及消费主义的兴起。</p>
+
+  <div class="card">
+    <h3>动手：这三十年的大事，按推动力分开看</h3>
+    <span class="seg-btns" id="tl-f"><button data-f="all">全部</button><button data-f="gov">政府 / 军事</button><button data-f="con">消费者 / 商业</button></span>
+    <ul class="tl" id="tl"></ul>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>冷战与政府资金</h2>
+  <p>1945 年二战结束后不久，两个超级大国——美国和苏联——之间的关系越来越紧张，冷战开始了。于是政府向科学和工程投入了大量资金。计算机在战时已经证明了自己的价值，比如曼哈顿计划和破解纳粹的通信加密，所以政府投入大量资源，各种雄心勃勃的项目得以进行，比如之前讲过的 ENIAC、EDVAC、Atlas 和旋风。这种高速发展，如果只靠商业运作——必须靠销售收回开发成本——是根本不可能做到的。</p>
+  <p>到 1950 年代，情况开始变化，尤其是 <b>UNIVAC 1</b>，它是第一台取得商业成功的计算机。和 ENIAC、Atlas 不同，UNIVAC 1 不是一台机器，而是一个<b>型号</b>，一共造了 40 多台。大部分 UNIVAC 卖给了政府或大公司，成为美国日益壮大的军事工业复合体的一部分，因为只有它们有钱买得起这些尖端技术。</p>
+  <p>一个著名的例子是：一台为美国原子能委员会生产的 UNIVAC 1，被 CBS 电视台用来预测 1952 年美国总统大选的结果。只用了 1% 的选票，UNIVAC 1 就正确预测出艾森豪威尔会以压倒性优势获胜，而专家们预测的是史蒂文森会赢。这件事把计算机推到了公众眼前。</p>
+  <p>计算机和以前的机器不一样。以前的机器增强的是人类的<b>体力</b>：卡车能运更多东西，自动织布机织得更快，机床加工更精确等等，这些代表了工业革命。而计算机增强的是人类的<b>智力</b>。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>Memex 与国家科学基金会</h2>
+  <p><b>范内瓦·布什</b>（Vannevar Bush）看到了这种潜力。他在 1945 年发表了一篇文章，描述了一种假想的计算设备，叫 <b>Memex</b>。人们可以用这台设备存放自己所有的书和其他资料，以及和别人的通信。而且数据按格式存储，所以可以快速查询，非常灵活，可以辅助我们的记忆。他还预言会出现一种新形式的百科全书，信息之间相互链接。听起来是不是很熟悉？</p>
+
+  <div class="card">
+    <h3>动手：顺着链接"联想"下去</h3>
+    <div class="memex">
+      <div>
+        <p class="muted" style="margin:0 0 6px;font-size:13px">你走过的路径（Memex 设想能把它保存下来、分享给别人）</p>
+        <div class="trail" id="mx-trail"></div>
+      </div>
+      <div class="doc" id="mx-doc"></div>
+    </div>
+    <p class="hint">点文中带下划线的词，跳到相关的资料</p>
+  </div>
+  <div class="extra">
+    <span class="t">这就是超链接</span>
+    布什在文章里把这种一条条资料之间的关联叫"联想路径"（associative trail）。几十年后它变成了超文本、万维网和维基百科——你现在点的就是 HTML 里的 <code>&lt;a&gt;</code> 链接。第 30 集讲万维网时还会回到这里。
+  </div>
+
+  <p>Memex 启发了之后的几个重要里程碑，比如上一集伊万·萨瑟兰的 Sketchpad，以及我们很快会讲到的道格·恩格尔巴特的 oN-Line System（第 26 集）。</p>
+  <p>范内瓦·布什曾经领导美国科学研究与发展局，这个部门负责在二战期间资助和协调科学研究。冷战期间，布什四处游说，想建立一个职责类似、但在和平时期运作的机构。于是<b>国家科学基金会</b>（NSF）在 1950 年成立。直到今天，国家科学基金会依然负责为科学研究提供政府资金，它是美国在科技上领先全球的主要原因之一。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>晶体管收音机与日本电子业</h2>
+  <p>1950 年代，消费者开始购买晶体管设备，其中值得一提的是<b>收音机</b>：它又小又耐用，用电池就够了，而且便携，不像 1940 年代以前那些用真空管的收音机。收音机大获成功，卖得像菲比精灵和 iPhone 一样火。</p>
+  <p>日本政府也在寻找工业机会，想振兴战后的经济。日本很快从贝尔实验室取得了晶体管的授权，帮助振兴了日本的半导体和电子产业。1955 年，<b>索尼</b>推出了它的第一款产品：TR-55 晶体管收音机。日本公司把重心放在质量和价格上，结果仅仅 5 年时间，就占领了美国便携收音机市场的一半。这为日本日后成为美国强大的工业对手埋下了伏笔。</p>
+  <p>1953 年，全世界大概只有 100 台计算机。这时苏联的计算机技术只比西方落后几年，苏联在 1950 年完成了它的第一台可编程电子计算机。但在太空竞赛上，苏联遥遥领先。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · 思想泡泡</div>
+  <h2>太空竞赛与阿波罗导航计算机</h2>
+  <p>苏联在 1957 年把第一颗人造卫星送上了轨道：<b>斯普特尼克 1 号</b>。不久之后的 1961 年，苏联宇航员<b>尤里·加加林</b>成为第一个进入太空的人。这让美国民众很不满，于是在加加林那次太空任务一个月后，肯尼迪总统提出要登上月球。登月可是很贵的！</p>
+  <p>NASA 的预算增长了将近十倍，在 1966 年达到顶峰，占了政府预算的 4.5%。如今，NASA 的预算只占约 0.5%。NASA 用这笔钱资助各种各样的科学研究，其中阿波罗计划花得最多，雇用了大约 40 万人，还有 2 万多所大学和公司参与。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="nasa" viewBox="0 0 680 140" role="img" aria-label="NASA 预算占比"></svg></div>
+      <figcaption>图 1　NASA 预算占美国政府预算的比例（数字来自课程）。</figcaption>
+    </figure>
+  </div>
+
+  <p>其中一个挑战是怎样在太空中导航：NASA 需要计算机来计算复杂的轨道、引导飞船。为此他们造了<b>阿波罗导航计算机</b>（Apollo Guidance Computer），它有三个重要要求：</p>
+  <div class="req">
+    <div><b>① 快</b><small>要实时算出复杂的轨道。这在意料之中。</small></div>
+    <div><b>② 小而轻</b><small>飞船里空间不多，而且要一路飞到月球，能轻一点是一点。</small></div>
+    <div><b>③ 超级可靠</b><small>太空里有震动、辐射、极端温差。东西坏了，可没法去百思买买个新的。</small></div>
+  </div>
+  <p>那个时代的主流技术——真空管和分立晶体管——满足不了这些要求。所以 NASA 用了一项全新的技术：几集前讲过的<b>集成电路</b>。阿波罗导航计算机是第一台使用集成电路的计算机，这是一次巨大的范式转变。<span class="muted" style="font-size:13px">（这是课程的说法；也有资料认为同一时期为美国空军演示的样机更早。）</span>NASA 是唯一负担得起集成电路的组织：起初一块芯片大约 50 美元，而导航计算机需要几千块。但美国也因此成功登月，打败了苏联。</p>
+  <p>虽然人们常把集成电路的发展归功于阿波罗导航计算机，但它们的产量很低，一共只有 17 次阿波罗任务。实际上，是<b>军方</b>大大推动了集成电路的发展，尤其是洲际导弹和核弹，它们让集成电路得以大规模生产。美国在建造强大的计算机时，也进一步推动了集成电路的发展，这些计算机一般叫<b>超级计算机</b>，因为它们往往比全世界最快的普通计算机还快 10 倍以上。但 CDC、Cray、IBM 造的这些计算机极其昂贵，几乎只有政府买得起，它们被用于美国国家安全局这样的政府机构，以及劳伦斯·利弗莫尔、洛斯·阿拉莫斯这样的国家实验室。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>日美此消彼长</h2>
+  <p>起初，美国的半导体产业靠利润丰厚的政府合同起步，因此忽视了利润微薄的消费者市场。于是日本半导体产业在 1950、60 年代靠低利润率占领了消费者市场。日本人投入大量资金，大规模生产以获得<b>规模经济</b>，同时研究技术，提高质量和良品率，并用自动化降低成本。</p>
+  <p>1970 年代，太空竞赛和冷战逐渐降温，高利润的政府合同变少了，美国的半导体和电子公司发现越来越难竞争。很多计算机部件变成了标准化的大宗商品，这也帮不上忙：DRAM 就是 DRAM，既然能从日立买到便宜的，干嘛要从英特尔买贵的？1970 年代，美国公司开始缩水、合并，或者干脆倒闭。1974 年，英特尔不得不裁掉三分之一的员工；大名鼎鼎的仙童半导体也在 1979 年濒临倒闭，被其他公司收购。为了生存，很多公司把生产外包出去，降低成本。英特尔不再把精力放在内存芯片上，而是转向<b>处理器</b>，这个决定最终挽救了公司。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="forces" viewBox="0 0 680 230" role="img" aria-label="两股推动力"></svg></div>
+      <figcaption>图 2　推动计算机发展的两股力量此消彼长（示意，不是精确数据）。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>计算器、游戏机和家用电脑</h2>
+  <p>美国公司的乏力，让夏普、卡西欧这样的日本公司主导了 1970 年代的一种热门产品：<b>手持计算器</b>。因为集成电路，计算器变得又小又便宜，取代了办公室里昂贵的台式计算器。对大多数人来说，这是他们第一次不用纸笔和计算尺来做计算。手持计算器因此大卖，进一步降低了集成电路的成本，让微处理器得到广泛使用，比如之前讲过的英特尔 4004——英特尔在 1971 年应日本计算器公司 Busicom 的要求做了这块芯片。</p>
+  <p>很快，日本电子产品到处都是，从电视到手表到随身听。而廉价的微处理器也催生了全新的产品，比如<b>街机游戏</b>：1972 年诞生了 Pong，1976 年诞生了《打砖块》（Breakout）。随着成本不断下降，很快普通人也买得起计算机了。这一时期，第一批家用电脑开始出现，比如 1975 年的 Altair 8800，以及第一批家用游戏机，比如 1977 年的 Atari 2600。<b>家用</b>！我再说一遍，<b>家用</b>！今天这看起来没什么大不了，但那时候这是计算机的一个全新时代。</p>
+  <p>在短短三十年里，计算机从大到人可以在 CPU 里走来走去——当然，得有政府许可——变成了小孩都能拿在手里的掌上玩具，而且里面的微处理器还快得多。推动这场巨变的是两股力量：<b>政府和消费者</b>。政府的资金，比如冷战期间美国投入的那些钱，推动了计算机的早期发展，并让计算机产业活得足够久，等到技术成熟到可以商用。然后是企业，最后是消费者，把计算机变成了主流。</p>
+  <p>冷战虽然结束了，但这种关系今天仍在延续：政府依然在资助科学研究，情报机构依然在买超级计算机，人类依然在被送上太空，而你依然在买电视、Xbox、PlayStation、笔记本和手机。所以，计算机会继续飞速发展。我们下周见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    冷战期间，政府和军方的巨额资金让计算机在"不赚钱"的早期活了下来、不断进步（ENIAC、阿波罗导航计算机、导弹、超级计算机）；随后日本企业以质量、价格和规模经济打开了消费市场（收音机、计算器），把芯片做得越来越便宜，最终让计算机走进了千家万户。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么说早期计算机的发展离不开政府资金？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">早期计算机极其昂贵，仅靠卖产品收回开发成本根本做不到那种发展速度。冷战让政府愿意大量投入（ENIAC、EDVAC、Atlas、旋风……），直到 1950 年代 UNIVAC 1 才出现商业成功，而且主要买家仍是政府和大公司。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 课程说计算机和工业革命时期的机器有什么本质不同？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">以前的机器增强人的体力（卡车、织布机、机床），计算机增强的是人的智力——范内瓦·布什的 Memex 设想就是用机器辅助人的记忆和思考。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 阿波罗导航计算机为什么要用集成电路？集成电路真正的大规模生产靠的是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它必须快、小而轻、在震动和辐射下超级可靠，真空管和分立晶体管做不到。但阿波罗只有 17 次任务、产量很小，真正让集成电路大规模生产的是军方的洲际导弹、核弹，以及超级计算机。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 1970 年代美国半导体公司为什么陷入困境？英特尔是怎么活下来的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">政府高利润合同减少；它们此前忽视了消费市场，而日本公司靠规模经济、质量和自动化占领了它；内存这类部件变成大宗商品，只能比价格。英特尔裁员三分之一，并从内存转向处理器，最终靠处理器活了下来。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="23.html"><small>← 上一集</small>23 屏幕与 2D 图形显示</a>
+    <a class="next" href="25.html"><small>下一集 →</small>25 个人计算机革命</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 24 集 The Cold War and Consumerism（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 年表 ---------- */
+(function () {
+  const E = [
+    [1945, 'gov', '二战结束，冷战开始；范内瓦·布什发表 Memex 构想', '政府开始向科学和工程大量投入'],
+    [1946, 'gov', 'ENIAC 建成', '政府资助的大型项目之一'],
+    [1950, 'gov', '美国国家科学基金会（NSF）成立；苏联完成第一台可编程电子计算机', ''],
+    [1951, 'con', 'UNIVAC 1：第一台商业成功的计算机型号', '共造了 40 多台，主要卖给政府和大公司'],
+    [1952, 'con', 'CBS 用 UNIVAC 1 预测总统大选', '只用 1% 的选票就猜中艾森豪威尔大胜'],
+    [1953, 'gov', '全世界大约只有 100 台计算机', ''],
+    [1955, 'con', '索尼 TR-55 晶体管收音机', '5 年内日本公司占了美国便携收音机市场的一半'],
+    [1957, 'gov', '苏联发射斯普特尼克 1 号', '太空竞赛开始'],
+    [1961, 'gov', '加加林进入太空；一个月后肯尼迪提出登月', ''],
+    [1966, 'gov', 'NASA 预算达到顶峰：政府预算的 4.5%', '阿波罗计划约 40 万人、2 万多所大学和公司'],
+    [1969, 'gov', '阿波罗登月', '按课程的说法，阿波罗导航计算机是第一台使用集成电路的计算机'],
+    [1971, 'con', '英特尔 4004，应日本计算器公司 Busicom 要求设计', '手持计算器大卖，芯片越来越便宜'],
+    [1972, 'con', '街机游戏 Pong', ''],
+    [1974, 'con', '英特尔裁员三分之一', '政府合同减少，日本竞争激烈'],
+    [1975, 'con', 'Altair 8800：第一批家用电脑', '第 10 集讲过用开关给它编程'],
+    [1976, 'con', '街机游戏《打砖块》Breakout', ''],
+    [1977, 'con', 'Atari 2600：第一批家用游戏机', '家用！'],
+    [1979, 'con', '仙童半导体濒临倒闭，被收购', ''],
+  ];
+  let f = 'all';
+  function paint() {
+    $('#tl').innerHTML = E.map(([y, k, t, s]) => `<li class="${k} ${f !== 'all' && f !== k ? 'dim' : ''}"><span class="yr">${y}</span><span class="dot"></span><span class="tx">${t}${s ? `<small>${s}</small>` : ''}</span></li>`).join('');
+    $$('#tl-f button').forEach(b => b.classList.toggle('sel', b.dataset.f === f));
+  }
+  $$('#tl-f button').forEach(b => b.onclick = () => { f = b.dataset.f; paint(); });
+  paint();
+})();
+
+/* ---------- Memex ---------- */
+(function () {
+  const D = {
+    memex: ['Memex', '范内瓦·布什 1945 年设想的一种桌子大小的设备：存放你所有的书、资料和<a data-g="letters">通信</a>，能快速查询。最特别的是，你可以把相关的资料<a data-g="trail">连成一条路径</a>。'],
+    letters: ['通信', '和同事的往来信件也存进 Memex。比如一封讨论<a data-g="bow">土耳其弓</a>的信，你可以把它和相关的书连起来。'],
+    bow: ['土耳其弓', '布什文章里的例子：一位研究者想知道为什么土耳其短弓比英国长弓更强，他把百科全书、历史书、<a data-g="physics">弹性材料的物理</a>一条条连起来。'],
+    physics: ['弹性材料的物理', '一本物理教材里讲弹性的那一章。研究者在这里批注，又连回<a data-g="trail">他的整条路径</a>。'],
+    trail: ['联想路径', '把一条条资料按思考的顺序连起来的"路径"，可以保存下来，甚至复制一份<a data-g="wiki">送给朋友</a>。这就是超链接的雏形。'],
+    wiki: ['今天的样子', '信息之间相互链接的百科全书——维基百科；链接一个接一个的网页——万维网。都是 Memex 设想的后代。回到<a data-g="memex">Memex</a>。'],
+  };
+  let trail = [];
+  function go(k) {
+    trail.push(D[k][0]); if (trail.length > 7) trail.shift();
+    $('#mx-doc').innerHTML = `<h4>${D[k][0]}</h4>${D[k][1]}`;
+    $$('#mx-doc a').forEach(a => a.onclick = () => go(a.dataset.g));
+    $('#mx-trail').innerHTML = trail.map(t => `<span>${t}</span>`).join('<i>→</i>');
+  }
+  go('memex');
+})();
+
+/* ---------- NASA ---------- */
+(function () {
+  const svg = $('#nasa');
+  [['1966 年（顶峰）', 4.5, 's-on'], ['如今', .5, 's-acc']].forEach(([n, v, cls], i) => {
+    const y = 20 + i * 50;
+    txt(svg, 140, y + 20, n, 't-main end');
+    el('rect', { x: 150, y, width: v * 100, height: 30, rx: 5, class: cls }, svg);
+    txt(svg, 150 + v * 100 + 10, y + 21, v + '%', 't-mono');
+  });
+  txt(svg, 150, 132, '预算几乎涨了十倍，大部分花在阿波罗计划上', 't-sub');
+})();
+
+/* ---------- 两股力量 ---------- */
+(function () {
+  const svg = $('#forces');
+  const X0 = 60, X1 = 640, Y0 = 190, Y1 = 30, A = 1940, B = 1985;
+  const sx = y => X0 + (y - A) / (B - A) * (X1 - X0);
+  const gov = y => Y0 - (Y0 - Y1) * Math.exp(-Math.pow((y - 1962) / 14, 2)) * .95;
+  const con = y => Y0 - (Y0 - Y1) / (1 + Math.exp(-(y - 1972) / 4)) * .95;
+  const path = f => { let d = ''; for (let y = A; y <= B; y += .5) d += (y === A ? 'M' : 'L') + sx(y) + ',' + f(y); return d; };
+  el('line', { x1: X0, y1: Y0, x2: X1, y2: Y0, class: 's-line' }, svg);
+  for (let y = 1940; y <= 1980; y += 10) txt(svg, sx(y), Y0 + 18, String(y), 't-sub mid');
+  el('path', { d: path(gov), style: 'fill:none;stroke:var(--accent);stroke-width:4' }, svg);
+  el('path', { d: path(con), style: 'fill:none;stroke:var(--on);stroke-width:4' }, svg);
+  txt(svg, sx(1952), gov(1952) - 12, '政府 / 军方的资金', 't-main t-acc');
+  txt(svg, sx(1976) + 10, con(1976) + 26, '消费者 / 商业市场', 't-main t-on');
+  [[1957, '斯普特尼克', 'mid'], [1966, 'NASA 顶峰 ', 'end'], [1971, ' 4004 · 计算器', ''], [1977, '家用游戏机', 'mid']].forEach(([y, l, an], i) => { el('line', { x1: sx(y), y1: Y0, x2: sx(y), y2: Y1 - 10, class: 's-dash' }, svg); txt(svg, sx(y), i === 3 ? Y1 + 4 : Y1 - 14, l, 't-sub ' + an); });
+})();
+</script>
+</body>
+</html>

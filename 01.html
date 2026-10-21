@@ -1,0 +1,862 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>01 计算机早期历史 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.bead{transition:transform .35s ease}
+.bead circle{fill:var(--panel);stroke:var(--wood);stroke-width:2;cursor:pointer;transition:fill .2s}
+.bead.on circle{fill:var(--on);stroke:var(--on)}
+.bead:hover circle{stroke-width:3}
+.rod{stroke:var(--wood);stroke-width:3}
+.frame{fill:none;stroke:var(--wood);stroke-width:6;rx:10}
+.gear-rot{transition:transform .4s ease}
+.gear-body{fill:var(--panel);stroke:var(--brass);stroke-width:3}
+.gear-tooth{fill:var(--brass)}
+.gear.carry .gear-body{stroke:var(--on);fill:var(--on-soft)}
+.gear-digit{font-family:var(--mono);font-size:15px;fill:var(--muted);text-anchor:middle;dominant-baseline:central}
+.pointer{fill:var(--on)}
+.dot17{fill:var(--panel);stroke:var(--ink);stroke-width:1.6;transition:fill .25s, opacity .25s}
+.dot17.g1{fill:var(--on-soft);stroke:var(--on)}
+.dot17.g2{fill:var(--accent-soft);stroke:var(--accent)}
+.dot17.g3{fill:var(--ok-soft);stroke:var(--ok)}
+.dot17.left{fill:var(--ink)}
+.pin{transition:transform .35s ease}
+.pin rect{fill:var(--metal)}
+.cell{cursor:pointer}
+.cell rect.box{fill:transparent;stroke:var(--line);stroke-width:1}
+.cell:hover rect.box{fill:var(--accent-soft)}
+.cell .hole{fill:var(--ink);opacity:0;transition:opacity .15s}
+.cell.punched .hole{opacity:1}
+.card-paper{fill:var(--paper);stroke:var(--wood);stroke-width:1.5}
+.cup{fill:none;stroke:var(--ink);stroke-width:2}
+.hg{fill:var(--mercury);transition:fill .2s}
+.hg.on{fill:var(--on)}
+.counter rect{fill:var(--panel);stroke:var(--ink);stroke-width:2;transition:all .2s}
+.counter.bump rect{stroke:var(--on);fill:var(--on-soft)}
+.diff-table td.hl{background:var(--on-soft);font-weight:700}
+.diff-table td.given{color:var(--muted)}
+.diff-table tr.new td{animation:pop .5s}
+@keyframes pop{from{background:var(--on-soft)}to{background:transparent}}
+</style>
+</head>
+<body data-ep="1">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=2" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 1 集</div>
+  <h1>计算机早期历史</h1>
+  <p class="en">Early Computing</p>
+  <p class="lead">电子计算机才出现不久，但人类对计算的需求早就有了。这一集从 4500 年前的算盘讲到 IBM 的诞生：每一件工具，都是因为社会规模超出了人脑能处理的范围。</p>
+  <div class="road">
+    <span>算盘</span><i>→</i><span>步进计算器</span><i>→</i><span>计算表</span><i>→</i><span>差分机</span><i>→</i><span>分析机</span><i>→</i><span>打孔卡片制表机</span><i>→</i><span>IBM</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 这门课讲什么</a></li>
+    <li><a href="#ch1">1 · 算盘</a></li>
+    <li><a href="#ch2">2 · "计算机"曾是职业</a></li>
+    <li><a href="#ch3">3 · 步进计算器</a></li>
+    <li><a href="#ch4">4 · 计算表与射程表</a></li>
+    <li><a href="#ch5">5 · 差分机与分析机</a></li>
+    <li><a href="#ch6">6 · 打孔卡片制表机</a></li>
+    <li><a href="#ch7">7 · IBM 的诞生</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>这门课要讲什么</h2>
+  <p>Hello world！我是 Carrie Anne，欢迎收看计算机科学速成课！</p>
+  <p>在这个系列里，我们会从位（bit）、字节（byte）、晶体管和逻辑门讲起，一直讲到操作系统、虚拟现实和机器人。内容很多，但先说清楚：我们<b>不会</b>教你怎么编程，而是把计算当作一门学科、一项技术，纵览一系列计算机话题。</p>
+  <p>计算机是当今世界的命脉。如果所有计算机突然同时关掉：电网会停摆，汽车会相撞，飞机会坠毁，净水厂会停工，股市会冻结，装满食物的卡车不知道该往哪儿送，员工也领不到工资。就连很多看上去和计算机无关的东西，比如 DFTBA 的 T 恤和我坐的这把椅子，也是在计算机管理的工厂里造出来的。计算机几乎改变了我们生活的每个方面。</p>
+  <p>这也不是人类第一次遇到这种由技术推动的全球变革。工业革命中制造能力的进步，让农业、工业和家庭生活都进入了新的规模：机械化带来了更好的收成和更多的食物，商品可以大批量生产，旅行和通讯变得更便宜、更快，生活质量通常也更好了。计算机技术正在做同样的事——从自动化农业和医疗设备，到全球通信和教育机会，再到虚拟现实、无人驾驶汽车这样的新领域。我们所处的时代，很可能会被后人称为<b>"电子时代"</b>。</p>
+  <p>你的智能手机里有数十亿个晶体管，计算机看起来似乎非常复杂。但实际上，它们只是很简单的机器，<b>通过一层又一层的抽象</b>来完成复杂的操作。这个系列会把这些层一层层拆开：从最简单的 1 和 0 开始，到逻辑单元、CPU、操作系统，再到整个互联网，乃至更远。</p>
+
+  <div class="card">
+    <figure>
+      <svg class="diagram" viewBox="0 0 640 330" role="img" aria-label="计算机的抽象层">
+        <!-- 层 -->
+        <g>
+          <rect x="30" y="20"  width="300" height="40" rx="8" class="s-acc"/><text x="180" y="45" class="t-main mid">网页 · 应用</text>
+          <rect x="30" y="70"  width="300" height="40" rx="8" class="s-panel"/><text x="180" y="95" class="t-main mid">互联网（数据包的传输）</text>
+          <rect x="30" y="120" width="300" height="40" rx="8" class="s-panel"/><text x="180" y="145" class="t-main mid">操作系统</text>
+          <rect x="30" y="170" width="300" height="40" rx="8" class="s-panel"/><text x="180" y="195" class="t-main mid">CPU</text>
+          <rect x="30" y="220" width="300" height="40" rx="8" class="s-panel"/><text x="180" y="245" class="t-main mid">逻辑门</text>
+          <rect x="30" y="270" width="300" height="40" rx="8" class="s-on"/><text x="180" y="295" class="t-main mid">晶体管 · 1 和 0</text>
+        </g>
+        <!-- 往上搭 -->
+        <path d="M22,300 V30" class="s-line" marker-end="url(#arrUp)"/>
+        <text x="8" y="170" class="t-sub mid" transform="rotate(-90 8 170)">一层层往上搭</text>
+        <defs>
+          <marker id="arrUp" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="currentColor" style="color:var(--ink)"/></marker>
+          <marker id="arrM" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted)"/></marker>
+        </defs>
+        <!-- 人 -->
+        <g>
+          <text x="360" y="38" class="t-main">买 T 恤的顾客</text>
+          <text x="360" y="56" class="t-sub">只管在网页上下单</text>
+          <path d="M350,40 H336" class="s-thin" marker-end="url(#arrM)"/>
+
+          <text x="460" y="88" class="t-main">网页设计师</text>
+          <text x="460" y="106" class="t-sub">不用知道数据包怎么走</text>
+          <path d="M452,84 C400,70 380,60 338,44" class="s-thin" marker-end="url(#arrM)"/>
+
+          <text x="360" y="138" class="t-main">路由器工程师</text>
+          <text x="360" y="156" class="t-sub">不用懂晶体管的逻辑</text>
+          <path d="M350,134 C345,115 342,100 338,92" class="s-thin" marker-end="url(#arrM)"/>
+
+          <text x="360" y="230" class="t-acc">每个人只需要懂自己那一层</text>
+          <text x="360" y="250" class="t-sub">下面的层被"封装"起来了——这就是抽象</text>
+        </g>
+      </svg>
+      <figcaption>图 1　计算机是一层层搭起来的。课程会从最底层的 1 和 0 讲起，一路向上。</figcaption>
+    </figure>
+  </div>
+
+  <p>不用担心。就像在网上买 T 恤的人不需要知道网页是怎么写的，网页设计师不需要知道数据包是怎么传输的，设计路由器的工程师也不需要懂晶体管的逻辑——这个系列每一集都会接着上一集讲，但并不依赖前面的内容。</p>
+  <p>等这个系列结束，我希望你能更好地理解计算机在你个人生活和整个社会中扮演的角色，也明白这项（可以说是）人类最伟大的发明，其实还处在婴儿期，它最大的影响还没有到来。</p>
+  <p>不过在深入之前，我们应该从计算的起源讲起。因为<b>虽然电子计算机出现不久，但人类对计算的需求早就有了</b>。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>算盘：最早的计算设备</h2>
+  <p>公认最早的计算设备是<b>算盘</b>，大约公元前 2500 年发明于美索不达米亚。它本质上是一台手动计算器，用来帮人加减很多数字。它还<b>存储着当前的计算状态</b>，很像今天的硬盘。</p>
+  <p>人们制造算盘，是因为社会的规模已经超出了一个人能在脑子里记住和处理的范围。一个村庄可能有上千人，或者上万头牛。</p>
+  <p>算盘有很多变种。我们来看一个最基础的版本：<b>每一行代表 10 的不同次方</b>。最底下一行的每颗珠子代表 1，上面一行的每颗代表 10，再上面一行代表 100，以此类推。</p>
+
+  <div class="card">
+    <h3>动手：拨算盘</h3>
+    <div class="scroll-x"><svg class="diagram" id="abacus" viewBox="0 0 600 250" role="img" aria-label="可交互的算盘"></svg></div>
+    <div class="readout" id="ab-read"></div>
+    <div class="step-text" id="ab-step">按课程里的顺序点下面的按钮，或者直接点珠子：点左边的珠子把它拨到右边，点右边的珠子把它拨回去。</div>
+    <div class="btns">
+      <button class="btn" id="ab-3">① 有 3 头牛</button>
+      <button class="btn" id="ab-p4">② 再买 4 头</button>
+      <button class="btn" id="ab-p5">③ 再买 5 头（要进位）</button>
+      <button class="btn" id="ab-1251">④ 表示 1251</button>
+      <button class="btn" id="ab-clr">清零</button>
+    </div>
+    <p class="hint">拨到右边的珠子（橙色）才算数</p>
+  </div>
+
+  <p>假设我们有 3 头牛，就在最底下一行把 3 颗珠子拨到右边。如果再买 4 头牛，只要再往右拨 4 颗，一共 7 颗。</p>
+  <p>但如果再买 5 头，这一行的珠子就不够用了。于是我们把这一行全部拨回左边，在第二行往右拨 1 颗，代表 10，然后在最底下一行再拨 2 颗，总数就是 12。</p>
+  <p>这种方法处理大数字特别有效。比如要加上 1251，只需要在最底下一行拨 1 颗，第二行拨 5 颗，第三行拨 2 颗，第四行拨 1 颗。我们不用在脑子里做加法，<b>算盘会替我们记住总数</b>。</p>
+  <div class="extra">
+    <span class="t">和后面课程的联系</span>
+    请留意"一行满了就清零、向上一行进 1"这个动作。等一下的步进计算器里，齿轮转过 9 会做同样的事；到了第 5 集，你会在加法电路里再次看到它，那时它叫<b>进位（carry）</b>。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>更多计算工具，以及"计算机"曾经是一种职业</h2>
+  <p>在接下来的 4000 年里，人类发明了各种巧妙的计算设备。比如<b>星盘</b>，让船只能在海上算出所在的纬度；<b>计算尺</b>，帮助做乘法和除法；人们还造出了上百种<b>时钟</b>，可以用来计算日出、潮汐、天体的位置，或者单纯拿来计时。</p>
+
+  <div class="card">
+    <figure>
+      <svg class="diagram" viewBox="0 0 640 200" role="img" aria-label="星盘、计算尺、时钟">
+        <!-- 星盘 -->
+        <g transform="translate(110 88)">
+          <circle r="58" class="s-panel"/>
+          <circle r="44" class="s-thin"/>
+          <circle r="22" class="s-thin" transform="translate(0 -10)"/>
+          <ellipse rx="44" ry="18" class="s-thin" transform="translate(0 6)"/>
+          <line x1="-52" y1="22" x2="52" y2="-22" class="s-line" style="stroke:var(--on);stroke-width:3"/>
+          <circle r="4" style="fill:var(--ink)"/>
+          <circle cy="-66" r="7" class="s-panel"/>
+        </g>
+        <text x="110" y="172" class="t-main mid">星盘</text>
+        <text x="110" y="190" class="t-sub mid">在海上算纬度</text>
+        <!-- 计算尺 -->
+        <g transform="translate(220 62)">
+          <rect x="0" y="0" width="200" height="22" rx="3" class="s-panel"/>
+          <rect x="40" y="22" width="200" height="18" rx="2" class="s-acc"/>
+          <rect x="0" y="40" width="200" height="22" rx="3" class="s-panel"/>
+          <g class="s-thin">
+            <path d="M10,22 v-8 M30,22 v-5 M50,22 v-8 M70,22 v-5 M90,22 v-8 M110,22 v-5 M130,22 v-8 M150,22 v-5 M170,22 v-8 M190,22 v-5"/>
+            <path d="M10,40 v8 M30,40 v5 M50,40 v8 M70,40 v5 M90,40 v8 M110,40 v5 M130,40 v8 M150,40 v5 M170,40 v8 M190,40 v5"/>
+          </g>
+          <rect x="112" y="-8" width="24" height="78" rx="3" style="fill:var(--on-soft);stroke:var(--on);stroke-width:1.5"/>
+          <line x1="124" y1="-8" x2="124" y2="70" style="stroke:var(--on);stroke-width:1.5"/>
+        </g>
+        <text x="330" y="172" class="t-main mid">计算尺</text>
+        <text x="330" y="190" class="t-sub mid">帮助做乘除</text>
+        <!-- 时钟 -->
+        <g transform="translate(540 88)">
+          <circle r="58" class="s-panel"/>
+          <g class="s-line">
+            <path d="M0,-50 v8 M0,50 v-8 M-50,0 h8 M50,0 h-8"/>
+          </g>
+          <path d="M25,-43 l-3,5 M43,-25 l-5,3 M43,25 l-5,-3 M25,43 l-3,-5 M-25,43 l3,-5 M-43,25 l5,-3 M-43,-25 l5,3 M-25,-43 l3,5" class="s-thin"/>
+          <line x1="0" y1="0" x2="0" y2="-36" class="s-line" style="stroke-width:3"/>
+          <line x1="0" y1="0" x2="26" y2="14" class="s-line" style="stroke:var(--on);stroke-width:3"/>
+          <circle r="4" style="fill:var(--ink)"/>
+        </g>
+        <text x="540" y="172" class="t-main mid">时钟</text>
+        <text x="540" y="190" class="t-sub mid">算日出、潮汐、天体位置</text>
+      </svg>
+      <figcaption>图 2　每种工具都让一件原本很费力的计算变得更快、更简单、更准确（示意图）。</figcaption>
+    </figure>
+  </div>
+
+  <p>这些设备都让原本很费力的计算变得更快、更简单，而且往往更准确。它们<b>降低了门槛</b>，同时也<b>放大了我们的脑力</b>。</p>
+  <div class="callout key">
+    <span class="t">敲黑板</span>
+    "降低门槛 + 放大脑力"是这个系列会反复提到的主题，记下来。
+  </div>
+  <p>正如计算机先驱 Charles Babbage（查尔斯·巴贝奇）所说：</p>
+  <blockquote class="quote"><b>"随着知识的增长和每一件新工具的发明，人类的劳动会越来越少。"</b><span class="who">—— Charles Babbage</span></blockquote>
+  <p>然而，这些设备当时都不叫"计算机"。"computer"这个词最早出现在 1613 年 Richard Braithwait 的一本书里，而且它指的根本不是机器，而是<b>一种职业</b>。Braithwait 写道：</p>
+  <blockquote class="quote"><b>"我读到过这个时代最出色的计算者，有史以来最好的算术家，他能把你好几天的工作缩短到很少的时间。"</b><span class="who">—— Richard Braithwait，1613</span></blockquote>
+  <p>那时候，"computer"指的是<b>负责计算的人</b>，有时会借助机器，但大多数时候不用。这个职业一直延续到 19 世纪末，之后"computer"的意思才逐渐转向指代机器。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>步进计算器：第一台能做加减乘除的机器</h2>
+  <p>这些机器中最有名的是<b>步进计算器</b>（Step Reckoner），由德国博学家戈特弗里德·莱布尼茨在 1694 年制造。莱布尼茨说过：</p>
+  <blockquote class="quote"><b>"……让优秀的人把时间浪费在计算上，有失他们的尊严，因为任何农民借助机器都能算得一样准确。"</b><span class="who">—— 戈特弗里德·莱布尼茨</span></blockquote>
+  <p>它的工作方式有点像汽车里的<b>里程表</b>——里程表其实就是一台不断累加行驶里程的机器。步进计算器里有一连串可以转动的齿轮，<b>每个齿轮有 10 个齿，代表数字 0 到 9</b>。每当一个齿轮转过 9，它就会转回 0，同时让旁边的齿轮前进一个齿。这就像在那个基础版算盘上数到 10 一样。做减法时，机器则反向运转。</p>
+
+  <div class="card">
+    <h3>动手：齿轮怎么进位</h3>
+    <div class="scroll-x"><svg class="diagram" id="gears" viewBox="0 0 560 230" role="img" aria-label="可交互的步进计算器齿轮"></svg></div>
+    <div class="readout" id="gear-read"></div>
+    <div class="btns" id="gear-btns">
+      <button class="btn primary" id="g-p1">+1</button>
+      <button class="btn" id="g-m1">−1</button>
+      <button class="btn" id="g-p7">+7（一齿一齿地转）</button>
+      <button class="btn" id="g-199">设为 199，再 +1 看连环进位</button>
+      <button class="btn" id="g-clr">清零</button>
+    </div>
+    <p class="hint">盯住个位齿轮从 9 转到 0 的那一下：十位齿轮会跟着前进一齿</p>
+  </div>
+
+  <p>借助一些巧妙的机械结构，步进计算器还能做乘法和除法。<b>乘法和除法其实只是多次加法和减法。</b>比如要算 17 除以 5，我们只要减 5，再减 5，再减 5，直到不能再减为止，就知道 17 里有 3 个 5，还余 2。</p>
+
+  <div class="card">
+    <h3>动手：用减法做除法，17 ÷ 5</h3>
+    <div class="scroll-x"><svg class="diagram" id="div17" viewBox="0 0 600 120" role="img" aria-label="17 除以 5 的演示"></svg></div>
+    <div class="step-text" id="div-step">17 个圆点。点"减一次 5"。</div>
+    <div class="btns">
+      <button class="btn primary" id="div-next">减一次 5</button>
+      <button class="btn" id="div-reset">重来</button>
+    </div>
+  </div>
+
+  <p>步进计算器能<b>自动</b>完成这种操作，它是第一台能做加、减、乘、除全部四种运算的机器。这个设计非常成功，在之后的三个世纪里一直被计算器沿用。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>计算表与射程表</h2>
+  <p>不幸的是，就算有了机械计算器，大多数现实问题仍然需要很多步计算才能得出答案，算出一个结果可能要几小时甚至几天。而且这些手工制作的机器非常昂贵，大多数人用不起。</p>
+  <p>所以在 20 世纪以前，大多数人接触计算的方式是<b>预先算好的计算表</b>，这些表就是由前面说的那些了不起的"人力计算机"编出来的。比如你想知道 8,675,309 的平方根，与其花一整天手摇步进计算器，不如翻开一本厚厚的平方根表，一分钟左右就能查到。</p>
+  <p>速度和准确性在战场上尤其重要，所以军队是最早用计算来解决复杂问题的群体之一。其中一个特别难的问题是<b>精确发射炮弹</b>。到 19 世纪，炮弹的射程已经能超过 1 公里（比半英里多一点）。再加上风力、温度、气压在不断变化，就算是想打中一艘船那么大的目标都很困难。</p>
+  <p>于是出现了<b>射程表</b>：炮手根据当前的环境条件和想要的射击距离去查表，表会告诉他们大炮的角度应该设成多少。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 660 270" role="img" aria-label="射程表的用法">
+        <defs>
+          <marker id="arrOn" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--on)"/></marker>
+          <marker id="arrInk" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink)"/></marker>
+        </defs>
+        <!-- 场景 -->
+        <line x1="10" y1="210" x2="250" y2="210" class="s-line"/>
+        <path d="M250,212 q12,-6 24,0 t24,0 t24,0 t24,0 t24,0" class="s-thin" style="stroke:var(--accent)"/>
+        <g transform="translate(55 196)">
+          <rect x="-4" y="-7" width="64" height="14" rx="4" class="s-panel" transform="rotate(-32)"/>
+          <circle r="13" class="s-panel"/>
+          <circle r="3" style="fill:var(--ink)"/>
+        </g>
+        <path d="M78,180 A28,28 0 0 0 82,196" class="s-thin" style="stroke:var(--on)"/>
+        <text x="90" y="192" class="t-mono t-on">θ</text>
+        <path d="M105,165 Q220,20 335,195" class="s-dash" style="stroke:var(--on)"/>
+        <path d="M310,198 h52 l-8,12 h-38 z" class="s-panel"/>
+        <line x1="330" y1="198" x2="330" y2="176" class="s-line"/>
+        <path d="M330,178 l14,8 l-14,4 z" style="fill:var(--accent)"/>
+        <line x1="55" y1="238" x2="335" y2="238" class="s-thin" marker-start="url(#arrInk)" marker-end="url(#arrInk)"/>
+        <text x="195" y="258" class="t-sub mid">射击距离：1 公里以上</text>
+        <g transform="translate(150 50)">
+          <path d="M0,0 h40 M0,10 h52 M0,20 h34" class="s-thin" style="stroke:var(--accent);stroke-width:2"/>
+          <text x="58" y="15" class="t-sub">风</text>
+        </g>
+        <text x="16" y="40" class="t-sub">温度、气压</text>
+        <text x="16" y="58" class="t-sub">也在不断变化</text>
+        <!-- 表 -->
+        <g transform="translate(400 30)">
+          <text x="110" y="0" class="t-main mid">射程表（数字为示意）</text>
+          <rect x="0" y="12" width="230" height="30" class="s-soft"/>
+          <text x="40" y="32" class="t-sub mid">距离</text><text x="115" y="32" class="t-sub mid">风</text><text x="190" y="32" class="t-sub mid">仰角</text>
+          <g class="t-mono">
+            <rect x="0" y="42" width="230" height="30" class="s-panel" style="stroke:var(--line)"/>
+            <text x="40" y="62" class="t-mono mid">800 米</text><text x="115" y="62" class="t-mono mid">无风</text><text x="190" y="62" class="t-mono mid">12°</text>
+            <rect x="0" y="72" width="230" height="30" class="s-panel" style="stroke:var(--line)"/>
+            <text x="40" y="92" class="t-mono mid">1000 米</text><text x="115" y="92" class="t-mono mid">无风</text><text x="190" y="92" class="t-mono mid">16°</text>
+            <rect x="0" y="102" width="230" height="30" class="s-on"/>
+            <text x="40" y="122" class="t-mono mid">1000 米</text><text x="115" y="122" class="t-mono mid">逆风</text><text x="190" y="122" class="t-mono mid t-on">18°</text>
+            <rect x="0" y="132" width="230" height="30" class="s-panel" style="stroke:var(--line)"/>
+            <text x="40" y="152" class="t-mono mid">1200 米</text><text x="115" y="152" class="t-mono mid">无风</text><text x="190" y="152" class="t-mono mid">21°</text>
+          </g>
+          <text x="0" y="190" class="t-sub">① 炮手查：距离 + 环境条件</text>
+          <text x="0" y="210" class="t-sub">② 表直接给出：大炮该抬多高</text>
+        </g>
+        <path d="M372,120 C382,140 388,150 398,148" class="s-line" style="stroke:var(--on)" marker-end="url(#arrOn)"/>
+      </svg>
+      </div>
+      <figcaption>图 3　射程表把"算弹道"变成了"查表"。代价是：只要大炮或炮弹一改，整张表就得重算。</figcaption>
+    </figure>
+  </div>
+
+  <p>射程表非常管用，一直用到了第二次世界大战。问题是，<b>只要改了大炮或炮弹的设计，就得重新算一整张新表</b>，这非常耗时，而且难免出错。</p>
+  <p>Charles Babbage 在 1822 年向皇家天文学会提交了一篇论文，指出了这个问题，标题是《论机械在天文与数学用表计算中的应用》。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · 思想泡泡</div>
+  <h2>差分机与分析机</h2>
+  <p>Charles Babbage 提出了一种新的机械装置，叫<b>差分机</b>（Difference Engine）。它比之前的机器复杂得多，能够<b>近似计算多项式</b>。多项式描述了几个变量之间的关系，比如射程和气压，或者 Carrie Anne 吃多少披萨和她有多开心。多项式还能用来近似对数函数和三角函数，而这些函数手算起来非常麻烦。</p>
+
+  <div class="extra">
+    <span class="t">差分机为什么只靠加法就能算多项式</span>
+    <p style="margin-top:4px">课程没有展开这一点，但它正是"差分机"名字的由来，而且很好玩。拿最简单的多项式 <code>f(x) = x²</code> 举例：把相邻两个结果相减，得到"一阶差"；一阶差再相减，得到"二阶差"。你会发现<b>二阶差永远是 2</b>。</p>
+    <p>反过来，只要知道开头几行，后面每一行都只需要做两次<b>加法</b>：新的一阶差 = 上一个一阶差 + 2；新的 f(x) = 上一个 f(x) + 新的一阶差。不需要乘法，而加法正是齿轮最擅长的。差分机就是一台"转一下摇柄，算出表格下一行"的机器。</p>
+    <div class="card" style="margin-bottom:6px">
+      <div class="scroll-x"><table class="tt diff-table" id="diff"></table></div>
+      <div class="step-text" id="diff-step">灰色的前三行由人算好填进去。点"转一下摇柄"，让机器只用加法往下算。</div>
+      <div class="btns">
+        <button class="btn primary" id="diff-next">转一下摇柄</button>
+        <button class="btn" id="diff-reset">重来</button>
+      </div>
+    </div>
+  </div>
+
+  <p>Babbage 在 1823 年开始建造差分机，之后的二十年里，他试图制造并组装 25,000 个零件，总重接近 15 吨。不幸的是，这个项目最终被放弃了。但在 1991 年，历史学家根据 Babbage 的图纸和文稿，把差分机造了出来——而且它真的能用！</p>
+  <p>更重要的是，在建造差分机期间，Babbage 构想出了一台更复杂的机器——<b>分析机</b>（Analytical Engine）。和差分机、步进计算器以及之前所有的计算设备不同，分析机是一台<b>"通用计算机"</b>：</p>
+  <ul>
+    <li>它能用来做很多事情，而不只是某一种特定的计算；</li>
+    <li>可以给它数据，让它<b>按顺序执行一系列操作</b>；</li>
+    <li>它有<b>内存</b>，甚至还有一台原始的打印机。</li>
+  </ul>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 680 270" role="img" aria-label="分析机的结构与现代计算机对照">
+        <defs>
+          <marker id="arrA" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--ink)"/></marker>
+        </defs>
+        <!-- 打孔卡 -->
+        <g transform="translate(20 40)">
+          <rect x="10" y="-8" width="120" height="74" rx="4" class="card-paper" opacity=".6"/>
+          <rect x="0" y="0" width="120" height="74" rx="4" class="card-paper"/>
+          <g style="fill:var(--ink)">
+            <rect x="14" y="14" width="8" height="12" rx="1"/><rect x="38" y="14" width="8" height="12" rx="1"/><rect x="86" y="14" width="8" height="12" rx="1"/>
+            <rect x="26" y="34" width="8" height="12" rx="1"/><rect x="62" y="34" width="8" height="12" rx="1"/><rect x="98" y="34" width="8" height="12" rx="1"/>
+            <rect x="14" y="52" width="8" height="12" rx="1"/><rect x="74" y="52" width="8" height="12" rx="1"/>
+          </g>
+          <text x="60" y="100" class="t-main mid">打孔卡</text>
+          <text x="60" y="118" class="t-sub mid">要做哪些运算 + 数据</text>
+        </g>
+        <path d="M150,77 H200" class="s-line" marker-end="url(#arrA)"/>
+        <!-- 磨坊 -->
+        <rect x="208" y="30" width="160" height="94" rx="12" class="s-on"/>
+        <text x="288" y="64" class="t-main mid">运算部件</text>
+        <text x="288" y="86" class="t-sub mid">Babbage 称为"磨坊"</text>
+        <text x="288" y="104" class="t-sub mid">Mill</text>
+        <!-- 仓库 -->
+        <path d="M376,64 H442" class="s-line" marker-end="url(#arrA)"/>
+        <path d="M442,92 H376" class="s-line" marker-end="url(#arrA)"/>
+        <rect x="450" y="30" width="160" height="94" rx="12" class="s-acc"/>
+        <text x="530" y="64" class="t-main mid">存储部件</text>
+        <text x="530" y="86" class="t-sub mid">Babbage 称为"仓库"</text>
+        <text x="530" y="104" class="t-sub mid">Store</text>
+        <!-- 打印机 -->
+        <path d="M288,124 V170" class="s-line" marker-end="url(#arrA)"/>
+        <rect x="218" y="178" width="140" height="50" rx="8" class="s-panel"/>
+        <text x="288" y="208" class="t-main mid">打印机</text>
+        <!-- 现代对照 -->
+        <text x="80" y="200" class="t-acc mid">↔ 程序 + 输入</text>
+        <text x="288" y="150" class="t-acc" dx="14">↔ CPU</text>
+        <text x="530" y="150" class="t-acc mid">↔ 内存</text>
+        <text x="370" y="208" class="t-acc">↔ 输出设备</text>
+        <text x="20" y="258" class="t-sub">蓝字是今天计算机里对应的部件。第 7 集会亲手"拼"出一颗 CPU，那时再回来看这张图。</text>
+      </svg>
+      </div>
+      <figcaption>图 4　分析机的结构示意（补充：Mill、Store 和打孔卡输入来自 Babbage 的设计，课程里没有展开）。</figcaption>
+    </figure>
+  </div>
+
+  <p>和差分机一样，分析机太超前了，从来没有被完整造出来。然而，<b>"自动计算机"</b>这个想法——一台能按照一系列操作自动执行下去的机器——意义重大，它<b>预示了计算机程序的诞生</b>。</p>
+  <p>英国数学家 Ada Lovelace（阿达·洛芙莱斯）给分析机编写了假想的程序，她说：</p>
+  <blockquote class="quote"><b>"一门全新的、庞大的、强有力的语言，将为未来的分析工作而诞生。"</b><span class="who">—— Ada Lovelace</span></blockquote>
+  <p>因为这些工作，Ada 常被认为是<b>世界上第一位程序员</b>。</p>
+  <p>分析机启发了（可以这么说）第一代计算机科学家，他们把 Babbage 的许多想法融入了自己的机器。这就是为什么 Babbage 常被称为<b>"计算之父"</b>。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>1890 年人口普查与打孔卡片制表机</h2>
+  <p>到了 19 世纪末，计算设备已经用在科学和工程领域的特定任务里，但在商业、政府和家庭生活中还很少见。</p>
+  <p>然而，美国政府在 1890 年的人口普查中遇到了一个严重的问题，只有计算机才能提供它需要的效率。美国宪法要求每十年进行一次人口普查，用来分配联邦资金、确定各州在国会的代表名额等等。到 1880 年代，美国人口迅速增长，主要是因为移民。1880 年的人口普查花了七年时间手工汇总，等做完时数据已经过时了；而据预测，1890 年的普查要花 13 年才能算完。可人口普查每十年就要做一次啊！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 640 200" role="img" aria-label="人口普查耗时对比">
+        <g>
+          <text x="150" y="44" class="t-main end">1880 年普查·手工</text>
+          <rect x="160" y="26" width="230" height="28" rx="5" class="s-panel"/>
+          <text x="398" y="45" class="t-mono">7 年</text>
+
+          <text x="150" y="94" class="t-main end">1890 年·若继续手工</text>
+          <rect x="160" y="76" width="427" height="28" rx="5" style="fill:var(--bad-soft);stroke:var(--bad);stroke-width:2;stroke-dasharray:6 4"/>
+          <text x="595" y="95" class="t-mono" style="fill:var(--bad)">13 年?</text>
+
+          <text x="150" y="144" class="t-main end">1890 年·用制表机</text>
+          <rect x="160" y="126" width="82" height="28" rx="5" class="s-on"/>
+          <text x="250" y="145" class="t-mono t-on">2.5 年</text>
+        </g>
+        <line x1="489" y1="14" x2="489" y2="168" style="stroke:var(--bad);stroke-width:2"/>
+        <text x="489" y="186" class="t-sub mid" style="fill:var(--bad)">第 10 年：下一次普查又来了</text>
+        <line x1="160" y1="14" x2="160" y2="168" class="s-thin"/>
+      </svg>
+      </div>
+      <figcaption>图 5　按 1 年 ≈ 33 像素等比例画出。手工的话，上一次还没算完，下一次就开始了。</figcaption>
+    </figure>
+  </div>
+
+  <p>人口普查局找到了 Herman Hollerith（赫尔曼·何乐礼），他发明了一台<b>打孔卡片制表机</b>。他的机器是"机电式"的：用传统的机械结构来计数，就像莱布尼茨的步进计算器那样，但再配上电力驱动的部件。</p>
+  <p>Hollerith 的机器使用<b>打孔卡</b>：一种纸卡片，上面有一格一格的位置，在某个位置打孔就代表一项数据。比如卡片上有一组孔位代表婚姻状况，如果你已婚，就在"已婚"的位置打孔。</p>
+  <p>当卡片插进 Hollerith 的机器时，一排小金属针会压到卡片上。<b>如果某个位置打了孔，针就会穿过纸上的孔，插进下面一小杯水银里，把电路接通。</b>接通的电路会驱动一台电机，转动齿轮加 1——在这个例子里，就是给"已婚"的总数加 1。</p>
+
+  <div class="card">
+    <h3>动手：打孔，然后压针</h3>
+    <div class="scroll-x"><svg class="diagram" id="punch" viewBox="0 0 600 360" role="img" aria-label="打孔卡片制表机的读卡原理"></svg></div>
+    <div class="step-text" id="punch-step">先在上面的卡片里点格子打孔（每组只能选一个），再点"插卡并压针"。</div>
+    <div class="btns">
+      <button class="btn primary" id="punch-go">插卡并压针</button>
+      <button class="btn" id="punch-new">换一张空白卡</button>
+      <button class="btn" id="punch-clr">计数清零</button>
+    </div>
+    <p class="hint">试试打一张"已婚 + 女"的卡，再打一张"未婚 + 男"的卡，看计数器怎么变</p>
+  </div>
+  <div class="extra">
+    <span class="t">和你学过的东西连起来</span>
+    这里的"有孔 / 没孔"，就是"电路通 / 电路断"，也就是 <b>1 / 0</b>。一张打孔卡就是一串二进制数据；针和水银构成的，本质上是一排<b>开关</b>。如果你读过笔记里的《从开关到加法器》，会发现这正是它第 1 章的那个电路。
+  </div>
+  <p>Hollerith 的机器比手工汇总快 10 倍左右，人口普查只用了两年半就完成了，为人口普查局省下了数百万美元。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>IBM 的诞生</h2>
+  <p>企业开始意识到计算的价值：在会计、保险评估、库存管理这类需要大量人力、大量数据的工作上，计算可以提高效率，从而提升利润。</p>
+  <p>为了满足这种需求，Hollerith 创办了<b>制表机器公司</b>（The Tabulating Machine Company）。这家公司后来在 1924 年和其他几家机器制造商合并，成为<b>"国际商业机器公司"</b>（International Business Machines Corporation），也就是你可能听说过的 <b>IBM</b>。</p>
+  <div class="road" style="margin:18px 0">
+    <span>1890 普查用上制表机</span><i>→</i><span>制表机器公司</span><i>→</i><span>1924 年合并</span><i>→</i><span><b>IBM</b></span>
+  </div>
+  <p>这些机电式的"商业机器"取得了巨大成功，改变了商业和政府的运作方式。到了 20 世纪中叶，世界人口的爆炸式增长和全球贸易的兴起，要求有更快、更灵活的工具来处理数据，这为<b>电子计算机</b>的出现铺好了舞台——那是我们下一集要讲的内容。</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <ul class="timeline">
+    <li><span class="yr">约前 2500</span>美索不达米亚发明算盘：手动计算器，还能存住计算状态</li>
+    <li><span class="yr">1613</span>"computer"一词首次见于文献，指的是做计算的人</li>
+    <li><span class="yr">1694</span>莱布尼茨的步进计算器：10 齿齿轮、转过 9 就进位，第一台能做四则运算的机器</li>
+    <li><span class="yr">1822</span>Babbage 发表论文，指出手工编表的问题</li>
+    <li><span class="yr">1823</span>差分机开工，约 25,000 个零件、15 吨，最终放弃；期间构想出通用的分析机，Ada Lovelace 为它写程序</li>
+    <li><span class="yr">1890</span>Hollerith 的打孔卡片制表机让人口普查从预计 13 年缩短到 2.5 年</li>
+    <li><span class="yr">1924</span>制表机器公司合并成 IBM</li>
+    <li><span class="yr">1991</span>历史学家按 Babbage 的图纸造出差分机，它真的能用</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    每一次计算工具的进步，都是因为要处理的规模超出了人脑：村庄的牛、炮兵的弹道、国家的人口。工具<b>降低门槛、放大脑力</b>，而"按顺序自动执行一系列操作"的想法，埋下了程序的种子。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 课程说算盘"类似于如今的硬盘"。它们像在哪里？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它们都<b>存储状态</b>。算盘上珠子的位置记住了当前算到哪个数，人不用把中间结果记在脑子里；硬盘同样是把数据保存下来，供之后继续使用。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 步进计算器只会"转齿轮"，它是怎么做除法的？17 ÷ 5 要转几轮？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">把除法拆成<b>反复做减法</b>：17 − 5 − 5 − 5 = 2，减了 3 次，剩下 2 不够再减，所以商 3 余 2。乘法同理，是反复做加法。这个"复杂运算 = 很多次简单运算"的思路，后面讲 CPU 时还会出现。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 分析机和差分机、步进计算器最大的区别是什么？为什么说它"预示了程序"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">前两者只能做某一种特定计算；分析机是<b>通用</b>的：可以给它数据，让它<b>按顺序执行一系列操作</b>，并且有内存。"让机器自动按一串指令执行下去"，正是程序的核心想法，所以 Ada Lovelace 给它写的假想程序被视为最早的程序。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 在 Hollerith 的机器里，"卡片上打了一个孔"是怎么变成"已婚人数 +1"的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">金属针压下 → 有孔的位置针能穿过去 → 插进水银杯 → <b>电路接通</b> → 电机转动对应的计数齿轮 +1。没孔的位置针被纸挡住，电路不通，不计数。孔 / 没孔 ⇔ 通 / 断 ⇔ 1 / 0。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a class="off" href="#"><small>← 上一集</small>没有了</a>
+    <a class="next" href="02.html"><small>下一集 →</small>02 电子计算机</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 1 集 Early Computing（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/* ---------- 图：算盘 ---------- */
+(function () {
+  const svg = $('#abacus');
+  const L = 90, R = 580, D = 22, PLACES = ['个', '十', '百', '千'];
+  const counts = [0, 0, 0, 0];             // counts[p]：第 p 位（0 = 个位）拨到右边的珠子数
+  const rowY = p => 200 - p * 50;
+  const beads = [];
+  let busy = false;
+
+  el('rect', { x: L - 14, y: 22, width: R - L + 28, height: 206, rx: 10, class: 'frame' }, svg);
+  for (let p = 0; p < 4; p++) {
+    const y = rowY(p);
+    el('line', { x1: L - 8, y1: y, x2: R + 8, y2: y, class: 'rod' }, svg);
+    txt(svg, L - 24, y + 5, `${PLACES[p]}位`, 't-sub end');
+    txt(svg, L - 24, y + 20, `×${10 ** p}`, 't-sub end');
+    beads[p] = [];
+    for (let j = 0; j < 10; j++) {
+      const g = el('g', { class: 'bead' }, svg);
+      el('circle', { cx: 0, cy: y, r: 10 }, g);
+      g.addEventListener('click', () => {
+        if (busy) return;
+        counts[p] = j < counts[p] ? j : j + 1;
+        render();
+        say(`手动拨珠：${PLACES[p]}位现在有 ${counts[p]} 颗。`);
+      });
+      beads[p][j] = g;
+    }
+  }
+  el('line', { x1: (L + R) / 2, y1: 30, x2: (L + R) / 2, y2: 220, class: 's-dash' }, svg);
+  txt(svg, (L + R) / 2 - 10, 16, '← 不算数', 't-sub end');
+  txt(svg, (L + R) / 2 + 10, 16, '算数 →', 't-sub');
+
+  function render() {
+    for (let p = 0; p < 4; p++) {
+      for (let j = 0; j < 10; j++) {
+        const on = j < counts[p];
+        const x = on ? R - j * D - D / 2 : L + (9 - j) * D + D / 2;
+        beads[p][j].style.transform = `translateX(${x}px)`;
+        beads[p][j].classList.toggle('on', on);
+      }
+    }
+    const v = counts.reduce((s, c, p) => s + c * 10 ** p, 0);
+    const parts = counts.map((c, p) => [c, p]).reverse().filter(([c]) => c).map(([c, p]) => p ? `${c}×${10 ** p}` : `${c}`);
+    $('#ab-read').innerHTML = `当前数：<span class="big">${v}</span>　${parts.length > 1 ? '= ' + parts.join(' + ') : ''}`;
+  }
+  const say = s => { $('#ab-step').innerHTML = s; };
+  const lock = on => { busy = on; $$('#ch1 .btn').forEach(b => b.disabled = on); };
+
+  async function add(p, n) {
+    const c = counts[p];
+    if (c + n <= 9) { counts[p] = c + n; render(); return; }
+    counts[p] = 10; render();
+    say(`${PLACES[p]}位：${c} + ${n} 超过 9，这一行的珠子用完了……`); await sleep(1100);
+    counts[p] = 0; render();
+    say(`……把${PLACES[p]}位全部拨回左边，`); await sleep(900);
+    if (p < 3) {
+      say(`……在${PLACES[p + 1]}位拨 1 颗（代表 ${10 ** (p + 1)}），`);
+      await add(p + 1, 1); await sleep(900);
+    }
+    counts[p] = c + n - 10; render();
+    say(`……最后在${PLACES[p]}位补上剩下的 ${c + n - 10} 颗。`); await sleep(600);
+  }
+  async function run(fn) { if (busy) return; lock(true); try { await fn(); } finally { lock(false); } }
+
+  $('#ab-3').onclick = () => run(async () => { counts.fill(0); counts[0] = 3; render(); say('最底下一行拨 3 颗珠子：3 头牛。'); });
+  $('#ab-p4').onclick = () => run(async () => { await add(0, 4); say('再往右拨 4 颗。如果刚才是 3，现在一共 7 颗：<b>7</b>。'); });
+  $('#ab-p5').onclick = () => run(async () => {
+    const before = counts.reduce((s, c, p) => s + c * 10 ** p, 0);
+    await add(0, 5);
+    say(`${before} + 5 = <b>${before + 5}</b>。${before === 7 ? '和课程里一样：拨回去、上一行进 1、再补 2 颗。' : ''}`);
+  });
+  $('#ab-1251').onclick = () => run(async () => {
+    counts.fill(0); render(); await sleep(300);
+    for (const [p, c] of [[0, 1], [1, 5], [2, 2], [3, 1]]) { counts[p] = c; render(); say(`${PLACES[p]}位拨 ${c} 颗……`); await sleep(650); }
+    say('从下往上：1、5、2、1 颗，就是 <b>1251</b>。不用在脑子里记，算盘替你记住了。');
+  });
+  $('#ab-clr').onclick = () => run(async () => { counts.fill(0); render(); say('清零了。'); });
+  render();
+})();
+
+/* ---------- 图：步进计算器齿轮 ---------- */
+(function () {
+  const svg = $('#gears');
+  const NAMES = ['百位', '十位', '个位'];
+  const CX = [120, 280, 440], CY = 130, RG = 62;
+  const digits = [0, 0, 0], angles = [0, 0, 0], gears = [], rots = [];
+  let busy = false;
+
+  for (let i = 0; i < 3; i++) {
+    const g = el('g', { class: 'gear' }, svg);
+    const rot = el('g', { class: 'gear-rot' }, g);
+    rot.style.transformOrigin = `${CX[i]}px ${CY}px`;
+    for (let k = 0; k < 10; k++) {
+      el('rect', { x: CX[i] - 7, y: CY - RG - 9, width: 14, height: 14, rx: 2, class: 'gear-tooth', transform: `rotate(${k * 36 + 18} ${CX[i]} ${CY})` }, rot);
+    }
+    el('circle', { cx: CX[i], cy: CY, r: RG, class: 'gear-body' }, rot);
+    for (let k = 0; k < 10; k++) {
+      const a = k * 36 * Math.PI / 180;
+      const t = txt(rot, CX[i] + 42 * Math.sin(a), CY - 42 * Math.cos(a), String(k), 'gear-digit');
+      if (k === 0) t.style.fill = 'var(--on)';
+    }
+    el('circle', { cx: CX[i], cy: CY, r: 8, style: 'fill:var(--brass)' }, rot);
+    el('path', { d: `M${CX[i] - 9},${CY - RG - 24} h18 l-9,13 z`, class: 'pointer' }, g);
+    txt(g, CX[i], 222, NAMES[i], 't-main mid');
+    gears[i] = g; rots[i] = rot;
+  }
+  txt(svg, 200, 20, '← 进位往左传', 't-sub mid');
+
+  function paint() {
+    rots.forEach((r, i) => { r.style.transform = `rotate(${angles[i]}deg)`; });
+    const v = digits[0] * 100 + digits[1] * 10 + digits[2];
+    $('#gear-read').innerHTML = `里程表读数：<span class="big">${digits.join('')}</span>　（指针下方的数字，= ${v}）`;
+  }
+  async function step(i, dir) {               // dir = +1 加一齿，-1 减一齿
+    const before = digits[i];
+    digits[i] = (before + dir + 10) % 10;
+    angles[i] -= dir * 36;
+    paint();
+    const wrap = (dir > 0 && before === 9) || (dir < 0 && before === 0);
+    if (wrap && i > 0) {
+      gears[i].classList.add('carry');
+      await sleep(420);
+      gears[i].classList.remove('carry');
+      await step(i - 1, dir);
+    }
+  }
+  async function run(fn) {
+    if (busy) return; busy = true; $$('#gear-btns .btn').forEach(b => b.disabled = true);
+    try { await fn(); } finally { busy = false; $$('#gear-btns .btn').forEach(b => b.disabled = false); }
+  }
+  function setTo(n) {
+    const ds = String(n).padStart(3, '0').split('').map(Number);
+    ds.forEach((d, i) => { const diff = ((d - digits[i]) % 10 + 10) % 10; angles[i] -= diff * 36; digits[i] = d; });
+    paint();
+  }
+  $('#g-p1').onclick = () => run(() => step(2, 1));
+  $('#g-m1').onclick = () => run(() => step(2, -1));
+  $('#g-p7').onclick = () => run(async () => { for (let k = 0; k < 7; k++) { await step(2, 1); await sleep(380); } });
+  $('#g-199').onclick = () => run(async () => { setTo(199); await sleep(900); await step(2, 1); });
+  $('#g-clr').onclick = () => run(async () => { setTo(0); });
+  paint();
+})();
+
+/* ---------- 图：17 ÷ 5 ---------- */
+(function () {
+  const svg = $('#div17');
+  const dots = [];
+  for (let i = 0; i < 17; i++) dots.push(el('circle', { cx: 30 + i * 32, cy: 40, r: 11, class: 'dot17' }, svg));
+  const brackets = el('g', {}, svg);
+  let k = 0;
+  function reset() {
+    k = 0; brackets.innerHTML = '';
+    dots.forEach(d => d.setAttribute('class', 'dot17'));
+    $('#div-step').innerHTML = '17 个圆点。点"减一次 5"。';
+    $('#div-next').disabled = false;
+  }
+  $('#div-next').onclick = () => {
+    if (k < 3) {
+      k++;
+      const from = 17 - 5 * k;
+      for (let i = from; i < from + 5; i++) dots[i].setAttribute('class', 'dot17 g' + k);
+      const x1 = 30 + from * 32 - 12, x2 = 30 + (from + 4) * 32 + 12;
+      el('path', { d: `M${x1},62 v8 H${x2} v-8`, class: 's-thin' }, brackets);
+      txt(brackets, (x1 + x2) / 2, 92, `第 ${k} 次 −5`, 't-sub mid');
+      $('#div-step').innerHTML = `第 ${k} 次减 5：还剩 <b>${17 - 5 * k}</b>。`;
+    } else {
+      k++;
+      dots[0].setAttribute('class', 'dot17 left'); dots[1].setAttribute('class', 'dot17 left');
+      txt(brackets, 46, 92, '剩 2', 't-sub mid t-on');
+      $('#div-step').innerHTML = '只剩 2 个，不够再减一个 5 了，停。一共减了 3 次：<b>17 = 5 × 3 + 2</b>，商 3 余 2。';
+      $('#div-next').disabled = true;
+    }
+  };
+  $('#div-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 图：差分机（补充） ---------- */
+(function () {
+  const table = $('#diff');
+  let rows;
+  function reset() {
+    rows = [{ x: 0, f: 0 }, { x: 1, f: 1, d1: 1 }, { x: 2, f: 4, d1: 3, d2: 2 }];
+    draw(-1);
+    $('#diff-step').innerHTML = '灰色的前三行由人算好填进去。点"转一下摇柄"，让机器只用加法往下算。';
+    $('#diff-next').disabled = false;
+  }
+  function draw(hi) {
+    const cell = (v, cls) => `<td class="num ${cls || ''}">${v == null ? '' : v}</td>`;
+    table.innerHTML = '<thead><tr><th>x</th><th>f(x) = x²</th><th>一阶差</th><th>二阶差</th></tr></thead><tbody>' +
+      rows.map((r, i) => {
+        const given = i < 3 ? 'given' : '';
+        const isNew = i === hi, isPrev = i === hi - 1;
+        return `<tr class="${isNew ? 'new' : ''}">${cell(r.x, given)}${cell(r.f, given + (isNew || isPrev ? ' hl' : ''))}${cell(r.d1, given + (isNew || isPrev ? ' hl' : ''))}${cell(r.d2, given + (isNew ? ' hl' : ''))}</tr>`;
+      }).join('') + '</tbody>';
+  }
+  $('#diff-next').onclick = () => {
+    const p = rows[rows.length - 1];
+    const d2 = 2, d1 = p.d1 + d2, f = p.f + d1;
+    rows.push({ x: p.x + 1, f, d1, d2 });
+    draw(rows.length - 1);
+    $('#diff-step').innerHTML = `一阶差：${p.d1} + ${d2} = <b>${d1}</b>；f(${p.x + 1})：${p.f} + ${d1} = <b>${f}</b>。两次加法，没有乘法，结果正是 ${p.x + 1}² = ${f}。`;
+    if (rows.length >= 11) $('#diff-next').disabled = true;
+  };
+  $('#diff-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 图：打孔卡读卡 ---------- */
+(function () {
+  const svg = $('#punch');
+  const COLS = [
+    { x: 160, label: '已婚', group: 0 }, { x: 250, label: '未婚', group: 0 },
+    { x: 390, label: '男', group: 1 }, { x: 480, label: '女', group: 1 },
+  ];
+  const punched = [false, false, false, false];
+  const totals = [0, 0, 0, 0];
+  const cells = [], holes = [], pins = [], cups = [], wires = [], counters = [];
+  let busy = false;
+
+  // 卡片（俯视）
+  el('rect', { x: 110, y: 12, width: 420, height: 78, rx: 6, class: 'card-paper' }, svg);
+  txt(svg, 205, 30, '婚姻状况', 't-sub mid'); txt(svg, 435, 30, '性别', 't-sub mid');
+  el('line', { x1: 320, y1: 20, x2: 320, y2: 84, class: 's-dash' }, svg);
+  txt(svg, 100, 56, '卡片', 't-main end'); txt(svg, 100, 74, '（俯视）', 't-sub end');
+  COLS.forEach((c, i) => {
+    const g = el('g', { class: 'cell', role: 'button', tabindex: '0', 'aria-label': '在' + c.label + '处打孔' }, svg);
+    el('rect', { x: c.x - 34, y: 38, width: 68, height: 46, rx: 6, class: 'box' }, g);
+    el('rect', { x: c.x - 6, y: 44, width: 12, height: 18, rx: 2, class: 'hole' }, g);
+    txt(g, c.x, 78, c.label, 't-main mid');
+    const toggle = () => {
+      if (busy) return;
+      const now = !punched[i];
+      COLS.forEach((o, j) => { if (o.group === c.group) punched[j] = false; });
+      punched[i] = now;
+      paintCard();
+    };
+    g.addEventListener('click', toggle);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } });
+    cells[i] = g;
+  });
+
+  // 机器（剖面）
+  txt(svg, 100, 140, '金属针', 't-main end');
+  txt(svg, 100, 196, '卡片（侧面）', 't-main end');
+  txt(svg, 100, 250, '水银杯', 't-main end');
+  txt(svg, 100, 320, '计数器', 't-main end');
+  el('rect', { x: 120, y: 186, width: 400, height: 10, class: 'card-paper' }, svg);
+  COLS.forEach((c, i) => {
+    holes[i] = el('rect', { x: c.x - 7, y: 185, width: 14, height: 12, style: 'fill:var(--bg)' }, svg);
+    wires[i] = el('path', { d: `M${c.x},262 V290`, class: 'wire' }, svg);
+    const cup = el('g', {}, svg);
+    cups[i] = el('rect', { x: c.x - 15, y: 236, width: 30, height: 24, class: 'hg' }, cup);
+    el('path', { d: `M${c.x - 18},218 V262 H${c.x + 18} V218`, class: 'cup' }, cup);
+    const pin = el('g', { class: 'pin' }, svg);
+    el('rect', { x: c.x - 11, y: 110, width: 22, height: 8, rx: 2 }, pin);
+    el('rect', { x: c.x - 3, y: 118, width: 6, height: 52, rx: 2 }, pin);
+    pins[i] = pin;
+    const cn = el('g', { class: 'counter' }, svg);
+    el('rect', { x: c.x - 38, y: 292, width: 76, height: 50, rx: 8 }, cn);
+    txt(cn, c.x, 310, c.label, 't-sub mid');
+    counters[i] = txt(cn, c.x, 333, '0', 't-mono mid t-on');
+    counters[i].style.fontSize = '18px';
+    counters[i].parentNode.dataset.i = i;
+    counters[i].g = cn;
+  });
+
+  function paintCard() {
+    COLS.forEach((c, i) => {
+      cells[i].classList.toggle('punched', punched[i]);
+      holes[i].style.display = punched[i] ? '' : 'none';
+    });
+  }
+  const say = s => { $('#punch-step').innerHTML = s; };
+  const btns = () => $$('#ch6 .card .btn');
+
+  $('#punch-go').onclick = async () => {
+    if (busy) return;
+    if (!punched.some(Boolean)) { say('卡片上还没有孔。先点上面卡片里的格子打孔。'); return; }
+    busy = true; btns().forEach(b => b.disabled = true);
+    say('压针……');
+    pins.forEach((p, i) => { p.style.transform = `translateY(${punched[i] ? 92 : 16}px)`; });
+    await sleep(450);
+    const hit = [];
+    COLS.forEach((c, i) => {
+      if (!punched[i]) return;
+      hit.push(c.label);
+      cups[i].classList.add('on'); wires[i].classList.add('on');
+      totals[i]++; counters[i].textContent = totals[i];
+      counters[i].g.classList.add('bump');
+    });
+    const miss = COLS.filter((c, i) => !punched[i]).map(c => c.label);
+    say(`<b>${hit.join('、')}</b>：针穿过孔 → 插进水银 → 电路接通 → 电机让计数器 <b>+1</b>。` +
+        (miss.length ? `<br>${miss.join('、')}：没有孔，针被纸挡住，电路不通，不计数。` : ''));
+    await sleep(1300);
+    pins.forEach(p => { p.style.transform = ''; });
+    cups.forEach(c => c.classList.remove('on')); wires.forEach(w => w.classList.remove('on'));
+    counters.forEach(c => c.g.classList.remove('bump'));
+    await sleep(350);
+    busy = false; btns().forEach(b => b.disabled = false);
+  };
+  $('#punch-new').onclick = () => { if (busy) return; punched.fill(false); paintCard(); say('换了一张空白卡。计数器保留着之前的总数——就像普查时一张张卡片累加。'); };
+  $('#punch-clr').onclick = () => { if (busy) return; totals.fill(0); counters.forEach(c => { c.textContent = '0'; }); say('计数清零。'); };
+  paintCard();
+})();
+</script>
+</body>
+</html>

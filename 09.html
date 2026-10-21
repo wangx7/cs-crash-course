@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>09 高级 CPU 设计 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.cache-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px}
+@media (max-width:760px){.cache-wrap{grid-template-columns:1fr}}
+.cl{border:2px solid var(--line);border-radius:10px;padding:8px 12px;margin-bottom:8px;background:var(--panel);font-size:14px;transition:all .25s}
+.cl.hit{border-color:var(--ok);background:var(--ok-soft)}
+.cl.new{border-color:var(--on);background:var(--on-soft)}
+.cl .tag{font:700 14px var(--mono)}
+.cl .dirty{float:right;font-size:12px;padding:1px 8px;border-radius:999px;background:var(--bg);color:var(--muted)}
+.cl .dirty.on{background:var(--bad);color:#fff}
+.cl.empty{color:var(--muted);border-style:dashed}
+.stat{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.stat div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 12px}
+.stat small{display:block;font-size:12px;color:var(--muted)}
+.stat b{font:700 18px var(--mono)}
+.log{font-size:13px;max-height:150px;overflow:auto;margin-top:8px;padding:8px 12px;background:var(--bg);border-radius:10px}
+.log div{padding:2px 0;border-bottom:1px dashed var(--line)}
+.log .h{color:var(--ok)} .log .m{color:var(--bad)} .log .w{color:var(--on)}
+.g-cell{rx:4}
+.g-f{fill:var(--accent-soft);stroke:var(--accent)}
+.g-d{fill:var(--ok-soft);stroke:var(--ok)}
+.g-e{fill:var(--on-soft);stroke:var(--on)}
+.g-x{fill:var(--bad-soft);stroke:var(--bad);stroke-dasharray:4 3}
+.g-s{fill:var(--bg);stroke:var(--line);stroke-dasharray:3 3}
+.g-w{fill:var(--accent-soft);stroke:var(--accent)}
+.g-y{fill:var(--on-soft);stroke:var(--on)}
+.big-num{font:700 30px var(--mono);color:var(--on)}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center}
+.nums div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 6px}
+.nums small{display:block;color:var(--muted);font-size:13px;margin-top:4px}
+@media (max-width:700px){.nums{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body data-ep="9">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=10" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 9 集</div>
+  <h1>高级 CPU 设计</h1>
+  <p class="en">Advanced CPU Designs</p>
+  <p class="lead">晶体管再快也有极限。这一集讲处理器设计者榨干每个时钟周期的各种招数：专用电路、缓存、流水线、乱序执行、分支预测、超标量、多核，直到一千万个核心的超级计算机。</p>
+  <div class="road">
+    <span>专用电路</span><i>→</i><span>缓存</span><i>→</i><span>流水线</span><i>→</i><span>乱序 / 推测执行</span><i>→</i><span>超标量</span><i>→</i><span>多核</span><i>→</i><span>超级计算机</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 更多指令</a></li>
+    <li><a href="#ch1">1 · 缓存</a></li>
+    <li><a href="#ch2">2 · 脏位</a></li>
+    <li><a href="#ch3">3 · 流水线</a></li>
+    <li><a href="#ch4">4 · 依赖与分支</a></li>
+    <li><a href="#ch5">5 · 超标量</a></li>
+    <li><a href="#ch6">6 · 多核与超算</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>更快的晶体管之外：更多专用指令</h2>
+  <p>随着这个系列的推进，我们看到计算机从每秒大概只能算一次的机械设备，发展到了以千赫、兆赫运行的 CPU。你现在看视频用的设备几乎肯定以吉赫的速度运行——每秒执行几十亿条指令。相信我，这是非常大的计算量！</p>
+  <p>在电子计算的早期，提升处理器速度的办法通常是缩短芯片里晶体管的切换时间——就是组成逻辑门、ALU 以及前几集讲过的其他部件的那些晶体管。但光让晶体管更快、更高效只能走这么远，所以处理器设计者发展出各种技术来提升性能，不仅让简单指令跑得快，还能执行复杂得多的操作。</p>
+  <p>上一集，我们给 CPU 写了一个能做除法的小程序，方法是连续做很多次减法。比如 16 除以 4，可以拆成更小的问题：16 − 4 − 4 − 4 − 4，碰到 0 或负数就知道算完了。但这种方法会吞掉很多时钟周期，效率不高。所以今天的大多数处理器把<b>除法作为 ALU 能在硬件里直接完成的一条指令</b>。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x">
+      <svg class="diagram" id="divcmp" viewBox="0 0 660 150" role="img" aria-label="软件除法与硬件除法"></svg>
+      </div>
+      <figcaption>图 1　16 ÷ 4：用上一集的程序要执行十几条指令；有硬件除法电路，一条指令就够（示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>当然，这些额外的电路让 ALU 更大、设计起来更复杂，但也更能干——这种<b>"用复杂度换速度"</b>的权衡，在计算史上出现过很多次。比如，现代计算机处理器有专门的电路来做图形运算、解码压缩视频、加密文件，这些操作如果用标准指令来完成，要花非常非常多的时钟周期。你可能听说过带 MMX、3DNow! 或 SSE 的处理器，它们就是有额外花哨电路、能执行额外花哨指令的处理器，用于游戏、加密之类的场景。</p>
+  <p>这些指令集扩展越来越多，而一旦有人写了利用它们的程序，就很难再把它们删掉。所以指令集往往越来越大，为了<b>向后兼容</b>，所有旧的操作码都会保留下来。英特尔 4004，第一个真正集成的 CPU，有 46 条指令，足够造出一台功能完整的计算机；而现代计算机处理器有上千条不同的指令，用到了各种巧妙复杂的内部电路。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>缓存：把一小块 RAM 放进 CPU</h2>
+  <p>高时钟速度和花哨的指令集又带来另一个问题：<b>怎样足够快地把数据送进、送出 CPU</b>。就像有一台强劲的蒸汽机车，却没法足够快地往里铲煤。这里的瓶颈是 RAM。</p>
+  <p>RAM 通常是 CPU 外面的一个内存模块，这意味着数据要沿着一组叫<b>总线</b>（bus）的数据线在 CPU 和 RAM 之间传来传去。总线也许只有几厘米长，别忘了电信号的传播速度接近光速，但当你以吉赫的速度运行——也就是十亿分之一秒的量级——就连这么一点延迟也开始成问题了。RAM 本身查找地址、取出数据、配置好输出也需要时间。所以一条"从 RAM 读取"的指令可能要几十个时钟周期才能完成，而这段时间里处理器只能闲坐着等数据。</p>
+  <p>解决办法之一是在 CPU 上直接放一小块 RAM，叫<b>缓存</b>（cache）。处理器芯片上空间不多，所以大多数缓存只有几 KB 或几 MB，而 RAM 通常是几 GB。</p>
+  <p>缓存提速的方式很巧妙。当 CPU 向 RAM 请求某个内存位置时，RAM 可以不只传回那一个值，而是传回<b>一整块数据</b>。这只多花一点点时间，却能把这一块数据存进缓存。这往往非常有用，因为计算机数据经常是按顺序排列、按顺序处理的。</p>
+  <p>比如，处理器在给一家餐厅统计当天的销售总额。它先从 RAM 的内存地址 100 取出第一笔交易。RAM 不只送回这一个值，而是送回从地址 100 到 200 的一整块数据，全部复制进缓存。现在，当处理器要下一笔交易、地址 101 的值来累加时，缓存会说："哦，这个值我这儿已经有了，马上给你！"根本不用跑去 RAM。因为缓存离处理器很近，通常一个时钟周期就能给出数据，不用等待。这比每次都在 RAM 之间来回跑要快得多。</p>
+  <p>当请求的数据已经在缓存里时，叫<b>缓存命中</b>（cache hit）；如果请求的数据不在缓存里，只好去 RAM 取，叫<b>缓存未命中</b>（cache miss）。</p>
+
+  <div class="card">
+    <h3>动手：给餐厅记账</h3>
+    <p class="muted" style="margin:0;font-size:14px">设定（示意）：缓存能放 2 块，每块 10 个地址；命中 1 个周期，未命中要去 RAM 取整块，20 个周期。</p>
+    <div class="cache-wrap">
+      <div>
+        <div id="lines"></div>
+        <div class="btns">
+          <button class="btn primary" id="c-next">读下一笔交易</button>
+          <button class="btn" id="c-all">一口气读完 100~119</button>
+        </div>
+        <div class="btns">
+          <button class="btn" id="c-store">把总额写到地址 150</button>
+          <button class="btn" id="c-300">去读地址 300</button>
+          <button class="btn" id="c-400">去读地址 400</button>
+          <button class="btn" id="c-reset">重来</button>
+        </div>
+      </div>
+      <div>
+        <div class="stat">
+          <div><small>命中</small><b id="s-hit">0</b></div>
+          <div><small>未命中</small><b id="s-miss">0</b></div>
+          <div><small>累计周期</small><b id="s-cyc">0</b></div>
+        </div>
+        <div class="readout" id="c-read" style="font-size:14px"></div>
+        <div class="log" id="c-log"></div>
+      </div>
+    </div>
+    <p class="hint">先读完 100~119，再依次点"写到 150""读 300""读 400"，看脏位什么时候触发写回</p>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>缓存当草稿纸，以及"脏位"</h2>
+  <p>缓存还可以当作草稿空间，在做比较长或比较复杂的计算时存放中间值。接着餐厅的例子：假设处理器算完了当天所有的销售额，想把结果存到内存地址 150。和之前一样，它不必一路跑回 RAM 去存，而是存进缓存里的副本——这样存得更快，如果之后还要接着算，取起来也更快。</p>
+  <p>但这引出了一个有意思的问题：缓存里的数据副本，现在和 RAM 里存的"真正版本"<b>不一样了</b>。这种不一致必须记录下来，以便在某个时候把一切同步好。为此，缓存为它存的每一块内存都配了一个特殊标记，叫<b>"脏位"</b>（dirty bit）——这可能是计算机科学家发明过的最好的术语。</p>
+  <p>同步最常发生在缓存已经满了、而处理器又请求一块新内存的时候。缓存在清掉旧的一块腾出空间之前，会先检查它的脏位：如果是"脏"的，就先把这块旧数据写回 RAM，再载入新的一块。</p>
+  <div class="extra">
+    <span class="t">为什么"顺序处理的数据"特别占便宜</span>
+    上面的模拟器里，读 100~119 这 20 笔只有 2 次未命中：第一次读 100 时把 100~109 一起搬了进来，接下来 9 次都是命中。如果数据东一个西一个（比如随机访问一个很大的数组），每次都可能未命中，缓存就帮不上忙了。写前端时也会遇到同样的道理：连续的数组遍历比到处跳的链表、对象访问更快，部分原因就在这里。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>指令流水线</h2>
+  <p>另一种提升 CPU 性能的技巧叫<b>指令流水线</b>（instruction pipelining）。想象你要洗一整个酒店的床单，但只有一台洗衣机和一台烘干机。一种做法是按顺序来：把一批床单放进洗衣机，等 30 分钟洗完；然后把湿床单拿出来放进烘干机，再等 30 分钟烘干。这样每小时能洗完一批。</p>
+  <p>（插一句：如果你有能在 30 分钟内烘干一批衣服的烘干机，请在评论里告诉我品牌和型号，我家的至少要 90 分钟。）</p>
+  <p>但就算有这台神奇的烘干机，如果把工作<b>并行</b>起来，还能更快。和之前一样，先把一批床单放进洗衣机，等 30 分钟洗完，再把湿床单放进烘干机。但这次，与其干等烘干机的 30 分钟，你同时往洗衣机里放进另一批。现在两台机器同时在转。再等 30 分钟，一批完成了，一批完成一半，还有一批准备放进去。这实际上让你的吞吐量翻了一倍。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="laundry" viewBox="0 0 680 200" role="img" aria-label="洗床单：顺序与并行"></svg></div>
+      <figcaption>图 2　每格是 30 分钟。上：一批洗完烘干再放下一批；下：烘第 1 批的同时洗第 2 批。</figcaption>
+    </figure>
+  </div>
+
+  <p>处理器设计也能用同样的思路。第 7 集里，我们的示例处理器按顺序、不停地循环执行"取指令—解码—执行"：取指令、解码、执行，取指令、解码、执行……这意味着我们的设计执行一条指令需要三个时钟周期。但这三个阶段用的是 CPU 的不同部分，这就有了并行的机会！在执行一条指令的同时，可以解码下一条指令，再从内存里取再下一条。这些不同的过程可以重叠，让 CPU 的所有部分在任何时刻都在工作。在这种流水线设计里，<b>每个时钟周期都能执行完一条指令</b>，吞吐量变成了三倍。</p>
+
+  <div class="card">
+    <h3>动手：CPU 流水线</h3>
+    <span class="seg-btns" id="pmode">
+      <button data-m="seq">顺序执行</button><button data-m="pipe">流水线</button><button data-m="stall">数据依赖 → 停顿</button><button data-m="flush">分支猜错 → 清空</button>
+    </span>
+    <div class="scroll-x" style="margin-top:12px"><svg class="diagram" id="pipe" viewBox="0 0 700 220" role="img" aria-label="流水线时序图"></svg></div>
+    <div class="step-text" id="pipe-cap"></div>
+    <p class="hint">横轴是时钟周期，每行是一条指令。蓝 = 取指令，绿 = 解码，橙 = 执行</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>流水线的麻烦：依赖和条件跳转</h2>
+  <p>但和缓存一样，流水线也会带来一些棘手的问题。一大风险是指令之间的<b>依赖</b>。比如，你可能取到了一个数据，而正在执行的那条指令马上就要修改它，结果流水线里拿到的就是旧值。为了弥补这一点，流水线处理器必须提前查看数据依赖，必要时让流水线<b>停顿</b>（stall），避免出问题。</p>
+  <p>高端处理器，比如笔记本和智能手机里的那些，更进一步：它们能<b>动态地重新排列</b>有依赖关系的指令，尽量减少停顿、让流水线一直流动，这叫<b>乱序执行</b>（out-of-order execution）。你可以想象，算清楚这一切的电路复杂得难以置信。尽管如此，流水线极其有效，今天几乎所有处理器都实现了它。</p>
+  <p>另一大风险是<b>条件跳转</b>指令，上一集我们讲过一个例子：JUMP_NEGATIVE。这类指令会根据某个值改变程序的执行流程。一个简单的流水线处理器看到跳转指令时，会长时间停顿，等这个值最终确定下来；只有知道了跳转结果，处理器才开始重新填满流水线。但这会造成很长的延迟，所以高端处理器也有对付这个问题的技巧。</p>
+  <p>把即将到来的跳转指令想象成路上的一个岔路口——一个<b>分支</b>。高级 CPU 会<b>猜</b>自己要走哪条路，并按照猜测提前把指令填进流水线，这种技术叫<b>推测执行</b>（speculative execution）。当跳转指令最终有了结果，如果 CPU 猜对了，流水线里已经装满了正确的指令，可以毫不延迟地继续跑。但如果猜错了，就必须丢掉所有推测出来的结果，执行一次<b>流水线清空</b>（pipeline flush）——有点像你错过了一个路口，只好掉头回到正路上，好让导航别再一个劲儿地喊。</p>
+  <p>为了尽量减少清空的影响，CPU 厂商开发了复杂的方法来猜测分支会往哪边走，叫<b>分支预测</b>（branch prediction）。今天的处理器不是五五开地瞎猜，往往能猜对 <b>90% 以上</b>！</p>
+  <div class="extra">
+    <span class="t">分支预测靠什么猜</span>
+    最简单的线索是"上次怎么走，这次多半还怎么走"。比如上一集求余数的循环，JUMP_NEG 前几次都不跳，只有最后一次跳——按"和上次一样"去猜，只会在最后错一次。真实的预测器会记录每个跳转指令最近的历史，猜得更准。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>超标量：一个周期执行好几条</h2>
+  <p>理想情况下，流水线让你每个时钟周期完成一条指令。后来<b>超标量处理器</b>（superscalar）出现了，它们每个时钟周期能执行<b>不止一条</b>指令。即便在流水线设计里，执行阶段时处理器也可能有一整块区域完全闲着。比如执行一条从内存取值的指令时，ALU 就坐在那儿，什么也不干。那为什么不一次取指令、解码好几条，并且只要有可能，就同时执行需要 CPU 不同部分的指令呢？</p>
+  <p>还可以更进一步：为常用的指令<b>复制几套电路</b>。比如，很多处理器有四个、八个甚至更多完全相同的 ALU，能并行执行很多条数学运算指令！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="superscalar" viewBox="0 0 680 200" role="img" aria-label="超标量处理器"></svg></div>
+      <figcaption>图 3　超标量：一次取、解码多条指令，分给不同的执行部件同时执行（示意）。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>多核、多 CPU 和超级计算机</h2>
+  <p>好，目前讲的这些技术，主要是优化<b>一个</b>指令流的执行吞吐量。另一种提升性能的方法是用<b>多核处理器</b>同时运行好几个指令流。你可能听过双核或四核处理器，意思是一个 CPU 芯片里有多个独立的处理单元。这在很多方面很像有多个独立的 CPU，但因为它们紧密集成在一起，可以共享一些资源，比如缓存，让多个核心能一起完成共同的计算。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="multicore" viewBox="0 0 680 210" role="img" aria-label="四核处理器"></svg></div>
+      <figcaption>图 4　四核处理器：四个独立的核心，共享一块缓存（示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>但当核心再多也不够用时，可以造带<b>多个独立 CPU</b> 的计算机！高端计算机，比如 YouTube 数据中心里正在给你传这个视频的服务器，往往需要额外的马力，才能让同时观看的几百人都流畅播放。目前最常见的是双 CPU 和四 CPU 的配置。</p>
+  <p>可有时候，就连这么多处理能力也不够。于是我们人类变得更加野心勃勃，造出了<b>超级计算机</b>！如果你要做真正的怪兽级计算——比如模拟宇宙的形成——就需要非常强大的计算能力。给台式机多加几个处理器根本不够，你需要很多处理器。不……不……比那还多。多得多！</p>
+  <p>在这个视频制作时，世界上最快的计算机位于中国无锡的国家超级计算中心。<b>神威·太湖之光</b>有令人脑袋融化的 40,960 个 CPU，每个有 256 个核心！加起来超过一千万个核心……每个核心以 1.45 GHz 运行。这台机器每秒总共能处理 9.3 亿亿（93 千万亿）次浮点数学运算，这个指标叫 <b>FLOPS</b>（每秒浮点运算次数）。相信我，这是非常多的 FLOPS！它能不能用最高画质跑《孤岛危机》还没人说过，但我猜大概可以。</p>
+
+  <div class="nums">
+    <div><div class="big-num">40,960</div><small>个 CPU</small></div>
+    <div><div class="big-num">× 256</div><small>每个 CPU 的核心数</small></div>
+    <div><div class="big-num">≈1049 万</div><small>个核心，每个 1.45 GHz</small></div>
+    <div><div class="big-num">93 P</div><small>FLOPS（9.3 × 10¹⁶）</small></div>
+  </div>
+  <div class="extra">
+    <span class="t">现在的纪录</span>
+    视频发布于 2017 年。之后榜首换了好几次：2022 年起出现了每秒超过百亿亿次（10¹⁸，1 EFLOPS）浮点运算的机器，比太湖之光快十几倍。思路仍然和课程讲的一样：更多核心、更多处理器，再加上大量专门做并行计算的加速芯片。
+  </div>
+  <p>长话短说，这些年来计算机处理器不仅快了很多，还复杂了很多，用上了各种巧妙的技巧，在每个时钟周期里榨出越来越多的计算。我们的任务，是用这股不可思议的处理能力去做又酷又有用的事——这就是编程的本质，我们下一集开始讲。下周见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>招数</th><th>解决什么</th><th>带来的新麻烦</th></tr></thead>
+      <tbody>
+        <tr><td>专用电路 / 指令集扩展</td><td>除法、图形、视频、加密不用拆成几百步</td><td>电路更复杂；为了兼容，指令只增不减</td></tr>
+        <tr><td>缓存</td><td>RAM 太远太慢，CPU 空等</td><td>缓存和 RAM 不一致 → 脏位、写回</td></tr>
+        <tr><td>流水线</td><td>取指、解码、执行可以重叠，每周期完成一条</td><td>数据依赖 → 停顿 / 乱序执行；条件跳转 → 推测执行、分支预测、猜错清空</td></tr>
+        <tr><td>超标量</td><td>执行阶段有部件闲着</td><td>要同时调度多条指令</td></tr>
+        <tr><td>多核 / 多 CPU / 超算</td><td>同时跑多个指令流</td><td>程序要能拆成可以并行的部分</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 缓存为什么能让顺序读取的数据变快？命中和未命中分别是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">未命中时，RAM 不只送回请求的那个值，而是送回一整块，存进缓存。之后读相邻地址时，数据已经在离 CPU 很近的缓存里，一个周期就能拿到，这叫命中；不在缓存里、只好去 RAM 取，叫未命中。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 脏位是干什么的？什么时候会把数据写回 RAM？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">数据写进缓存后，缓存副本和 RAM 不一致，脏位标记这一块"被改过"。等缓存满了、要清掉这一块给新数据腾地方时，如果它是脏的，就先写回 RAM，再载入新块。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 流水线为什么能让吞吐量变成三倍？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">取指令、解码、执行用的是 CPU 的不同部分。顺序执行时每条指令占 3 个周期，其余部分闲着；流水线让第 n 条执行、第 n+1 条解码、第 n+2 条取指令同时进行，稳定后每个周期都能完成一条。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 推测执行猜错了会怎样？为什么分支预测这么重要？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">猜错时，流水线里按猜测提前放进去的指令全部作废，要清空流水线、从正确的地址重新取，白白浪费几个周期。程序里跳转非常多，所以猜得越准（今天常常超过 90%），浪费越少。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="08.html"><small>← 上一集</small>08 指令和程序</a>
+    <a class="next" href="10.html"><small>下一集 →</small>10 早期的编程方式</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 9 集 Advanced CPU Designs（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 软件除法 vs 硬件除法 ---------- */
+(function () {
+  const svg = $('#divcmp');
+  txt(svg, 150, 40, '用程序（上一集）', 't-main end');
+  const seq = ['LOAD', 'LOAD', 'SUB', 'JN', 'J', 'SUB', 'JN', 'J', 'SUB', 'JN', 'J', 'SUB', 'JN', '…'];
+  seq.forEach((s, i) => { el('rect', { x: 160 + i * 34, y: 22, width: 30, height: 28, rx: 4, class: 's-acc' }, svg); txt(svg, 175 + i * 34, 40, s, 't-sub mid'); });
+  txt(svg, 150, 102, '硬件除法指令', 't-main end');
+  el('rect', { x: 160, y: 84, width: 30, height: 28, rx: 4, class: 's-on' }, svg);
+  txt(svg, 175, 102, 'DIV', 't-sub mid');
+  txt(svg, 200, 102, '一条搞定：16 ÷ 4 = 4', 't-sub');
+  txt(svg, 160, 138, '每个方块是一条指令，每条指令又要好几个时钟周期', 't-sub');
+})();
+
+/* ---------- 缓存模拟器 ---------- */
+(function () {
+  const BLOCK = 10, LINES = 2, HIT = 1, MISS = 20;
+  let lines, hit, miss, cyc, nextAddr, total, tick, lastEv;
+  const log = (cls, s) => { const d = document.createElement('div'); d.className = cls; d.innerHTML = s; $('#c-log').prepend(d); };
+  function reset() {
+    lines = []; hit = miss = cyc = 0; nextAddr = 100; total = 0; tick = 0; lastEv = null;
+    $('#c-log').innerHTML = '';
+    paint('缓存是空的。点"读下一笔交易"，从地址 100 开始累加。');
+  }
+  function access(addr, write) {
+    tick++;
+    const base = Math.floor(addr / BLOCK) * BLOCK;
+    let line = lines.find(l => l.base === base);
+    if (line) {
+      hit++; cyc += HIT; line.used = tick; lastEv = { base, kind: 'hit' };
+      log('h', `${write ? '写' : '读'}地址 ${addr}：<b>命中</b>（块 ${base}~${base + BLOCK - 1} 已在缓存）+${HIT} 周期`);
+    } else {
+      miss++; cyc += MISS;
+      let msg = `${write ? '写' : '读'}地址 ${addr}：<b>未命中</b> → 去 RAM 搬整块 ${base}~${base + BLOCK - 1}，+${MISS} 周期`;
+      if (lines.length >= LINES) {
+        const victim = lines.reduce((a, b) => a.used < b.used ? a : b);
+        if (victim.dirty) { cyc += MISS; msg += `；缓存满了，要清掉块 ${victim.base}~${victim.base + BLOCK - 1}，它是<b>脏</b>的 → 先写回 RAM，再 +${MISS} 周期`; log('w', msg); }
+        else { msg += `；缓存满了，清掉块 ${victim.base}~${victim.base + BLOCK - 1}（干净的，直接扔掉）`; log('m', msg); }
+        lines = lines.filter(l => l !== victim);
+      } else log('m', msg);
+      line = { base, dirty: false, used: tick };
+      lines.push(line); lastEv = { base, kind: 'new' };
+    }
+    if (write) line.dirty = true;
+  }
+  function paint(msg) {
+    const html = [];
+    for (let i = 0; i < LINES; i++) {
+      const l = lines[i];
+      if (!l) { html.push('<div class="cl empty">（空）</div>'); continue; }
+      const cls = lastEv && lastEv.base === l.base ? lastEv.kind : '';
+      html.push(`<div class="cl ${cls}"><span class="dirty ${l.dirty ? 'on' : ''}">脏位 ${l.dirty ? 1 : 0}</span><span class="tag">地址 ${l.base} ~ ${l.base + BLOCK - 1}</span></div>`);
+    }
+    $('#lines').innerHTML = html.join('');
+    $('#s-hit').textContent = hit; $('#s-miss').textContent = miss; $('#s-cyc').textContent = cyc;
+    const n = hit + miss;
+    $('#c-read').innerHTML = (msg ? msg + '<br>' : '') + (n ? `${n} 次访问。如果没有缓存，每次都去 RAM：${n} × ${MISS} = <b>${n * MISS}</b> 周期；现在是 <b>${cyc}</b> 周期。` : '');
+  }
+  const amount = a => (a * 37) % 90 + 10;
+  $('#c-next').onclick = () => { if (nextAddr > 119) { paint('100~119 已经读完了。试试右边几个按钮。'); return; } access(nextAddr, false); total += amount(nextAddr); nextAddr++; paint(`累加到地址 ${nextAddr - 1}，当前总额 ${total}。`); };
+  $('#c-all').onclick = () => { while (nextAddr <= 119) { access(nextAddr, false); total += amount(nextAddr); nextAddr++; } paint(`100~119 读完，总额 ${total}。`); };
+  $('#c-store').onclick = () => { access(150, true); paint('总额写进了缓存里的副本，没有写 RAM —— 这一块现在是<b>脏</b>的。'); };
+  $('#c-300').onclick = () => { access(300, false); paint(''); };
+  $('#c-400').onclick = () => { access(400, false); paint(''); };
+  $('#c-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 洗床单 ---------- */
+(function () {
+  const svg = $('#laundry');
+  const X0 = 110, CW = 70;
+  const cell = (r, c, label, cls, y0) => {
+    el('rect', { x: X0 + c * CW + 2, y: y0 + r * 30, width: CW - 4, height: 24, rx: 4, class: cls }, svg);
+    txt(svg, X0 + c * CW + CW / 2, y0 + r * 30 + 16, label, 't-sub mid');
+  };
+  for (let c = 0; c <= 7; c++) txt(svg, X0 + c * CW, 194, `${c * 30}′`, 't-sub mid');
+  txt(svg, 10, 20, '顺序', 't-main');
+  txt(svg, X0 - 10, 46, '洗衣机', 't-sub end'); txt(svg, X0 - 10, 76, '烘干机', 't-sub end');
+  [0, 1, 2].forEach(b => { cell(0, b * 2, `第 ${b + 1} 批`, 'g-w', 30); cell(1, b * 2 + 1, `第 ${b + 1} 批`, 'g-y', 30); });
+  txt(svg, X0 + 6 * CW + 8, 76, '3 小时 3 批', 't-sub');
+  txt(svg, 10, 112, '并行', 't-main t-on');
+  txt(svg, X0 - 10, 138, '洗衣机', 't-sub end'); txt(svg, X0 - 10, 168, '烘干机', 't-sub end');
+  [0, 1, 2, 3, 4].forEach(b => { cell(0, b, `第 ${b + 1} 批`, 'g-w', 122); cell(1, b + 1, `第 ${b + 1} 批`, 'g-y', 122); });
+  txt(svg, X0 + 6 * CW + 8, 168, '3 小时 5 批', 't-sub t-on');
+})();
+
+/* ---------- 流水线 ---------- */
+(function () {
+  const svg = $('#pipe');
+  const X0 = 170, CW = 42, RH = 34;
+  const NAMES = ['① LOAD_A 14', '② ADD B A', '③ STORE_A 13', '④ LOAD_B 15'];
+  const MODES = {
+    seq: { names: NAMES, rows: [[['f', 0], ['d', 1], ['e', 2]], [['f', 3], ['d', 4], ['e', 5]], [['f', 6], ['d', 7], ['e', 8]], [['f', 9], ['d', 10], ['e', 11]]],
+      cap: '顺序执行：一条指令走完三个阶段，下一条才开始。4 条指令要 <b>12</b> 个周期，任何时刻都只有一个部件在干活。' },
+    pipe: { names: NAMES, rows: [0, 1, 2, 3].map(i => [['f', i], ['d', i + 1], ['e', i + 2]]),
+      cap: '流水线：执行第 1 条的同时解码第 2 条、取第 3 条。4 条指令 <b>6</b> 个周期；流水线填满后，<b>每个周期完成一条</b>，吞吐量是顺序的 3 倍。' },
+    stall: { names: ['① LOAD_A 14', '② ADD B A（要用 A）', '③ STORE_A 13', '④ LOAD_B 15'],
+      rows: [[['f', 0], ['d', 1], ['e', 2]], [['f', 1], ['s', 2], ['d', 3], ['e', 4]], [['f', 2], ['s', 3], ['d', 4], ['e', 5]], [['f', 3], ['s', 4], ['d', 5], ['e', 6]]],
+      cap: '数据依赖：② 要用 ① 刚读进来的 A，可 ① 第 2 周期才执行完。处理器发现依赖，让 ② 等一拍（灰色虚线格 = <b>停顿</b>），后面的指令也跟着往后挪。高端 CPU 会用<b>乱序执行</b>，先拿别的不相关的指令来填这个空。' },
+    flush: { names: ['① JUMP_NEG 7', '② 猜：不跳，下一条', '③ 猜：再下一条', '⑦ 实际要跳去的指令'],
+      rows: [[['f', 0], ['d', 1], ['e', 2]], [['f', 1], ['x', 2]], [['f', 2]], [['f', 3], ['d', 4], ['e', 5]]], flushRows: [1, 2],
+      cap: '分支：① 是条件跳转，第 2 周期执行完才知道跳不跳。CPU 先<b>猜</b>"不跳"，把 ②③ 提前放进流水线（推测执行）。结果其实要跳 → 猜错了，②③ 作废（红色）→ <b>清空流水线</b>，从地址 7 重新取。猜对的话就一点都不耽误。' },
+  };
+  const LBL = { f: '取', d: '解', e: '执', s: '等', x: '作废' };
+  const CLS = { f: 'g-f', d: 'g-d', e: 'g-e', s: 'g-s', x: 'g-x' };
+  function draw(m) {
+    svg.innerHTML = '';
+    const M = MODES[m];
+    const maxC = 12;
+    for (let c = 0; c < maxC; c++) txt(svg, X0 + c * CW + CW / 2, 18, String(c + 1), 't-sub mid');
+    txt(svg, X0 - 10, 18, '周期', 't-sub end');
+    let last = 0;
+    M.rows.forEach((row, r) => {
+      const y = 28 + r * RH;
+      txt(svg, X0 - 10, y + 18, M.names[r], 't-sub end');
+      row.forEach(([k, c]) => {
+        el('rect', { x: X0 + c * CW + 2, y, width: CW - 4, height: RH - 8, rx: 4, class: CLS[k] }, svg);
+        txt(svg, X0 + c * CW + CW / 2, y + 17, LBL[k], 't-sub mid');
+        last = Math.max(last, c);
+      });
+      if (M.flushRows && M.flushRows.includes(r)) el('line', { x1: X0 + row[0][1] * CW, y1: y + 13, x2: X0 + (row[row.length - 1][1] + 1) * CW, y2: y + 13, style: 'stroke:var(--bad);stroke-width:2' }, svg);
+    });
+    el('line', { x1: X0 + (last + 1) * CW, y1: 24, x2: X0 + (last + 1) * CW, y2: 28 + 4 * RH, style: 'stroke:var(--ink);stroke-dasharray:4 3' }, svg);
+    txt(svg, X0 + (last + 1) * CW + 6, 28 + 4 * RH - 4, `${last + 1} 个周期`, 't-sub');
+    $$('#pmode button').forEach(b => b.classList.toggle('sel', b.dataset.m === m));
+    $('#pipe-cap').innerHTML = M.cap;
+  }
+  $$('#pmode button').forEach(b => b.onclick = () => draw(b.dataset.m));
+  draw('seq');
+})();
+
+/* ---------- 超标量 ---------- */
+(function () {
+  const svg = $('#superscalar');
+  el('rect', { x: 20, y: 70, width: 130, height: 60, rx: 10, class: 's-acc' }, svg);
+  txt(svg, 85, 96, '一次取、解码', 't-main mid'); txt(svg, 85, 114, '好几条指令', 't-sub mid');
+  const units = [['ALU 1', 'ADD'], ['ALU 2', 'SUB'], ['ALU 3', 'ADD'], ['内存读写', 'LOAD']];
+  units.forEach(([n, ins], i) => {
+    const y = 14 + i * 46;
+    el('path', { d: `M150,100 C190,100 200,${y + 18} 240,${y + 18}`, class: 's-thin' }, svg);
+    el('rect', { x: 240, y, width: 120, height: 36, rx: 8, class: 's-on' }, svg);
+    txt(svg, 300, y + 23, n, 't-main mid');
+    txt(svg, 372, y + 23, `执行 ${ins}`, 't-sub');
+  });
+  txt(svg, 600, 80, '同一个时钟周期里', 't-main mid');
+  txt(svg, 600, 100, '4 条指令同时执行', 't-main mid t-on');
+  txt(svg, 600, 124, '常用的 ALU 复制了好几份', 't-sub mid');
+})();
+
+/* ---------- 多核 ---------- */
+(function () {
+  const svg = $('#multicore');
+  el('rect', { x: 150, y: 10, width: 380, height: 190, rx: 14, class: 's-panel' }, svg);
+  txt(svg, 340, 30, '一颗 CPU 芯片', 't-sub mid');
+  [0, 1, 2, 3].forEach(i => {
+    const x = 170 + i * 88;
+    el('rect', { x, y: 42, width: 78, height: 80, rx: 8, class: 's-on' }, svg);
+    txt(svg, x + 39, 72, `核心 ${i + 1}`, 't-main mid');
+    txt(svg, x + 39, 92, '控制单元', 't-sub mid'); txt(svg, x + 39, 108, 'ALU · 寄存器', 't-sub mid');
+    el('path', { d: `M${x + 39},122 V148`, class: 's-line' }, svg);
+  });
+  el('rect', { x: 170, y: 148, width: 342, height: 36, rx: 8, class: 's-acc' }, svg);
+  txt(svg, 341, 171, '共享缓存', 't-main mid');
+  txt(svg, 20, 100, '4 个指令流', 't-main'); txt(svg, 20, 120, '同时跑', 't-sub');
+  txt(svg, 550, 100, '比 4 颗独立 CPU', 't-sub'); txt(svg, 550, 118, '结合得更紧密', 't-sub');
+})();
+</script>
+</body>
+</html>

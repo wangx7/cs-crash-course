@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>14 数据结构 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.memrow{display:flex;flex-wrap:wrap;gap:3px;margin:10px 0}
+.mc{display:flex;flex-direction:column;align-items:center;min-width:44px;border:2px solid var(--line);border-radius:7px;background:var(--panel);transition:all .2s}
+.mc .ad{font:11px var(--mono);color:var(--muted);padding:2px 4px;border-bottom:1px solid var(--line);width:100%;text-align:center}
+.mc .v{font:700 16px var(--mono);padding:5px 4px}
+.mc .ix{font:11px var(--mono);color:var(--accent);padding:0 4px 2px}
+.mc.hl{border-color:var(--on);background:var(--on-soft)}
+.mc.null{border-style:dashed}
+.mc.null .v{color:var(--bad)}
+.mc.junk .v{color:var(--muted)}
+.mc.read{border-color:var(--accent);background:var(--accent-soft)}
+.ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center;font-size:14px;margin-top:8px}
+.ctl input[type=number]{font:15px var(--mono);width:70px;padding:4px 8px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.screen{font:16px var(--mono);background:#111;color:#6f6;padding:10px 14px;border-radius:8px;min-height:44px;word-break:break-all;margin-top:8px}
+.grid3{display:inline-grid;grid-template-columns:repeat(3,48px);gap:4px}
+.grid3 div{height:42px;display:flex;align-items:center;justify-content:center;font:700 16px var(--mono);border:2px solid var(--line);border-radius:7px;background:var(--panel);cursor:pointer}
+.grid3 div.hl{border-color:var(--on);background:var(--on-soft)}
+.two{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.qs{display:flex;gap:8px;align-items:center;min-height:64px;flex-wrap:wrap}
+.qs .p{padding:8px 12px;border-radius:10px;background:var(--accent-soft);border:2px solid var(--accent);font-weight:600;font-size:14px}
+.qs .p.first{border-color:var(--on);background:var(--on-soft)}
+.qs i{font-style:normal;color:var(--muted)}
+.pancakes{display:flex;flex-direction:column-reverse;align-items:center;gap:3px;min-height:150px;justify-content:flex-start;padding-top:6px}
+.pancakes div{height:20px;border-radius:999px;background:var(--wood);opacity:.85;color:#fff;font-size:12px;text-align:center;line-height:20px;transition:all .2s}
+.pancakes div.top{outline:3px solid var(--on)}
+.plate{width:180px;height:8px;border-radius:999px;background:var(--metal);margin:0 auto}
+</style>
+</head>
+<body data-ep="14">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=15" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 14 集</div>
+  <h1>数据结构</h1>
+  <p class="en">Data Structures</p>
+  <p class="lead">算法处理的数据，在内存里到底怎么摆放？这一集介绍最主要的几种数据结构：数组、字符串、矩阵、结构体，以及靠"指针"串起来的链表、队列、栈、树和图。</p>
+  <div class="road">
+    <span>数组</span><i>→</i><span>字符串</span><i>→</i><span>矩阵</span><i>→</i><span>结构体</span><i>→</i><span>链表（指针）</span><i>→</i><span>队列 / 栈</span><i>→</i><span>树 / 图</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 数组</a></li>
+    <li><a href="#ch1">1 · 字符串</a></li>
+    <li><a href="#ch2">2 · 矩阵</a></li>
+    <li><a href="#ch3">3 · 结构体</a></li>
+    <li><a href="#ch4">4 · 指针与链表</a></li>
+    <li><a href="#ch5">5 · 队列与栈</a></li>
+    <li><a href="#ch6">6 · 树与图</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>数组：一个挨一个</h2>
+  <p>上一集讲了一些经典算法，比如给数组排序、在图里找最短路径。我们没讲的是：算法处理的数据，在内存里是以什么格式存放的。你肯定不希望数据乱得像 John Green 的大学宿舍，食物、衣服、纸张丢得到处都是。我们希望数据是<b>有结构的</b>，这样才高效、方便读取。为此，计算机科学家发明了<b>数据结构</b>！</p>
+  <p>上一集我们已经介绍了一种基本数据结构：<b>数组</b>（array），在有些编程语言里也叫列表（list）或向量（vector）。它是存在内存里的一串值。所以，不再像之前那样一个变量只存一个值，比如 j = 5，我们可以在一个数组变量里存好几个值。要取出数组里的某个值，就要指定一个<b>下标</b>（index）。几乎所有编程语言里，数组下标都从 0 开始，用方括号表示访问。所以，如果想把数组 j 第一个和第三个位置的值加起来、结果存进变量 a，可以写：<code>a = j[0] + j[2]</code>。</p>
+  <p>数组在内存里的存法非常直接。为了简单，假设编译器从内存地址 1000 开始存数组。这个数组有 7 个数，按顺序一个挨一个存着。如果写 <code>j[0]</code>，程序会去内存地址 1000，加上 0 个偏移，得到地址 1000，读出那里的值：5。如果想取 <code>j[5]</code>，程序去内存地址 1000，加 5 个偏移，得到地址 1005，读出值：4。</p>
+
+  <div class="card">
+    <h3>动手：下标 → 内存地址</h3>
+    <div class="memrow" id="arr"></div>
+    <div class="ctl"><label>j[ <input type="number" id="arr-i" min="0" max="6" value="5"> ]</label><span id="arr-read" style="font-family:var(--mono)"></span></div>
+    <p class="hint">j[0] = 5、j[5] = 4 来自课程，其余数值为示意</p>
+  </div>
+
+  <p>"数组里第 5 个数"和"下标为 5 的数"很容易搞混，它们不是一回事。记住，下标 5 其实是数组里的<b>第 6 个</b>数，因为下标是从 0 开始数的。</p>
+  <p>数组是用途极其广泛的数据结构，一直被用到，所以几乎所有编程语言都自带了大量处理数组的函数。比如给数组排序的函数很常见：只要把数组传进去，它就返回排好序的数组，你不必自己写排序算法。</p>
+  <div class="extra">
+    <span class="t">为什么下标从 0 开始</span>
+    看上面的图就明白了：下标就是"离起点的偏移"。j[i] 的地址 = 起始地址 + i。第一个元素离起点 0 格，所以是 j[0]。CPU 算地址只要一次加法，这就是数组按下标访问特别快的原因。（真实计算机里一个数通常占好几个字节，地址要再乘以每个元素的大小，课程为了简单当成每个占 1 格。）
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>字符串：以 null 结尾的字符数组</h2>
+  <p>数组的近亲是<b>字符串</b>（string），它其实就是一串字母、数字、标点和其他书面字符组成的数组。第 4 集讲过计算机怎样存储字符。写代码时，通常用一对引号把文字括起来，比如 <code>j = "STAN ROCKS"</code>。它看起来不像数组，但确实是。在幕后，内存是这样的：</p>
+
+  <div class="card">
+    <h3>动手：print 怎么知道该停在哪</h3>
+    <div class="memrow" id="str"></div>
+    <div class="btns"><button class="btn primary" id="str-print">print(j)</button><button class="btn" id="str-null">把结尾的 null 删掉</button><button class="btn" id="str-reset">恢复</button></div>
+    <div class="screen" id="str-screen"></div>
+    <div class="step-text" id="str-cap">注意最后一格：不是字符"0"，而是二进制值 0。</div>
+  </div>
+
+  <p>注意，字符串在内存里以 <b>0</b> 结尾——不是字符"0"，而是二进制值 0。它叫 <b>null 字符</b>，标志着字符串的结尾。这个字符非常重要：如果调用 print 函数在屏幕上显示文字，它会从起始位置开始，一个一个字符地往屏幕上打印，但它得知道什么时候停下来！否则它会把内存里的每一样东西都当成文字打印出来。这个 0 告诉函数什么时候停。</p>
+  <p>因为计算机经常和文字打交道，所以有很多专门处理字符串的函数。比如很多编程语言有个叫 <b>strcat</b>（string concatenate，字符串连接）的函数，它接收两个字符串，把第二个复制到第一个的末尾。</p>
+  <div class="extra">
+    <span class="t">"停不下来"的危险</span>
+    上面"删掉 null"后打印出来的那串乱码，就是真实世界里一类经典漏洞的样子：程序读过了字符串的边界，把相邻内存里的数据（可能是密码）一起读出来、发了出去。C 语言的字符串就是这种以 null 结尾的格式；JavaScript 的字符串则另外记着长度，不靠结尾的 0，所以你写 JS 时碰不到这个问题。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>矩阵：数组的数组</h2>
+  <p>我们可以用数组表示一维的列表，但有时需要处理二维数据，比如电子表格，或者屏幕上的像素。为此我们需要<b>矩阵</b>（matrix）。你可以把矩阵看成<b>数组的数组</b>！所以一个 3 × 3 的矩阵其实是一个大小为 3 的数组，它的每个位置又存着一个大小为 3 的数组。我们可以这样初始化一个矩阵，它在内存里是这样排列的。</p>
+  <p>要取出一个值，需要两个下标，比如 <code>j[2][1]</code>。这告诉计算机：找数组 2 里位置 1 的元素，得到的值是 12。</p>
+
+  <div class="card">
+    <h3>动手：二维下标 → 一维内存</h3>
+    <div class="two">
+      <div><p class="muted" style="margin:0 0 6px;font-size:13px">逻辑上：3 × 3 的格子（点一格）</p><div class="grid3" id="mx"></div></div>
+      <div style="flex:1;min-width:260px"><p class="muted" style="margin:0 0 6px;font-size:13px">内存里：一行接一行，排成一条</p><div class="memrow" id="mx-mem"></div><div class="readout" id="mx-read" style="font-size:14px"></div></div>
+    </div>
+    <p class="hint">j[2][1] = 12 来自课程，其余数值为示意</p>
+  </div>
+
+  <p>矩阵酷的地方在于，它不局限于 3 × 3，可以是任意大小、任意维度。比如可以做一个五维矩阵，然后这样访问：<code>a = j[2][0][18][18][3]</code>。没错，你现在知道怎么访问五维矩阵了——快去告诉你的朋友！</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>结构体：把相关的变量捆在一起</h2>
+  <p>到目前为止，我们存的都是单个数字或字母，放进数组或矩阵里。但有时把一组相关的变量存在一起会很有用，比如一个银行账号和它的余额。像这样捆在一起的一组变量叫<b>结构体</b>（struct）。现在我们可以存不同类型的数据了，这些数据不再是单个数字，而是复合的数据结构，能一次存好几样数据。我们甚至可以做由自己定义的结构体组成的数组，它们在内存里会被自动打包在一起。如果访问 <code>j[0]</code>，拿回的是存在那里的整个结构体，然后可以取出其中的账号和余额。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="structs" viewBox="0 0 680 170" role="img" aria-label="结构体数组"></svg></div>
+      <figcaption>图 1　结构体数组：每个元素是一个"账户"结构体，里面有账号和余额两个字段，在内存里紧挨着（数值为示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>这种结构体数组和其他任何数组一样，在创建时就有固定的大小，不能扩大来容纳更多的值。而且数组在内存里必须按顺序存储，所以很难在中间插入一个新值。但结构体这种数据结构可以用来构建更复杂的数据结构，消除这些限制。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>指针与链表</h2>
+  <p>来看这个叫<b>节点</b>（node）的结构体。它存着一个变量，比如一个数字，还有一个<b>指针</b>（pointer）。指针是一种特殊的变量，它的名字就来自它的作用：<b>指向</b>计算机内存里的某个位置。</p>
+  <p>用这个结构体，我们可以创建<b>链表</b>（linked list）。它是一种灵活的数据结构，能存很多个节点。它靠每个节点指向链表中的下一个节点来做到这一点。假设内存里存着三个节点结构体，分别在地址 1000、1002 和 1008。它们之所以隔开，可能是因为在不同时间创建的，中间夹着别的数据。</p>
+  <p>可以看到，第一个节点存着值 7，它的"下一个"指针里是地址 1008，这意味着链表中的下一个节点位于内存地址 1008。走到那里，下一个节点存着值 112，指向地址 1002。跟过去，看到一个值为 14 的节点，这个节点又指回地址 1000，也就是第一个节点。这种链表叫<b>循环链表</b>。但链表也可以是非循环的：最后一个指针设为 0，也就是"null"，表示到了链表的尽头。</p>
+  <p>程序员使用链表时，很少去看"下一个"指针里存的具体内存地址，而是用链表的抽象模型，就像下面右边那样，这样更容易理解。</p>
+
+  <div class="card">
+    <h3>动手：链表的两种看法</h3>
+    <div class="scroll-x"><svg class="diagram" id="ll" viewBox="0 0 680 300" role="img" aria-label="链表的内存视图与抽象视图"></svg></div>
+    <div class="btns"><button class="btn" id="ll-ins">在 7 后面插入 99</button><button class="btn" id="ll-circ">切换：循环 / 以 null 结尾</button><button class="btn" id="ll-reset">恢复</button></div>
+    <div class="step-text" id="ll-cap"></div>
+  </div>
+
+  <p>数组的大小必须预先定好，而链表可以<b>动态</b>地变大变小：可以创建新节点，通过修改指针值把它插进链表。链表也很容易重新排序、从两端缩短、拆成两半、反转等等，超级方便！链表还很适合上集讲的那些排序算法。因为这么灵活，很多更复杂的数据结构都建立在链表之上，最有名、最普遍的是<b>队列</b>和<b>栈</b>。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>队列与栈</h2>
+  <p><b>队列</b>（queue）就像邮局里排队：谁先来，谁就先被服务。哪怕你只想买张邮票，而前面那个人要寄 23 个包裹。这叫<b>先进先出</b>（FIFO，first-in first-out）——我是说队列，不是说那 23 个包裹。</p>
+  <p>想象我们有一个叫"邮局队列"的指针，指向链表的第一个节点。服务完 Hank 之后，读取 Hank 的"下一个"指针，把"邮局队列"指向下一个人。这样我们就把 Hank <b>出队</b>（dequeue）了——他办完了，离开队列。如果想把某人<b>入队</b>（enqueue），也就是加进队列，就要沿着链表一直走到末尾，把末尾节点的"下一个"指针指向新来的人，比如 Nick。</p>
+  <p>只要稍作修改，我们也能用链表做<b>栈</b>（stack），栈是<b>后进先出</b>（LIFO，last-in first-out）的。你可以把它想成一叠松饼：做好一个新松饼，就把它叠到之前那些上面；吃的时候，先吃最上面那个。美味！数据不叫入队和出队，而是<b>入栈</b>（push）和<b>出栈</b>（pop）。没错，这些就是正式的术语！</p>
+
+  <div class="card">
+    <h3>动手：排队和叠松饼</h3>
+    <div class="two">
+      <div style="flex:1;min-width:280px">
+        <h3 style="font-size:16px">队列（先进先出）</h3>
+        <div class="qs" id="queue"></div>
+        <div class="btns"><button class="btn" id="q-en">Nick 入队</button><button class="btn" id="q-de">出队（服务第一个）</button></div>
+      </div>
+      <div style="min-width:220px">
+        <h3 style="font-size:16px">栈（后进先出）</h3>
+        <div class="pancakes" id="stack"></div><div class="plate"></div>
+        <div class="btns"><button class="btn" id="s-push">push 一个新松饼</button><button class="btn" id="s-pop">pop（吃最上面的）</button></div>
+      </div>
+    </div>
+    <div class="step-text" id="qs-cap">左边：先来的先走。右边：后放上去的先被吃。</div>
+  </div>
+  <div class="extra">
+    <span class="t">你天天在用</span>
+    第 12 集那个"调用栈"就是栈：最后调用的函数最先返回。浏览器的"后退"按钮是栈；JavaScript 的事件循环里，等待执行的回调排的是队列。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>树与图</h2>
+  <p>如果把节点结构体改一下，让它不只有一个指针，而是有两个，就能构建<b>树</b>（tree），另一种在很多算法里用到的数据结构。同样，程序员很少去看这些指针的具体值，而是把树抽象成这样：最上面的节点叫<b>根节点</b>（root），根节点下面的所有节点都叫<b>子节点</b>（children）。任何一个子节点直接上方的那个节点，叫它的<b>父节点</b>（parent）。这个例子能说明托马斯·杰斐逊是阿伦·伯尔的父亲吗？这就留给你们的同人小说来决定吧。没有任何子节点的节点——也就是树到头的地方——叫<b>叶节点</b>（leaf）。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="tree" viewBox="0 0 680 280" role="img" aria-label="二叉树"></svg></div>
+      <figcaption>图 2　二叉树：每个节点最多两个子节点。从根到叶只能单向往下走。</figcaption>
+    </figure>
+  </div>
+
+  <p>在我们的例子里，节点最多只能有两个子节点，所以这种树叫<b>二叉树</b>（binary tree）。但你完全可以改成三个、四个或更多，甚至可以让节点用链表来存它所有的子节点。不管是现实中的树还是数据结构里的树，一个重要的性质是：从根到叶是<b>单向</b>的。如果根连着叶、叶又连回根，那就很奇怪了。</p>
+  <p>如果数据是随意连接的，包括存在循环，可以用<b>图</b>（graph）来表示。还记得上一集用道路连接城市的那张图吗？这种结构可以用带多个指针的节点来表示，所以没有根、叶、子节点、父节点这些概念，任何节点都可以指向任何其他节点！</p>
+  <p>以上概述了计算机科学中最主要的一些数据结构。在这些基本结构之上，程序员还做出了各种具有不同性质的新变体，比如"红黑树"和"堆"，我们没时间讲了。不同的数据结构适用于不同的场景，为工作选对数据结构能让事情简单得多，所以花时间考虑用哪种数据结构是值得的。幸运的是，大多数编程语言都自带了预先打包好的数据结构库，比如 C++ 有它的标准模板库，Java 有 Java 类库。这意味着程序员不必浪费时间从零开始实现，可以把时间花在更有趣的事情上——又往上提升了一层抽象！下周见！</p>
+  <div class="extra">
+    <span class="t">前端里的树</span>
+    网页的 DOM 就是一棵树：<code>&lt;html&gt;</code> 是根，<code>&lt;body&gt;</code> 是它的子节点，文字节点是叶。Vue 的虚拟 DOM、组件树，也都是树。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt static" style="width:100%">
+      <thead><tr><th>数据结构</th><th>怎么存</th><th>特点</th></tr></thead>
+      <tbody>
+        <tr><td>数组</td><td>一个挨一个连续存放</td><td>按下标取值极快（起始地址 + 下标）；大小固定，中间插入难</td></tr>
+        <tr><td>字符串</td><td>字符数组，以 null（二进制 0）结尾</td><td>函数靠 0 知道在哪停</td></tr>
+        <tr><td>矩阵</td><td>数组的数组，在内存里一行接一行</td><td>多个下标 j[2][1]，任意维度</td></tr>
+        <tr><td>结构体</td><td>把几个相关变量捆在一起</td><td>可以组成数组，也是构建复杂结构的零件</td></tr>
+        <tr><td>链表</td><td>节点 = 值 + 指向下一个节点的指针</td><td>节点可以散在内存各处；动态增减、插入只改指针</td></tr>
+        <tr><td>队列 / 栈</td><td>建在链表之上</td><td>队列先进先出（入队 / 出队）；栈后进先出（push / pop）</td></tr>
+        <tr><td>树</td><td>节点有多个指向子节点的指针</td><td>根、父、子、叶；从根到叶单向</td></tr>
+        <tr><td>图</td><td>节点可以随意指向任何节点</td><td>可以有循环，没有根和叶</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    数组靠"连续存放 + 下标偏移"换来速度，代价是死板；链表靠"指针"换来灵活，代价是只能一个个顺着找。队列、栈、树、图都是用指针把节点按不同规则连起来。选对数据结构，算法会简单很多。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 数组从地址 1000 开始，j[5] 在哪个地址？它是数组里的第几个数？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">1000 + 5 = 1005。下标从 0 开始，所以 j[5] 是第 6 个数。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 字符串结尾的 null 是做什么的？如果它丢了会怎样？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它是二进制值 0，标志字符串结束。print 之类的函数从开头逐个处理字符，遇到 0 才停。丢了的话，函数会一直读下去，把后面不相干的内存也当成文字处理。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 在数组中间插入一个值很难，在链表中间插入为什么容易？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">数组必须连续存放，插入要把后面所有元素往后挪（而且大小固定）。链表的节点可以放在内存任何地方：新节点随便放，只要让前一个节点的指针指向它、它的指针指向原来的下一个节点，改两个指针就行。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 队列和栈的区别？各举一个生活中的例子。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">队列先进先出（FIFO），像邮局排队；栈后进先出（LIFO），像一叠松饼，最后放上去的最先被吃。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="13.html"><small>← 上一集</small>13 算法入门</a>
+    <a class="next" href="15.html"><small>下一集 →</small>15 阿兰·图灵</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 14 集 Data Structures（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const cell = (ad, v, ix, cls) => `<div class="mc ${cls || ''}"><span class="ad">${ad}</span><span class="v">${v}</span>${ix != null ? `<span class="ix">${ix}</span>` : ''}</div>`;
+
+/* ---------- 数组 ---------- */
+(function () {
+  const J = [5, 3, 7, 1, 9, 4, 2];
+  function paint() {
+    const i = Math.max(0, Math.min(6, +$('#arr-i').value | 0));
+    $('#arr').innerHTML = J.map((v, k) => cell(1000 + k, v, `j[${k}]`, k === i ? 'hl' : '')).join('');
+    $('#arr-read').innerHTML = `→ 地址 1000 + ${i} = <b>${1000 + i}</b> → 值 <b style="color:var(--on)">${J[i]}</b>（这是第 ${i + 1} 个数）`;
+  }
+  $('#arr-i').oninput = paint; paint();
+})();
+
+/* ---------- 字符串 ---------- */
+(function () {
+  const S = 'STAN ROCKS';
+  const JUNK = ['p', 'w', 'd', '=', '4', '2', '!', 'x', '%', '&', 'Q'];
+  let hasNull = true, timer = null;
+  function cells(readTo) {
+    const mem = [...S].map(c => c === ' ' ? '␣' : c);
+    const out = [];
+    mem.forEach((c, k) => out.push(cell(2000 + k, c, null, k <= readTo ? 'read' : '')));
+    if (hasNull) out.push(cell(2000 + mem.length, '0', null, 'null' + (readTo >= mem.length ? ' read' : '')));
+    JUNK.forEach((c, k) => { const ad = 2000 + mem.length + (hasNull ? 1 : 0) + k, idx = mem.length + (hasNull ? 1 : 0) + k; out.push(cell(ad, c, null, 'junk' + (idx <= readTo ? ' read' : ''))); });
+    $('#str').innerHTML = out.join('');
+  }
+  function print() {
+    clearInterval(timer);
+    let k = -1; $('#str-screen').textContent = '';
+    const seq = [...S, ...(hasNull ? ['\0'] : []), ...JUNK];
+    timer = setInterval(() => {
+      k++;
+      cells(k);
+      const c = seq[k];
+      if (c === '\0') { clearInterval(timer); $('#str-cap').innerHTML = '读到二进制 0 → <b>停</b>。屏幕上正好是 STAN ROCKS。'; return; }
+      if (c === undefined) { clearInterval(timer); $('#str-cap').innerHTML = '没有 null，print 一路读下去，把后面不相干的内存也当成文字打印了出来（这里只画了一小段，真实情况会一直读下去）。'; return; }
+      $('#str-screen').textContent += c;
+    }, 160);
+  }
+  $('#str-print').onclick = print;
+  $('#str-null').onclick = () => { clearInterval(timer); hasNull = false; cells(-1); $('#str-screen').textContent = ''; $('#str-cap').textContent = '结尾的 0 没了。再 print 一次试试。'; };
+  $('#str-reset').onclick = () => { clearInterval(timer); hasNull = true; cells(-1); $('#str-screen').textContent = ''; $('#str-cap').textContent = '注意最后一格：不是字符"0"，而是二进制值 0。'; };
+  cells(-1);
+})();
+
+/* ---------- 矩阵 ---------- */
+(function () {
+  const M = [[5, 3, 7], [1, 9, 4], [2, 12, 8]];
+  let r = 2, c = 1;
+  function paint() {
+    $('#mx').innerHTML = M.flatMap((row, i) => row.map((v, j) => `<div data-r="${i}" data-c="${j}" class="${i === r && j === c ? 'hl' : ''}">${v}</div>`)).join('');
+    $$('#mx div').forEach(d => d.onclick = () => { r = +d.dataset.r; c = +d.dataset.c; paint(); });
+    $('#mx-mem').innerHTML = M.flat().map((v, k) => cell(1000 + k, v, `[${Math.floor(k / 3)}][${k % 3}]`, k === r * 3 + c ? 'hl' : '')).join('');
+    $('#mx-read').innerHTML = `j[${r}][${c}] → 数组 ${r} 里的位置 ${c} → 内存地址 1000 + ${r}×3 + ${c} = <b>${1000 + r * 3 + c}</b> → 值 <b style="color:var(--on)">${M[r][c]}</b>`;
+  }
+  paint();
+})();
+
+/* ---------- 结构体数组 ---------- */
+(function () {
+  const svg = $('#structs');
+  const A = [['j[0]', '7041', '¥ 2,300'], ['j[1]', '1128', '¥ 15'], ['j[2]', '9560', '¥ 830']];
+  A.forEach(([n, acc, bal], i) => {
+    const x = 20 + i * 215;
+    el('rect', { x, y: 30, width: 200, height: 100, rx: 10, class: 's-acc' }, svg);
+    txt(svg, x + 100, 22, n, 't-mono mid');
+    [['账号', acc], ['余额', bal]].forEach(([k, v], r) => {
+      el('rect', { x: x + 12, y: 42 + r * 42, width: 176, height: 34, rx: 6, class: 's-panel' }, svg);
+      txt(svg, x + 24, 64 + r * 42, k, 't-sub');
+      txt(svg, x + 176, 64 + r * 42, v, 't-mono end');
+    });
+  });
+  txt(svg, 340, 158, 'j[1] 拿到整个结构体；j[1].余额 拿到其中一个字段', 't-sub mid');
+})();
+
+/* ---------- 链表 ---------- */
+(function () {
+  const svg = $('#ll');
+  let nodes, head, circular;
+  function reset() { nodes = { 1000: [7, 1008], 1008: [112, 1002], 1002: [14, 1000] }; head = 1000; circular = true; draw('三个节点散在内存地址 1000、1002、1008，每个节点 = 值 + 下一个节点的地址。'); }
+  function order() { const o = []; let p = head, k = 0; while (p && k++ < 10) { if (o.includes(p)) break; o.push(p); p = nodes[p][1]; } return o; }
+  function draw(msg) {
+    svg.innerHTML = '';
+    txt(svg, 20, 20, '内存视图（程序员很少看这个）', 't-sub');
+    let x = 20;
+    for (let a = 1000; a <= 1012; a++) {
+      const w = 50;
+      const isNode = !!nodes[a];
+      el('rect', { x, y: 32, width: w - 4, height: 60, rx: 5, class: isNode ? 's-on' : 's-soft' }, svg);
+      txt(svg, x + (w - 4) / 2, 46, String(a), 't-sub mid');
+      if (isNode) {
+        txt(svg, x + (w - 4) / 2, 66, String(nodes[a][0]), 't-mono mid');
+        txt(svg, x + (w - 4) / 2, 84, nodes[a][1] ? '→' + nodes[a][1] : '→null', 't-sub mid');
+      } else txt(svg, x + (w - 4) / 2, 70, '…', 't-sub mid');
+      x += w;
+    }
+    txt(svg, 20, 112, '橙色格子是链表节点，中间的灰格是别的数据', 't-sub');
+    // 抽象视图
+    txt(svg, 20, 150, '抽象视图（程序员脑子里的样子）', 't-sub');
+    const o = order();
+    o.forEach((a, i) => {
+      const bx = 30 + i * 150;
+      el('rect', { x: bx, y: 166, width: 70, height: 44, rx: 8, class: 's-on' }, svg);
+      el('rect', { x: bx + 70, y: 166, width: 30, height: 44, rx: 8, class: 's-panel' }, svg);
+      txt(svg, bx + 35, 194, String(nodes[a][0]), 't-mono mid');
+      el('circle', { cx: bx + 85, cy: 188, r: 4, style: 'fill:var(--ink)' }, svg);
+      if (i < o.length - 1) el('path', { d: `M${bx + 89},188 H${bx + 146}`, class: 's-line', 'marker-end': 'url(#llA)' }, svg);
+    });
+    const lx = 30 + (o.length - 1) * 150 + 89;
+    if (circular) el('path', { d: `M${lx},188 H${lx + 20} V250 H18 V188 H28`, class: 's-line', 'marker-end': 'url(#llA)' }, svg), txt(svg, (lx + 20) / 2, 268, '最后一个指回第一个：循环链表', 't-sub mid');
+    else { el('path', { d: `M${lx},188 H${lx + 30}`, class: 's-line' }, svg); txt(svg, lx + 36, 193, 'null', 't-mono t-on'); txt(svg, 300, 268, '最后一个指针是 0（null）：链表到头了', 't-sub mid'); }
+    const defs = el('defs', {}, svg); const m = el('marker', { id: 'llA', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 7, markerHeight: 7, orient: 'auto' }, defs); el('path', { d: 'M0,0 L10,5 L0,10 z', style: 'fill:var(--ink)' }, m);
+    $('#ll-cap').innerHTML = msg;
+  }
+  $('#ll-ins').onclick = () => {
+    if (nodes[1005]) return;
+    nodes[1005] = [99, nodes[1000][1]]; nodes[1000][1] = 1005;
+    draw('新节点放在内存里任意一个空位（这里是 1005），只改了两个指针：<b>7 的指针从 1008 改成 1005</b>，新节点的指针指向 1008。别的节点一个都没动——数组可做不到。');
+  };
+  $('#ll-circ').onclick = () => {
+    const o = order(), last = o[o.length - 1];
+    circular = !circular; nodes[last][1] = circular ? head : 0;
+    draw(circular ? '最后一个节点的指针改回 1000：又变成循环链表。' : `最后一个节点（${nodes[last][0]}）的指针改成 0，也就是 null：链表有了尽头。`);
+  };
+  $('#ll-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 队列和栈 ---------- */
+(function () {
+  let q = ['Hank', 'Brittany', 'Ali'], s = ['松饼 1', '松饼 2', '松饼 3'], n = 4, nq = 0;
+  const say = t => { $('#qs-cap').innerHTML = t; };
+  function paint() {
+    $('#queue').innerHTML = q.length ? `<span class="muted" style="font-size:12px">邮局队列 →</span>` + q.map((p, i) => `<span class="p ${i === 0 ? 'first' : ''}">${p}</span>`).join('<i>→</i>') + '<i>→ null</i>' : '<span class="muted">队列空了</span>';
+    $('#stack').innerHTML = s.map((p, i) => `<div class="${i === s.length - 1 ? 'top' : ''}" style="width:${150 - (i % 3) * 8}px">${p}</div>`).join('');
+  }
+  $('#q-en').onclick = () => { const who = ['Nick', 'Carrie', 'John', 'Grace'][nq++ % 4]; q.push(who); paint(); say(`<b>入队</b>：沿链表走到末尾，把最后一个人的指针指向 ${who}。`); };
+  $('#q-de').onclick = () => { if (!q.length) return; const who = q.shift(); paint(); say(`<b>出队</b>：服务完 ${who}，读 ${who} 的指针，把"邮局队列"指向下一个人${q[0] ? '（' + q[0] + '）' : ''}。先来的先走。`); };
+  $('#s-push').onclick = () => { if (s.length >= 7) return; s.push('松饼 ' + n++); paint(); say(`<b>push</b>：新做好的${s[s.length - 1]}叠在最上面。`); };
+  $('#s-pop').onclick = () => { if (!s.length) return; const p = s.pop(); paint(); say(`<b>pop</b>：吃掉最上面的${p}——它是最后放上去的。`); };
+  paint();
+})();
+
+/* ---------- 树 ---------- */
+(function () {
+  const svg = $('#tree');
+  const N = { r: [340, 40, '根'], a: [200, 120, ''], b: [480, 120, ''], c: [120, 210, '叶'], d: [280, 210, '叶'], e: [480, 210, '叶'] };
+  [['r', 'a'], ['r', 'b'], ['a', 'c'], ['a', 'd'], ['b', 'e']].forEach(([p, q]) => el('line', { x1: N[p][0], y1: N[p][1], x2: N[q][0], y2: N[q][1], class: 's-line' }, svg));
+  Object.entries(N).forEach(([k, [x, y, t]]) => {
+    el('circle', { cx: x, cy: y, r: 22, style: 'fill:var(--panel)' }, svg);
+    el('circle', { cx: x, cy: y, r: 22, class: k === 'r' ? 's-on' : t === '叶' ? 's-soft' : 's-acc' }, svg);
+    txt(svg, x, y + 5, t || '节点', 't-sub mid');
+  });
+  txt(svg, 380, 36, '← 根节点 root', 't-sub');
+  txt(svg, 170, 104, '它是下面两个叶的父节点', 't-sub end');
+  txt(svg, 200, 254, '叶节点 leaf：没有子节点', 't-sub mid');
+  txt(svg, 600, 150, '最多 2 个子节点', 't-sub mid');
+  txt(svg, 600, 168, '= 二叉树', 't-sub mid');
+  txt(svg, 600, 186, '从根到叶只能往下走', 't-sub mid');
+})();
+</script>
+</body>
+</html>

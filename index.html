@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机科学速成课 · 图文版</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.wrap{max-width:900px;margin:0 auto;padding:0 24px 80px}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 18px;font-size:14px;color:var(--muted)}
+.bar label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.prog{flex:1;min-width:140px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.eps{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ep{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.ep.ready{border-color:var(--on)}
+.ep .n{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--muted);text-align:center}
+.ep.read .n{color:var(--ok)}
+.ep .zh{font-weight:600}
+.ep .en{font-size:13px;color:var(--muted)}
+.ep a.title{color:var(--ink);text-decoration:none}
+.ep a.title:hover .zh{color:var(--accent)}
+.ep .side{display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}
+.tag{padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.tag.wip{background:var(--bg);color:var(--muted);font-weight:400}
+.tag.done{background:var(--ok-soft);color:var(--ok)}
+.side a{color:var(--muted)}
+.maker{margin:14px 0 0;font-size:14px;color:var(--muted);padding:8px 14px;border-left:3px solid var(--on);background:var(--on-soft);border-radius:0 8px 8px 0;max-width:680px}
+.maker b{color:var(--ink)}
+@media (max-width:600px){
+  .wrap{padding:0 16px 60px}
+  .ep{grid-template-columns:32px minmax(0,1fr);padding:10px 12px}
+  .ep .side{grid-column:2;flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<div class="topbar"><a href="https://github.com/wangx7/backend_study_hub">← 原项目 backend_study_hub</a><span></span></div>
+<header class="hero" style="max-width:900px">
+  <div class="eyebrow">CRASH COURSE COMPUTER SCIENCE · 图文版</div>
+  <h1>计算机科学速成课</h1>
+  <p class="lead">40 集，每集一篇：正文据中文字幕忠实整理，配手绘示意图，关键处可以动手点。不方便看视频的时候，读这个。</p>
+  <p class="maker">本图文版由 <b>Claude Opus 5.5</b>（Anthropic）制作：整理正文、绘制全部示意图、编写交互演示。</p>
+</header>
+<div class="wrap">
+  <div class="bar">
+    <label><input type="checkbox" id="planOnly"> 只看学习计划里的集</label>
+    <div class="prog"><i id="prog"></i></div>
+    <span id="count"></span>
+  </div>
+  <ol class="eps" id="eps"></ol>
+  <div class="credit">
+    课程原作：<a href="https://www.youtube.com/playlist?list=PL8dPuuaLjXtNlUrzyH5r6jN9ulIgZBpdo" target="_blank" rel="noopener">Crash Course Computer Science</a>（PBS Digital Studios，CC BY-NC-SA 4.0）。
+    中文字幕：<a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7 翻译组</a>。
+    视频：B 站 <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF" target="_blank" rel="noopener">BV1ZQ4y1W7rF</a>（第 N 集是 P(N+1)）。<br>
+    图文版制作：Claude Opus 5.5（Anthropic）。作为原课程的衍生作品，本图文版同样以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布：可自由分享和改编，但需署名、不得商用、并以相同协议分享。
+  </div>
+</div>
+<script src="cc.js"></script>
+<script>
+// 已制作完成的集
+const READY = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25];
+// 学习计划.md 里每段 📺 提到的集数
+const PLAN = { '第一段': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 18, 19], '第二段': [13, 14, 20, 28, 29, 30], '第四段': [31, 33, 23], '第六段': [16] };
+const EPS = [
+  ['计算机早期历史', 'Early Computing'], ['电子计算机', 'Electronic Computing'], ['布尔逻辑和逻辑门', 'Boolean Logic & Logic Gates'],
+  ['二进制', 'Representing Numbers and Letters with Binary'], ['算术逻辑单元', 'How Computers Calculate - the ALU'], ['寄存器和内存', 'Registers and RAM'],
+  ['中央处理器', 'The Central Processing Unit (CPU)'], ['指令和程序', 'Instructions & Programs'], ['高级 CPU 设计', 'Advanced CPU Designs'],
+  ['早期的编程方式', 'Early Programming'], ['编程语言发展史', 'The First Programming Languages'], ['编程原理：语句和函数', 'Programming Basics: Statements & Functions'],
+  ['算法入门', 'Intro to Algorithms'], ['数据结构', 'Data Structures'], ['阿兰·图灵', 'Alan Turing'],
+  ['软件工程', 'Software Engineering'], ['集成电路与摩尔定律', "Integrated Circuits & Moore's Law"], ['操作系统', 'Operating Systems'],
+  ['内存与储存介质', 'Memory & Storage'], ['文件系统', 'Files & File Systems'], ['压缩', 'Compression'],
+  ['命令行界面', 'Keyboards & Command Line Interfaces'], ['屏幕与 2D 图形显示', 'Screens & 2D Graphics'], ['冷战和消费主义', 'The Cold War and Consumerism'],
+  ['个人计算机革命', 'The Personal Computer Revolution'], ['图形用户界面', 'Graphical User Interfaces'], ['3D 图形', '3D Graphics'],
+  ['计算机网络', 'Computer Networks'], ['互联网', 'The Internet'], ['万维网', 'The World Wide Web'],
+  ['计算机安全', 'Cybersecurity'], ['黑客与攻击', 'Hackers & Cyber Attacks'], ['加密', 'Cryptography'],
+  ['机器学习与人工智能', 'Machine Learning & Artificial Intelligence'], ['计算机视觉', 'Computer Vision'], ['自然语言处理', 'Natural Language Processing'],
+  ['机器人', 'Robots'], ['计算机心理学', 'Psychology of Computing'], ['教育科技', 'Educational Technology'],
+  ['奇点、天网与计算机的未来', 'The Singularity, Skynet, and the Future of Computing'],
+];
+const stageOf = n => Object.keys(PLAN).find(k => PLAN[k].includes(n)) || '';
+const pad = n => String(n).padStart(2, '0');
+const read = new Set(ccStore.get('cc-read', []));
+const planOnly = $('#planOnly');
+planOnly.checked = ccStore.get('cc-plan-only', false);
+
+function render() {
+  const list = EPS.map(([zh, en], i) => ({ n: i + 1, zh, en, stage: stageOf(i + 1) }))
+    .filter(e => !planOnly.checked || e.stage);
+  $('#eps').innerHTML = list.map(e => {
+    const ready = READY.includes(e.n), isRead = read.has(e.n);
+    const title = `<div class="zh">${e.zh}</div><div class="en">${e.en}</div>`;
+    return `<li class="ep${ready ? ' ready' : ''}${isRead ? ' read' : ''}">
+      <span class="n">${isRead ? '✓' : pad(e.n)}</span>
+      ${ready ? `<a class="title" href="${pad(e.n)}.html">${title}</a>` : `<div>${title}</div>`}
+      <span class="side">
+        ${e.stage ? `<span class="tag">${e.stage}</span>` : ''}
+        ${isRead ? '<span class="tag done">已读</span>' : (ready ? '' : '<span class="tag wip">制作中</span>')}
+        <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=${e.n + 1}" target="_blank" rel="noopener">视频↗</a>
+      </span>
+    </li>`;
+  }).join('');
+  $('#count').textContent = `已读 ${read.size} / 40 · 已制作 ${READY.length} 集`;
+  $('#prog').style.width = `${read.size / 40 * 100}%`;
+}
+planOnly.addEventListener('change', () => { ccStore.set('cc-plan-only', planOnly.checked); render(); });
+render();
+</script>
+</body>
+</html>

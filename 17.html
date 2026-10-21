@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>17 集成电路与摩尔定律 · 计算机科学速成课</title>
+<script>try{const a=localStorage.getItem('vitepress-theme-appearance');if(a==='dark'||a==='light')document.documentElement.dataset.theme=a}catch(e){}</script>
+<link rel="stylesheet" href="cc.css">
+<style>
+.nums{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center}
+.nums div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 4px}
+.nums b{display:block;font:700 22px var(--mono);color:var(--on)}
+.nums small{color:var(--muted);font-size:12px}
+@media (max-width:700px){.nums{grid-template-columns:repeat(2,1fr)}}
+.litho-steps{display:flex;flex-wrap:wrap;gap:4px;margin-top:10px}
+.litho-steps span{width:26px;height:6px;border-radius:3px;background:var(--line)}
+.litho-steps span.on{background:var(--on)}
+.si{fill:#9fb4c8}
+:root[data-theme="dark"] .si{fill:#4a5d70}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .si{fill:#4a5d70}}
+.ox{fill:#e9d8a6;stroke:#b89b52;stroke-width:1}
+.pr{fill:#d77fb3;opacity:.85}
+.pr.exp{fill:#f3c2df}
+.mask{fill:var(--ink)}
+.dopeN{fill:#7bc47f;opacity:.9}
+.dopeP{fill:#e0a04a;opacity:.95}
+.metal{fill:#b8bec6;stroke:#7d848d;stroke-width:1}
+.ray{stroke:#ffd84a;stroke-width:3;opacity:.85}
+.gas{fill:#7bc47f}
+</style>
+</head>
+<body data-ep="17">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=18" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 17 集</div>
+  <h1>集成电路与摩尔定律</h1>
+  <p class="en">Integrated Circuits &amp; Moore's Law</p>
+  <p class="lead">软件能变得这么复杂，靠的是硬件的爆炸式进步。这一集讲人们怎样摆脱成千上万根手焊的导线：把元件集成进一小片硅，用光把电路"印"上去，然后每两年把晶体管密度翻一倍。</p>
+  <div class="road">
+    <span>数字暴政</span><i>→</i><span>集成电路 IC</span><i>→</i><span>印刷电路板 PCB</span><i>→</i><span>光刻</span><i>→</i><span>摩尔定律</span><i>→</i><span>微处理器</span><i>→</i><span>极限</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 数字暴政</a></li>
+    <li><a href="#ch1">1 · 集成电路</a></li>
+    <li><a href="#ch2">2 · 印刷电路板</a></li>
+    <li><a href="#ch3">3 · 光刻</a></li>
+    <li><a href="#ch4">4 · 摩尔定律</a></li>
+    <li><a href="#ch5">5 · 微处理器</a></li>
+    <li><a href="#ch6">6 · 极限</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>数字暴政</h2>
+  <p>过去 6 集我们深入讲了软件，从早期的编程尝试到现代软件工程的做法。在大约 50 年里，软件的复杂程度从手工打在纸带上的机器码，发展到在集成开发环境里编译的面向对象编程语言。但如果没有硬件的进步，这种复杂化是不可能实现的。要体会计算硬件在性能和复杂程度上的爆炸式增长，我们得回到电子计算诞生的时候。</p>
+  <p>大约从 1940 年代到 1960 年代中期，每台计算机都是用一个个单独的零件造出来的，这些零件叫<b>分立元件</b>（discrete components），全部用导线连在一起。比如 ENIAC 由 1.7 万多个真空管、7 万个电阻、1 万个电容和 7000 个二极管组成，全部需要 <b>500 万个手工焊点</b>。想提高性能就得加更多元件，意味着更多连接、更多导线，更多复杂性，这被称为<b>"数字暴政"</b>（Tyranny of Numbers）。</p>
+  <div class="nums">
+    <div><b>17,000+</b><small>真空管</small></div>
+    <div><b>70,000</b><small>电阻</small></div>
+    <div><b>10,000</b><small>电容</small></div>
+    <div><b>7,000</b><small>二极管</small></div>
+    <div><b>500 万</b><small>手工焊点</small></div>
+  </div>
+  <p class="muted" style="font-size:13px;text-align:center">ENIAC 的零件清单</p>
+  <p>到 1950 年代中期，晶体管开始在市场上买得到，并被用进计算机。它们比真空管小得多、快得多、可靠得多，但晶体管仍然是分立元件。1959 年，IBM 把它基于真空管的"709"计算机升级成晶体管，把所有分立的真空管换成分立的晶体管。新机器 IBM 7090 快了 6 倍，价格只有一半。这些晶体管计算机标志着电子计算的<b>第二代</b>。</p>
+  <p>然而，虽然更快更小，分立晶体管并没有解决数字暴政的问题。设计一台有几十万个独立元件的计算机已经很难驾驭，更别说实际制造了。到 1960 年代，这个问题快到了崩溃的边缘：计算机内部常常就是一大团缠绕的导线。看看 1965 年一台 PDP-8 的内部是什么样子！解决办法是再往上提一层抽象，把底层的复杂性封装起来！</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>集成电路</h2>
+  <p>突破出现在 1958 年：在德州仪器工作的<b>杰克·基尔比</b>（Jack Kilby）演示了这样一种电子部件，"电子电路的所有元件都完全集成在其中"。简单说就是：与其用很多分立元件拼出计算机零件、再用导线把它们全部连起来，不如把很多元件放在一起，装进<b>一个新的单独元件</b>里。这就是<b>集成电路</b>（Integrated Circuit），简称 <b>IC</b>。</p>
+  <p>几个月后的 1959 年，罗伯特·诺伊斯（Robert Noyce）领导的仙童半导体让集成电路变得实用。基尔比用锗来做集成电路，锗是一种稀有且不稳定的材料；而仙童用的是储量丰富的<b>硅</b>，它约占地壳的四分之一！硅也更稳定，因此更可靠。所以诺伊斯被广泛视为<b>现代集成电路之父</b>，开创了电子时代……也开创了<b>硅谷</b>——仙童的所在地，很快又冒出了许多其他半导体公司。</p>
+  <p>早期，一块集成电路可能只包含一个只有几个晶体管的简单电路，比如这块早期的西屋公司样品。但即便这样，也能把简单电路——比如第 3 集的逻辑门——封装成单个元件。集成电路有点像计算机工程师的乐高积木，是可以组合出无数种设计的"积木块"。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>印刷电路板</h2>
+  <p>然而，它们最终还是得连在一起，才能组成更大更复杂的电路，比如一整台计算机。为此，工程师有了另一项创新：<b>印刷电路板</b>（Printed Circuit Board），简称 <b>PCB</b>。PCB 可以大批量生产，它不需要焊接、捆扎无数根导线，而是把所有金属导线直接<b>蚀刻</b>在板子上，把元件连接起来。把 PCB 和集成电路结合使用，可以做出和分立元件完全相同功能的电路，但单独的元件和缠绕的导线要少得多。而且更小、更便宜、更可靠。三赢！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="pcb" viewBox="0 0 680 200" role="img" aria-label="分立元件与 IC + PCB 对比"></svg></div>
+      <figcaption>图 1　同样功能的电路：左边一堆分立元件和缠绕的导线；右边几块 IC，导线直接蚀刻在电路板上（示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>许多早期集成电路是用极小的分立元件封装成一个单元做成的，比如这块 1964 年的 IBM 样品。然而，即使用非常非常小的元件，一块集成电路上也很难塞进 5 个以上的晶体管。要实现更复杂的设计，需要一种截然不同的制造工艺，它改变了一切：<b>光刻</b>（photolithography）！</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>光刻：用光把电路"印"到硅上</h2>
+  <p>简单说，光刻是一种用光把复杂图案转移到材料（比如半导体）上的方法。它只有几种基本操作，但这些操作可以用来造出极其复杂的电路。我们用一个简单但完整的例子，走一遍制作过程！</p>
+
+  <div class="card">
+    <h3>动手：在硅片上做一个晶体管</h3>
+    <div class="scroll-x"><svg class="diagram" id="litho" viewBox="0 0 640 260" role="img" aria-label="光刻工艺截面图"></svg></div>
+    <div class="litho-steps" id="litho-bar"></div>
+    <div class="step-text" id="litho-cap"></div>
+    <div class="btns"><button class="btn" id="litho-prev">← 上一步</button><button class="btn primary" id="litho-next">下一步 →</button><button class="btn" id="litho-reset">从头开始</button></div>
+    <p class="hint">截面图：从侧面看切开的硅片。颜色：浅蓝 = 硅，米黄 = 氧化层，粉 = 光刻胶，黑 = 光掩膜，绿 / 橙 = 两种掺杂区，灰 = 金属</p>
+  </div>
+
+  <p>我们从一片硅开始，它像一块薄饼干，叫<b>晶圆</b>（wafer）。美味！第 2 集简单讲过，硅很特别，因为它是半导体：一种有时导电、有时不导电的材料。我们可以控制它在哪里、什么时候导电，这让硅成为制造晶体管的完美原料。我们还可以用晶圆做底座，在上面铺设复杂的金属电路，把所有东西集成在一起，非常适合做……集成电路！</p>
+  <p>下一步是在硅的顶部加一层薄薄的<b>氧化层</b>，作为保护涂层。然后涂上一种特殊的化学品，叫<b>光刻胶</b>（photoresist）。它被光照射后会发生化学变化，变得可溶，于是可以用另一种特殊化学品把它洗掉。光刻胶本身没多大用，但和<b>光掩膜</b>（photomask）配合使用就非常强大。光掩膜就像一张照相底片，只不过上面不是一只吃小卷饼的仓鼠，而是要转移到晶圆上的图案。我们把光掩膜盖在晶圆上，打开一盏强光灯。光掩膜挡住光的地方，光刻胶不变；光照到的地方，光刻胶发生化学变化，于是我们可以只洗掉被光照过的光刻胶，有选择地露出部分氧化层。</p>
+  <p>现在用另一种特殊化学品，通常是一种酸，去掉露出来的氧化层，蚀刻出一个一直通到裸露硅的小孔。注意，光刻胶下面的氧化层被保护住了。为了清理干净，再用另一种特殊化学品洗掉剩下的光刻胶。没错，光刻要用到很多特殊化学品，每种都有非常特定的作用！</p>
+  <p>现在硅又露出来了，我们想只改造露出来的区域，让它导电性更好。为此要用一种叫<b>掺杂</b>（doping）的过程从化学上改变它。（我连玩笑都不开了，我们继续。）掺杂通常用高温气体完成，比如磷，它会渗透进硅暴露的区域，改变它的电学性质。半导体的物理和化学我们就不深入了，如果感兴趣，视频描述里有一个链接，是我们的朋友、Veritasium 频道的 Derek Muller 做的一个很棒的视频。</p>
+  <p>但要做出一个晶体管，还需要再来几轮光刻。过程基本上重新开始：先铺一层新的氧化层，涂上光刻胶。现在用一张图案不同的新光掩膜，在掺杂区域上方开一个小窗口。再一次洗掉剩下的光刻胶。现在掺杂——再次忍住不讲笑话——但这次用另一种气体，把一部分硅变成另一种形式。在光刻中，时机非常重要，用来控制掺杂扩散的范围和蚀刻的深度。这里我们只想在之前那块区域里面，掺杂一小块嵌套的区域。</p>
+  <p>现在做晶体管需要的部件都齐了！最后一步是在氧化层上开出通道，这样就能接上细小的金属导线，连到晶体管的不同部分。再一次涂光刻胶，用新的光掩膜蚀刻出小通道。然后用一种新工艺，叫<b>金属化</b>（metallization），铺上一层薄薄的金属，比如铝或铜。但我们不想用金属盖住所有东西，而是想蚀刻出特定的电路设计。所以和之前非常相似：涂光刻胶、用光掩膜、溶掉曝光的光刻胶，再用化学品去掉露出来的金属。呼！</p>
+  <p>我们的晶体管终于做好了！它有三根小导线，连到硅的三个不同区域，每个区域都以特定方式掺杂，在这个例子里造出的叫<b>双极结型晶体管</b>（bipolar junction transistor）。这是 1962 年的真实专利，一项永远改变了世界的发明！</p>
+  <p>用类似的步骤，光刻还能做出其他有用的电子元件，比如电阻和电容，全都在同一片硅上，外加把它们连成电路所需的所有导线。再见了，分立元件！我们的例子只做了一个晶体管，但在现实中，光掩膜一次就能铺下几百万个微小的细节。这是一块集成电路从上面看的样子：导线上下交错，把所有单独的元件互连成复杂的电路。</p>
+  <p>虽然可以做一张覆盖整片晶圆的光掩膜，但我们可以利用这样一个事实：光可以被聚焦、投射成我们想要的任意大小。就像电影胶片可以投满整块银幕一样，我们可以把光掩膜聚焦到很小的一块硅上，做出极其精细的细节。一片晶圆通常用来做几十块集成电路，整片做完后切开，封装成<b>微芯片</b>——就是你在电子产品里经常看到的那些小黑方块。记住：每一块这样的芯片，核心都是这样一小片硅。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>摩尔定律</h2>
+  <p>随着光刻技术的进步，晶体管的尺寸缩小了，密度更高了。1960 年代初，一块集成电路很少有超过 5 个晶体管，根本塞不下；但到 1960 年代中期，市场上开始出现超过 100 个晶体管的集成电路。1965 年，<b>戈登·摩尔</b>看出了这个趋势：大约每两年，得益于材料和制造的进步，同样大小的空间里能塞进<b>两倍数量</b>的晶体管。这叫<b>摩尔定律</b>（Moore's Law）。不过这个名字有点名不副实，它根本不是定律，更像是一种趋势。但它是个好趋势。</p>
+  <p>集成电路的价格也急剧下降，从 1962 年平均 50 美元降到 1968 年的 2 美元左右。今天几美分就能买到集成电路。更小的晶体管和更高的密度还有别的好处：晶体管越小，需要移动的电荷就越少，所以能更快地切换状态，耗电也更少。而且电路更紧凑，意味着信号延迟更少，时钟速度可以更快。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="moore" viewBox="0 0 680 320" role="img" aria-label="晶体管数量随年份增长"></svg></div>
+      <figcaption>图 2　一块芯片上的晶体管数量（纵轴对数刻度，每往上一格是 10 倍）。点是课程里提到的数字，虚线是"从 4004 开始每两年翻一倍"。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>微处理器与第三、四代计算机</h2>
+  <p>1968 年，罗伯特·诺伊斯和戈登·摩尔联手创办了一家新公司，名字由 Integrated（集成）和 Electronics（电子）两个词组合而成……<b>英特尔</b>（Intel），今天最大的芯片制造商。第 7、8 集讲过的英特尔 4004 CPU 是一个重要的里程碑：它在 1971 年发布，是第一个以单块集成电路形式出货的处理器，叫<b>微处理器</b>（microprocessor），因为它小得那么漂亮！它有 2300 个晶体管。整个 CPU 装进一块芯片，这种集成程度让人们惊叹——仅仅二十年前，用分立元件做它要占满一整个房间。</p>
+  <p>集成电路的时代，尤其是微处理器，开启了<b>第三代</b>计算。而英特尔 4004 只是个开始，CPU 的晶体管数量爆发式增长！到 1980 年，CPU 有 3 万个晶体管；到 1990 年，突破了 100 万个；到 2000 年，3000 万个；到 2010 年，<b>十亿个晶体管，在一块芯片里！</b>我的天！</p>
+  <p>为了达到这种密度，光刻能达到的最精细分辨率，从大约 1 万纳米——大约是人类头发直径的 1/10——提高到了今天的 14 纳米左右。这比一个红细胞小了 400 多倍！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="sizes" viewBox="0 0 680 210" role="img" aria-label="尺寸对比"></svg></div>
+      <figcaption>图 3　逐级放大对比尺寸：头发 → 红细胞 → 14 纳米（大小按比例；最右一格放大了 100 倍才看得见）。</figcaption>
+    </figure>
+  </div>
+
+  <p>当然，受益的不只是 CPU。大多数电子器件基本上都在指数式进步：内存、显卡、固态硬盘、相机感光元件，什么都是。今天的处理器，比如 iPhone 7 里的 A10 CPU，在一块大约 1 厘米 × 1 厘米的集成电路里，有令人脑袋融化的 <b>33 亿</b>个晶体管，比一张邮票还小！</p>
+  <p>现代工程师当然不是手工一个晶体管一个晶体管地布置这些设计的，那是人力不可能做到的。从 1970 年代开始，人们用<b>超大规模集成</b>（very-large-scale integration，VLSI）软件来自动生成芯片设计。利用"逻辑综合"之类的技术，可以直接放下一整个高层组件，比如内存缓存，软件会以尽可能高效的方式生成电路。很多人认为这是<b>第四代</b>计算机的开始。</p>
+  <div class="extra">
+    <span class="t">2017 年之后</span>
+    课程说的"今天 14 纳米"是 2017 年的情况。之后手机和电脑芯片陆续用上了标称"7 纳米""5 纳米""3 纳米"的工艺——不过这些数字如今更像是工艺代号，不再严格等于某个实际尺寸。晶体管数量继续上涨，最大的芯片已经有上千亿个晶体管。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>摩尔定律的尽头？</h2>
+  <p>坏消息是，专家们预言摩尔定律的终结已经预言了几十年，而我们可能终于接近它了。进一步微缩面临两个重大问题。</p>
+  <p>第一，由于光刻所用光的<b>波长</b>，我们在光掩膜和晶圆上能做出的图案精细程度正在碰到极限。为此，科学家们一直在研发波长越来越短的光源，以投射出越来越小的图案。</p>
+  <p>第二，当晶体管变得非常非常小，电极之间可能只隔着几十个原子时，电子可能会直接跳过这个间隙，这种现象叫<b>量子隧穿</b>（quantum tunneling）。如果晶体管漏电，它就不是一个好开关了。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="tunnel" viewBox="0 0 680 160" role="img" aria-label="量子隧穿"></svg></div>
+      <figcaption>图 4　间隙宽时，关着的开关真的关着；间隙只剩几十个原子时，电子会"穿"过去——开关漏电了（示意）。</figcaption>
+    </figure>
+  </div>
+
+  <p>尽管如此，科学家和工程师们正在努力寻找绕开这些问题的办法。实验室里已经演示过小到 1 纳米的晶体管。这能不能实现商业化，仍被一层"掩膜"罩着，是个谜。但也许将来我们能把它"分辨"清楚。我真是"晶"不及待想知道。<span class="muted" style="font-size:13px">（原文结尾是三个双关：MASKED 掩膜 / 隐藏、RESOLVE 分辨率 / 解决、DIEING 晶粒 die / 等不及。）</span>下周见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <ul class="timeline">
+    <li><span class="yr">1940s~</span>第一代：真空管，分立元件；ENIAC 500 万个手工焊点——"数字暴政"</li>
+    <li><span class="yr">1959</span>第二代：分立晶体管（IBM 7090，快 6 倍、价格减半）</li>
+    <li><span class="yr">1958~59</span>基尔比（锗）、诺伊斯（硅）发明集成电路；PCB 把导线蚀刻在板上</li>
+    <li><span class="yr">1960s</span>光刻：氧化 → 光刻胶 → 光掩膜曝光 → 蚀刻 → 掺杂 → 金属化，一次印出成百万个细节</li>
+    <li><span class="yr">1965</span>摩尔定律：大约每两年，同样面积的晶体管数量翻一倍</li>
+    <li><span class="yr">1971</span>第三代：英特尔 4004 微处理器，2300 个晶体管</li>
+    <li><span class="yr">1970s~</span>第四代：VLSI 软件自动生成芯片设计</li>
+    <li><span class="yr">2016</span>A10：约 1 cm² 里 33 亿个晶体管；极限：光的波长、量子隧穿</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    集成电路把一堆元件"封装"成一个元件，光刻让人们能用光一次印出数百万个晶体管和连线。晶体管越小，就越多、越快、越省电、越便宜——这就是摩尔定律背后的良性循环，直到撞上物理的墙。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 什么是"数字暴政"？换成分立晶体管为什么还不够？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">性能靠加元件提升，元件越多、连线和焊点越多（ENIAC 500 万个焊点），设计和制造都难以驾驭。分立晶体管虽然更小更快，但仍然是一个个单独元件，要一根根连起来，问题依旧。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 光刻里，光刻胶和光掩膜各起什么作用？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">光掩膜像底片，决定光照到哪里；光刻胶被光照到的地方会变得可溶、能被洗掉。两者配合，就把光掩膜上的图案转移到晶圆上，接下来只对露出来的区域做蚀刻、掺杂或金属化。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么诺伊斯被视为现代集成电路之父，而不是基尔比？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">基尔比用的锗稀少、不稳定；诺伊斯的仙童半导体用储量丰富（约占地壳四分之一）、更稳定可靠的硅，让集成电路变得实用。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 晶体管变小有哪些好处？继续变小遇到了哪两个问题？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">好处：密度更高、要移动的电荷更少所以切换更快更省电、电路更紧凑信号延迟更少时钟更快、价格更低。问题：光的波长限制了能刻出多细的图案；电极间只剩几十个原子时会发生量子隧穿，晶体管漏电。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="16.html"><small>← 上一集</small>16 软件工程</a>
+    <a class="next" href="18.html"><small>下一集 →</small>18 操作系统</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 17 集 Integrated Circuits &amp; Moore's Law（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 分立 vs IC + PCB ---------- */
+(function () {
+  const svg = $('#pcb');
+  el('rect', { x: 10, y: 10, width: 300, height: 170, rx: 10, class: 's-soft' }, svg);
+  let seed = 5; const r = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const pts = Array.from({ length: 26 }, () => [30 + r() * 260, 30 + r() * 130]);
+  for (let i = 0; i < 40; i++) { const a = pts[Math.floor(r() * pts.length)], b = pts[Math.floor(r() * pts.length)]; el('path', { d: `M${a[0]},${a[1]} Q${(a[0] + b[0]) / 2 + (r() - .5) * 80},${(a[1] + b[1]) / 2 + (r() - .5) * 80} ${b[0]},${b[1]}`, style: `fill:none;stroke:${['var(--bad)', 'var(--accent)', 'var(--on)', 'var(--ok)'][i % 4]};stroke-width:1.5;opacity:.7` }, svg); }
+  pts.forEach(([x, y], i) => el('rect', { x: x - 6, y: y - 3, width: 12, height: 6, rx: 2, style: `fill:${i % 3 ? 'var(--wood)' : 'var(--ink)'}` }, svg));
+  txt(svg, 160, 196, '分立元件 + 一团导线', 't-sub mid');
+  el('rect', { x: 370, y: 10, width: 300, height: 170, rx: 10, style: 'fill:#2f6b3a;opacity:.85' }, svg);
+  const chips = [[420, 50], [540, 50], [420, 120], [560, 125]];
+  [[[480, 65], [540, 65]], [[450, 80], [450, 120]], [[600, 80], [600, 125]], [[480, 135], [560, 140]], [[510, 75], [510, 110], [560, 110]]].forEach(line => el('path', { d: 'M' + line.map(p => p.join(',')).join(' L'), style: 'fill:none;stroke:#e8c66a;stroke-width:3' }, svg));
+  chips.forEach(([x, y]) => { el('rect', { x, y, width: 60, height: 30, rx: 3, style: 'fill:#111' }, svg); for (let k = 0; k < 5; k++) { el('rect', { x: x + 6 + k * 11, y: y - 4, width: 4, height: 4, style: 'fill:#ccc' }, svg); el('rect', { x: x + 6 + k * 11, y: y + 30, width: 4, height: 4, style: 'fill:#ccc' }, svg); } });
+  txt(svg, 520, 196, '几块 IC + 蚀刻在板上的导线', 't-sub mid');
+})();
+
+/* ---------- 光刻 ---------- */
+(function () {
+  const svg = $('#litho');
+  const W = 600, X0 = 20, SI = 160, OXH = 14, PRH = 14;
+  const full = [[0, W]];
+  const holes = (h) => { const segs = []; let x = 0; h.sort((a, b) => a[0] - b[0]).forEach(([a, b]) => { segs.push([x, a]); x = b; }); segs.push([x, W]); return segs; };
+  const CONT = [[215, 245], [285, 315], [470, 500]];
+  const S = [
+    { t: '一片<b>晶圆</b>：纯净的硅，像一块薄饼干。', ox: [], pr: [] },
+    { t: '在硅上加一层薄薄的<b>氧化层</b>，作保护涂层。', ox: full, pr: [] },
+    { t: '涂上<b>光刻胶</b>：被光照到的地方会变得可溶。', ox: full, pr: full },
+    { t: '盖上<b>光掩膜</b>，打开强光。掩膜挡住的地方光刻胶不变；中间的开口让光照到下面的光刻胶（变浅色）。', ox: full, pr: full, mask: [[200, 400]], light: true, exp: [[200, 400]] },
+    { t: '用特殊化学品<b>洗掉被光照过的光刻胶</b>，露出下面的氧化层。', ox: full, pr: holes([[200, 400]]) },
+    { t: '用酸<b>蚀刻</b>掉露出来的氧化层，一直通到硅。光刻胶下面的氧化层被保护住了。', ox: holes([[200, 400]]), pr: holes([[200, 400]]) },
+    { t: '用另一种化学品<b>洗掉剩下的光刻胶</b>。硅又露出来了。', ox: holes([[200, 400]]), pr: [] },
+    { t: '<b>掺杂</b>：高温的磷气体渗进露出的硅，改变它的电学性质（绿色区域）。', ox: holes([[200, 400]]), pr: [], d1: true, gas: true },
+    { t: '第二轮：先铺一层<b>新的氧化层</b>，再涂光刻胶。', ox: full, pr: full, d1: true },
+    { t: '用<b>图案不同的新光掩膜</b>曝光：只在掺杂区上方开一个小窗口。', ox: full, pr: full, d1: true, mask: [[260, 340]], light: true, exp: [[260, 340]] },
+    { t: '洗掉曝光的光刻胶 → 蚀刻氧化层 → 洗掉剩余光刻胶：小窗口打开了。', ox: holes([[260, 340]]), pr: [], d1: true },
+    { t: '用<b>另一种气体</b>掺杂，在绿色区域里面做出一小块嵌套的区域（橙色）。要控制好时间，别渗得太深。', ox: holes([[260, 340]]), pr: [], d1: true, d2: true, gas: true },
+    { t: '第三轮：重新氧化、涂光刻胶、用新光掩膜，<b>蚀刻出三个小通道</b>，分别通到三个区域。', ox: holes(CONT.map(c => c.slice())), pr: [], d1: true, d2: true },
+    { t: '<b>金属化</b>：整片铺上一层薄薄的金属（铝或铜），金属也填进了三个通道。', ox: holes(CONT.map(c => c.slice())), pr: [], d1: true, d2: true, metal: [[0, W]] },
+    { t: '再来一次光刻胶 + 光掩膜，<b>去掉多余的金属</b>，只留下三根导线。完成：一个<b>双极结型晶体管</b>，三根线连着三个掺杂方式不同的区域。', ox: holes(CONT.map(c => c.slice())), pr: [], d1: true, d2: true, metal: CONT.map(([a, b]) => [a - 10, b + 10]), done: true },
+  ];
+  let k = 0;
+  $('#litho-bar').innerHTML = S.map(() => '<span></span>').join('');
+  function draw() {
+    const s = S[k];
+    svg.innerHTML = '';
+    el('rect', { x: X0, y: SI, width: W, height: 70, class: 'si' }, svg);
+    txt(svg, X0 + W - 6, SI + 62, '硅', 't-sub end');
+    if (s.d1) el('path', { d: `M${X0 + 200},${SI} V${SI + 30} Q${X0 + 300},${SI + 50} ${X0 + 400},${SI + 30} V${SI} Z`, class: 'dopeN' }, svg);
+    if (s.d2) el('path', { d: `M${X0 + 260},${SI} V${SI + 12} Q${X0 + 300},${SI + 22} ${X0 + 340},${SI + 12} V${SI} Z`, class: 'dopeP' }, svg);
+    s.ox.forEach(([a, b]) => el('rect', { x: X0 + a, y: SI - OXH, width: b - a, height: OXH, class: 'ox' }, svg));
+    s.pr.forEach(([a, b]) => {
+      el('rect', { x: X0 + a, y: SI - OXH - PRH, width: b - a, height: PRH, class: 'pr' }, svg);
+      (s.exp || []).forEach(([ea, eb]) => { const x1 = Math.max(a, ea), x2 = Math.min(b, eb); if (x2 > x1) el('rect', { x: X0 + x1, y: SI - OXH - PRH, width: x2 - x1, height: PRH, class: 'pr exp' }, svg); });
+    });
+    if (s.metal) s.metal.forEach(([a, b]) => {
+      el('rect', { x: X0 + a, y: SI - OXH - 10, width: b - a, height: 10, class: 'metal' }, svg);
+      CONT.forEach(([ca, cb]) => { if (ca >= a && cb <= b) el('rect', { x: X0 + ca, y: SI - OXH, width: cb - ca, height: OXH, class: 'metal' }, svg); });
+    });
+    if (s.mask) {
+      holes(s.mask.map(m => m.slice())).forEach(([a, b]) => el('rect', { x: X0 + a, y: 70, width: b - a, height: 10, class: 'mask' }, svg));
+      txt(svg, X0, 64, '光掩膜', 't-sub');
+    }
+    if (s.light) {
+      for (let x = 30; x < W; x += 40) el('line', { x1: X0 + x, y1: 14, x2: X0 + x, y2: 66, class: 'ray' }, svg);
+      s.mask.forEach(([a, b]) => { for (let x = a + 15; x < b; x += 30) el('line', { x1: X0 + x, y1: 82, x2: X0 + x, y2: SI - OXH - PRH, class: 'ray' }, svg); });
+      txt(svg, X0 + W, 12, '强光', 't-sub end');
+    }
+    if (s.gas) for (let i = 0; i < 18; i++) el('circle', { cx: X0 + 120 + (i * 37) % 360, cy: 60 + (i * 23) % 70, r: 4, class: s.d2 && !s.done ? 'gas' : 'gas', style: s.d2 ? 'fill:#e0a04a' : '' }, svg);
+    if (s.done) { [['基极 B', 230], ['发射极 E', 300], ['集电极 C', 485]].forEach(([n, x]) => { el('line', { x1: X0 + x, y1: SI - OXH - 10, x2: X0 + x, y2: 92, class: 's-line' }, svg); txt(svg, X0 + x, 84, n, 't-main mid'); }); }
+    txt(svg, X0, SI + 90, `第 ${k + 1} / ${S.length} 步`, 't-sub');
+    $$('#litho-bar span').forEach((sp, i) => sp.classList.toggle('on', i <= k));
+    $('#litho-cap').innerHTML = s.t;
+    $('#litho-prev').disabled = k === 0; $('#litho-next').disabled = k === S.length - 1;
+  }
+  $('#litho-next').onclick = () => { k++; draw(); };
+  $('#litho-prev').onclick = () => { k--; draw(); };
+  $('#litho-reset').onclick = () => { k = 0; draw(); };
+  draw();
+})();
+
+/* ---------- 摩尔定律 ---------- */
+(function () {
+  const svg = $('#moore');
+  const X0 = 70, X1 = 650, Y0 = 280, Y1 = 20, YR0 = 1960, YR1 = 2018, E0 = 0, E1 = 10;
+  const sx = y => X0 + (y - YR0) / (YR1 - YR0) * (X1 - X0), sy = v => Y0 - (Math.log10(v) - E0) / (E1 - E0) * (Y0 - Y1);
+  for (let e = E0; e <= E1; e++) { el('line', { x1: X0, y1: sy(10 ** e), x2: X1, y2: sy(10 ** e), style: 'stroke:var(--line)' }, svg); txt(svg, X0 - 8, sy(10 ** e) + 4, e === 0 ? '1' : e === 3 ? '1千' : e === 6 ? '100万' : e === 9 ? '10亿' : `10^${e}`, 't-sub end'); }
+  for (let y = 1960; y <= 2015; y += 10) txt(svg, sx(y), Y0 + 18, String(y), 't-sub mid');
+  // 每两年翻倍参考线
+  let d = '';
+  for (let y = 1971; y <= 2017; y++) { const v = 2300 * 2 ** ((y - 1971) / 2); d += (y === 1971 ? 'M' : 'L') + sx(y) + ',' + sy(v); }
+  el('path', { d, class: 's-dash', style: 'stroke:var(--on)' }, svg);
+  txt(svg, sx(1984) - 6, sy(2300 * 2 ** 6.5) - 10, '每两年 ×2', 't-sub end t-on');
+  const P = [[1961, 5, '≤5'], [1966, 100, '100+'], [1971, 2300, '4004：2300'], [1980, 3e4, '3 万'], [1990, 1e6, '100 万'], [2000, 3e7, '3000 万'], [2010, 1e9, '10 亿'], [2016, 3.3e9, 'A10：33 亿']];
+  P.forEach(([y, v, l], i) => { el('circle', { cx: sx(y), cy: sy(v), r: 6, style: 'fill:var(--accent)' }, svg); txt(svg, sx(y) + (i === 7 ? -10 : 10), sy(v) + (i === 7 ? -10 : 4), l, i === 7 ? 't-sub end' : 't-sub'); });
+})();
+
+/* ---------- 尺寸 ---------- */
+(function () {
+  const svg = $('#sizes');
+  // 头发 100 µm, 红细胞 ~7 µm, 14 nm
+  el('rect', { x: 20, y: 20, width: 200, height: 160, rx: 8, class: 's-soft' }, svg);
+  el('rect', { x: 20, y: 70, width: 200, height: 60, style: 'fill:var(--wood);opacity:.6' }, svg);
+  txt(svg, 120, 105, '头发 ≈ 10 万纳米粗', 't-sub mid');
+  el('rect', { x: 110, y: 96, width: 12, height: 6, style: 'fill:var(--on)' }, svg);
+  txt(svg, 120, 196, '早期光刻：1 万纳米（头发的 1/10）', 't-sub mid');
+  el('path', { d: 'M122,96 L250,20 M122,102 L250,180', class: 's-dash' }, svg);
+  el('rect', { x: 250, y: 20, width: 200, height: 160, rx: 8, class: 's-soft' }, svg);
+  el('ellipse', { cx: 350, cy: 100, rx: 62, ry: 62, style: 'fill:var(--bad);opacity:.55' }, svg);
+  el('ellipse', { cx: 350, cy: 100, rx: 30, ry: 30, style: 'fill:var(--bad);opacity:.25' }, svg);
+  txt(svg, 350, 105, '红细胞 ≈ 5600 纳米', 't-sub mid');
+  el('rect', { x: 348, y: 160, width: 3, height: 3, style: 'fill:var(--ink)' }, svg);
+  txt(svg, 350, 196, '14 纳米 × 400 ≈ 一个红细胞', 't-sub mid');
+  el('path', { d: 'M351,160 L480,20 M351,163 L480,180', class: 's-dash' }, svg);
+  el('rect', { x: 480, y: 20, width: 180, height: 160, rx: 8, class: 's-soft' }, svg);
+  for (let i = 0; i < 4; i++) el('rect', { x: 500 + i * 38, y: 80, width: 30, height: 30, rx: 3, class: 's-on' }, svg);
+  txt(svg, 570, 70, '放大 100 倍后', 't-sub mid');
+  txt(svg, 570, 136, '每格 14 纳米', 't-sub mid');
+  txt(svg, 570, 196, '2017 年最精细的光刻', 't-sub mid');
+})();
+
+/* ---------- 量子隧穿 ---------- */
+(function () {
+  const svg = $('#tunnel');
+  const draw = (x0, gap, title, leak) => {
+    el('rect', { x: x0, y: 50, width: 90, height: 60, rx: 6, style: 'fill:var(--metal)' }, svg);
+    el('rect', { x: x0 + 90 + gap, y: 50, width: 90, height: 60, rx: 6, style: 'fill:var(--metal)' }, svg);
+    for (let i = 0; i < 6; i++) el('circle', { cx: x0 + 20 + (i % 3) * 25, cy: 65 + Math.floor(i / 3) * 30, r: 5, style: 'fill:var(--accent)' }, svg);
+    if (leak) { el('circle', { cx: x0 + 90 + gap / 2, cy: 80, r: 5, style: 'fill:var(--accent)' }, svg); el('circle', { cx: x0 + 110 + gap, cy: 70, r: 5, style: 'fill:var(--accent)' }, svg); el('path', { d: `M${x0 + 80},80 C${x0 + 95},60 ${x0 + 100 + gap},60 ${x0 + 115 + gap},70`, class: 's-dash', style: 'stroke:var(--bad)' }, svg); }
+    txt(svg, x0 + 90 + gap / 2, 30, title, 't-main mid');
+    txt(svg, x0 + 90 + gap / 2, 135, leak ? '电子跳过间隙：漏电' : '电子过不去：关得住', leak ? 't-sub mid t-on' : 't-sub mid');
+  };
+  draw(20, 90, '间隙很宽', false);
+  draw(400, 14, '只隔几十个原子', true);
+})();
+</script>
+</body>
+</html>
