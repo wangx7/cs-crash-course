@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>43 Transformer 与大语言模型 · 计算机科学速成课 · 续集</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.wv-pt{cursor:pointer}
+.wv-pt circle{stroke:var(--panel);stroke-width:2;transition:r .15s}
+.wv-pt:hover circle,.wv-pt.sel circle{r:9}
+.wv-pt text{font-size:14px;fill:var(--ink);font-weight:600;pointer-events:none}
+.wv-link{stroke:var(--muted);stroke-width:1.5;stroke-dasharray:4 4}
+.attn{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.attn button{font:inherit;font-size:17px;min-width:46px;border:1px solid var(--line);border-radius:10px;padding:6px 8px 2px;cursor:pointer;color:var(--ink);line-height:1.4;transition:background .2s}
+.attn button small{display:block;font:11px var(--mono);color:var(--muted)}
+.attn button.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.lm .row{display:grid;grid-template-columns:64px 1fr 1fr;gap:10px;align-items:center;margin:6px 0;font-size:14px}
+.lm .head{font-size:12px;color:var(--muted)}
+.lm .bar{height:18px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+.lm .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);transition:width .25s}
+.lm .bar.c i{background:var(--on)}
+.lm .bar span{position:relative;font:11px/18px var(--mono);padding-left:6px;color:var(--ink)}
+.slider{display:flex;align-items:center;gap:10px;font-size:14px;margin:10px 0;flex-wrap:wrap}
+.slider input{flex:1;min-width:160px}
+.slider b{font-family:var(--mono);min-width:3em}
+.reply{white-space:pre-line;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:12px 14px;font-size:15px;margin-top:10px;min-height:84px}
+.reply .p{color:var(--muted)}
+.rank{display:grid;gap:8px;margin:10px 0}
+.rank button{text-align:left;font:inherit;font-size:15px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:10px 12px 10px 44px;cursor:pointer;position:relative;line-height:1.6}
+.rank button:hover{border-color:var(--accent)}
+.rank button::before{content:attr(data-k);position:absolute;left:12px;top:10px;font:700 13px var(--mono);color:var(--muted)}
+.rank button[data-r]::after{content:"第 " attr(data-r) " 名";position:absolute;right:12px;top:-9px;font-size:12px;background:var(--on);color:#fff;border-radius:999px;padding:0 8px}
+.rank button[data-r]{border-color:var(--on);background:var(--on-soft)}
+</style>
+</head>
+<body data-ep="43">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="36.html">回顾原课程第 36 集 · 自然语言处理</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 续集 · 第 43 集</div>
+  <h1>Transformer 与大语言模型</h1>
+  <p class="en">Transformers &amp; Large Language Models</p>
+  <p class="lead">第 36 集结束时，语言模型还只是语音识别里帮忙挑词的配角。也是在 2017 年，原课程还在播出的时候，Google 的研究者提出了一种叫 Transformer 的神经网络结构。之后几年里，人们拿它做的还是"猜下一个词"这件老事，只是模型越做越大，读的文字越来越多。做到一定规模，它就成了能聊天、能写代码的大语言模型。这一集讲它是怎么一层层搭起来的。</p>
+  <div class="road">
+    <span>词向量</span><i>→</i><span>注意力</span><i>→</i><span>Transformer</span><i>→</i><span>预测下一个词</span><i>→</i><span>预训练与规模</span><i>→</i><span>人类反馈微调</span><i>→</i><span>对话助手</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：本站续写的原创内容（不是 Crash Course 官方作品）</span>
+    <span class="l-add">蓝色虚线框：延伸与补充</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从第 36 集说起</a></li>
+    <li><a href="#ch1">1 · 把词变成数字</a></li>
+    <li><a href="#ch2">2 · 注意力</a></li>
+    <li><a href="#ch3">3 · Transformer</a></li>
+    <li><a href="#ch4">4 · 一次一个词元</a></li>
+    <li><a href="#ch5">5 · 预训练与规模</a></li>
+    <li><a href="#ch6">6 · 从续写到助手</a></li>
+    <li><a href="#ch7">7 · 它会什么、不会什么</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从第 36 集说起</h2>
+  <p>原课程讲到第 40 集就结束了。这一集接着两集往下讲：<a href="34.html">第 34 集</a>的机器学习和神经网络，<a href="36.html">第 36 集</a>的自然语言处理。</p>
+  <p>先回忆一下第 36 集讲的<b>语言模型</b>：给定前面的词，算出下一个词是什么的概率。在语音识别里，它负责在"she was happy"和"she was harpy"这种发音很像的候选里挑出更合理的那个。那时的语言模型通常只看前面两三个词，统计一下哪种组合更常见。</p>
+  <p>今天的大语言模型（Large Language Model，简称 LLM）做的<b>还是这件事</b>：根据前面的文字，猜下一个词。变化在三处：</p>
+  <ul>
+    <li>前面的文字，从两三个词变成了几千、几十万个词；</li>
+    <li>负责猜的东西，从一张统计表变成了上千亿个参数的神经网络；</li>
+    <li>用来学习的文字，从一个语料库变成了大半个互联网。</li>
+  </ul>
+  <p>而让这一切变得可行的，是 2017 年那篇论文提出的结构，<b>Transformer</b>。要讲明白它，得先从神经网络怎么"读"一个词开始。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>把词变成数字：词向量</h2>
+  <p>第 34 集里，神经网络的输入是数字，比如飞蛾的翼展和重量。可一个词不是数字。最简单的办法是给每个词编个号："猫"是 1，"狗"是 2，"苹果"是 3……但这样编号毫无意义：猫和狗的号挨着，并不代表它们相似；换个顺序编，网络学到的东西就全乱了。</p>
+  <p>更好的办法来自语言学家的一句老话："看一个词的邻居，就知道它的意思。"<b>猫</b>和<b>狗</b>常出现在相似的句子里："喂___吃饭"、"___在沙发上睡觉"。<b>苹果</b>和<b>香蕉</b>则常出现在"一斤___多少钱"这类句子里。那就让计算机读大量文本，给每个词分配一串数字，也就是一个<b>向量</b>（vector），并且让出现在相似上下文里的词，向量也相近。这就是<b>词向量</b>（word embedding）。</p>
+  <p>2013 年，Google 的托马斯·米科洛夫（Tomas Mikolov）等人发布了 <b>word2vec</b>，能在几十亿词的文本上快速训练出这样的向量，通常每个词 300 个数字。最出名的发现是：这些向量能做"加减法"。用"国王"的向量减去"男人"，再加上"女人"，得到的点离"女王"最近。没有人教过它"性别"这个概念，可它自己在空间里找出了这样一个方向。</p>
+
+  <div class="card">
+    <h3>动手：词的地图</h3>
+    <div class="scroll-x"><svg class="diagram" id="wv" viewBox="0 0 680 360" role="img" aria-label="二维词向量示意图"></svg></div>
+    <div class="btns"><button class="btn primary" id="wv-ana">国王 − 男人 + 女人 = ？</button><button class="btn" id="wv-clr">清除</button></div>
+    <div class="step-text" id="wv-cap">点任意一个词，看看离它最近的是谁。</div>
+    <p class="hint">真实的词向量有几百上千维，这里压成两维，位置是示意的，但"意思相近就离得近"和"方向有含义"这两点是真的。</p>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>注意力：每个词都去看别的词</h2>
+  <p>词向量有一个大缺陷：<b>一个词只有一个向量</b>，不管它在什么句子里。看这两句话：</p>
+  <blockquote class="quote">动物没有过马路，因为<b>它</b>太累了。<br>动物没有过马路，因为<b>它</b>太宽了。</blockquote>
+  <p>人一眼就知道，第一句的"它"是动物，第二句的"它"是马路。区别只在最后一个字。要读懂"它"，必须<b>结合句子里其他的词</b>来看，而且要知道该看哪个：这里该看的是"累"和"宽"，然后回头去找"动物"或"马路"。</p>
+  <p>这就是<b>注意力</b>（attention）机制的想法。对句子里的每一个词，都做这样三步：</p>
+  <ol>
+    <li>这个词提出一个"问题"，叫<b>查询</b>（query）。比如"它"在问：我指代的是哪个名词？</li>
+    <li>每个词都挂着一个"标签"，叫<b>键</b>（key），表明自己能回答什么问题。查询和每个键对一对，算出一个匹配分数；分数换算成百分比，加起来正好是 100%。这就是<b>注意力权重</b>。</li>
+    <li>每个词还带着自己的"内容"，叫<b>值</b>（value）。按注意力权重把所有词的内容混合起来，就得到这个词<b>在这句话里</b>的新向量。</li>
+  </ol>
+  <p>查询、键、值，都是从词向量乘上几个矩阵得来的。这几个矩阵里的数字，和第 34 集里神经网络的权重一样，都是训练出来的，没有人手工去写。</p>
+
+  <div class="card">
+    <h3>动手：点一个字，看它在"注意"谁</h3>
+    <div class="seg-btns" id="at-mode"><button data-m="tired" class="sel">……它太累了</button><button data-m="wide">……它太宽了</button></div>
+    <div class="attn" id="at"></div>
+    <div class="step-text" id="at-cap"></div>
+    <p class="hint">颜色越深，被注意得越多。权重是本页按这个思路手工设定的示意值，真实模型里的注意力分布更杂。</p>
+  </div>
+
+  <div class="extra">
+    <span class="t">不止一组注意力</span>
+    真实的模型会同时用好几组查询、键、值，叫<b>多头注意力</b>（multi-head attention）。研究者观察训练好的模型时发现，不同的"头"会关注不同的关系：有的专找代词指的是谁，有的关注动词和它的宾语，有的只看紧挨着的前一个词。也没有人规定它们该怎么分工。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>Transformer：一次看完整句话</h2>
+  <p>在 Transformer 之前，处理句子最常用的是<b>循环神经网络</b>（Recurrent Neural Network，RNN），尤其是 1997 年提出的一种叫 LSTM 的变体。2016 年 Google 翻译换成神经网络，用的就是它。RNN 像人读书一样，<b>一个词一个词地往后读</b>，边读边更新一个"记忆"向量，读完最后一个词，记忆里就装着整句话的意思。</p>
+  <p>这有两个问题。第一，句子一长，开头的信息在一遍遍更新里慢慢被冲淡。第二，更要命的是<b>没法并行</b>：第 5 个词必须等第 4 个词算完才能开始。<a href="09.html">第 9 集</a>讲过，CPU 靠流水线和多核来同时做好几件事；<a href="27.html">第 27 集</a>讲过，GPU 有成百上千个核心，专门同时做大量相同的计算。RNN 偏偏是一条只能排队走的路，用不上这么多核心。</p>
+  <p>2017 年 6 月，Google 的八位研究者发表了论文《Attention Is All You Need》（注意力就是你所需要的一切）。他们的结构叫 <b>Transformer</b>，干脆<b>去掉了循环</b>，只用注意力：句子里每个词同时去看所有其他词，所有这些打分<b>一步里同时算完</b>。词的先后顺序也不能丢，所以给每个位置再加上一个"位置编码"。</p>
+
+  <div class="card">
+    <h3>动手：排队读 vs. 同时看</h3>
+    <div class="slider"><span>句子长度</span><input type="range" id="rt-n" min="3" max="12" value="6" aria-label="句子长度"><b id="rt-nv">6</b></div>
+    <div class="scroll-x"><svg class="diagram" id="rt" viewBox="0 0 680 300" role="img" aria-label="RNN 与 Transformer 的计算方式对比"></svg></div>
+    <div class="readout" id="rt-out"></div>
+  </div>
+
+  <p>一层"注意力 + 一个小的前馈神经网络"算一个 Transformer 层。把几十层叠起来，越往上，每个词的向量里装的就越是"这句话在讲什么"，而不只是"这个词是什么"。论文里最大的模型，在 8 块 GPU 上训练了三天半，就刷新了英德、英法翻译的纪录。</p>
+  <div class="callout key">
+    <span class="t">为什么是它赢了</span>
+    Transformer 不一定是最"聪明"的结构，但它和 GPU 天生合拍：没有排队，全是大块的矩阵乘法。这意味着<b>只要多给算力和数据，就能把它做得更大</b>。接下来几年的故事，几乎都在讲这一点。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>一次一个词元：生成是怎么回事</h2>
+  <p>先说"词"。模型其实不按词来切文字，而是按<b>词元</b>（token）。常见的词是一个词元；生僻的长词会被切成几段，比如英文 unbelievable 可能切成 un、believ、able。中文大致一个字是一到两个词元，看具体的分词方法。这样切，不管遇到什么新词，都能用有限的几万个词元拼出来。这和<a href="21.html">第 21 集</a>压缩里的字典编码是一个思路：常见的片段给一个编号。</p>
+  <p>生成文字的过程，就是第 36 集那个语言模型的动作，一遍遍重复：</p>
+  <ol>
+    <li>把目前为止的所有词元送进 Transformer；</li>
+    <li>它对词表里的<b>每一个</b>词元都给出一个概率，表示"下一个是它"的可能性；</li>
+    <li>按这些概率<b>抽</b>一个出来，接到末尾；</li>
+    <li>回到第 1 步。</li>
+  </ol>
+  <p>注意第 3 步是"抽"，不是"挑最大的"。永远挑最大的，文字会很死板，还容易原地打转。所以通常会加一点随机性，由一个叫<b>温度</b>（temperature）的参数控制：温度低，几乎总选最可能的那个；温度高，不太可能的词也有机会被抽中。</p>
+
+  <div class="card">
+    <h3>动手：下一个词抽什么</h3>
+    <p style="margin:0 0 6px">提示：<b>今天天气真____</b></p>
+    <div class="slider"><span>温度</span><input type="range" id="tp-t" min="0.1" max="2" step="0.1" value="1" aria-label="温度"><b id="tp-tv">1.0</b></div>
+    <div class="lm" id="tp"></div>
+    <div class="btns"><button class="btn primary" id="tp-1">抽 1 次</button><button class="btn" id="tp-100">抽 100 次</button><button class="btn" id="tp-clr">清零</button></div>
+    <div class="readout" id="tp-out"></div>
+    <p class="hint">左边蓝条是模型给出的概率，右边橙条是你实际抽到的次数。概率是示意值。把温度拉到 0.1 试试，再拉到 2.0。</p>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>预训练与规模</h2>
+  <p>第 34 集里训练分类器，要有人先把数据标好：这只是月蛾，那只是帝王蛾。可"猜下一个词"不需要人来标：随便拿一段文字，遮住下一个词，答案就在原文里。这叫<b>自监督学习</b>。于是网上能找到的书籍、百科、新闻、论坛、代码，全都可以拿来当练习题。先在海量文字上这样练，叫<b>预训练</b>（pre-training）。</p>
+  <ul class="timeline">
+    <li><span class="yr">2018</span>OpenAI 发布 GPT（Generative Pre-trained Transformer，生成式预训练 Transformer），1.17 亿个参数。同年 Google 发布 BERT，第二年用进了 Google 搜索。</li>
+    <li><span class="yr">2019</span>GPT-2，15 亿个参数，能写出连贯的好几段文字。</li>
+    <li><span class="yr">2020</span>OpenAI 的研究者发现了<b>规模定律</b>（scaling laws）：参数、数据、算力每增加一个数量级，模型的预测误差就按一条很规律的曲线往下降。同年的 GPT-3 有 1750 亿个参数、96 层，在约 3000 亿个词元上训练。它不用专门训练，只要在提示里给几个例子，就能做翻译、算术、写代码。</li>
+    <li><span class="yr">2022</span>DeepMind 的 Chinchilla 研究指出：之前的模型参数多、读得少。按同样的算力，参数少一些、多读一些更划算，大约每个参数配 20 个词元。700 亿参数的 Chinchilla 读了 1.4 万亿个词元，胜过了 2800 亿参数的大模型。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：到底大了多少</h3>
+    <div class="seg-btns" id="sz-mode"><button data-m="lin" class="sel">普通刻度</button><button data-m="log">对数刻度</button></div>
+    <div class="scroll-x"><svg class="diagram" id="sz" viewBox="0 0 680 230" role="img" aria-label="几个语言模型的参数量对比"></svg></div>
+    <div class="step-text" id="sz-cap"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">后来的数字去哪了</span>
+    GPT-3 之后，很多公司不再公布自己模型的参数量和训练数据。能查到准确数字的，多是公开了权重的模型，比如 Meta 在 2024 年发布的 Llama 3.1，最大的版本有 4050 亿个参数。越往后，比赛拼的也越来越不只是"大"：数据质量、训练方法、推理时的算力，都和参数量一样重要。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>从"续写机"到"助手"</h2>
+  <p>预训练出来的模型很会<b>续写</b>，但它不知道自己该"回答问题"。你问它一个问题，它可能接着写出更多问题，因为在网上，一个问题后面常常跟着另一个问题，比如练习册、考卷、论坛的提问列表。</p>
+
+  <div class="card">
+    <h3>动手：同一个问题，两种模型</h3>
+    <div class="seg-btns" id="ft-mode"><button data-m="base" class="sel">只做过预训练</button><button data-m="chat">微调之后</button></div>
+    <div class="reply" id="ft-out"></div>
+  </div>
+
+  <p>把续写机变成助手，主要靠两步<b>微调</b>（fine-tuning）：</p>
+  <ol>
+    <li><b>指令微调</b>：请人写一批"指令 → 好回答"的示范，让模型在这些示范上接着训练，学会"问了就答"的格式。</li>
+    <li><b>人类反馈强化学习</b>（Reinforcement Learning from Human Feedback，RLHF）：让模型对同一个问题写好几个回答，请标注员<b>排名</b>。用这些排名训练出一个"打分模型"，它学会预测人会更喜欢哪个回答；再用<a href="34.html">第 34 集</a>末尾讲过的强化学习，让语言模型朝着高分的方向调整。</li>
+  </ol>
+
+  <div class="card">
+    <h3>动手：你来当标注员</h3>
+    <p style="margin:0">问题：<b>米饭煮好了，有点夹生，怎么补救？</b>　按你觉得的好坏，依次点三个回答。</p>
+    <div class="rank" id="rk"></div>
+    <div class="step-text" id="rk-cap">先点你觉得最好的那个。</div>
+    <div class="btns"><button class="btn" id="rk-clr">重新排</button></div>
+  </div>
+
+  <p>效果很明显。2022 年 OpenAI 的 InstructGPT 论文里，标注员更喜欢经过这样微调的 13 亿参数模型写的回答，胜过没有微调的 1750 亿参数的 GPT-3。2022 年 11 月 30 日，用同样方法训练的 <b>ChatGPT</b> 作为免费的"研究预览"上线。据瑞银（UBS）根据网站流量做的估算，两个月后它的月活跃用户就达到了约 1 亿，当时被称为史上增长最快的消费级应用。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>它会什么、不会什么</h2>
+  <p>大语言模型能翻译、总结、写信、写代码、解释概念，很多任务从来没有人专门训练过它。原因可能是：要把"下一个词"猜得足够准，就得多少学会文字背后的东西，比如语法、事实、代码的逻辑。至于它到底"懂"到什么程度，研究者至今还在争论，就像<a href="40.html">第 40 集</a>讲的，"智能"本来就很难量化。</p>
+  <div class="callout">
+    <span class="t">一本正经地胡说八道</span>
+    模型的目标是写出<b>看起来合理</b>的下一个词，而不是<b>核实过的</b>下一个词。所以它有时会编出不存在的论文、记错年份、算错数，语气还和说对的时候一样笃定。这叫<b>幻觉</b>（hallucination）。另外，它的知识停在训练数据收集完的那天，叫<b>知识截止日期</b>。常见的应对办法是让它先去查资料、调用计算器，再回答。这会在下一集细讲。
+  </div>
+  <p>2024 年以后出现了一个新方向：<b>推理模型</b>。2024 年 9 月 OpenAI 发布 o1 的预览版，2025 年 1 月中国公司深度求索（DeepSeek）发布了公开权重的 DeepSeek-R1。它们在回答之前先写一长段"草稿"，一步一步推，发现走不通就换条路，再给出最终答案。规模定律从"训练时多花算力"扩展到了"回答时多花算力"：同一个模型，想得越久，难题做得越好。</p>
+  <p>能一次读进去的文字，也就是<b>上下文窗口</b>，也在变长：GPT-3 只有 2048 个词元，大约几页纸；到 2024 年，已经有模型能一次读入上百万个词元，相当于好几本书。</p>
+  <div class="extra">
+    <span class="t">写这一页的，也是这样一个模型</span>
+    这个图文版由 Claude 制作，它就是本集讲的这类大语言模型。上面说的局限它也有：本页的日期和数字在写作时查证过，参考资料列在页尾；如果你发现错误，以参考资料为准。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>词向量</td><td>每个词一串数字；上下文相似的词，向量相近；方向有含义（国王 − 男人 + 女人 ≈ 女王）</td></tr>
+      <tr><td>注意力</td><td>每个词用查询去匹配所有词的键，得到权重，再按权重混合它们的值；让词的含义随句子而变</td></tr>
+      <tr><td>Transformer</td><td>2017 年；去掉循环，只用注意力；所有词同时算，适合 GPU，能一直做大；代价是 O(n²)</td></tr>
+      <tr><td>词元与生成</td><td>文字切成词元；每次算出所有词元的概率，按温度抽一个，接上，重复</td></tr>
+      <tr><td>预训练与规模</td><td>猜下一个词不用人工标注；参数、数据、算力越多，误差按规律下降</td></tr>
+      <tr><td>微调与人类反馈</td><td>指令示范 + 人对回答排名 → 打分模型 → 强化学习；把续写机变成助手</td></tr>
+      <tr><td>局限</td><td>幻觉、知识截止日期；推理模型用"回答时多想一会儿"换取准确</td></tr>
+      <tr><td>连到哪几集</td><td><a href="09.html">9</a>、<a href="27.html">27</a>（并行与 GPU）· <a href="13.html">13</a>（大 O）· <a href="21.html">21</a>（字典编码）· <a href="34.html">34</a>（神经网络、强化学习）· <a href="36.html">36</a>（语言模型）</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么说今天的大语言模型和第 36 集的语言模型做的是"同一件事"？它们又差在哪？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">都是根据前面的文字，算出下一个词的概率。差别在于：能看的上下文从两三个词变成了成千上万个词元；负责计算的从统计表变成了上千亿参数的 Transformer；训练用的文字从一个语料库变成了大半个互联网；还经过了指令微调和人类反馈训练。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 在"动物没有过马路，因为它太累了"里，模型怎么知道"它"指的是动物？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">靠注意力。"它"的查询会和句子里每个词的键配对打分。结合"累"这个词，和"动物"的匹配度最高，于是"它"的新向量里主要混入了"动物"的内容。把"累"换成"宽"，匹配最高的就变成"马路"。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么 Transformer 比 RNN 更容易做大？它又付出了什么代价？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">RNN 必须一个词一个词地顺序计算，后一步要等前一步，没法利用 GPU 的大量核心。Transformer 让所有词同时互相打分，全是可以并行的矩阵乘法，加算力就能加规模。代价是每两个词之间都要算一次，句子长度为 n 时要算 n² 对，长度翻倍，计算量变成四倍。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 只做过预训练的模型，和对话助手有什么区别？中间做了什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">预训练模型只会续写，问它问题可能接着写出更多问题。中间做了指令微调（在"指令 → 好回答"的示范上训练）和人类反馈强化学习（标注员给多个回答排名 → 训练打分模型 → 用强化学习让模型朝高分方向调整）。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 为什么大语言模型会"一本正经地胡说八道"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它的训练目标是写出看起来合理的下一个词，而不是核实过的事实，所以可能编出不存在的东西，而且语气一样笃定。它的知识也停在训练数据的截止日期。常见的应对是让它先查资料、调用工具，并且给出出处，方便人来核对。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="42.html"><small>← 上一集</small>42 云计算</a>
+    <a class="next" href="44.html"><small>下一集 →</small>44 生成式 AI 与智能体</a>
+  </div>
+
+  <div class="credit">
+    续集为本站原创内容，不是 Crash Course 官方作品，写法沿用原课程的思路。正文、示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。<br>
+    参考资料：
+    Mikolov 等，<a href="https://arxiv.org/abs/1301.3781" target="_blank" rel="noopener">Efficient Estimation of Word Representations in Vector Space</a>（2013）；
+    Vaswani 等，<a href="https://arxiv.org/abs/1706.03762" target="_blank" rel="noopener">Attention Is All You Need</a>（2017）；
+    Kaplan 等，<a href="https://arxiv.org/abs/2001.08361" target="_blank" rel="noopener">Scaling Laws for Neural Language Models</a>（2020）；
+    Brown 等，<a href="https://arxiv.org/abs/2005.14165" target="_blank" rel="noopener">Language Models are Few-Shot Learners</a>（GPT-3，2020）；
+    Hoffmann 等，<a href="https://arxiv.org/abs/2203.15556" target="_blank" rel="noopener">Training Compute-Optimal Large Language Models</a>（Chinchilla，2022）；
+    Ouyang 等，<a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noopener">Training language models to follow instructions with human feedback</a>（InstructGPT，2022）；
+    <a href="https://www.euronews.com/next/2023/02/02/openai-chatgpt" target="_blank" rel="noopener">Reuters：ChatGPT sets record for fastest-growing user base</a>（2023-02）；
+    <a href="https://en.wikipedia.org/wiki/OpenAI_o1" target="_blank" rel="noopener">OpenAI o1</a>（2024-09-12 预览）；
+    DeepSeek-AI，<a href="https://arxiv.org/abs/2501.12948" target="_blank" rel="noopener">DeepSeek-R1</a>（2025-01）。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 词的地图 ---------- */
+(function () {
+  const svg = $('#wv');
+  const COL = { a: 'var(--on)', f: 'var(--ok)', p: 'var(--accent)', v: 'var(--bad)' };
+  const W = [
+    ['猫', 110, 90, 'a'], ['狗', 165, 70, 'a'], ['老虎', 95, 150, 'a'], ['狮子', 150, 165, 'a'],
+    ['苹果', 280, 265, 'f'], ['香蕉', 345, 295, 'f'], ['西瓜', 270, 325, 'f'],
+    ['国王', 450, 70, 'p', 'L'], ['女王', 580, 70, 'p'], ['男人', 450, 190, 'p', 'L'], ['女人', 580, 190, 'p'],
+    ['汽车', 545, 290, 'v'], ['火车', 625, 315, 'v'], ['自行车', 505, 330, 'v'],
+  ];
+  el('defs', {}, svg).innerHTML = '<marker id="wv-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker>';
+  const links = el('g', {}, svg);
+  const pts = W.map(([w, x, y, g, side], i) => {
+    const p = el('g', { class: 'wv-pt', tabindex: '0', role: 'button', 'aria-label': w }, svg);
+    el('circle', { cx: x, cy: y, r: 7, style: `fill:${COL[g]}` }, p);
+    if (side === 'L') txt(p, x - 12, y + 5, w, 'end'); else txt(p, x + 12, y + 5, w, '');
+    const go = () => pick(i);
+    p.addEventListener('click', go);
+    p.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    return p;
+  });
+  const d = (a, b) => Math.hypot(a[1] - b[1], a[2] - b[2]);
+  function clear() { links.innerHTML = ''; pts.forEach(p => p.classList.remove('sel')); }
+  function pick(i) {
+    clear();
+    pts[i].classList.add('sel');
+    const near = W.map((w, j) => [j, d(W[i], w)]).filter(([j]) => j !== i).sort((a, b) => a[1] - b[1]).slice(0, 3);
+    near.forEach(([j]) => el('line', { x1: W[i][1], y1: W[i][2], x2: W[j][1], y2: W[j][2], class: 'wv-link' }, links));
+    $('#wv-cap').innerHTML = `离 <b>${W[i][0]}</b> 最近的是：${near.map(([j]) => W[j][0]).join('、')}。它们在大量文本里常出现在相似的位置，所以向量也相近。`;
+  }
+  function arrow(a, b, color, dash) {
+    el('line', { x1: a[0], y1: a[1], x2: b[0], y2: b[1], 'marker-end': 'url(#wv-arr)', style: `stroke:${color};stroke-width:3${dash ? ';stroke-dasharray:6 4' : ''}` }, links);
+  }
+  $('#wv-ana').onclick = () => {
+    clear();
+    const [, kx, ky] = W[7], [, mx, my] = W[9], [, wx, wy] = W[10];
+    arrow([mx, my], [wx - 9, wy], 'var(--accent)');
+    arrow([kx, ky], [kx + (wx - mx) - 9, ky + (wy - my)], 'var(--on)', true);
+    pts[10].classList.add('sel'); pts[8].classList.add('sel');
+    $('#wv-cap').innerHTML = '蓝箭头：从"男人"走到"女人"。把<b>同一个箭头</b>挪到"国王"上（橙色虚线），终点正好落在 <b>女王</b> 附近。这个方向大致对应"性别"，可没有人告诉过模型什么是性别。';
+  };
+  $('#wv-clr').onclick = () => { clear(); $('#wv-cap').textContent = '点任意一个词，看看离它最近的是谁。'; };
+})();
+
+/* ---------- 注意力 ---------- */
+(function () {
+  let mode = 'tired', sel = 6;
+  const words = () => ['动物', '没有', '过', '马路', '，', '因为', '它', '太', mode === 'tired' ? '累' : '宽', '了'];
+  function raw(i, j) {
+    const noun = mode === 'tired' ? 0 : 3, other = mode === 'tired' ? 3 : 0;
+    if (i === j) return 1;
+    if (i === 6) return j === noun ? 7 : j === 8 ? 1.2 : j === other ? .6 : .15;
+    if (i === 8) return j === 6 ? 3 : j === noun ? 2.2 : j === 7 ? 1.2 : .15;
+    if (i === 2) return j === 3 ? 3 : j === 0 ? 2 : j === 1 ? 1 : .15;
+    if (i === 3) return j === 2 ? 2.5 : j === 0 ? .8 : .15;
+    if (i === 0) return j === 1 ? 1.5 : j === 2 ? 1.2 : j === 3 ? .8 : .15;
+    if (i === 4) return .3;
+    return Math.abs(i - j) === 1 ? 1 : .2;
+  }
+  function draw() {
+    const ws = words(), r = ws.map((_, j) => raw(sel, j)), s = r.reduce((a, b) => a + b, 0), w = r.map(v => v / s);
+    $('#at').innerHTML = ws.map((t, j) => {
+      const pct = Math.round(w[j] * 100);
+      return `<button data-j="${j}" class="${j === sel ? 'sel' : ''}" style="background:color-mix(in srgb, var(--on) ${Math.min(100, pct * 1.4)}%, var(--panel))">${t}<small>${pct}%</small></button>`;
+    }).join('');
+    $$('#at button').forEach(b => b.onclick = () => { sel = +b.dataset.j; draw(); });
+    const top = w.map((v, j) => [j, v]).filter(([j]) => j !== sel).sort((a, b) => b[1] - a[1])[0];
+    let cap = `<b>${ws[sel]}</b> 最关注的是 <b>${ws[top[0]]}</b>（${Math.round(top[1] * 100)}%）。`;
+    if (sel === 6) cap += mode === 'tired' ? '会"累"的是动物，不是马路。换成"……它太宽了"试试。' : '会"宽"的是马路，不是动物。同一个"它"，因为后面一个字不同，看向了不同的地方。';
+    else if (sel === 8) cap += '它也回头看"它"和那个名词：是谁' + ws[8] + '？';
+    else cap += '点"它"看看最有意思的那个。';
+    $('#at-cap').innerHTML = cap;
+  }
+  $$('#at-mode button').forEach(b => b.onclick = () => {
+    $$('#at-mode button').forEach(x => x.classList.toggle('sel', x === b));
+    mode = b.dataset.m; draw();
+  });
+  draw();
+})();
+
+/* ---------- RNN vs Transformer ---------- */
+(function () {
+  const svg = $('#rt'), S = '今天的天气真好我们去公园吧';
+  function draw() {
+    const n = +$('#rt-n').value;
+    $('#rt-nv').textContent = n;
+    svg.innerHTML = '';
+    const gap = 10, bw = Math.min(44, (600 - gap * (n - 1)) / n), x0 = 60 + (600 - (bw * n + gap * (n - 1))) / 2;
+    const cx = i => x0 + i * (bw + gap) + bw / 2;
+    txt(svg, 10, 28, 'RNN', 't-main');
+    txt(svg, 10, 46, '排队读', 't-sub');
+    for (let i = 0; i < n; i++) {
+      el('rect', { x: cx(i) - bw / 2, y: 50, width: bw, height: 34, rx: 6, class: 's-panel' }, svg);
+      txt(svg, cx(i), 73, S[i], 't-main mid');
+      txt(svg, cx(i), 104, '第' + (i + 1) + '步', 't-sub mid');
+      if (i) el('path', { d: `M${cx(i - 1) + bw / 2},67 H${cx(i) - bw / 2 - 2}`, class: 's-line', style: 'stroke:var(--accent)' }, svg);
+    }
+    txt(svg, 10, 168, 'Transformer', 't-main');
+    txt(svg, 10, 186, '同时看', 't-sub');
+    const by = 240;
+    for (let i = 0; i < n; i++) for (let j = i + 1; j < n; j++) {
+      const h = 14 + (j - i) * (44 / n) * 1.6;
+      el('path', { d: `M${cx(i)},${by} Q${(cx(i) + cx(j)) / 2},${by - h * 1.6} ${cx(j)},${by}`, style: 'fill:none;stroke:var(--on);stroke-width:1.2;opacity:.55' }, svg);
+    }
+    for (let i = 0; i < n; i++) {
+      el('rect', { x: cx(i) - bw / 2, y: by, width: bw, height: 34, rx: 6, class: 's-panel' }, svg);
+      txt(svg, cx(i), by + 23, S[i], 't-main mid');
+    }
+    txt(svg, 340, 294, '第 1 步：所有连线同时算', 't-sub mid');
+    $('#rt-out').innerHTML = `RNN：要按顺序走 <span class="big">${n}</span> 步，每一步都得等上一步。<br>Transformer：<span class="big">${n * n}</span> 次打分（每个词对每个词，含自己），但<b>一步里同时算完</b>。<br><span class="muted" style="font-size:14px">句子长一倍，打分次数变成四倍，这就是第 13 集说的 O(n²)。</span>`;
+  }
+  $('#rt-n').oninput = draw;
+  draw();
+})();
+
+/* ---------- 温度与抽样 ---------- */
+(function () {
+  const C = [['好', .46], ['不错', .22], ['热', .12], ['冷', .08], ['糟糕', .05], ['奇怪', .03], ['晴朗', .025], ['香蕉', .002]];
+  let cnt = C.map(() => 0), total = 0, last = null;
+  const probs = () => {
+    const T = +$('#tp-t').value, r = C.map(([, p]) => Math.pow(p, 1 / T)), s = r.reduce((a, b) => a + b, 0);
+    return r.map(v => v / s);
+  };
+  function sample(p) { let u = Math.random(); for (let i = 0; i < p.length; i++) { u -= p[i]; if (u <= 0) return i; } return p.length - 1; }
+  function draw() {
+    const p = probs(), mx = Math.max(1, ...cnt);
+    $('#tp-tv').textContent = (+$('#tp-t').value).toFixed(1);
+    $('#tp').innerHTML = '<div class="row head"><span>候选</span><span>概率</span><span>抽到的次数</span></div>' + C.map(([w], i) => `<div class="row"><span>${w}</span>
+      <div class="bar"><i style="width:${p[i] * 100}%"></i><span>${(p[i] * 100).toFixed(p[i] < .01 ? 2 : 1)}%</span></div>
+      <div class="bar c"><i style="width:${cnt[i] / mx * 100}%"></i><span>${cnt[i]}</span></div></div>`).join('');
+    $('#tp-out').innerHTML = last == null ? '还没抽。' : `今天天气真<span class="big">${C[last][0]}</span>　<span class="muted" style="font-size:14px">（共抽了 ${total} 次）</span>`;
+  }
+  const draws = k => { const p = probs(); for (let n = 0; n < k; n++) { last = sample(p); cnt[last]++; total++; } draw(); };
+  const reset = () => { cnt = C.map(() => 0); total = 0; last = null; draw(); };
+  $('#tp-1').onclick = () => draws(1);
+  $('#tp-100').onclick = () => draws(100);
+  $('#tp-clr').onclick = reset;
+  $('#tp-t').oninput = reset;
+  draw();
+})();
+
+/* ---------- 参数量 ---------- */
+(function () {
+  const svg = $('#sz');
+  const M = [['GPT', '2018', 1.17e8, '1.17 亿'], ['BERT-Large', '2018', 3.4e8, '3.4 亿'], ['GPT-2', '2019', 1.5e9, '15 亿'], ['GPT-3', '2020', 1.75e11, '1750 亿'], ['Llama 3.1', '2024', 4.05e11, '4050 亿']];
+  let mode = 'lin';
+  function draw() {
+    svg.innerHTML = '';
+    const X0 = 150, X1 = 600, LO = 7, HI = 12;
+    const sx = v => mode === 'lin' ? X0 + v / 4.05e11 * (X1 - X0) : X0 + (Math.log10(v) - LO) / (HI - LO) * (X1 - X0);
+    if (mode === 'log') for (let e = LO; e <= HI; e++) {
+      el('line', { x1: sx(10 ** e), x2: sx(10 ** e), y1: 14, y2: 196, class: 's-dash', style: 'opacity:.5' }, svg);
+      txt(svg, sx(10 ** e), 216, ['1000 万', '1 亿', '10 亿', '100 亿', '1000 亿', '1 万亿'][e - LO], 't-sub mid');
+    }
+    M.forEach(([n, y, v, s], i) => {
+      const yy = 20 + i * 36;
+      txt(svg, X0 - 10, yy + 15, n, 't-main end');
+      txt(svg, X0 - 10, yy + 29, y, 't-sub end');
+      el('rect', { x: X0, y: yy + 4, width: Math.max(1, sx(v) - X0), height: 20, rx: 3, style: `fill:${i === 3 ? 'var(--on)' : 'var(--accent)'}` }, svg);
+      txt(svg, Math.max(sx(v), X0 + 1) + 6, yy + 19, s, 't-sub');
+    });
+    $('#sz-cap').innerHTML = mode === 'lin' ?
+      '普通刻度下，GPT 和 BERT 的条几乎看不见：GPT-3 的参数是第一代 GPT 的约 <b>1500 倍</b>，只隔了两年。' :
+      '对数刻度下，每往右一格是 10 倍。从 2018 到 2020，差不多每年涨一到两个数量级，这正是规模定律给人们的信心。';
+  }
+  $$('#sz-mode button').forEach(b => b.onclick = () => { $$('#sz-mode button').forEach(x => x.classList.toggle('sel', x === b)); mode = b.dataset.m; draw(); });
+  draw();
+})();
+
+/* ---------- 预训练 vs 微调 ---------- */
+(function () {
+  const Q = '法国的首都是哪里？';
+  const OUT = {
+    base: `<span class="p">${Q}</span>\n德国的首都是哪里？\n意大利的首都是哪里？\n西班牙的首都是哪里？\n\n第三单元　欧洲地理　课后练习（答案见第 87 页）`,
+    chat: `<span class="p">${Q}</span>\n\n法国的首都是巴黎。`,
+  };
+  const cap = { base: '\n\n<span class="p">（它在续写：网上"一串问题"很常见，比如练习册。）</span>', chat: '\n\n<span class="p">（同一个预训练模型，经过微调后，学会了"问了就答"。）</span>' };
+  const show = m => { $('#ft-out').innerHTML = OUT[m] + cap[m]; };
+  $$('#ft-mode button').forEach(b => b.onclick = () => { $$('#ft-mode button').forEach(x => x.classList.toggle('sel', x === b)); show(b.dataset.m); });
+  show('base');
+})();
+
+/* ---------- 你来当标注员 ---------- */
+(function () {
+  const A = [
+    ['A', '加两三勺热水，盖上锅盖，用小火再焖 5 到 10 分钟。电饭煲的话，洒点水后再按一次"煮饭"或"保温"一会儿就行。'],
+    ['B', '米饭夹生，通常是因为水放少了，或者煮的时间不够。大米的主要成分是淀粉，淀粉需要吸收足够的水分并在一定温度下才能完全糊化……'],
+    ['C', '建议倒掉重新煮。'],
+  ];
+  let order = [];
+  function draw() {
+    $('#rk').innerHTML = A.map(([k, t]) => {
+      const r = order.indexOf(k);
+      return `<button data-k="${k}"${r >= 0 ? ` data-r="${r + 1}"` : ''}>${t}</button>`;
+    }).join('');
+    $$('#rk button').forEach(b => b.onclick = () => {
+      if (order.includes(b.dataset.k) || order.length === 3) return;
+      order.push(b.dataset.k); draw();
+    });
+    if (order.length === 0) $('#rk-cap').textContent = '先点你觉得最好的那个。';
+    else if (order.length < 3) $('#rk-cap').textContent = '再点下一个。';
+    else {
+      const pairs = [[0, 1], [0, 2], [1, 2]].map(([i, j]) => `<b>${order[i]}</b> 好于 <b>${order[j]}</b>`);
+      $('#rk-cap').innerHTML = `记下了 3 条比较：${pairs.join('；')}。<br>成千上万条这样的比较，用来训练一个"打分模型"：它学会给回答打分，分数高低和人的偏好一致。之后语言模型就朝着让打分模型给高分的方向调整。<span class="muted">（多数人会把 A 排第一：B 讲了原因却没说怎么办，C 能用但太浪费。）</span>`;
+    }
+  }
+  $('#rk-clr').onclick = () => { order = []; draw(); };
+  draw();
+})();
+</script>
+</body>
+</html>

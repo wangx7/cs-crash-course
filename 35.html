@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>35 计算机视觉 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+canvas.px{display:block;width:100%;max-width:640px;height:auto;border-radius:10px;image-rendering:pixelated;margin:8px 0}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:14px;margin-right:14px;cursor:pointer}
+.sl{display:grid;grid-template-columns:120px 1fr 56px;gap:10px;align-items:center;font-size:14px;margin:4px 0}
+.sl output{font:600 14px var(--mono);text-align:right}
+.gg{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;max-width:520px;margin:8px 0}
+.gg span{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font:600 13px var(--mono);border-radius:4px;cursor:pointer;position:relative}
+.gg span.in{outline:3px solid var(--on);outline-offset:-3px;z-index:1}
+.gg span.ctr{outline:3px solid var(--bad);outline-offset:-3px;z-index:2}
+.gg span.edge{cursor:default;opacity:.55}
+.kgrid{display:inline-grid;grid-template-columns:repeat(3,36px);gap:2px;vertical-align:middle;margin-right:10px}
+.kgrid span{height:30px;display:flex;align-items:center;justify-content:center;font:600 13px var(--mono);background:var(--code);border-radius:4px}
+.math{font:13px/1.8 var(--mono);background:var(--code);border-radius:8px;padding:8px 12px;overflow-wrap:anywhere;margin-top:8px}
+.math b{color:var(--on)}
+.feat{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.feat span{font-size:13px;padding:3px 10px;border-radius:20px;border:1px solid var(--line);background:var(--panel)}
+.feat span.on{border-color:var(--ok);background:var(--ok-soft);color:var(--ok);font-weight:600}
+.emo{font-size:20px;font-weight:700;color:var(--on)}
+</style>
+</head>
+<body data-ep="35">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=36" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 35 集</div>
+  <h1>计算机视觉</h1>
+  <p class="en">Computer Vision</p>
+  <p class="lead">相机拍照早就比人眼清楚，可"看到"不等于"看懂"。这一集从最笨的办法开始——逐个像素找颜色——然后学会用一个 3×3 的"核"去卷积一小块像素、找出边缘，再把一堆简单的特征拼起来找人脸；最后，卷积神经网络让计算机自己学出该用什么核。找到脸之后，还能定位五官、读出表情。</p>
+  <div class="road">
+    <span>像素与颜色跟踪</span><i>→</i><span>核与卷积</span><i>→</i><span>边缘检测</span><i>→</i><span>Viola-Jones 人脸检测</span><i>→</i><span>卷积神经网络</span><i>→</i><span>面部标志点</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 看到不等于看懂</a></li>
+    <li><a href="#ch1">1 · 颜色跟踪</a></li>
+    <li><a href="#ch2">2 · 核与卷积</a></li>
+    <li><a href="#ch3">3 · 用核找形状：人脸检测</a></li>
+    <li><a href="#ch4">4 · 卷积神经网络</a></li>
+    <li><a href="#ch5">5 · 面部标志点与表情</a></li>
+    <li><a href="#ch6">6 · 视觉的抽象层次</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>"拍照"不等于"看懂"</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！今天，我们先来想想视觉有多重要。大多数人要靠视觉来做饭、绕开障碍、读路牌、看这样的视频，还有成百上千件别的事。视觉是带宽最高的感官，源源不断地提供关于世界状态、以及如何对它采取行动的海量信息。正因如此，半个世纪以来，计算机科学家一直在设法让计算机拥有视觉，由此诞生了<b>计算机视觉</b>（computer vision）这个子领域。它的目标是让计算机能够从数字图像和视频中<b>提取出高层次的理解</b>。</p>
+  <p>每个用过数码相机或智能手机的人都知道，计算机已经非常擅长以惊人的保真度和细节拍下照片——事实上比人类强得多。但正如计算机视觉教授<b>李飞飞</b>最近说的："就像'听到'不等于'听懂'，'拍照'也不等于'看见'。"</p>
+  <p>复习一下：计算机上的图像，最常见的存储方式是一个由<b>像素</b>组成的大网格。每个像素由一种颜色定义，这个颜色存成三种加色三原色——<b>红、绿、蓝</b>——的组合。通过组合这三种颜色的不同强度，我们可以表示任何颜色，这叫 <b>RGB 值</b>。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>最简单的算法：颜色跟踪</h2>
+  <p>也许最简单的计算机视觉算法——也是个很好的起点——是<b>跟踪一个有颜色的物体</b>，比如一个亮粉色的球。我们要做的第一件事是记下球的颜色。为此，我们取最中心那个像素的 RGB 值。存好这个值后，就可以给程序一张图片，让它找出颜色最接近的像素。这样的算法可以从右上角开始，逐个检查每个像素，计算它和目标颜色的差异。看完每个像素后，最匹配的那个，很可能就是球上的一个像素。</p>
+  <p>我们不只能在一张照片上跑这个算法，还可以在视频的每一帧上跑，从而<b>随时间跟踪</b>这个球。</p>
+
+  <div class="card">
+    <h3>动手：在球场上找粉色的球</h3>
+    <div>
+      <label class="chk"><input type="checkbox" id="tk-night">夜场比赛</label>
+      <label class="chk"><input type="checkbox" id="tk-jersey">一队球衣和球同色</label>
+    </div>
+    <canvas class="px" id="trk" aria-label="球场画面与颜色跟踪结果"></canvas>
+    <div class="btns"><button class="btn primary" id="tk-scan">扫描这一帧</button><button class="btn" id="tk-play">播放视频，逐帧跟踪</button></div>
+    <div class="step-text" id="tk-cap"></div>
+    <p class="hint" style="margin-bottom:0">这张"照片"只有 160×100 个像素，放大了给你看。<span style="color:var(--on)">橙色十字</span>是算法找到的最接近目标颜色的像素；播放视频时，<span style="color:#22d3ee">青色轨迹</span>是每一帧找到的位置。</p>
+  </div>
+
+  <p>当然，由于光照、阴影和其他因素的变化，球场上那个球几乎不可能和我们存的目标 RGB 值完全一样，只是最接近而已。在更极端的情况下，比如夜场比赛，跟踪效果可能会很差。而如果某一队的球衣和球用了同样的颜色，我们的算法就会彻底晕掉。由于这些原因，除非环境能被严格控制，<b>颜色标记跟踪</b>这类算法很少被使用。</p>
+  <p class="muted" style="font-size:13px">（字幕把"右上角"译成了"左上角"。从哪个角开始其实无所谓，反正每个像素都要看一遍。本页的演示就按原文从右上角开始扫。）</p>
+  <div class="extra">
+    <span class="t">"颜色差异"怎么算</span>
+    最直接的是把 RGB 当成三维空间里的点，算两点距离：√((R₁−R₂)² + (G₁−G₂)² + (B₁−B₂)²)。它的毛病你在夜场里已经看到了：整体变暗时，粉色球的三个数一起变小，离"亮粉色"反而比白色场地线还远。实际中常把颜色换成 HSV（色相、饱和度、明度）来比，主要比"色相"，对明暗变化就没那么敏感——但影子、反光、同色球衣，照样会让它出错。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>核与卷积：找出边缘</h2>
+  <p>颜色跟踪的例子可以逐个像素地搜索，因为颜色就存在单个像素里面。但这种方法对大于一个像素的特征就不管用了，比如物体的边缘，它天生就是由很多像素组成的。为了在图像中识别这类特征，计算机视觉算法必须考虑一小块区域的像素，这叫<b>块</b>（patches）。</p>
+  <p>举个例子，我们来讲一个在场景中找<b>垂直边缘</b>的算法，比如用来帮助无人机安全穿过一片障碍物。为了简单起见，我们把图像转成灰度，不过大多数算法也能处理彩色。现在放大其中一根杆子，近距离看看边缘是什么样的。我们可以很容易地看出杆子的左边缘从哪里开始，因为那里有一个在垂直方向上贯穿很多像素的颜色变化。</p>
+  <p>我们可以更正式地定义这个现象，写一条规则：一个像素是垂直边缘的可能性，等于它左边一些像素和右边一些像素之间颜色差异的大小。这两组像素的颜色差异越大，这个像素越可能在边缘上。如果颜色差异很小，它大概根本不是边缘。</p>
+  <p>这个操作的数学写法是这样的，它叫<b>核</b>（kernel）或<b>过滤器</b>（filter）。它包含逐像素相乘用的数值，乘积的总和存进中心像素。我们来看看它对例子中的像素怎么起作用。我已经把所有像素都标上了灰度值。现在拿着核，把它的中心对准我们关心的像素。核指定了下面每个像素该乘以什么。然后，我们把所有这些数加起来。在这个例子里，结果是 147。这就成了我们的新像素值。这种把核应用到一块像素上的操作，叫<b>卷积</b>（convolution）。</p>
+
+  <div class="card">
+    <h3>动手：亲手做一次卷积</h3>
+    <p class="hint" style="margin-top:0">这是杆子左边缘附近放大的一小块（数字是灰度值，越大越亮）。点任意一个不在最外圈的像素，把核的中心对准它。</p>
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap">
+      <div><div class="kgrid" id="kv"></div></div>
+      <div style="font-size:14px">垂直边缘核<br><span class="muted">左列 ×(−1)，右列 ×1，中间 ×0</span></div>
+    </div>
+    <div class="gg" id="gg"></div>
+    <div class="math" id="gg-math"></div>
+    <div class="btns"><button class="btn" id="gg-all">对每个像素都做一遍</button></div>
+    <div class="gg" id="gg-out" style="display:none"></div>
+  </div>
+
+  <p>现在我们把核应用到另一个像素上。这次的结果是 1，只有 1。换句话说，颜色差异非常小，不是边缘。如果把核应用到照片里的每个像素，结果就像这样：像素值最高的地方，就是有强烈垂直边缘的地方。注意，水平的边缘，比如背景里的那些平台，几乎看不见了。如果想突出那些特征，就得用另一个核——对水平边缘敏感的核。这两个增强边缘的核都叫 <b>Prewitt 算子</b>（Prewitt Operators），以发明者的名字命名。</p>
+
+  <div class="card">
+    <h3>动手：给整张图换不同的核</h3>
+    <span class="seg-btns" id="kn"><button data-k="orig">原图</button><button data-k="v">垂直边缘</button><button data-k="h">水平边缘</button><button data-k="sharp">锐化</button><button data-k="blur">模糊</button></span>
+    <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:8px">
+      <div class="kgrid" id="kn-k"></div>
+      <div class="step-text" id="kn-cap" style="flex:1;min-width:220px;margin:0"></div>
+    </div>
+    <canvas class="px" id="kcv" style="image-rendering:auto" aria-label="应用不同核之后的图像"></canvas>
+    <p class="hint" style="margin-bottom:0">一个示意场景：三根深色的杆子（无人机要躲的障碍）、背景里两块横着的平台、地面。</p>
+  </div>
+
+  <p>这只是海量核里的两个例子，核可以做很多种不同的图像变换。比如，这个核能<b>锐化</b>图像，这个核能<b>模糊</b>图像。</p>
+  <div class="extra">
+    <span class="t">你每天都在用卷积</span>
+    CSS 的 <code>filter: blur(4px)</code>、手机修图里的"锐化"滑块、视频会议的背景虚化，底层都是拿一个核在图像上滑一遍。模糊核把周围像素平均一下，于是细节被"抹平"；锐化核是"自己 × 5，减去上下左右"，放大了和邻居的差别。核越大，模糊得越厉害，计算量也越大——所以 GPU 很适合干这个：每个像素的计算互不相干，可以同时做。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>用核找形状：Viola-Jones 人脸检测</h2>
+  <p>核也可以像小小的图像饼干模具一样使用，只匹配特定的形状。我们的边缘核找的是从右到左、或从上到下有强烈差异的像素块。但我们也可以做出擅长找<b>线</b>的核——两边都有边缘的线；甚至能找出被对比色包围的<b>像素小岛</b>。这类核可以开始描述简单的形状。</p>
+  <p>比如在人脸上，鼻梁往往比鼻子两侧更亮，所以对线敏感的核在这里的值会更高。眼睛也很有特点——一个暗色的圆，被更亮的像素围着——也有其他的核对这种模式敏感。当计算机扫描一张图片时（最常见的方式是滑动一个<b>搜索窗口</b>），它可以寻找那些表明这是一张人脸的特征组合。虽然每个核单独来看都是个很弱的人脸检测器，但组合起来就可以相当准确。如果不是一张脸，一堆像脸的特征恰好聚在一起的可能性不大。这就是一个早期且很有影响力的算法——<b>Viola-Jones 人脸检测</b>——的基础。</p>
+
+  <div class="card">
+    <h3>动手：滑动窗口找人脸</h3>
+    <canvas class="px" id="vj" aria-label="滑动窗口人脸检测" style="cursor:crosshair"></canvas>
+    <div class="feat" id="vj-feat"></div>
+    <div class="btns"><button class="btn primary" id="vj-run">滑动窗口扫一遍</button><button class="btn" id="vj-clear">清除</button></div>
+    <div class="step-text" id="vj-cap"></div>
+    <p class="hint" style="margin-bottom:0">图里有一张简笔脸，还有几个"捣乱的"：一只孤零零的眼睛、一对像眼睛的圆点、一条亮线、一个空白椭圆。窗口在每个位置用 4 个弱检测器打分。你也可以直接点图片，把窗口放到任意位置看看。</p>
+  </div>
+  <div class="extra">
+    <span class="t">Viola-Jones 为什么那么快</span>
+    2001 年的这个算法用的"核"是一些黑白相间的矩形（叫 Haar 特征），比如"上面一条暗、下面一条亮"对应眼睛和脸颊。它有两个妙招：一是"积分图"，预先算好一张累加表，之后任意矩形的像素和都只要做 4 次加减；二是"级联"，先用两三个最便宜的特征快速排除掉绝大多数明显不是脸的窗口，只有过了关的窗口才接受更多特征的检查。于是它能在 2000 年代初的普通电脑和数码相机上实时找脸——相机取景框里那个跟着脸走的小方框，很长一段时间都是它的功劳。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>卷积神经网络</h2>
+  <p>如今最热门的新算法是<b>卷积神经网络</b>（Convolutional Neural Networks）。如果需要复习，上一集我们讲过神经网络。简单说，人工神经元——神经网络的基本构件——接收一系列输入，把每个输入乘以一个特定的权重，然后把这些值全部加起来。这听起来应该有点耳熟，因为它很像卷积。事实上，如果我们给神经元输入的是<b>二维的像素数据</b>，而不是一维的输入列表，那它就和卷积一模一样。输入权重就相当于核里的数值。但和预先定义好的核不同，神经网络可以<b>自己学出</b>有用的核，用来识别图像里有意思的特征。</p>
+  <p>卷积神经网络用成组的这种神经元来处理图像数据，每个神经元输出一张新图像，本质上是被不同的、学出来的核"消化"过的。这些输出再被后续几层神经元处理，于是就有了卷积之上的卷积之上的卷积。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="cnn" viewBox="0 0 680 230" role="img" aria-label="卷积神经网络逐层从边缘到人脸"></svg></div>
+      <figcaption>图 1　卷积神经网络一层层往上搭：边缘 → 角 → 五官 → 脸。每个小方块代表一层里学出来的一种特征。</figcaption>
+    </figure>
+  </div>
+
+  <p>最开始的第一个卷积层可能会找到边缘这样的东西，因为正如我们讨论过的，单次卷积就能识别出这些。下一层可能有一些神经元，在这些边缘特征上做卷积，识别出由边缘组成的简单形状，比如<b>角</b>。再往上一层，可能在这些角特征上做卷积，包含能识别简单物体的神经元，比如<b>嘴巴和眉毛</b>。就这样不断进行下去，复杂度一层层累积，直到某一层做一次卷积，把所有东西拼在一起：眼睛、耳朵、嘴巴、鼻子，全套齐活，然后说："啊哈，这是一张脸！"</p>
+  <p>卷积神经网络不一定要有很多层，但通常都有很多层，以识别复杂的物体和场景。这就是为什么这项技术被看作<b>深度学习</b>。Viola-Jones 和卷积神经网络都可以用于人脸之外的很多图像识别问题，比如识别手写文字、在 CT 扫描里发现肿瘤、监测道路上的车流。不过我们还是接着说人脸。</p>
+  <div class="extra">
+    <span class="t">李飞飞和 ImageNet</span>
+    开头那句"拍照不等于看见"的李飞飞，带领团队建了 ImageNet：一千多万张人工标注过的图片，分成上万个类别。2012 年，一个叫 AlexNet 的卷积神经网络在 ImageNet 识别比赛中把错误率大幅拉低，用的正是 GPU 训练——这常被看作深度学习浪潮的起点。上一集说的"标记数据"有多重要，这就是一个例子。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>面部标志点：从"有张脸"到"读出表情"</h2>
+  <p>不管用的是什么算法，一旦我们在照片里把一张脸分离出来，就可以用更专门的计算机视觉算法来精确定位<b>面部标志点</b>（facial landmarks），比如鼻尖和嘴角。这些数据可以用来判断很多事情，比如眼睛是不是睁着——有了标志点，这就很简单了，不过是点和点之间的距离而已。我们也可以跟踪眉毛的位置：眉毛相对于眼睛的位置，可以表示惊讶或者高兴。根据嘴部标志点的形状，检测微笑也相当直接。</p>
+
+  <div class="card">
+    <h3>动手：用标志点读表情</h3>
+    <div class="scroll-x"><svg class="diagram" id="lm" viewBox="0 0 680 280" role="img" aria-label="面部标志点与表情识别"></svg></div>
+    <div class="sl"><label for="lm-b">眉毛高度</label><input type="range" id="lm-b" min="0" max="1" step="0.01" value="0.4"><output id="lm-bv"></output></div>
+    <div class="sl"><label for="lm-e">眼睛张开</label><input type="range" id="lm-e" min="0" max="1" step="0.01" value="0.6"><output id="lm-ev"></output></div>
+    <div class="sl"><label for="lm-s">嘴角</label><input type="range" id="lm-s" min="-1" max="1" step="0.01" value="0"><output id="lm-sv"></output></div>
+    <div class="sl"><label for="lm-o">张嘴</label><input type="range" id="lm-o" min="0" max="1" step="0.01" value="0"><output id="lm-ov"></output></div>
+    <div class="btns"><button class="btn" data-p="happy">开心</button><button class="btn" data-p="surp">惊讶</button><button class="btn" data-p="sad">忧伤</button><button class="btn" data-p="conf">困惑</button><button class="btn" data-p="calm">平静</button></div>
+    <div class="step-text" id="lm-cap"></div>
+    <p class="hint" style="margin-bottom:0">橙色点是标志点，虚线是算法量的距离。右边的"判断"只是几条按距离写的 if 规则，真实的情感识别算法复杂得多，但用的原料就是这些点。</p>
+  </div>
+
+  <p>所有这些信息都可以交给<b>情感识别算法</b>来解读，让计算机能推断你是开心、忧伤、沮丧还是困惑等等。反过来，这又能让计算机聪明地调整自己的行为……比如在你困惑时给些提示，在你沮丧时别弹窗让你装更新。这只是视觉让计算机具备<b>情境感知</b>能力——也就是感知周围环境——的一个例子。不只是物理环境，比如你是在上班还是在火车上；还有社交环境，比如你是在正式的商务会议上，还是在朋友的生日派对上。你在这些环境里的举止不一样，计算设备如果够聪明，也应该如此。</p>
+  <p>面部标志点还捕捉了你脸的几何形状，比如两眼之间的距离、前额的高度。这是一种<b>生物识别数据</b>，让带摄像头的计算机能认出你。不管是手机看到你就自动解锁，还是政府用监控摄像头追踪人，人脸识别的应用似乎无穷无尽。最近在手部和全身的标志点跟踪上也有突破，让计算机能解读用户的肢体语言，以及他们对着联网微波炉疯狂比划的是什么手势。</p>
+  <div class="extra">
+    <span class="t">两个要记住的点</span>
+    ① 第 31 集说过，生物识别数据的问题是<b>没法重设</b>：密码泄露了可以换，脸的几何特征泄露了不行。所以人脸数据比一般数据更需要谨慎保存，很多国家和地区对它有专门的法律限制。② 作为前端，你现在就能在浏览器里玩这些：<code>navigator.mediaDevices.getUserMedia()</code> 拿到摄像头画面，再用 Google 的 MediaPipe 之类的库在页面里实时算出几百个面部、手部标志点——计算都在用户自己的设备上完成，画面不必上传。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>视觉的抽象层次</h2>
+  <p>正如这个系列里多次说过的，<b>抽象</b>是构建复杂系统的关键，计算机视觉也一样。在硬件层面，工程师在造越来越好的摄像头，让计算机的视力一年比一年好——这一点我自己可做不到。用摄像头的数据，计算机视觉算法处理像素，找出脸和手这样的东西。然后，用这些算法的输出，还有更专门的算法来解读用户的表情和手势之类的东西。在此之上，有人在打造全新的交互体验，比如能响应手势和情绪的智能电视、智能辅导系统。每一层都是活跃的研究领域，每年都有突破。而这只是冰山一角。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="stack" viewBox="0 0 680 220" role="img" aria-label="计算机视觉的抽象层次"></svg></div>
+      <figcaption>图 2　每一层只用下一层的输出，不用关心更底下的细节。</figcaption>
+    </figure>
+  </div>
+
+  <p>如今计算机视觉无处不在——无论是商店里扫描条形码、在红灯前等待的自动驾驶汽车，还是 Snapchat 里给你加上胡子的滤镜。而最令人兴奋的是，计算机科学家们其实才刚刚起步，超快的 GPU 这类计算技术的最新进展让这一切成为可能。拥有人类般视觉能力的计算机，将彻底改变我们和它们交互的方式。当然，如果它们还能听和说就更好了，这是我们下周要讨论的。到时见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>计算机视觉</td><td>从图像和视频中提取高层次的理解；拍照 ≠ 看懂</td></tr>
+      <tr><td>颜色跟踪</td><td>逐个像素找最接近目标 RGB 的；怕光照变化、怕同色物体，只适合严格控制的环境</td></tr>
+      <tr><td>块</td><td>边缘之类的特征跨越很多像素，要一小块一小块地看</td></tr>
+      <tr><td>核 / 过滤器、卷积</td><td>核对准一个像素，逐个相乘再求和，存回中心像素；对每个像素都做一遍就是卷积</td></tr>
+      <tr><td>Prewitt 算子</td><td>分别突出垂直边缘和水平边缘的两个核；其他核能锐化、模糊</td></tr>
+      <tr><td>Viola-Jones</td><td>滑动窗口 + 多个弱特征（鼻梁亮线、暗色眼睛……）组合，判断是不是脸</td></tr>
+      <tr><td>卷积神经网络</td><td>神经元输入二维像素 = 卷积，权重就是核，但核是学出来的；层层卷积：边缘 → 角 → 五官 → 脸</td></tr>
+      <tr><td>面部标志点</td><td>鼻尖、嘴角等点；点之间的距离能判断睁眼、惊讶、微笑，也能做人脸识别</td></tr>
+      <tr><td>抽象层次</td><td>摄像头 → 找脸找手 → 解读表情手势 → 新的交互体验</td></tr>
+    </tbody>
+  </table>
+
+  <ol class="timeline">
+    <li><span class="yr">1970</span>Judith Prewitt 提出 Prewitt 边缘检测算子</li>
+    <li><span class="yr">2001</span>Viola-Jones 人脸检测算法发表，能实时找脸</li>
+    <li><span class="yr">2009</span>李飞飞团队发布 ImageNet 图像数据集</li>
+    <li><span class="yr">2012</span>卷积神经网络 AlexNet 用 GPU 训练，在 ImageNet 比赛中大幅领先</li>
+  </ol>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    计算机视觉的核心手法是卷积：拿一个小小的核在图像上逐个位置"乘了再加"，就能找出边缘、线条、暗色小岛这类局部特征；把很多弱特征组合起来就能认出人脸。卷积神经网络更进一步，让网络自己学出该用什么核，一层层从边缘拼到整张脸。找到脸后，再用标志点之间的距离读出表情。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 颜色跟踪算法是怎么找球的？为什么现实中很少用？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">先记下球中心像素的 RGB 值，然后逐个像素计算和这个颜色的差异，最接近的那个像素很可能在球上；对每一帧都这样做就能跟踪。但光照、阴影会让球的颜色变化，夜里尤其差；场上有同色的东西（比如球衣）时算法会彻底混乱。所以只适合环境能严格控制的场合。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 垂直边缘核左列是 −1、中列是 0、右列是 1。它为什么能找出垂直边缘？为什么对水平的平台几乎没反应？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">它算的是"右边三个像素之和 − 左边三个像素之和"，左右差别越大结果越大，正好对应一条竖着的明暗分界。水平边缘是上下有差别、左右差不多，左右两列相减几乎抵消，结果接近 0。要找水平边缘得把核转 90°，用上下相减的水平 Prewitt 核。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 卷积神经网络和上一集的人工神经元有什么关系？它比手工设计的核强在哪？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">神经元把输入乘权重再求和；当输入是一块二维像素时，这就是卷积，权重就是核的数值。区别是手工核要人来设计，而卷积神经网络的核是从标记数据里学出来的，而且可以一层叠一层：先学边缘，再在边缘上学角，再学五官，最后认出整张脸。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 找到人脸以后，怎么判断一个人的眼睛是不是睁着？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">用面部标志点算法定位眼睛上下眼睑的点，然后量这两个点之间的距离：距离大就是睁着，接近 0 就是闭着。类似地，眉毛到眼睛的距离、嘴角相对嘴中间的高低，可以用来判断惊讶、微笑等表情。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="34.html"><small>← 上一集</small>34 机器学习与人工智能</a>
+    <a class="next" href="36.html"><small>下一集 →</small>36 自然语言处理</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 35 集 Computer Vision（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// 在 W×H 的灰度数组上应用 3×3 核
+function conv(G, W, H, K) {
+  const O = new Float32Array(W * H);
+  for (let y = 1; y < H - 1; y++) for (let x = 1; x < W - 1; x++) {
+    let s = 0;
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) s += G[(y + j) * W + x + i] * K[j + 1][i + 1];
+    O[y * W + x] = s;
+  }
+  return O;
+}
+const KERNELS = {
+  v: [[-1, 0, 1], [-1, 0, 1], [-1, 0, 1]],
+  h: [[-1, -1, -1], [0, 0, 0], [1, 1, 1]],
+  sharp: [[0, -1, 0], [-1, 5, -1], [0, -1, 0]],
+  blur: [[1 / 9, 1 / 9, 1 / 9], [1 / 9, 1 / 9, 1 / 9], [1 / 9, 1 / 9, 1 / 9]]
+};
+const kHTML = K => K.flat().map(v => `<span>${Math.abs(v - 1 / 9) < 1e-9 ? '1/9' : v}</span>`).join('');
+
+/* ---------- 颜色跟踪 ---------- */
+(function () {
+  const W = 160, H = 100, S = 4;
+  const cv = $('#trk'), ctx = cv.getContext('2d');
+  cv.width = W * S; cv.height = H * S;
+  const off = document.createElement('canvas'); off.width = W; off.height = H;
+  const o = off.getContext('2d', { willReadFrequently: true });
+  const ballAt = t => [24 + t * 112, 80 - 54 * Math.sin(Math.PI * t)];
+  const TEAM_A = [[30, 34], [62, 22], [100, 30], [130, 64]], TEAM_B = [[50, 64], [92, 74], [120, 20], [140, 40]];
+  let target = null, trail = [], busy = false;
+
+  function paint(t, jersey) {
+    for (let i = 0; i < W; i += 20) { o.fillStyle = (i / 20) % 2 ? '#3a923a' : '#43a043'; o.fillRect(i, 0, 20, H); }
+    o.strokeStyle = '#f2f2f2'; o.lineWidth = 1;
+    o.strokeRect(4.5, 4.5, W - 9, H - 9);
+    o.beginPath(); o.moveTo(W / 2 + .5, 4); o.lineTo(W / 2 + .5, H - 4); o.stroke();
+    o.beginPath(); o.arc(W / 2, H / 2, 14, 0, 7); o.stroke();
+    const player = (x, y, c) => {
+      o.fillStyle = '#e8c39e'; o.beginPath(); o.arc(x, y - 7, 2.5, 0, 7); o.fill();
+      o.fillStyle = c; o.fillRect(x - 3, y - 4, 6, 8);
+      o.fillStyle = '#222'; o.fillRect(x - 3, y + 4, 2, 4); o.fillRect(x + 1, y + 4, 2, 4);
+    };
+    TEAM_A.forEach(([x, y]) => player(x, y, '#2b59c3'));
+    TEAM_B.forEach(([x, y]) => player(x, y, jersey && target ? `rgb(${target.join(',')})` : '#f2c230'));
+    const [bx, by] = ballAt(t);
+    const g = o.createRadialGradient(bx - 1.5, by - 1.5, .5, bx, by, 5);
+    g.addColorStop(0, '#ff9ccc'); g.addColorStop(.45, '#ff4fa3'); g.addColorStop(1, '#b8306f');
+    o.fillStyle = g; o.beginPath(); o.arc(bx, by, 4.5, 0, 7); o.fill();
+  }
+  function frame(t, seed) {
+    const night = $('#tk-night').checked, jersey = $('#tk-jersey').checked;
+    paint(t, jersey);
+    const img = o.getImageData(0, 0, W, H), d = img.data, R = rng(seed);
+    const k = night ? .3 : 1, nz = night ? 14 : 4;
+    for (let i = 0; i < d.length; i += 4) for (let c = 0; c < 3; c++) d[i + c] = d[i + c] * k + (R() - .5) * 2 * nz + (night && c === 2 ? 8 : 0);
+    o.putImageData(img, 0, 0);
+    return d;
+  }
+  // 记下球最中心像素的颜色（白天、无噪声）
+  (function () { paint(0, false); const [bx, by] = ballAt(0); const p = o.getImageData(Math.round(bx), Math.round(by), 1, 1).data; target = [p[0], p[1], p[2]]; })();
+
+  // 从右上角开始，一行行、从右往左扫
+  function detect(d, rows = H) {
+    let best = Infinity, bx = -1, by = -1;
+    for (let y = 0; y < rows; y++) for (let x = W - 1; x >= 0; x--) {
+      const i = (y * W + x) * 4;
+      const dd = (d[i] - target[0]) ** 2 + (d[i + 1] - target[1]) ** 2 + (d[i + 2] - target[2]) ** 2;
+      if (dd < best) { best = dd; bx = x; by = y; }
+    }
+    return [bx, by, Math.sqrt(best)];
+  }
+  function show(hit, scanRow) {
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(off, 0, 0, W * S, H * S);
+    // 目标色样
+    ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(8, 8, 150, 34);
+    ctx.fillStyle = `rgb(${target.join(',')})`; ctx.fillRect(14, 14, 22, 22);
+    ctx.fillStyle = '#fff'; ctx.font = '13px ui-monospace,monospace'; ctx.fillText('目标 ' + target.join(','), 42, 30);
+    // 轨迹：每帧一个点；相邻两帧离得近才连线，乱跳时就只剩散点
+    ctx.strokeStyle = ctx.fillStyle = '#22d3ee'; ctx.lineWidth = 3;
+    trail.forEach(([x, y], i) => {
+      ctx.beginPath(); ctx.arc((x + .5) * S, (y + .5) * S, 3.5, 0, 7); ctx.fill();
+      const q = trail[i - 1];
+      if (q && Math.hypot(x - q[0], y - q[1]) < 12) { ctx.beginPath(); ctx.moveTo((q[0] + .5) * S, (q[1] + .5) * S); ctx.lineTo((x + .5) * S, (y + .5) * S); ctx.stroke(); }
+    });
+    if (scanRow != null) { ctx.fillStyle = 'rgba(255,255,255,.25)'; ctx.fillRect(0, 0, W * S, scanRow * S); ctx.fillStyle = '#fff'; ctx.fillRect(0, scanRow * S, W * S, 2); }
+    if (hit && hit[0] >= 0) {
+      const x = (hit[0] + .5) * S, y = (hit[1] + .5) * S;
+      ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.moveTo(x - 18, y); ctx.lineTo(x - 6, y); ctx.moveTo(x + 6, y); ctx.lineTo(x + 18, y); ctx.moveTo(x, y - 18); ctx.lineTo(x, y - 6); ctx.moveTo(x, y + 6); ctx.lineTo(x, y + 18); ctx.stroke();
+      ctx.strokeRect(x - 7, y - 7, 14, 14);
+    }
+  }
+  const near = (h, t) => { const [bx, by] = ballAt(t); return Math.hypot(h[0] - bx, h[1] - by) < 6; };
+  function cap(h, t) {
+    const ok = near(h, t);
+    const why = $('#tk-night').checked ? '夜里整个画面变暗，球的颜色离"亮粉色"很远，反而是被灯照着的白色场地线、或者噪点更接近。' :
+      $('#tk-jersey').checked ? '有好几个像素和目标颜色几乎一模一样，算法分不清哪个才是球。' : '';
+    $('#tk-cap').innerHTML = `找到的像素在 (${h[0]}, ${h[1]})，和目标颜色的差异是 <b>${h[2].toFixed(1)}</b>。` + (ok ? '它确实在球上。' : `<b style="color:var(--bad)">它不在球上！</b>${why}`);
+  }
+  function scanOnce() {
+    if (busy) return;
+    trail = [];
+    const d = frame(.3, 11);
+    if (REDUCE) { const h = detect(d); show(h); cap(h, .3); return; }
+    busy = true; let r = 0;
+    const step = () => { r = Math.min(H, r + 4); const h = detect(d, r); show(h, r < H ? r : null); if (r < H) requestAnimationFrame(step); else { busy = false; cap(h, .3); } };
+    step();
+  }
+  function play() {
+    if (busy) return;
+    busy = true; trail = []; let f = 0, miss = 0; const N = 60;
+    const step = () => {
+      const t = f / (N - 1), d = frame(t, 100 + f), h = detect(d);
+      if (!near(h, t)) miss++;
+      trail.push([h[0], h[1]]); show(h);
+      f++;
+      if (f < N) setTimeout(step, REDUCE ? 0 : 50);
+      else { busy = false; $('#tk-cap').innerHTML = `60 帧里，有 <b>${60 - miss}</b> 帧找到的是球，<b>${miss}</b> 帧跟丢了。` + (miss > 6 ? '　看青色轨迹乱跳的样子——这就是颜色跟踪在不受控环境里的下场。' : '　白天、没有同色干扰时，轨迹就是球飞过的弧线。'); }
+    };
+    step();
+  }
+  $('#tk-scan').onclick = scanOnce;
+  $('#tk-play').onclick = play;
+  ['#tk-night', '#tk-jersey'].forEach(s => $(s).onchange = () => { if (!busy) { trail = []; frame(.3, 11); show(null); $('#tk-cap').textContent = '条件变了，再扫描一次或播放视频看看。'; } });
+  frame(.3, 11); show(null);
+  $('#tk-cap').innerHTML = '目标颜色已经从球最中心的像素取好（左上角色块）。点"扫描这一帧"，看算法从右上角开始一个个像素地找。';
+})();
+
+/* ---------- 手算卷积 ---------- */
+(function () {
+  const G = [
+    [29, 31, 30, 32, 79, 81, 80, 82, 31, 30],
+    [30, 32, 31, 30, 81, 80, 82, 79, 30, 29],
+    [31, 30, 31, 29, 80, 80, 79, 81, 32, 31],
+    [30, 29, 30, 31, 79, 81, 81, 80, 30, 30],
+    [32, 31, 32, 30, 81, 79, 80, 80, 31, 32],
+    [30, 30, 31, 32, 80, 82, 79, 81, 29, 30],
+    [31, 32, 30, 31, 82, 80, 81, 79, 30, 31]
+  ];
+  const K = KERNELS.v, R = G.length, C = G[0].length;
+  $('#kv').innerHTML = kHTML(K);
+  const shade = v => { const g = Math.round(v * 2.6); return `background:rgb(${g},${g},${g});color:${g > 140 ? '#111' : '#eee'}`; };
+  const box = $('#gg');
+  box.innerHTML = G.flatMap((row, y) => row.map((v, x) => `<span data-x="${x}" data-y="${y}" class="${x && y && x < C - 1 && y < R - 1 ? '' : 'edge'}" style="${shade(v)}">${v}</span>`)).join('');
+  const at = (x, y) => box.children[y * C + x];
+  function pick(cx, cy) {
+    $$('span', box).forEach(s => s.classList.remove('in', 'ctr'));
+    const terms = [];
+    let sum = 0;
+    for (let j = -1; j <= 1; j++) for (let i = -1; i <= 1; i++) {
+      at(cx + i, cy + j).classList.add(i || j ? 'in' : 'ctr');
+      const k = K[j + 1][i + 1], v = G[cy + j][cx + i];
+      if (k) terms.push(`${v}×(${k})`);
+      sum += k * v;
+    }
+    const L = G[cy - 1][cx - 1] + G[cy][cx - 1] + G[cy + 1][cx - 1], Rt = G[cy - 1][cx + 1] + G[cy][cx + 1] + G[cy + 1][cx + 1];
+    $('#gg-math').innerHTML = `${terms.join(' + ')}（乘 0 的省略）<br>= 右列之和 ${Rt} − 左列之和 ${L} = <b>${sum}</b>　→　` +
+      (Math.abs(sum) > 60 ? '差别很大：<b>这里是一条垂直边缘</b>。' : '差别很小：不是边缘。') + (sum < -60 ? '（负数表示左亮右暗，看的是大小。）' : '');
+  }
+  box.onclick = e => { const s = e.target.closest('span'); if (!s || s.classList.contains('edge')) return; pick(+s.dataset.x, +s.dataset.y); };
+  pick(3, 3);
+  $('#gg-all').onclick = () => {
+    const out = $('#gg-out'); out.style.display = '';
+    const flat = conv(Float32Array.from(G.flat()), C, R, K);
+    out.innerHTML = Array.from(flat).map((v, i) => { const x = i % C, y = Math.floor(i / C), e = !(x && y && x < C - 1 && y < R - 1); const g = Math.min(255, Math.round(Math.abs(v) * 1.6)); return `<span class="edge" style="opacity:${e ? .15 : 1};background:rgb(${g},${g},${g});color:${g > 140 ? '#111' : '#eee'}">${e ? '' : v}</span>`; }).join('');
+    $('#gg-all').textContent = '↓ 卷积结果（亮 = 数值大）';
+  };
+})();
+
+/* ---------- 整张图换核 ---------- */
+(function () {
+  const W = 200, H = 120, S = 3;
+  const G = new Float32Array(W * H), R = rng(5);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    let v = 185 - y * .45;
+    if (y >= 98) v = 105;
+    if (((x >= 18 && x < 92) && (y >= 40 && y < 47)) || ((x >= 112 && x < 192) && (y >= 28 && y < 35))) v = 110;
+    if ([38, 98, 150].some(px => x >= px && x < px + 9) && y >= 14) v = 55;
+    G[y * W + x] = v + (R() - .5) * 6;
+  }
+  const cv = $('#kcv'), ctx = cv.getContext('2d');
+  cv.width = W * S; cv.height = H * S;
+  const off = document.createElement('canvas'); off.width = W; off.height = H;
+  const o = off.getContext('2d');
+  const CAP = {
+    orig: '原始的灰度图。',
+    v: '垂直边缘核：杆子的左右两侧亮了起来，<b>横着的平台几乎看不见</b>——它们的边缘是上下方向的明暗变化，左右相减抵消了。',
+    h: '水平边缘核：把核转 90°，变成"下面三个 − 上面三个"。这下平台和地平线亮了，杆子几乎消失（只剩顶端一小截）。',
+    sharp: '锐化核：中心 ×5，减去上下左右。和邻居差别大的地方被放大，边缘更"脆"，噪点也更明显。',
+    blur: '模糊核：9 个像素各取 1/9，相当于求平均。细节和噪点都被抹平了。'
+  };
+  function show(k) {
+    $$('#kn button').forEach(b => b.classList.toggle('sel', b.dataset.k === k));
+    let out = G, edge = k === 'v' || k === 'h';
+    if (k !== 'orig') out = conv(G, W, H, KERNELS[k]);
+    const img = o.createImageData(W, H);
+    for (let i = 0; i < W * H; i++) {
+      const x = i % W, y = Math.floor(i / W);
+      let v = (k !== 'orig' && (x === 0 || y === 0 || x === W - 1 || y === H - 1)) ? 0 : out[i];
+      if (edge) v = Math.abs(v) * 1.3;
+      v = Math.max(0, Math.min(255, v));
+      img.data.set([v, v, v, 255], i * 4);
+    }
+    o.putImageData(img, 0, 0);
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(off, 0, 0, W * S, H * S);
+    $('#kn-k').innerHTML = k === 'orig' ? '<span>—</span><span>—</span><span>—</span><span>—</span><span>1</span><span>—</span><span>—</span><span>—</span><span>—</span>' : kHTML(KERNELS[k]);
+    $('#kn-cap').innerHTML = CAP[k];
+  }
+  $$('#kn button').forEach(b => b.onclick = () => show(b.dataset.k));
+  show('v');
+})();
+
+/* ---------- Viola-Jones 风格的滑动窗口 ---------- */
+(function () {
+  const W = 128, H = 80, S = 5, WIN = 32;
+  const G = new Float32Array(W * H), R = rng(9);
+  for (let i = 0; i < W * H; i++) G[i] = 90 + (R() - .5) * 16;
+  const fill = (f, v) => { for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (f(x, y)) G[y * W + x] = v + (R() - .5) * 8; };
+  const disk = (cx, cy, r) => (x, y) => (x + .5 - cx) ** 2 + (y + .5 - cy) ** 2 <= r * r;
+  const rect = (x0, y0, x1, y1) => (x, y) => x >= x0 && x < x1 && y >= y0 && y < y1;
+  // 真正的脸：左上角在 (78, 24)
+  const face = (fx, fy) => {
+    fill((x, y) => ((x + .5 - fx - 16) / 15) ** 2 + ((y + .5 - fy - 16) / 16) ** 2 <= 1, 200);
+    fill(disk(fx + 10.5, fy + 11.5, 3), 40); fill(disk(fx + 22.5, fy + 11.5, 3), 40);
+    fill(rect(fx + 13, fy + 13, fx + 15, fy + 20), 165); fill(rect(fx + 17, fy + 13, fx + 19, fy + 20), 165);
+    fill(rect(fx + 15, fy + 13, fx + 17, fy + 20), 245);
+    fill(rect(fx + 10, fy + 24, fx + 23, fy + 27), 60);
+  };
+  face(78, 24);
+  // 捣乱的：一只眼睛、一对圆点、一条亮线、一个空白椭圆
+  fill(disk(16, 14, 8), 200); fill(disk(16, 14, 3), 40);
+  fill(disk(46, 12, 7), 200); fill(disk(58, 12, 7), 200); fill(disk(46, 12, 3), 40); fill(disk(58, 12, 3), 40);
+  fill(rect(44, 46, 48, 66), 165); fill(rect(50, 46, 54, 66), 165); fill(rect(48, 46, 50, 66), 245);
+  fill((x, y) => ((x + .5 - 18) / 12) ** 2 + ((y + .5 - 58) / 14) ** 2 <= 1, 200);
+
+  const mean = (x0, y0, x1, y1) => { let s = 0, n = 0; for (let y = Math.max(0, y0); y < Math.min(H, y1); y++) for (let x = Math.max(0, x0); x < Math.min(W, x1); x++) { s += G[y * W + x]; n++; } return n ? s / n : 0; };
+  const eye = (cx, cy) => { const c = mean(cx - 2, cy - 2, cx + 3, cy + 3); const sur = (mean(cx - 2, cy - 7, cx + 3, cy - 4) + mean(cx - 2, cy + 5, cx + 3, cy + 8) + mean(cx - 7, cy - 2, cx - 4, cy + 3) + mean(cx + 5, cy - 2, cx + 8, cy + 3)) / 4; return sur - c; };
+  const FEATS = [
+    ['左眼：暗圆被亮色包围', (wx, wy) => eye(wx + 10, wy + 11) > 60],
+    ['右眼：暗圆被亮色包围', (wx, wy) => eye(wx + 22, wy + 11) > 60],
+    ['鼻梁：比两侧亮的竖线', (wx, wy) => mean(wx + 15, wy + 13, wx + 17, wy + 20) - (mean(wx + 12, wy + 13, wx + 15, wy + 20) + mean(wx + 17, wy + 13, wx + 20, wy + 20)) / 2 > 40],
+    ['嘴：比上方暗的横条', (wx, wy) => mean(wx + 11, wy + 20, wx + 22, wy + 23) - mean(wx + 11, wy + 24, wx + 22, wy + 27) > 60]
+  ];
+  const score = (wx, wy) => FEATS.map(f => f[1](wx, wy));
+
+  const cv = $('#vj'), ctx = cv.getContext('2d');
+  cv.width = W * S; cv.height = H * S;
+  let cur = null, marks = [], busy = false;
+  function draw() {
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) { const v = Math.round(Math.max(0, Math.min(255, G[y * W + x]))); ctx.fillStyle = `rgb(${v},${v},${v})`; ctx.fillRect(x * S, y * S, S, S); }
+    marks.forEach(([x, y, n]) => {
+      if (n === 4) { ctx.strokeStyle = '#22c55e'; ctx.lineWidth = 3; ctx.strokeRect(x * S, y * S, WIN * S, WIN * S); }
+      else if (n > 0) { ctx.fillStyle = ['', 'rgba(255,159,28,.35)', 'rgba(255,159,28,.6)', 'rgba(255,159,28,.85)'][n]; ctx.beginPath(); ctx.arc((x + WIN / 2) * S, (y + WIN / 2) * S, 2 + n, 0, 7); ctx.fill(); }
+    });
+    if (cur) {
+      ctx.strokeStyle = '#ff9f1c'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.strokeRect(cur[0] * S, cur[1] * S, WIN * S, WIN * S); ctx.setLineDash([]);
+      const sc = score(cur[0], cur[1]);
+      $('#vj-feat').innerHTML = FEATS.map((f, i) => `<span class="${sc[i] ? 'on' : ''}">${sc[i] ? '✓' : '✗'} ${f[0]}</span>`).join('');
+      return sc;
+    }
+    $('#vj-feat').innerHTML = FEATS.map(f => `<span>${f[0]}</span>`).join('');
+  }
+  const POS = []; for (let y = 0; y <= H - WIN; y += 2) for (let x = 0; x <= W - WIN; x += 2) POS.push([x, y]);
+  function finish() {
+    const faces = marks.filter(m => m[2] === 4);
+    $('#vj-cap').innerHTML = `扫了 <b>${POS.length}</b> 个窗口位置。<span style="color:var(--on)">橙色圆点</span>是有 1～3 个特征满足的窗口中心（越大满足的越多），一共 ${marks.filter(m => m[2] > 0 && m[2] < 4).length} 处——那只孤零零的眼睛、那对圆点、那条亮线都骗过了一部分检测器。<span style="color:var(--ok)">绿框</span>是 4 个特征同时满足的：<b>${faces.length}</b> 个，${faces.length > 1 ? '全挤在那张脸上（挨着的几个框其实是同一张脸，实际算法会把它们合并成一个）' : '正好框住那张脸'}。每个检测器单独看都会被骗，合在一起就很准。`;
+  }
+  $('#vj-run').onclick = () => {
+    if (busy) return;
+    marks = []; busy = true;
+    const add = p => { const n = score(...p).filter(Boolean).length; if (n) marks.push([p[0], p[1], n]); };
+    if (REDUCE) { POS.forEach(add); cur = null; draw(); busy = false; finish(); return; }
+    let i = 0;
+    const step = () => {
+      for (let k = 0; k < 12 && i < POS.length; k++, i++) add(POS[i]);
+      cur = POS[Math.min(i, POS.length - 1)];
+      draw();
+      if (i < POS.length) requestAnimationFrame(step); else { cur = null; draw(); busy = false; finish(); }
+    };
+    step();
+  };
+  $('#vj-clear').onclick = () => { if (busy) return; marks = []; cur = null; draw(); $('#vj-cap').textContent = ''; };
+  cv.addEventListener('click', e => {
+    if (busy) return;
+    const r = cv.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width * W, y = (e.clientY - r.top) / r.height * H;
+    cur = [Math.max(0, Math.min(W - WIN, Math.round((x - WIN / 2) / 2) * 2)), Math.max(0, Math.min(H - WIN, Math.round((y - WIN / 2) / 2) * 2))];
+    const sc = draw(), n = sc.filter(Boolean).length;
+    $('#vj-cap').innerHTML = `窗口左上角在 (${cur[0]}, ${cur[1]})：4 个检测器里有 <b>${n}</b> 个说"像"。` + (n === 4 ? '全部同意——<b>这是一张脸</b>。' : n ? '单个检测器很弱，只有几个同意还不能算脸。' : '');
+  });
+  draw();
+})();
+
+/* ---------- 卷积神经网络层次图 ---------- */
+(function () {
+  const svg = $('#cnn');
+  const col = (x, title, sub) => { txt(svg, x, 24, title, 't-main mid'); txt(svg, x, 216, sub, 't-sub mid'); };
+  // 像素
+  for (let j = 0; j < 6; j++) for (let i = 0; i < 6; i++) { const g = 60 + ((i * 37 + j * 53) % 150); el('rect', { x: 32 + i * 14, y: 60 + j * 14, width: 13, height: 13, style: `fill:rgb(${g},${g},${g})` }, svg); }
+  col(74, '像素', '输入图像');
+  const tile = (x, y) => el('rect', { x: x - 22, y: y - 22, width: 44, height: 44, rx: 6, class: 's-panel', style: 'stroke-width:1.5' }, svg);
+  const ln = (x, y, d) => el('path', { d, transform: `translate(${x},${y})`, class: 's-line', style: 'stroke-width:3;stroke:var(--accent)' }, svg);
+  // 边缘
+  [[60, 'M0,-14 V14'], [112, 'M-14,0 H14'], [164, 'M-12,12 L12,-12']].forEach(([y, d]) => { tile(200, y); ln(200, y, d); });
+  col(200, '第 1 层', '边缘');
+  // 角
+  [[60, 'M-12,-12 V12 H12'], [112, 'M-12,12 V-12 H12'], [164, 'M12,-12 V12 H-12']].forEach(([y, d]) => { tile(320, y); ln(320, y, d); });
+  col(320, '第 2 层', '角');
+  // 五官
+  tile(440, 60); el('ellipse', { cx: 440, cy: 60, rx: 14, ry: 8, class: 's-line', style: 'stroke:var(--accent);stroke-width:2.5' }, svg); el('circle', { cx: 440, cy: 60, r: 4, style: 'fill:var(--accent)' }, svg);
+  tile(440, 112); ln(440, 112, 'M-16,-4 Q0,12 16,-4');
+  tile(440, 164); ln(440, 164, 'M-16,4 Q0,-10 16,2');
+  col(440, '第 3 层', '眼睛、嘴、眉毛');
+  // 脸
+  el('rect', { x: 530, y: 50, width: 120, height: 130, rx: 12, class: 's-on' }, svg);
+  el('ellipse', { cx: 590, cy: 115, rx: 38, ry: 46, class: 's-line', style: 'stroke-width:2.5' }, svg);
+  el('circle', { cx: 576, cy: 104, r: 4, style: 'fill:var(--ink)' }, svg); el('circle', { cx: 604, cy: 104, r: 4, style: 'fill:var(--ink)' }, svg);
+  el('path', { d: 'M576,134 Q590,146 604,134', class: 's-line', style: 'stroke-width:2.5' }, svg);
+  col(590, '更深的层', '"啊哈，这是脸！"');
+  [[124, 172], [228, 292], [348, 412], [468, 524]].forEach(([a, b]) => el('path', { d: `M${a},112 H${b}`, class: 's-line', style: 'stroke-width:1.5;stroke:var(--muted)' }, svg));
+  [[172], [292], [412], [524]].forEach(([b]) => el('path', { d: `M${b - 7},107 L${b},112 L${b - 7},117`, class: 's-line', style: 'stroke-width:1.5;stroke:var(--muted)' }, svg));
+})();
+
+/* ---------- 面部标志点 ---------- */
+(function () {
+  const svg = $('#lm');
+  const P = { happy: [.55, .6, .85, .35], surp: [1, 1, 0, .8], sad: [.25, .45, -.8, 0], conf: [.05, .5, -.2, 0], calm: [.4, .6, 0, 0] };
+  const v = id => +$('#' + id).value;
+  function draw() {
+    const b = v('lm-b'), e = v('lm-e'), s = v('lm-s'), op = v('lm-o');
+    $('#lm-bv').textContent = b.toFixed(2); $('#lm-ev').textContent = e.toFixed(2); $('#lm-sv').textContent = s.toFixed(2); $('#lm-ov').textContent = op.toFixed(2);
+    svg.innerHTML = '';
+    const cx = 200, eyeY = 112, eyeX = [168, 232];
+    el('ellipse', { cx, cy: 135, rx: 88, ry: 112, class: 's-panel' }, svg);
+    const open = 1 + e * 11, browY = eyeY - 20 - b * 24;
+    const lmk = [];
+    eyeX.forEach((x, i) => {
+      el('ellipse', { cx: x, cy: eyeY, rx: 17, ry: open, style: 'fill:var(--bg);stroke:var(--ink);stroke-width:2' }, svg);
+      if (open > 3) el('circle', { cx: x, cy: eyeY, r: Math.min(6, open - 1), style: 'fill:var(--ink)' }, svg);
+      const tilt = (b < .15 ? 5 : 0) * (i ? -1 : 1);
+      el('path', { d: `M${x - 20},${browY + tilt} Q${x},${browY - 7} ${x + 20},${browY - tilt}`, class: 's-line', style: 'stroke-width:4' }, svg);
+      lmk.push([x, eyeY - open], [x, eyeY + open], [x, browY - 3.5]);
+      el('line', { x1: x + 26, x2: x + 26, y1: eyeY - open, y2: eyeY + open, style: 'stroke:var(--on);stroke-dasharray:3 2' }, svg);
+      el('line', { x1: x - 26, x2: x - 26, y1: browY - 3.5, y2: eyeY, style: 'stroke:var(--accent);stroke-dasharray:3 2' }, svg);
+    });
+    el('path', { d: `M${cx},${eyeY + 8} L${cx - 9},${eyeY + 48} H${cx + 6}`, class: 's-line', style: 'stroke-width:2' }, svg);
+    lmk.push([cx - 3, eyeY + 48]);
+    const my = 205, lift = s * 14, mw = 34, oh = op * 22;
+    const cornerY = my - lift;
+    el('path', { d: `M${cx - mw},${cornerY} Q${cx},${my + lift + 2} ${cx + mw},${cornerY}` + (oh > 1 ? ` Q${cx},${my + lift + 2 + oh * 2} ${cx - mw},${cornerY} Z` : ''), class: 's-line', style: `stroke-width:3;${oh > 1 ? 'fill:var(--bad-soft)' : ''}` }, svg);
+    lmk.push([cx - mw, cornerY], [cx + mw, cornerY], [cx, my + lift / 2 + 1]);
+    if (oh > 1) lmk.push([cx, my + lift / 2 + 1 + oh]);
+    lmk.forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 4, style: 'fill:var(--on);stroke:var(--panel);stroke-width:1.5' }, svg));
+    // 读数
+    const eyeD = open * 2, browD = eyeY - browY, smile = (my + lift / 2 + 1) - cornerY, mouthO = oh;
+    let emo, why;
+    if (eyeD < 5) { emo = '闭眼'; why = '上下眼睑的点几乎重合'; }
+    else if (browD > 38 && eyeD > 17 && mouthO > 8) { emo = '惊讶'; why = '眉毛离眼睛很远、眼睛睁得很大、嘴张开'; }
+    else if (smile > 6) { emo = '开心'; why = '嘴角比嘴中间高'; }
+    else if (smile < -6) { emo = '忧伤'; why = '嘴角比嘴中间低'; }
+    else if (browD < 25) { emo = '困惑 / 皱眉'; why = '眉毛压得离眼睛很近'; }
+    else { emo = '平静'; why = '各项距离都在中间'; }
+    const X = 380;
+    txt(svg, X, 40, '标志点量出来的距离', 't-main');
+    [['眼睛上下距离', eyeD, 'var(--on)'], ['眉毛到眼睛', browD, 'var(--accent)'], ['嘴角比嘴中间高', smile, 'var(--ink)'], ['嘴张开', mouthO, 'var(--ink)']].forEach(([n, val, c], i) => {
+      txt(svg, X, 74 + i * 30, n, 't-sub');
+      txt(svg, X + 150, 74 + i * 30, val.toFixed(1), 't-mono').style.fill = c;
+    });
+    txt(svg, X, 210, '判断', 't-sub');
+    const t = txt(svg, X, 240, emo, 't-main'); t.style.fontSize = '24px'; t.style.fill = 'var(--on)';
+    $('#lm-cap').innerHTML = `判断为<b>${emo}</b>：${why}。`;
+  }
+  ['lm-b', 'lm-e', 'lm-s', 'lm-o'].forEach(id => $('#' + id).oninput = draw);
+  $$('[data-p]').forEach(btn => btn.onclick = () => { const p = P[btn.dataset.p];['lm-b', 'lm-e', 'lm-s', 'lm-o'].forEach((id, i) => $('#' + id).value = p[i]); draw(); });
+  draw();
+})();
+
+/* ---------- 抽象层次 ---------- */
+(function () {
+  const svg = $('#stack');
+  const L = [
+    ['交互体验', '智能电视、智能辅导系统：根据手势和表情做出反应', 's-on'],
+    ['专门的解读算法', '表情识别、手势识别：用标志点判断开心、困惑、在比划什么', 's-acc'],
+    ['计算机视觉算法', '处理像素，找出脸、手这样的东西', 's-acc'],
+    ['硬件：摄像头', '工程师造出一年比一年好的"眼睛"', 's-panel']
+  ];
+  L.forEach(([n, d, c], i) => {
+    const y = 10 + i * 52, x = 20 + i * 18;
+    el('rect', { x, y, width: 640 - i * 36, height: 44, rx: 10, class: c }, svg);
+    txt(svg, x + 16, y + 27, n, 't-main');
+    txt(svg, x + 160, y + 27, d, 't-sub');
+  });
+})();
+</script>
+</body>
+</html>

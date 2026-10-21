@@ -1,0 +1,561 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>38 计算机心理学 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.tiles{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+.tiles button{width:64px;height:64px;border-radius:12px;border:2px solid var(--line);cursor:pointer;position:relative;font:700 18px var(--mono);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.6)}
+.tiles button[disabled]{cursor:default}
+.res{font-size:14px;line-height:1.8}
+.res b{font-family:var(--mono)}
+.hm{display:grid;grid-template-columns:repeat(10,1fr);gap:2px;max-width:420px;margin:10px 0}
+.hm span{aspect-ratio:1;border-radius:3px}
+.legend-bar{display:flex;max-width:420px;height:14px;border-radius:4px;overflow:hidden;margin:4px 0}
+.legend-bar span{flex:1}
+.num{font:600 34px/1.4 var(--mono);letter-spacing:2px;text-align:center;background:var(--code);border-radius:10px;padding:10px;margin:10px 0;min-height:1.4em}
+.inrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.inrow input[type=text]{flex:1;min-width:160px;font:16px var(--mono);padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.doors{display:flex;gap:24px;flex-wrap:wrap;justify-content:center}
+.door{width:150px;text-align:center;font-size:14px}
+.door svg{width:150px;height:220px;display:block;margin:0 auto 6px}
+.door .btns{justify-content:center}
+.track{position:relative;height:56px;background:var(--code);border-radius:28px;margin:12px 0;touch-action:none}
+.knob{position:absolute;top:6px;left:6px;width:120px;height:44px;border-radius:22px;background:var(--panel);border:1px solid var(--line);display:flex;align-items:center;gap:10px;padding:0 12px;font-size:14px;user-select:none;-webkit-user-select:none;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.knob .grip{width:14px;height:24px;background-image:radial-gradient(circle,var(--muted) 1.5px,transparent 1.6px);background-size:6px 6px;cursor:grab}
+.knob.plain .grip{display:none}
+.knob.plain{cursor:default}
+.choices{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.choices button{font:15px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 14px;cursor:pointer}
+.choices button.ok{border-color:var(--ok);background:var(--ok-soft)}
+.choices button.no{border-color:var(--bad);background:var(--bad-soft)}
+.ed{border:1px solid var(--line);border-radius:10px;background:var(--panel);overflow:visible}
+.ed .bar{display:flex;gap:4px;padding:4px 6px;border-bottom:1px solid var(--line);background:var(--bg);border-radius:10px 10px 0 0;position:relative;font-size:14px}
+.ed .bar>button{border:0;background:none;padding:4px 10px;border-radius:6px;cursor:pointer;font:inherit;color:var(--ink)}
+.ed .bar>button:hover,.ed .bar>button.open{background:var(--accent-soft)}
+.ed .menu{position:absolute;top:34px;left:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:4px;display:none;z-index:5;min-width:170px}
+.ed .menu.open{display:block}
+.ed .menu button{display:flex;justify-content:space-between;width:100%;border:0;background:none;padding:6px 10px;border-radius:5px;cursor:pointer;font:inherit;color:var(--ink)}
+.ed .menu button:hover{background:var(--accent-soft)}
+.ed .menu kbd{font:12px var(--mono);color:var(--muted)}
+.ed textarea{width:100%;box-sizing:border-box;border:0;background:none;color:var(--ink);font:15px/1.6 var(--mono);padding:10px 12px;resize:vertical;min-height:90px;outline:none}
+</style>
+</head>
+<body data-ep="38">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=39" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 38 集</div>
+  <h1>计算机心理学</h1>
+  <p class="en">Psychology of Computing</p>
+  <p class="lead">计算机终究是给人用的工具，而人是"乱"的：没有性能规格，一会儿理性一会儿不理性。所以好的设计师会借用心理学——人眼擅长比什么、短期记忆能装几样、为什么门把手会骗人、为什么选择题比填空题容易。之后还有：会察言观色的"情感计算"、网上聊天时人更愿意吐露心事、视频会议里"对不上的眼神"，以及让人发毛的"恐怖谷"。</p>
+  <div class="road">
+    <span>可用性</span><i>→</i><span>视觉与颜色</span><i>→</i><span>分块</span><i>→</i><span>示能</span><i>→</i><span>认出 vs 回想</span><i>→</i><span>情感计算 · CMC · 凝视</span><i>→</i><span>恐怖谷</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 人是"乱"的</a></li>
+    <li><a href="#ch1">1 · 视觉：明暗与颜色</a></li>
+    <li><a href="#ch2">2 · 分块</a></li>
+    <li><a href="#ch3">3 · 示能</a></li>
+    <li><a href="#ch4">4 · 认出与回想、新手与专家</a></li>
+    <li><a href="#ch5">5 · 情感计算</a></li>
+    <li><a href="#ch6">6 · 以计算机为媒介的沟通</a></li>
+    <li><a href="#ch7">7 · 人与机器人：恐怖谷</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>计算机是给人用的，而人是"乱"的</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！在这个系列里，我们几乎只关注计算机本身——让它们运转的电路和算法。毕竟……这是<b>计算机</b>速成课。但归根结底，计算机是人使用的工具。而人类……嗯……挺乱的。我们不是由人类工程师从零开始、按已知的性能规格设计出来的。我们这一刻还很理性，下一刻就不理性了。你有没有对导航系统发过火？漫无目的地刷过维基百科？求过浏览器快点加载？给你的扫地机器人起过名字？这些都是典型的人类行为！</p>
+  <p>为了造出有用、好用、用着愉快的计算机系统，我们需要同时了解计算机和人类的长处与短处。正因如此，优秀的系统设计师在创造软件时，会运用社会心理学、认知心理学、行为心理学和知觉心理学的原理。</p>
+  <p>你肯定遇到过用起来让人抓狂、阻碍你做事的实体界面或计算机界面。也许它设计得太糟，你根本搞不懂，干脆放弃了。那个界面的<b>可用性</b>（usability）很差。可用性指的是一件人造物——比如软件——能在多大程度上被有效且高效地用来达成目标。为了帮助人类工作，我们需要了解人类：从他们怎么看、怎么想，到怎么反应、怎么互动。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>视觉：人眼擅长排明暗，不擅长排颜色</h2>
+  <p>比如，心理学家已经把人类的视觉系统研究得很透彻了。我们知道，人很擅长给颜色的<b>深浅</b>排序。这里有三个，你能把它们从浅到深排好吗？你大概不用怎么想。正因为有这种天生的能力，颜色的深浅非常适合用来显示<b>连续值</b>的数据。</p>
+  <p>另一方面，人类非常不擅长给<b>不同的颜色</b>排序。这里还有一组给你排：橙色在蓝色前面还是后面？绿色放哪？你可能会想按光的波长来排，就像彩虹那样，但那要多想很多。大多数人排起来会慢得多，也更容易出错。</p>
+
+  <div class="card">
+    <h3>动手：排排看，计个时</h3>
+    <span class="seg-btns" id="co-mode"><button data-m="0">第一组：同一种颜色的深浅</button><button data-m="1">第二组：不同的颜色</button></span>
+    <p class="hint" id="co-hint" style="margin:8px 0 0"></p>
+    <div class="tiles" id="co-tiles"></div>
+    <div class="res" id="co-res"></div>
+  </div>
+
+  <p>由于视觉系统天生的这种笨拙，用不同的颜色来显示连续数据，可能是个灾难性的设计选择：你会发现自己得不停地回头看图例来比较。不过，当数据是<b>离散的、没有顺序</b>的，比如<b>分类数据</b>时，颜色就再合适不过了。这听起来也许显而易见，但你会惊讶地发现，有多少界面把这种基本的事情做错了。</p>
+
+  <div class="card">
+    <h3>动手：同一份数据，三种上色方式</h3>
+    <span class="seg-btns" id="hm-mode"><button data-m="seq">连续数据 → 深浅</button><button data-m="rain">连续数据 → 彩虹色</button><button data-m="cat">分类数据 → 不同颜色</button></span>
+    <div class="hm" id="hm"></div>
+    <div class="legend-bar" id="hm-leg"></div>
+    <div class="step-text" id="hm-cap"></div>
+  </div>
+  <div class="extra">
+    <span class="t">做前端时就能用上</span>
+    数据可视化库里的配色一般分三类：<b>顺序型</b>（sequential，同一色相由浅到深，给连续值用）、<b>发散型</b>（diverging，两端两种颜色、中间浅，给"高于 / 低于平均"这种有中点的数据用）、<b>分类型</b>（categorical，彼此差异大的几种颜色，给没有顺序的类别用）。另外，大约每 12 个男性里就有 1 个是某种色觉异常，所以别只靠颜色传递信息：加上文字标签、图案或形状，并保证足够的明暗对比度（WCAG 无障碍规范里有具体的对比度要求）。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>分块：一次只记得住几样东西</h2>
+  <p>除了视觉，理解人类的认知也能帮我们设计出符合大脑运作方式的界面。比如，当信息被<b>分块</b>（chunked）——也就是把东西组成一个个小而有意义的组——时，人能更有效地阅读、记住和处理它们。人在短期记忆里一般能同时记住 <b>7 ± 2</b> 样东西。保守起见，我们通常看到的分组都是 5 个或更少。这就是为什么电话号码会被拆成几块，比如 317、555、3897：它不再是我们很可能会忘掉的十个独立数字，而是三块，我们应付得过来。</p>
+
+  <div class="card">
+    <h3>动手：记一个号码</h3>
+    <span class="seg-btns" id="ch-mode"><button data-m="0">不分块</button><button data-m="1">分块</button></span>
+    <div class="num" id="ch-num" aria-live="polite"></div>
+    <div class="btns"><button class="btn primary" id="ch-go">显示 3 秒</button></div>
+    <div class="inrow" id="ch-row" style="display:none"><input type="text" id="ch-in" inputmode="numeric" placeholder="凭记忆输入刚才的号码" aria-label="凭记忆输入号码"><button class="btn" id="ch-check">核对</button></div>
+    <div class="step-text" id="ch-cap">各试几次：先"不分块"，再"分块"。号码每次都是随机的 10 位数字。</div>
+  </div>
+
+  <p>从计算机的角度看，分块没必要地多花了时间和空间，所以效率更低。但对我们人类来说，它的效率高得多——碰到这种权衡，我们几乎总是选对人有利的那边，毕竟现在说了算的还是我们……暂时。分块已经被用到了计算机界面上，比如下拉菜单里的选项、带按钮的菜单栏。对计算机来说，把这些东西一个挨一个挤在一起效率更高——分组浪费了内存和屏幕空间。但这样设计界面，让人更容易扫视、记住和找到它们。</p>
+  <div class="extra">
+    <span class="t">"7 ± 2"和表单设计</span>
+    "7 ± 2"来自心理学家乔治·米勒 1956 年的一篇著名论文；后来的研究认为，真正能同时记住的"块"可能只有 4 个左右，所以课程说"保守起见 5 个或更少"是很实在的建议。前端里到处都是它：手机号、银行卡号输入框自动插空格；验证码分成几格；设置页把几十个选项分成几组、每组加小标题；导航栏一级菜单通常不超过五六项。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>示能：看一眼就知道怎么用</h2>
+  <p>界面设计里另一个核心概念是<b>示能</b>（affordances）。按照把这个词在计算机领域推广开来的唐·诺曼的说法："示能为物品该如何操作提供了强烈的线索。平板是用来推的。旋钮是用来转的。插槽是用来插东西的。[……] 当充分利用了示能时，用户只要看一眼就知道该怎么做：不需要图示、标签或说明。"</p>
+  <p class="muted" style="font-size:13px">（字幕把 affordance 译作"直观功能"。国内设计界更常见的译法是"示能"或"可供性"，本页用"示能"。）</p>
+  <p>如果你曾经去拉一个门把手，然后才发现得推开，那你就发现了一个<b>坏掉的示能</b>。相反，门上装一块推板是更好的设计，因为它只给了你"推"这一个选择。门是很简单的东西——如果你得在门上贴文字说明，那你大概该回去重新设计了。</p>
+
+  <div class="card">
+    <h3>动手：开门</h3>
+    <div class="doors" id="doors"></div>
+    <div class="step-text" id="door-cap">两扇门都要<b>推</b>才能开。分别试试，你第一下会选什么？</div>
+  </div>
+
+  <p>示能被大量用在我们第 26 集讨论过的图形用户界面里。这是计算机变得比命令行好用得多的原因之一：你不用猜屏幕上哪些东西能点，因为它们看起来就像按钮。它们凸出来，就等着你去按！我最喜欢的示能之一，是告诉用户屏幕上某个元素可以<b>拖动</b>的<b>滚花</b>（knurling）——给物体加上一种纹理，增加抓握感，并告诉你最好从哪里抓。这个想法和图案借鉴自现实世界的实体工具。</p>
+
+  <div class="card">
+    <h3>动手：哪个能拖？</h3>
+    <div class="track" id="tr1"><div class="knob" id="kn1"><span class="grip"></span>有滚花</div></div>
+    <div class="track" id="tr2"><div class="knob plain" id="kn2"><span class="grip"></span>没有滚花</div></div>
+    <div class="step-text" id="kn-cap">两个都能左右拖动。只是一个告诉了你，一个没告诉你。</div>
+  </div>
+  <div class="extra">
+    <span class="t">"诺曼门"和 CSS 里的示能</span>
+    唐·诺曼的《设计心理学》（The Design of Everyday Things）是交互设计的入门经典；需要贴"推 / 拉"字条的门，从此被戏称为"诺曼门"。在网页上，示能靠的是一堆小细节：按钮有背景、圆角和阴影，悬停时变色、鼠标变成 <code>cursor: pointer</code>；链接有颜色和下划线；可拖动的地方用 <code>cursor: grab</code> 和一排小点（就是滚花）。扁平化设计流行时，很多界面把这些线索去掉了，结果用户分不清哪些字能点——这就是示能被削弱的代价。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>认出 vs 回想，新手 vs 专家</h2>
+  <p>和示能相关的，是"<b>认出</b>与<b>回想</b>"（recognition vs recall）的心理学。你从考试里就很熟悉这个效应了：这就是为什么选择题比填空题容易。一般来说，当记忆被一个感官线索——比如一个词、一张图或一个声音——触发时，人的记忆会好得多。这就是为什么界面使用<b>图标</b>：功能的图形化表示，比如一个垃圾桶，表示文件被删除后去的地方。我们不需要回想那个图标是干什么的，只需要认出它。</p>
+
+  <div class="card">
+    <h3>动手：填空题和选择题</h3>
+    <p style="margin:0">在 Linux 命令行里，删除一个文件的命令是什么？</p>
+    <div id="rc-a">
+      <div class="inrow"><input type="text" id="rc-in" placeholder="先别往下看，凭记忆写" aria-label="删除文件的命令"><button class="btn" id="rc-check">交卷</button><button class="btn" id="rc-give">想不起来</button></div>
+    </div>
+    <div id="rc-b" style="display:none">
+      <p style="margin:8px 0 0">换成选择题：</p>
+      <div class="choices" id="rc-ch"></div>
+    </div>
+    <div class="step-text" id="rc-cap"></div>
+  </div>
+
+  <p>这也是相比命令行界面的一大进步：在命令行里，你得靠记忆来知道用什么命令。我该输入 "delete"，还是 "remove"，还是……"trash"，还是……糟了，什么都有可能！（在 Linux 里其实是 "rm"。）</p>
+  <p class="muted" style="font-size:13px">（字幕把那句 "or… shoot, it could be anything!" 里的 shoot 也当成了候选命令，译成"射出"。其实 shoot 是"糟了、该死"的意思，是主持人想不起来时的感叹。）</p>
+  <p>不过，让一切都容易发现、容易学，有时意味着用起来慢，这和另一个心理学概念相冲突：<b>专业技能</b>（expertise）。随着你对界面越来越熟悉，你会变得更快，在脑中建立起如何高效做事的<b>心智模型</b>。所以，好的界面应该提供<b>多条路径</b>来实现目标。一个很好的例子是复制和粘贴：它能在文字处理软件的"编辑"下拉菜单里找到，也能用键盘快捷键触发。一种方式照顾新手，另一种照顾专家，谁也不拖慢谁。所以，鱼和熊掌可以兼得！</p>
+
+  <div class="card">
+    <h3>动手：两条路做同一件事</h3>
+    <div class="ed">
+      <div class="bar"><button id="ed-menu-btn" aria-haspopup="true" aria-expanded="false">编辑 ▾</button>
+        <div class="menu" id="ed-menu" role="menu"><button data-a="copy" role="menuitem">复制<kbd id="k-c"></kbd></button><button data-a="paste" role="menuitem">粘贴<kbd id="k-v"></kbd></button><button data-a="all" role="menuitem">全选<kbd id="k-a"></kbd></button></div>
+      </div>
+      <textarea id="ed-ta" aria-label="练习用的文本框">选中这句话里的几个字，把它复制一份粘贴到末尾。先用上面的"编辑"菜单做一次，再用键盘快捷键做一次。</textarea>
+    </div>
+    <div class="step-text" id="ed-cap">还没开始。</div>
+  </div>
+  <div class="extra">
+    <span class="t">前端里的"新手路径"和"专家路径"</span>
+    VS Code 是个好例子：新手点菜单和侧边栏的图标（认出），熟手按 <code>⌘⇧P</code> 打开命令面板直接敲命令名，甚至记住快捷键（回想）。菜单项旁边写上快捷键，就是在帮新手一点点变成专家。做 Web 应用时也一样：常用操作给出看得见的按钮，同时支持快捷键，并在按钮的提示里写出快捷键。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>情感计算：会察言观色的计算机</h2>
+  <p>除了让人更高效，我们还希望计算机有<b>情商</b>：能根据用户的情绪状态——也叫"<b>情感</b>"（affect）——调整自己的行为，做出恰当的回应。这能让体验更有同理心、更愉快，甚至让人欣喜。罗莎琳德·皮卡德在她 1995 年关于<b>情感计算</b>（Affective Computing）的论文中阐述了这一愿景，开创了一个融合心理学、社会科学和计算机科学的交叉领域。它推动了对能够识别、解读、模拟和改变人类情感的计算系统的研究。这件事意义重大，因为我们知道，在学习、沟通和做决定这类日常事务中，情绪会影响认知和知觉。</p>
+  <p>能感知情感的系统使用传感器（有时是穿戴式的），采集语音、面部视频，以及出汗程度、心率这样的生物特征。这些多模态传感器数据，会和计算模型一起使用——这些模型描述了人如何产生和表达<b>情感状态</b>（比如快乐、沮丧）和<b>社交状态</b>（比如友谊、信任）。模型估计用户处于某种状态的可能性，并想出怎样最好地回应这种状态，以达成系统的目标——可能是让用户冷静下来、建立信任，或者帮他们完成作业。</p>
+  <p>2012 年，Facebook 做了一项关注用户情感的研究。在一周时间里，数据科学家修改了几十万用户动态消息里的内容：一些人看到更多积极的内容，另一些人看到更多消极的内容。研究人员分析了人们那一周的发帖，发现看到更多积极内容的用户，自己发的内容也更积极；看到更多消极内容的用户，发的帖子也更消极。显然，Facebook 和其他服务给你看什么，绝对会影响你。作为内容的把关人，这既是巨大的机会，也是巨大的责任。这也是为什么这项研究最终引起了很大争议。</p>
+  <p>它还引出了一些有趣的问题：计算机程序应该怎样回应人类的交流？如果用户情绪消极，也许计算机不该用一种欢快、积极的方式回应，那样很烦人。又或者，计算机应该试着引出积极的反应，哪怕有点尴尬。什么是"正确"的行为，在很大程度上还是一个开放的研究问题。</p>
+  <div class="extra">
+    <span class="t">那项研究为什么有争议</span>
+    这项研究在 2014 年发表后，争议焦点主要不在结论，而在<b>知情同意</b>：近 70 万用户并不知道自己的动态消息被调整过、成了实验对象，研究依据的只是用户注册时同意过的服务条款。它让很多人第一次意识到：推荐算法不只是"把内容排个序"，它在实实在在地影响用户的情绪。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>以计算机为媒介的沟通，和对不上的眼神</h2>
+  <p>说到 Facebook，它是<b>以计算机为媒介的沟通</b>（computer-mediated communication，简称 <b>CMC</b>）的一个绝佳例子，这也是一个很大的研究领域。它包括<b>同步</b>沟通——比如视频通话，所有参与者同时在线——也包括<b>异步</b>沟通——比如推文、邮件和短信，人们可以在自己能回、想回的时候再回。研究人员研究表情符号的使用、轮流发言这类规则，以及不同沟通渠道里使用的语言。</p>
+  <p>一个有趣的发现是：和面对面交流相比，人们在以计算机为媒介的对话中，表现出更高程度的<b>自我暴露</b>——也就是透露个人信息。所以，如果你想做一个系统，搞清楚用户到底花了多少小时看《英国家庭烘焙大赛》，做个聊天机器人可能比做个有脸的虚拟助手更好。</p>
+  <p>心理学研究还表明，<b>眼神注视</b>在说服、教学和吸引注意力方面极其重要。说话时看着对方叫<b>相互注视</b>（mutual gaze）。研究表明，它能提高投入度，帮助实现对话的目标，无论是学习、交朋友还是谈成一笔生意。在录像讲座这样的场景里，讲师很少（如果有的话）看镜头，而是通常看着现场的学生。这对他们没问题，但这意味着在线看讲座的人投入度降低了。为此，研究人员开发了能调整头部和眼睛的计算机视觉和图形软件，让讲师看起来像是在直视镜头——直视远程观众。这种技术叫<b>增强注视</b>（augmented gaze）。</p>
+  <p>类似的技术也被用到了视频会议里，用来纠正摄像头的位置——摄像头几乎总是在屏幕上方。因为你通常看的是屏幕上对方的视频，而不是直接看摄像头，所以在对方看来，你总像是在往下看——这打破了相互注视，可能造成各种不好的社交副作用，比如权力不对等。幸运的是，这可以用数字方式修正，让对方觉得你正深情地凝视着他们的眼睛。</p>
+
+  <div class="card">
+    <h3>动手：为什么视频里你总在"往下看"</h3>
+    <div class="scroll-x"><svg class="diagram" id="gz" viewBox="0 0 680 230" role="img" aria-label="摄像头在屏幕上方时视线的偏差角"></svg></div>
+    <label style="display:flex;gap:10px;align-items:center;font-size:14px;margin:6px 0">你离屏幕 <input type="range" id="gz-d" min="30" max="100" value="55" style="flex:1"> <b id="gz-dv" style="font-family:var(--mono)"></b></label>
+    <label style="display:flex;gap:10px;align-items:center;font-size:14px;margin:6px 0">对方的眼睛在摄像头下方 <input type="range" id="gz-h" min="2" max="25" value="12" style="flex:1"> <b id="gz-hv" style="font-family:var(--mono)"></b></label>
+    <div class="step-text" id="gz-cap"></div>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>人与机器人的互动：恐怖谷</h2>
+  <p>人类还很喜欢把物体<b>拟人化</b>，计算机也不例外，尤其是会动的，比如上集讲的机器人。除了上个世纪占主导的工业用途，机器人越来越多地被用在医疗、教育和娱乐场景中，经常和人打交道。<b>人与机器人交互</b>（Human-Robot Interaction，简称 HRI）是一个专门研究这类互动的领域，比如人们怎样看待机器人的不同行为和外形，或者机器人怎样解读人类的社交暗示，从而融入其中、不显得特别尴尬。</p>
+  <p class="muted" style="font-size:13px">（字幕把 HRI 译成"人机交互"。"人机交互"通常指 HCI（Human-Computer Interaction），这里说的是人与<b>机器人</b>的交互。）</p>
+  <p>正如上集讨论的，人们一直在追求让机器人的外表和互动尽可能像人。1940、50 年代工程师刚开始造机器人时，它们一点也不像人，几乎全是毫无人样的工业机器。随着时间推移，工程师越来越擅长造类人机器人：它们有了头，能用两条腿走路，但……它们没法真的走进餐馆、假装成人类。随着人们越来越接近"像人"——用人造眼球代替摄像头，用合成皮肉包住金属骨架——事情开始变得有点……诡异，引起一种怪异、不安的感觉。在"几乎像人"和"真的是人"之间，这种好感度的下跌，被称为<b>恐怖谷</b>（uncanny valley）。</p>
+
+  <div class="card">
+    <h3>动手：沿着"像人的程度"走一遍</h3>
+    <div class="scroll-x"><svg class="diagram" id="uv" viewBox="0 0 680 280" role="img" aria-label="恐怖谷曲线"></svg></div>
+    <input type="range" id="uv-x" min="0" max="100" value="20" style="width:100%" aria-label="像人的程度">
+    <div class="step-text" id="uv-cap"></div>
+    <p class="hint" style="margin-bottom:0">这条曲线是日本机器人学家森政弘 1970 年提出的示意图，不是精确测量出来的数据。</p>
+  </div>
+
+  <p>机器人的<b>行为</b>是否也应该像人，也存在争论。已经有大量证据表明，即使机器人的行为不像我们，人们也会把它们当成懂得人类社交规矩的对象来对待。而当它们违反这些规矩时——比如插到你前面、轧了你的脚却不道歉——人们会非常生气！</p>
+  <p>毫无疑问，心理学和计算机科学是一个强大的组合，有巨大的潜力影响我们的日常生活。这也给我们留下了很多问题。比如，你可能会对笔记本电脑撒谎，但笔记本电脑应该对你撒谎吗？如果撒谎能让你更高效或更快乐呢？又或者，社交媒体公司应不应该精心挑选给你看的内容，让你在它们的网站上待得更久、买更多东西？顺便说一句，它们确实在这么做。这类伦理问题不好回答，但心理学至少能帮助我们理解计算系统中各种设计选择的影响和意义。</p>
+  <p>不过从积极的一面看，理解设计背后的心理学，可能会带来更好的<b>无障碍性</b>（accessibility）：如今计算机比以往任何时候都更直观，更多的人能理解和使用它们。电话会议和虚拟教室的体验也越来越好。随着机器人技术不断进步，人们和它们的互动也会越来越自在。另外，多亏了心理学，我们都能因为对滚花的共同热爱而走到一起。我们下周见！</p>
+  <p class="muted" style="font-size:13px">（字幕把 accessibility 译作"易用性"。它在这里指让更多人——包括老人、残障人士——能够使用计算机，通常译作"无障碍"或"可及性"。）</p>
+  <div class="extra">
+    <span class="t">"让你待得更久"有个名字</span>
+    利用心理弱点、诱导用户做出对自己不利的选择的界面设计，被称为"黑暗模式"（dark patterns）：退订按钮藏得很深、默认勾选的附加服务、"仅剩 1 件"的倒计时、无限下拉的信息流……作为前端，你会是亲手把这些设计实现出来的人。知道它们的心理学原理，才能在需求评审时说清楚它的代价。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>可用性</td><td>人造物（如软件）能多有效、多高效地帮人达成目标</td></tr>
+      <tr><td>视觉</td><td>人擅长排深浅 → 连续数据用深浅；不擅长排不同颜色 → 颜色只给无序的分类数据</td></tr>
+      <tr><td>分块</td><td>短期记忆约 7 ± 2 样，保守用 5 个以内一组；电话号码、菜单分组</td></tr>
+      <tr><td>示能</td><td>外形暗示用法：推板推、旋钮转；按钮凸起、滚花表示可拖动</td></tr>
+      <tr><td>认出 vs 回想</td><td>认出比回想容易（选择题 vs 填空题）；图标让人认出功能，命令行要靠回想</td></tr>
+      <tr><td>专业技能</td><td>给新手（菜单）和专家（快捷键）各一条路</td></tr>
+      <tr><td>情感计算</td><td>Picard 1995；用传感器 + 模型估计情绪并回应；Facebook 2012 情绪实验的争议</td></tr>
+      <tr><td>CMC</td><td>同步（视频通话）/ 异步（邮件、短信）；在线时人更愿意自我暴露</td></tr>
+      <tr><td>注视</td><td>相互注视提高投入度；摄像头在屏幕上方导致"往下看"；增强注视用软件修正</td></tr>
+      <tr><td>HRI / 恐怖谷</td><td>人会拟人化机器人；几乎像人却又不完全像时，好感度骤降</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    好的计算机系统是按"人"的规格设计的：用深浅表示大小、把信息分成小块、让外形自己说明用法、让人认出而不是回想、同时照顾新手和专家。计算机越来越能读懂和影响人的情绪与注意力，这带来更好的体验，也带来"该不该这么做"的伦理问题。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 要在地图上显示各地区的气温（连续值），用"同一种颜色的深浅"和"彩虹色"哪个更好？显示各地区的主要方言（分类）呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">气温用深浅：人天生擅长给深浅排序，一眼就知道哪里更热；彩虹色没有直观的顺序，得不停对照图例。方言是没有顺序的分类数据，用不同的颜色正合适。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 分块对计算机来说是浪费，为什么还要这么做？举两个界面里的例子。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">因为人的短期记忆只能装 7 ± 2 样东西，分成小块后更容易读、记和找；在人和机器的效率之间，我们优先照顾人。例子：电话号码 317-555-3897 分三段；下拉菜单和菜单栏把功能分组（还有银行卡号输入时自动加空格等）。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 什么是"坏掉的示能"？在网页上怎么避免？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">外形暗示的用法和实际用法不一致，比如装着拉手、却要推开的门。网页上：能点的东西要看起来像能点（按钮有背景和边框、悬停有反馈、鼠标变手形），不能点的东西别做得像按钮；可拖动的元素加上滚花和 grab 光标。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 视频会议时，为什么对方总觉得你在往下看？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">摄像头几乎总装在屏幕上方，而你看的是屏幕上对方的脸，不是摄像头，所以从摄像头的角度看，你的视线是朝下的，破坏了相互注视。可以用计算机视觉和图形软件调整眼睛和头部，让你看起来像在直视对方（增强注视）。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="37.html"><small>← 上一集</small>37 机器人</a>
+    <a class="next" href="39.html"><small>下一集 →</small>39 教育科技</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 38 集 Psychology of Computing（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
+
+/* ---------- 颜色排序计时 ---------- */
+(function () {
+  const SETS = [
+    { hint: '从<b>最浅到最深</b>依次点。', items: [['hsl(212,70%,82%)', 0], ['hsl(212,70%,62%)', 1], ['hsl(212,70%,42%)', 2], ['hsl(212,70%,24%)', 3]] },
+    { hint: '按<b>彩虹的顺序</b>（红在前）依次点。', items: [['hsl(0,75%,50%)', 0], ['hsl(30,90%,50%)', 1], ['hsl(55,85%,45%)', 2], ['hsl(120,55%,40%)', 3], ['hsl(210,75%,50%)', 4], ['hsl(275,55%,50%)', 5]] }
+  ];
+  const times = [null, null];
+  let mode = 0, next = 0, t0 = 0, err = 0;
+  function show() {
+    $$('#co-mode button').forEach(b => b.classList.toggle('sel', +b.dataset.m === mode));
+    $('#co-hint').innerHTML = SETS[mode].hint;
+    next = 0; err = 0; t0 = 0;
+    const box = $('#co-tiles');
+    box.innerHTML = shuffle(SETS[mode].items).map(([c, k]) => `<button data-k="${k}" style="background:${c}" aria-label="色块"></button>`).join('');
+    $$('button', box).forEach(b => b.onclick = () => {
+      if (!t0) t0 = performance.now();
+      if (+b.dataset.k === next) { b.disabled = true; b.textContent = ++next; if (next === SETS[mode].items.length) done(); }
+      else { err++; b.animate?.([{ transform: 'translateX(-4px)' }, { transform: 'translateX(4px)' }, { transform: 'none' }], 200); }
+    });
+    report();
+  }
+  function done() { times[mode] = [(performance.now() - t0) / 1000, err]; report(); }
+  function report() {
+    const f = (t, i) => t ? `${i ? '不同颜色' : '同色深浅'}：<b>${t[0].toFixed(1)} 秒</b>，点错 <b>${t[1]}</b> 次（${SETS[i].items.length} 个）` : `${i ? '不同颜色' : '同色深浅'}：还没做`;
+    $('#co-res').innerHTML = f(times[0], 0) + '<br>' + f(times[1], 1) + (times[0] && times[1] ? '<br>第二组多了两个色块，但难的主要不是数量：深浅有一个天然的方向，而"橙在蓝前还是蓝后"需要你先在心里调出彩虹的顺序。' : '');
+  }
+  $$('#co-mode button').forEach(b => b.onclick = () => { mode = +b.dataset.m; show(); });
+  show();
+})();
+
+/* ---------- 同一份数据三种上色 ---------- */
+(function () {
+  // 一个平滑的"地形"数据：值在 0~1
+  const V = Array.from({ length: 60 }, (_, i) => { const x = i % 10, y = Math.floor(i / 10); return Math.max(0, Math.min(1, .5 + .45 * Math.sin(x / 2.2) * Math.cos(y / 1.8) + .1 * Math.sin(x * y))); });
+  const CAT = ['hsl(210,70%,50%)', 'hsl(30,85%,52%)', 'hsl(140,50%,42%)', 'hsl(330,60%,55%)'];
+  const C = {
+    seq: v => `hsl(212,65%,${88 - v * 66}%)`,
+    rain: v => `hsl(${(1 - v) * 270},80%,50%)`,
+    cat: (v, i) => CAT[(Math.floor((i % 10) / 3) + Math.floor(i / 30) * 2) % 4]
+  };
+  const CAP = {
+    seq: '连续值用同一色相的深浅：越深越大。不看图例，你也能一眼找到最大的区域、看出它是怎么渐变过去的。',
+    rain: '同样的数据换成彩虹色：最大值是红色还是紫色？黄色和青色哪个更大？你得不停对照下面的图例。黄绿色那一圈还特别显眼，会让人误以为那里有一条"边界"，其实数据是平滑变化的。',
+    cat: '如果数据本来就是没有顺序的类别（比如四个销售大区），用差异明显的几种颜色就很合适——这时颜色只需要回答"是不是同一类"，不需要排大小。'
+  };
+  function show(m) {
+    $$('#hm-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === m));
+    $('#hm').innerHTML = V.map((v, i) => `<span style="background:${C[m](v, i)}"></span>`).join('');
+    $('#hm-leg').innerHTML = m === 'cat' ? CAT.map((c, i) => `<span style="background:${c}" title="大区 ${i + 1}"></span>`).join('') : Array.from({ length: 20 }, (_, i) => `<span style="background:${C[m](i / 19)}"></span>`).join('');
+    $('#hm-cap').innerHTML = CAP[m] + (m === 'cat' ? '' : '　（图例：左小右大。）');
+  }
+  $$('#hm-mode button').forEach(b => b.onclick = () => show(b.dataset.m));
+  show('seq');
+})();
+
+/* ---------- 分块记忆 ---------- */
+(function () {
+  let mode = 0, cur = '', timer = null;
+  const stats = [[0, 0], [0, 0]];
+  const fmt = s => mode ? `${s.slice(0, 3)} ${s.slice(3, 6)} ${s.slice(6)}` : s;
+  function sel() { $$('#ch-mode button').forEach(b => b.classList.toggle('sel', +b.dataset.m === mode)); }
+  $$('#ch-mode button').forEach(b => b.onclick = () => { mode = +b.dataset.m; sel(); $('#ch-num').textContent = ''; });
+  $('#ch-go').onclick = () => {
+    clearTimeout(timer);
+    cur = String(2 + Math.floor(Math.random() * 8)) + Array.from({ length: 9 }, () => Math.floor(Math.random() * 10)).join('');
+    $('#ch-num').textContent = fmt(cur);
+    $('#ch-row').style.display = 'none'; $('#ch-in').value = '';
+    timer = setTimeout(() => { $('#ch-num').textContent = '？？？'; $('#ch-row').style.display = ''; $('#ch-in').focus(); }, 3000);
+  };
+  const check = () => {
+    const a = $('#ch-in').value.replace(/\D/g, '');
+    if (!cur) return;
+    let right = 0; for (let i = 0; i < 10; i++) if (a[i] === cur[i]) right++;
+    stats[mode][0]++; if (a === cur) stats[mode][1]++;
+    $('#ch-num').textContent = fmt(cur);
+    $('#ch-cap').innerHTML = (a === cur ? '<b style="color:var(--ok)">全对！</b>' : `对了 <b>${right}</b> / 10 位。`) +
+      `<br>不分块：${stats[0][0]} 次里全对 ${stats[0][1]} 次；分块：${stats[1][0]} 次里全对 ${stats[1][1]} 次。` +
+      '<br>10 个散的数字远超短期记忆的容量；分成 3 块之后，你要记的只是 3 样东西。';
+    cur = ''; $('#ch-row').style.display = 'none';
+  };
+  $('#ch-check').onclick = check;
+  $('#ch-in').onkeydown = e => { if (e.key === 'Enter') check(); };
+  sel();
+})();
+
+/* ---------- 开门 ---------- */
+(function () {
+  const D = [
+    ['装着拉手的门', 'M60,90 h10 v40 h-10', '拉手'],
+    ['装着推板的门', 'M50,100 h40 v24 h-40 z', '推板']
+  ];
+  $('#doors').innerHTML = D.map(([n, d, h], i) => `<div class="door"><svg viewBox="0 0 150 220" role="img" aria-label="${n}"><rect x="20" y="10" width="110" height="200" rx="4" style="fill:var(--wood);opacity:.85;stroke:var(--ink);stroke-width:2"/><path d="${d}" style="fill:${i ? 'var(--metal)' : 'none'};stroke:var(--ink);stroke-width:${i ? 2 : 6};stroke-linecap:round"/></svg>${n}<div class="btns"><button class="btn" data-i="${i}" data-a="pull">拉</button><button class="btn" data-i="${i}" data-a="push">推</button></div></div>`).join('');
+  const tried = [[], []];
+  $$('#doors button').forEach(b => b.onclick = () => {
+    const i = +b.dataset.i, a = b.dataset.a;
+    tried[i].push(a);
+    const first = tried[i][0];
+    $('#door-cap').innerHTML = i === 0 ?
+      (a === 'pull' ? '拉不开！门上明明装着一个让人想握住往回拉的把手，它却要推——这就是<b>坏掉的示能</b>。很多这样的门最后都贴上了"推"字。' : `推开了。${first === 'pull' ? '不过你第一下选的是"拉"——大多数人都会这样，因为把手在暗示你拉。' : ''}`) :
+      (a === 'push' ? '推开了。一块平板没有地方可以握，你的手只能推——不需要任何文字说明。' : '一块平板没处可抓，你根本拉不动它。这扇门只给了你一个选择。');
+  });
+})();
+
+/* ---------- 滚花与拖动 ---------- */
+(function () {
+  const used = [false, false];
+  [['#tr1', '#kn1'], ['#tr2', '#kn2']].forEach(([t, k], i) => {
+    const track = $(t), knob = $(k);
+    let sx = 0, sl = 0, drag = false;
+    knob.addEventListener('pointerdown', e => { drag = true; sx = e.clientX; sl = knob.offsetLeft; knob.setPointerCapture(e.pointerId); const g = knob.querySelector('.grip'); if (g) g.style.cursor = 'grabbing'; });
+    knob.addEventListener('pointermove', e => { if (!drag) return; const max = track.clientWidth - knob.offsetWidth - 6; knob.style.left = Math.max(6, Math.min(max, sl + e.clientX - sx)) + 'px'; });
+    knob.addEventListener('pointerup', () => {
+      drag = false; const g = knob.querySelector('.grip'); if (g) g.style.cursor = 'grab';
+      used[i] = true;
+      $('#kn-cap').innerHTML = (i === 0 ? '有滚花的那个：一排小点像现实中工具手柄上的防滑纹，鼠标移上去还变成了"抓手"——它在告诉你"从这里抓"。' : '没有滚花的那个其实也能拖，但它看起来只是个标签，大多数人根本不会想到去拖它。') +
+        (used[0] && used[1] ? '　同样的功能，用户能不能发现，取决于有没有示能。' : '');
+    });
+  });
+})();
+
+/* ---------- 认出 vs 回想 ---------- */
+(function () {
+  const reveal = (msg) => {
+    $('#rc-b').style.display = '';
+    $('#rc-cap').innerHTML = msg;
+    $('#rc-ch').innerHTML = shuffle(['delete', 'remove', 'trash', 'rm', 'del']).map(o => `<button>${o}</button>`).join('');
+    $$('#rc-ch button').forEach(b => b.onclick = () => {
+      b.classList.add(b.textContent === 'rm' ? 'ok' : 'no');
+      if (b.textContent === 'rm') $('#rc-cap').innerHTML = '对，是 <code>rm</code>。看到选项时，你只需要<b>认出</b>它，比凭空<b>回想</b>容易得多。图标和菜单就是把"填空题"变成了"选择题"。';
+    });
+  };
+  $('#rc-check').onclick = () => { const v = $('#rc-in').value.trim().toLowerCase(); reveal(v === 'rm' ? '答对了！看来你已经是命令行的"专家"了。下面这道选择题对你来说就更简单了：' : `你写的是"${v.replace(/[<>&]/g, '') || '（空）'}"。没关系，大多数人想不起来。现在换成选择题：`); };
+  $('#rc-give').onclick = () => reveal('想不起来很正常。现在换成选择题：');
+})();
+
+/* ---------- 菜单 vs 快捷键 ---------- */
+(function () {
+  const mac = /Mac|iPhone|iPad/.test(navigator.platform);
+  $('#k-c').textContent = mac ? '⌘C' : 'Ctrl+C'; $('#k-v').textContent = mac ? '⌘V' : 'Ctrl+V'; $('#k-a').textContent = mac ? '⌘A' : 'Ctrl+A';
+  const ta = $('#ed-ta'), menu = $('#ed-menu'), btn = $('#ed-menu-btn');
+  let buf = '', menuClicks = 0, menuOps = 0, keyOps = 0, fromMenu = false;
+  const upd = () => { $('#ed-cap').innerHTML = `用菜单：完成 <b>${menuOps}</b> 次操作，一共点了 <b>${menuClicks}</b> 下鼠标。　用快捷键：完成 <b>${keyOps}</b> 次操作，每次只要按一组键。` + (menuOps && keyOps ? '<br>菜单让你不用记任何东西（认出），快捷键快得多但得先记住（回想）。两条路并存，新手和专家都不耽误。' : ''); };
+  const toggle = open => { menu.classList.toggle('open', open); btn.classList.toggle('open', open); btn.setAttribute('aria-expanded', open); };
+  btn.onclick = () => { menuClicks++; toggle(!menu.classList.contains('open')); upd(); };
+  document.addEventListener('click', e => { if (!e.target.closest('.ed .bar')) toggle(false); });
+  $$('button', menu).forEach(b => b.onclick = () => {
+    menuClicks++; menuOps++; fromMenu = true;
+    const a = b.dataset.a, s = ta.selectionStart, e = ta.selectionEnd;
+    if (a === 'copy') buf = ta.value.slice(s, e);
+    if (a === 'all') { ta.focus(); ta.select(); }
+    if (a === 'paste' && buf) { ta.value = ta.value.slice(0, s) + buf + ta.value.slice(e); ta.focus(); ta.setSelectionRange(s + buf.length, s + buf.length); }
+    toggle(false); upd(); fromMenu = false;
+  });
+  ['copy', 'paste', 'cut'].forEach(ev => ta.addEventListener(ev, () => { if (ev === 'copy') buf = ta.value.slice(ta.selectionStart, ta.selectionEnd); if (!fromMenu) { keyOps++; upd(); } }));
+  ta.addEventListener('keydown', e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'a') { keyOps++; upd(); } });
+})();
+
+/* ---------- 视线偏差 ---------- */
+(function () {
+  const svg = $('#gz');
+  function draw() {
+    const d = +$('#gz-d').value, h = +$('#gz-h').value;
+    $('#gz-dv').textContent = d + ' cm'; $('#gz-hv').textContent = h + ' cm';
+    const ang = Math.atan(h / d) * 180 / Math.PI;
+    svg.innerHTML = '';
+    const S = 4.2, EX = 90, EY = 110, SX = EX + d * S;
+    // 屏幕
+    el('rect', { x: SX, y: 40, width: 12, height: 150, rx: 3, style: 'fill:var(--ink)' }, svg);
+    el('circle', { cx: SX + 6, cy: 34, r: 7, style: 'fill:var(--accent);stroke:var(--panel);stroke-width:2' }, svg);
+    txt(svg, SX + 22, 38, '摄像头', 't-sub');
+    const fy = 34 + h * S * .9;
+    el('circle', { cx: SX - 4, cy: fy, r: 5, style: 'fill:var(--on)' }, svg);
+    txt(svg, SX + 22, fy + 4, '屏幕上对方的眼睛', 't-sub');
+    // 你
+    el('circle', { cx: EX - 30, cy: EY, r: 30, class: 's-panel' }, svg);
+    el('circle', { cx: EX - 12, cy: EY - 6, r: 4, style: 'fill:var(--ink)' }, svg);
+    txt(svg, EX - 30, EY + 52, '你', 't-main mid');
+    // 视线与相机连线
+    el('line', { x1: EX - 8, y1: EY - 6, x2: SX - 4, y2: fy, style: 'stroke:var(--on);stroke-width:2.5' }, svg);
+    el('line', { x1: EX - 8, y1: EY - 6, x2: SX + 6, y2: 34, style: 'stroke:var(--accent);stroke-width:2;stroke-dasharray:6 4' }, svg);
+    txt(svg, (EX + SX) / 2, Math.min(EY, fy) + 30, `差了约 ${ang.toFixed(1)}°`, 't-main mid');
+    $('#gz-cap').innerHTML = `你看的是屏幕上对方的眼睛（橙线），摄像头却在上面（蓝色虚线）。两条线差了约 <b>${ang.toFixed(1)}°</b>，所以在对方的画面里，你一直在<b>往下看</b>。` +
+      (ang > 6 ? '偏差越大，对方越容易察觉"他没在看我"。' : '偏差小多了——这也是为什么离屏幕远一点、把对方的窗口挪到紧贴摄像头下方会有帮助。');
+  }
+  ['#gz-d', '#gz-h'].forEach(s => $(s).oninput = draw);
+  draw();
+})();
+
+/* ---------- 恐怖谷 ---------- */
+(function () {
+  const svg = $('#uv');
+  const X0 = 60, X1 = 650, YM = 150, H = 110;
+  const f = x => { // 示意曲线：上升 → 在 ~80 处陡降 → 到 100 回升到最高
+    const base = x / 100 * .75;
+    const dip = 1.45 * Math.exp(-(((x - 83) / 6.5) ** 2));
+    return base - dip + .35 * Math.exp(-(((x - 100) / 5) ** 2));
+  };
+  const sx = x => X0 + x / 100 * (X1 - X0), sy = v => YM - v * H;
+  const STOPS = [[0, '工业机械臂', '完全不像人，谈不上喜欢或讨厌。'], [25, '扫地机器人', '会动、有点像宠物——很多人会给它起名字。'], [48, '卡通人形机器人', '有头有手，样子可爱，好感一路上升。'], [68, '仿人机器人', '很像人了，大家觉得挺酷。'], [83, '几乎乱真的仿真人', '<b>掉进谷底</b>：皮肤、眼球都很逼真，但表情和动作差了一点点，反而让人发毛。'], [100, '健康的真人', '真的是人，好感度回到最高。']];
+  function draw() {
+    const x = +$('#uv-x').value;
+    svg.innerHTML = '';
+    el('line', { x1: X0, x2: X1, y1: YM, y2: YM, style: 'stroke:var(--muted)' }, svg);
+    el('line', { x1: X0, x2: X0, y1: 20, y2: 270, style: 'stroke:var(--muted)' }, svg);
+    txt(svg, X0 + 6, 28, '好感度', 't-sub'); txt(svg, X1, YM + 18, '像人的程度 →', 't-sub end');
+    el('rect', { x: sx(74), y: 20, width: sx(92) - sx(74), height: 250, style: 'fill:var(--bad-soft)' }, svg);
+    txt(svg, sx(83), 264, '恐怖谷', 't-main mid').style.fill = 'var(--bad)';
+    let d = ''; for (let i = 0; i <= 100; i++) d += (i ? 'L' : 'M') + sx(i).toFixed(1) + ',' + sy(f(i)).toFixed(1);
+    el('path', { d, style: 'fill:none;stroke:var(--accent);stroke-width:3' }, svg);
+    STOPS.forEach(([sxv, n]) => { el('circle', { cx: sx(sxv), cy: sy(f(sxv)), r: 4, style: 'fill:var(--accent)' }, svg); });
+    el('circle', { cx: sx(x), cy: sy(f(x)), r: 9, style: 'fill:var(--on);stroke:var(--panel);stroke-width:2' }, svg);
+    const near = STOPS.reduce((a, b) => Math.abs(b[0] - x) < Math.abs(a[0] - x) ? b : a);
+    $('#uv-cap').innerHTML = `<b>${near[1]}</b>：${near[2]}`;
+  }
+  $('#uv-x').oninput = draw; draw();
+})();
+</script>
+</body>
+</html>

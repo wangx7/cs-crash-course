@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>46 2026，回看第 40 集 · 计算机科学速成课 · 续集</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.slider{display:flex;align-items:center;gap:10px;font-size:14px;margin:10px 0;flex-wrap:wrap}
+.slider input{flex:1;min-width:160px}
+.slider b{font-family:var(--mono);min-width:3em}
+/* 预言卡片 */
+.preds{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:12px 0}
+@media (max-width:640px){.preds{grid-template-columns:1fr}}
+.pc{perspective:900px;cursor:pointer;outline:none}
+.pc-in{display:grid;transition:transform .5s;transform-style:preserve-3d;height:100%}
+.pc.open .pc-in{transform:rotateY(180deg)}
+.pc-f,.pc-b{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);font-size:14px;line-height:1.7}
+.pc-b{transform:rotateY(180deg);background:var(--bg)}
+.pc:focus-visible .pc-f,.pc:hover .pc-f{border-color:var(--accent)}
+.pc-f small,.pc-b small{display:block;font-size:12px;color:var(--muted)}
+.pc-f b{display:block;font-size:16px;margin:2px 0}
+.pc-b .tag{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:0 8px;margin-bottom:4px}
+.tag.yes{background:var(--ok-soft);color:var(--ok)}
+.tag.half{background:var(--on-soft);color:var(--on)}
+.tag.not{background:var(--bad-soft);color:var(--bad)}
+/* 工作四象限 */
+.quad{display:grid;grid-template-columns:70px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:6px;margin:10px 0}
+.quad .h{font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;text-align:center}
+.quad .cell{min-height:104px;border:2px solid var(--line);border-radius:12px;padding:8px;background:var(--panel);display:flex;flex-wrap:wrap;align-content:flex-start;gap:4px;transition:background .3s}
+.quad .cell>b{width:100%;font-size:13px;color:var(--muted)}
+.quad .cell>i{width:100%;font-style:normal;font-size:12px;color:var(--muted);margin-top:auto}
+.quad button{font:13px/1.4 inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:12px;padding:2px 9px;cursor:pointer}
+.quad button.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.tasks{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0}
+.tasks span{font-size:13px;border-radius:12px;padding:2px 10px}
+.tasks .ai{background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.tasks .auto{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.tasks .hu{background:var(--on-soft);color:var(--on);border:1px solid var(--on)}
+/* 来源证明 */
+.pv{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start;margin-top:12px}
+@media (max-width:560px){.pv{grid-template-columns:1fr}}
+.pix{display:grid;grid-template-columns:repeat(6,22px);gap:2px;padding:6px;background:var(--bg);border-radius:10px;width:max-content}
+.pix i{width:22px;height:22px;border-radius:3px;transition:background .3s}
+.pix i.chg{outline:2px solid var(--bad);outline-offset:-2px}
+.mani{font-size:14px;line-height:1.7;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:var(--panel)}
+.mani .row{display:flex;gap:8px;align-items:baseline}
+.mani .row code{font-size:12px}
+.verdict{font-weight:700}
+.verdict.ok{color:var(--ok)}.verdict.bad{color:var(--bad)}.verdict.unk{color:var(--muted)}
+/* 续集地图 */
+.sq{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+@media (max-width:700px){.sq{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:440px){.sq{grid-template-columns:1fr}}
+.sq a{display:block;border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);color:var(--ink);text-decoration:none;font-size:13px;line-height:1.6}
+.sq a:hover{border-color:var(--accent)}
+.sq a i{font:700 12px var(--mono);font-style:normal;color:var(--on)}
+.sq a b{display:block;font-size:15px}
+.sq a span{color:var(--muted)}
+.sq a.here{border-color:var(--on);background:var(--on-soft)}
+</style>
+</head>
+<body data-ep="46">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="40.html">回顾原课程第 40 集 · 奇点、天网与计算机的未来</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 续集 · 第 46 集 · 续集最终集</div>
+  <h1>2026，回看第 40 集</h1>
+  <p class="en">Looking Back from 2026</p>
+  <p class="lead">原课程的最后一集录于 2017 年底。它预言了接下来十年会成为主流的技术，用一条增长曲线估算计算机什么时候追上人脑，又把工作分进四个象限，看哪些会被自动化。快十年过去了，这一集拿着第 40 集的预言逐条对照，再看看那几年冒出来、第 40 集没来得及细讲的新问题：AI 的耗电、隐私和监管、真假难辨。</p>
+  <div class="road">
+    <span>第 40 集的预言</span><i>→</i><span>哪些成真了</span><i>→</i><span>AI 的能耗</span><i>→</i><span>隐私与监管</span><i>→</i><span>真假难辨</span><i>→</i><span>你也可以参与</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：本站续写的原创内容（不是 Crash Course 官方作品）</span>
+    <span class="l-add">蓝色虚线框：延伸与补充</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从第 40 集说起</a></li>
+    <li><a href="#ch1">1 · 第 40 集的预言</a></li>
+    <li><a href="#ch2">2 · 奇点算到哪了</a></li>
+    <li><a href="#ch3">3 · 工作四象限 · 2026</a></li>
+    <li><a href="#ch4">4 · AI 的能耗</a></li>
+    <li><a href="#ch5">5 · 隐私与监管</a></li>
+    <li><a href="#ch6">6 · 真假难辨</a></li>
+    <li><a href="#ch7">7 · 你也可以参与</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从第 40 集说起</h2>
+  <p><a href="40.html">第 40 集</a>是原课程的最终集。它没有讲新的技术原理，而是往前看：计算会不会像马克·维瑟说的那样"消失"进万物？AI 会不会超过人类？工作会被自动化到什么程度？它很谨慎，反复说"没人知道"，但也给出了几样可以核对的东西：</p>
+  <ul>
+    <li>一张清单：<b>接下来十年左右</b>，虚拟现实、自动驾驶、无人机、可穿戴设备、服务机器人会成为主流，新硬件会让神经网络"快如闪电"；</li>
+    <li>一个估算：2017 年的计算机，处理能力大约相当于<b>一只老鼠</b>，人脑还要再高 10⁵ 倍；</li>
+    <li>一张四象限图：手工 / 认知 × 常规 / 非常规，只有<b>非常规的认知工作</b>"暂时安全"。</li>
+  </ul>
+  <p>续集前五集，各自把原课程的一条主线往下接了一层：<a href="41.html">第 41 集</a>讲硬件怎么转向并行，<a href="42.html">第 42 集</a>讲计算怎么搬进云端的数据中心，<a href="43.html">第 43 集</a>和<a href="44.html">第 44 集</a>讲大语言模型和生成式 AI，<a href="45.html">第 45 集</a>讲安全的新攻防。这一集接的是最后一条主线，<a href="38.html">第 38</a>–40 集的<b>人与社会</b>，并把前五集收拢起来。</p>
+  <div class="callout">
+    <span class="t">这一集的写法</span>
+    回看预言最容易犯的错，是拿今天的答案嘲笑昨天的人，或者反过来，把今天的趋势当成定局。下面的判断都写成"截至 2026 年"，数字都给出处。很多事还在变，几年后再看，这一页本身也会变成一份需要对照的"预言"。
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>第 40 集的预言，逐条对照</h2>
+  <p>第 40 集第 6 节列了一串"接下来十年左右很可能成为主流"的东西。"主流"是个模糊的词，这里按一个朴素的标准来判：<b>普通人日常生活里是不是常见</b>。实验室里做出来、少数城市能体验到，算"部分成真"。</p>
+
+  <div class="card">
+    <h3>动手：翻开每张卡片</h3>
+    <p class="hint" style="margin-top:0">正面是 2017 年的预言，点一下翻到背面看 2026 年的情况。先自己猜一猜它成真了没有。</p>
+    <div class="preds" id="pr"></div>
+    <div class="btns"><button class="btn primary" id="pr-all">全部翻开</button><button class="btn" id="pr-clr">全部合上</button></div>
+    <div class="step-text" id="pr-cap">已翻开 0 张。</div>
+  </div>
+
+  <p>翻完会发现一个规律：<b>纯软件和芯片上的事，来得比预想的快；要在真实世界里动手的事，来得比预想的慢</b>。神经网络硬件和对话助手超出了 2017 年大多数人的想象，而叠衣服、在陌生街道上开车，这些人类觉得不费力的事，机器还在一点点啃。这正是<a href="37.html">第 37 集</a>补充框里的<b>莫拉维克悖论</b>：对人难的事（下棋、算数）对机器往往容易，对人容易的事（走路、抓东西）对机器反而难。</p>
+  <div class="extra">
+    <span class="t">第 40 集说"没来得及讲"的那些</span>
+    第 40 集最后点了几个系列没讲到的话题：加密货币、无线通信、3D 打印、生物信息学、量子计算。其中两个后来有了大新闻。2024 年的诺贝尔化学奖，一半颁给了用 AI 预测蛋白质结构的 AlphaFold 的两位研发者。量子计算机还没有大到能破解今天的公钥密码，但各国已经开始换用"后量子密码"，<a href="45.html">第 45 集</a>讲了原因。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>奇点算到哪了</h2>
+  <p>第 40 集有一个可以拖动的增长模型：2017 年的计算机算 1，"一个人的大脑"是 10⁵，计算能力每 1.6 年左右翻一倍，本世纪末就能超过全人类的总和。现在过去了九年，可以拿真实的数字来对一对。问题是，<b>该拿哪个数字</b>？</p>
+  <div class="scroll-x">
+  <table class="tt" style="width:100%">
+    <thead><tr><th>量的是什么</th><th>增长速度</th><th>2017 → 2026 粗算</th></tr></thead>
+    <tbody>
+      <tr><td>一颗芯片里的晶体管（<a href="17.html">第 17 集</a>摩尔定律）</td><td>约 2 年翻一倍</td><td class="num">约 23 倍（10^1.4）</td></tr>
+      <tr><td>第 40 集模型的默认设定</td><td>约 1.6 年翻一倍</td><td class="num">约 50 倍（10^1.7）</td></tr>
+      <tr><td>训练一个前沿 AI 模型动用的总算力（Epoch AI 统计）</td><td>每年约 4–5 倍</td><td class="num">约 26 万–200 万倍（10^5.4–10^6.3）</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="hint" style="margin-top:6px">第三行是按 2010–2024 年的统计趋势外推到 2026 年的粗算，只是数量级。</p>
+  <p>三行差了好几个数量级。第一行量的是<b>一颗芯片</b>，它确实没有快到哪去，<a href="41.html">第 41 集</a>讲过，频率早就撞上了功耗墙。第三行量的是<b>一次训练一共花掉的计算</b>：成千上万颗 GPU 连在一起（<a href="41.html">第 41 集</a>），装进专门建的数据中心（<a href="42.html">第 42 集</a>），连续算几个月。它涨得快，主要不是因为每颗芯片快了，而是因为<b>投入的芯片、时间和钱多了</b>。</p>
+  <p>按第三行算，"10⁵ 倍"这条线在这几年就已经越过了。可截至 2026 年，没有哪个严肃的研究者宣布奇点已经到来。今天的大模型能写代码、解数学题、通过很多专业考试，但也会犯人不会犯的低级错误（<a href="43.html">第 43 集</a>的"幻觉"），也还不能像人一样独立、可靠地把一件长期的复杂工作从头做到尾。这恰好印证了第 40 集自己的提醒：<b>"处理能力"不等于"智能"</b>，用算力给大脑定价，只能当数量级上的直觉。</p>
+  <div class="callout key">
+    <span class="t">S 型曲线还是指数曲线？</span>
+    第 40 集给了两种可能：一直指数增长，或者被"复杂度刹车"拉平。到 2026 年，两边都能找到证据。支持继续增长的一方，指着规模定律和"回答时多想一会儿"的推理模型（<a href="43.html">第 43 集</a>）。主张会放缓的一方指出，高质量文本快被用完了，电力和芯片产能也开始成为瓶颈。下面第 4 节会说到电。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>工作四象限 · 2026 版</h2>
+  <p>第 40 集的四象限有一个隐含的假设：自动化会先吃掉<b>常规</b>的工作，<b>非常规的认知</b>工作（教师、律师、医生、科学家、小说家）最安全。2017 年这么想很合理：那时的软件擅长按规则办事，不擅长写文章、读合同、做开放的判断。</p>
+  <p>大语言模型把这个顺序打乱了。它们最先碰到的，恰恰是写、读、总结、编程这些<b>认知任务</b>，包括很多非常规的。2023 年，OpenAI 和宾夕法尼亚大学的研究者（Eloundou 等）把美国职业数据库里的近两万项工作任务逐项打分，估计约 <b>80%</b> 的美国劳动者，所在职业里至少有 10% 的任务会受到大语言模型影响；约 <b>19%</b> 的人，一半以上的任务会受到影响。收入越高的职业，平均暴露得越多。</p>
+  <p>但"受影响"不等于"被取代"。这项研究量的是：有了这类工具，完成一项任务的时间能不能减半。所以 2026 年讨论这件事的方式变了：不再问"<b>哪份工作</b>会消失"，而是问"<b>一份工作里哪些任务</b>会交给机器，人还负责什么"。</p>
+
+  <div class="card">
+    <h3>动手：同一张四象限，两种看法</h3>
+    <span class="seg-btns" id="qd-mode"><button data-m="2017" class="sel">2017：第 40 集的判断</button><button data-m="2026">2026：把工作拆成任务</button></span>
+    <div class="quad" id="qd">
+      <div></div><div class="h">手工</div><div class="h">认知</div>
+      <div class="h">常规性</div><div class="cell" data-q="rm"><b>常规 · 手工</b><i></i></div><div class="cell" data-q="rc"><b>常规 · 认知</b><i></i></div>
+      <div class="h">非常规性</div><div class="cell" data-q="nm"><b>非常规 · 手工</b><i></i></div><div class="cell" data-q="nc"><b>非常规 · 认知</b><i></i></div>
+    </div>
+    <div class="step-text" id="qd-cap">点格子里的任意一个工作，看它拆开后的任务。</div>
+    <p class="hint">2026 视图里，蓝色越深，表示这一格的任务里 <b>AI 工具常被用来帮忙</b>的比例越高。任务怎么拆、怎么归类，是本页的示意判断，不是统计数据。</p>
+  </div>
+
+  <p>真实的就业数据怎么说？截至 2026 年，<b>还没有看到整体性的大规模失业</b>，但有一个值得注意的信号。斯坦福数字经济实验室的布林约尔松（Erik Brynjolfsson）等人，用美国最大的薪资服务商 ADP 的数据做了研究，2025 年 8 月发表的论文发现：在最容易被 AI 影响的职业里（比如软件开发、客服），<b>22–25 岁</b>的年轻人就业人数相对下降了约 13%；同样职业里年纪大、经验多的人则基本稳定。2026 年 8 月的更新版本里，这个差距扩大到约 19%，作者同时强调，整体上并没有看到大范围的岗位替代。也有经济学家认为，加息和疫情后的招聘回调也能解释一部分。</p>
+  <div class="extra">
+    <span class="t">为什么先受影响的是新人</span>
+    一种解释是：入门岗位的很多活，比如写简单代码、整理资料、回答标准问题，正是 AI 工具最擅长的；而老员工的价值更多在经验、判断和人脉上，这些不在训练数据里。这带来一个长期的问题：如果新人没有机会从简单的活干起，下一代的"老员工"从哪里来？
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>AI 的能耗</h2>
+  <p>第 40 集没有提到电。可从<a href="41.html">第 41 集</a>和<a href="42.html">第 42 集</a>能看出来，今天的 AI 不是一台电脑里的程序，而是成片的数据中心：几万颗 GPU，每颗满载时要几百瓦到上千瓦，再加上散热。计算终究是物理的，第 3 集里那个能通能断的开关，每切换一次都要花一点点能量。切换的次数大到一定程度，就成了一笔看得见的电费。</p>
+  <p>国际能源署（IEA）2025 年 4 月的报告《能源与 AI》估计：2024 年全球数据中心用电约 <b>415 太瓦时</b>（4150 亿度），约占全球用电的 <b>1.5%</b>；在它的基准情景里，到 2030 年会翻一倍多，达到约 <b>945 太瓦时</b>，略低于全球用电的 3%，增长主要来自 AI 用的加速服务器。这些数据中心高度集中，美国约占 45%，所以对个别地区电网的压力，比全球平均数显示的要大得多。</p>
+
+  <div class="card">
+    <h3>动手：一次提问，和一整年的数据中心</h3>
+    <span class="seg-btns" id="en-mode"><button data-m="lin" class="sel">普通刻度</button><button data-m="log">对数刻度</button></span>
+    <div class="scroll-x"><svg class="diagram" id="en" viewBox="0 0 680 318" role="img" aria-label="从一次 AI 提问到全球用电的能耗对比"></svg></div>
+    <div class="step-text" id="en-cap"></div>
+    <div class="slider"><span>你每天问 AI</span><input type="range" id="en-n" min="1" max="100" value="20" aria-label="每天提问次数"><b id="en-nv">20</b><span>次</span></div>
+    <div class="readout" id="en-out"></div>
+    <p class="hint">"一次提问"用的是 Google 2025 年 8 月公布的 Gemini 文本提问<b>中位数</b> 0.24 瓦时，含芯片、主机、闲置机器和机房开销。生成图片、视频，或者让推理模型长时间思考，会多得多。手机充电按 4000 毫安时电池粗算。</p>
+  </div>
+
+  <p>这组数字要放在一起看。<b>单次提问很省</b>：Google 说，从 2024 年 5 月到 2025 年 5 月，它的中位数提问能耗降到了原来的 1/33，靠的是更好的芯片、更小更快的模型、更高的利用率。可<b>总量还在涨</b>，因为用的人和用的方式增长得更快。19 世纪的经济学家杰文斯观察到，蒸汽机烧煤越来越省，英国的用煤总量反而越来越多。效率提高让东西变便宜，便宜又让人用得更多。这叫<b>杰文斯悖论</b>，AI 会不会重演，是 2026 年能源讨论的焦点之一。</p>
+  <div class="extra">
+    <span class="t">不只是电</span>
+    数据中心还要用水来散热，要占地，要等电网接入，有些地方还要为它新建发电厂。另一面，AI 也被用来调度电网、设计更省电的芯片、加速材料研究。<a href="42.html">第 42 集</a>里的 PUE（数据中心总用电 ÷ 计算设备用电）就是衡量机房"浪费"多少的指标。对写软件的人来说，最直接的一条是：不需要大模型的地方，就别用大模型。第 40 集说过，车门锁用一个 if 语句就够了。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>隐私与监管</h2>
+  <p>第 40 集讲普适计算时提到了它的另一面：有人把"计算机无处不在"看作反乌托邦，计算机无处不在地<b>监视</b>着我们、<b>争夺</b>着我们的注意力。2017 年以后，社会对这一面的回应，最明显的变化是：<b>技术开始被写进法律</b>。</p>
+  <h3>先管数据：GDPR</h3>
+  <p>欧盟的《通用数据保护条例》（GDPR）2016 年通过，<b>2018 年 5 月 25 日</b>开始适用，就在第 40 集播出半年之后。它的几个核心想法：</p>
+  <ul>
+    <li><b>要有合法理由</b>才能处理个人数据，"同意"是其中一种，而且同意必须是明确的、可以撤回的；</li>
+    <li><b>只收需要的</b>数据，只用于说好的目的；</li>
+    <li>个人有权<b>查看</b>、<b>更正</b>、<b>删除</b>自己的数据，也有权把数据带走；</li>
+    <li>发生数据泄露（<a href="32.html">第 32 集</a>的那些攻击），一般要在 <b>72 小时</b>内报告监管机构；</li>
+    <li>罚款最高可达 2000 万欧元或全球年营业额的 4%，取较高者。</li>
+  </ul>
+  <p>这部法律也管欧盟以外的公司，只要它们处理欧盟居民的数据。它直接影响了全世界的网站：今天几乎每个网站都有的 <b>Cookie 同意弹窗</b>，很大程度上就是 GDPR 和欧盟另一部隐私法规共同的产物。许多国家和地区随后也立了类似的法，中国的《个人信息保护法》在 <b>2021 年 11 月 1 日</b>施行。</p>
+  <h3>再管 AI 本身</h3>
+  <p>GDPR 管的是"数据"。可 AI 系统带来的问题不全是数据问题：一个筛简历的模型可能系统性地歧视某类人（模型会学到训练数据里的偏差，<a href="34.html">第 34 集</a>的分类器学的就是数据里的规律，好的坏的一起学），一个聊天机器人可能让人以为对面是真人。欧盟的《人工智能法》（AI Act）2024 年 8 月 1 日生效，思路是<b>按风险分级</b>：</p>
+  <div class="scroll-x">
+  <table class="tt" style="width:100%">
+    <thead><tr><th>风险等级</th><th>例子</th><th>要求</th></tr></thead>
+    <tbody>
+      <tr><td>不可接受</td><td>政府给公民做"社会评分"、利用弱点操纵人的行为</td><td>禁止</td></tr>
+      <tr><td>高风险</td><td>招聘筛选、教育评分、信贷审批、执法、医疗器械里的 AI</td><td>风险管理、数据质量、记录日志、人工监督</td></tr>
+      <tr><td>透明度义务</td><td>聊天机器人、生成图片和视频的 AI、深度伪造</td><td>告诉用户对面是 AI；生成内容要能被识别</td></tr>
+      <tr><td>最小风险</td><td>垃圾邮件过滤、游戏里的 AI</td><td>基本不额外要求</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <ul class="timeline">
+    <li><span class="yr">2024-08</span>《人工智能法》生效，各项义务分阶段适用。</li>
+    <li><span class="yr">2025-02</span>"不可接受风险"的做法开始被禁止。</li>
+    <li><span class="yr">2025-08</span>对通用大模型提供者（比如<a href="43.html">第 43 集</a>那类模型）的义务开始适用。</li>
+    <li><span class="yr">2026-07</span>欧盟通过"数字综合修订"（Digital Omnibus），因为配套的标准和监管机构没准备好，把大部分高风险义务推迟到 2027 年 12 月，嵌在产品里的高风险 AI 推迟到 2028 年 8 月。</li>
+    <li><span class="yr">2026-08</span>透明度义务（第 50 条）开始适用：AI 生成的内容要做机器可读的标记，深度伪造要向观众说明。</li>
+  </ul>
+  <p>中国走的是另一条路：不搞一部大而全的法，而是针对具体技术分别出规定。比如 2023 年 8 月施行的《生成式人工智能服务管理暂行办法》，和 2025 年 9 月 1 日施行的《人工智能生成合成内容标识办法》。美国截至 2026 年还没有一部综合性的联邦 AI 法律，更多是各州立法和行业自律。</p>
+  <div class="callout">
+    <span class="t">规则也在"迭代"</span>
+    AI Act 还没完全适用就改了一次期限，这件事本身说明了一个难题：法律几年一修，技术几个月一变。规则写得太细，很快会过时；写得太粗，又没法执行。所以监管和技术一样，也在边做边改。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>真假难辨</h2>
+  <p><a href="44.html">第 44 集</a>讲了扩散模型怎么从噪声里"画"出图像。同样的技术也能做出以假乱真的照片、声音和视频，这就是<b>深度伪造</b>（deepfake）。以前伪造一段视频要专业团队，现在一台电脑、几分钟的素材就够了。</p>
+  <p>2024 年 1 月，英国工程公司奥雅纳（Arup）香港办公室的一名财务员工，被拉进一场视频会议。屏幕上的"英国总部首席财务官"和几位"同事"都是深度伪造出来的。他按指示分 15 次转出了共 2 亿港元（约 2500 万美元），事后向总部核实才发现上当。整个过程没有黑进任何系统，也没有偷任何密码。<a href="32.html">第 32 集</a>说过，最容易攻破的往往是人，这次骗子用的是一张"真"脸。</p>
+  <p>怎么应对？到 2026 年，主要有三类办法，各有局限：</p>
+  <ol>
+    <li><b>检测</b>：训练模型去分辨真假。这是一场军备竞赛，生成器变强，检测器就失效，而且总有误判。</li>
+    <li><b>水印</b>：生成内容时，在像素或文字里藏进人看不出、机器能读出的信号。比如 Google DeepMind 2023 年推出的 SynthID。缺点是只对"愿意加水印"的生成器有效。</li>
+    <li><b>来源证明</b>：不去判断"是不是假的"，而是证明"它从哪来、被谁改过"。2021 年 2 月，Adobe、微软、BBC、英特尔、Arm 和 Truepic 成立了 C2PA（内容来源和真实性联盟），定了一个开放标准，叫<b>内容凭证</b>（Content Credentials）。</li>
+  </ol>
+  <p>内容凭证用的是两件老工具：<b>哈希</b>，可以看作<a href="29.html">第 29 集</a>校验和的加强版，内容改一个比特，哈希就完全不同；还有<a href="33.html">第 33 集</a>的<b>数字签名</b>。相机或软件对图片内容算一个哈希，再用自己的私钥签名，和"谁、什么时候、做了什么"一起写进文件。之后每次编辑，编辑软件都追加一条记录、再签一次名。任何人都可以用公钥验证这一串签名。</p>
+
+  <div class="card">
+    <h3>动手：验证一张图的内容凭证</h3>
+    <span class="seg-btns" id="pv-mode"><button data-m="ok" class="sel">原样发布</button><button data-m="edit">偷偷改了像素</button><button data-m="strip">凭证被删掉</button><button data-m="forge">伪造凭证</button><button data-m="ai">AI 生成</button></span>
+    <div class="pv">
+      <div><div class="pix" id="pv-img"></div><p class="hint" style="margin:6px 0 0">一张 6×6 的"照片"</p></div>
+      <div class="mani" id="pv-man"></div>
+    </div>
+    <div class="step-text" id="pv-cap"></div>
+    <p class="hint">哈希用的是一个简化的示意函数，真实的内容凭证用 SHA-256 和 X.509 证书。</p>
+  </div>
+
+  <p>注意"凭证被删掉"那一种：截图、转发、很多平台压缩图片时，都会把这些元数据丢掉。<b>没有凭证，不能说明它是假的，也不能说明它是真的</b>。所以来源证明要想起作用，得让真东西普遍带上凭证。截至 2026 年，一些相机和手机（比如 2025 年的 Google Pixel 10）已经在拍照时写入内容凭证，越来越多的生成式 AI 服务也在输出里同时加上凭证和水印。前面说的中国标识办法和欧盟第 50 条，都要求 AI 生成的内容带上机器可读的标记。</p>
+  <div class="callout key">
+    <span class="t">最朴素的办法仍然有效</span>
+    奥雅纳事件之后，很多公司补上的不是什么高科技，而是流程：大额转账必须<b>换一个渠道</b>核实，比如挂掉视频，打一个你早就存好的电话号码。家人之间约定一个只有彼此知道的"暗号"，也能防住冒充亲人的 AI 语音诈骗。这和<a href="31.html">第 31 集</a>的多因素认证是同一个思路：不要只信一个渠道。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>你也可以参与</h2>
+  <p>第 40 集最后说："你可以成为这场惊人变革和挑战的一部分。"九年过去，这句话没有过时，参与的方式倒是更具体了。</p>
+  <ul>
+    <li><b>学原理，不只学工具。</b>工具几个月换一代，原理却很稳定。<a href="43.html">第 43 集</a>的注意力，底下是<a href="34.html">第 34 集</a>的神经网络；<a href="41.html">第 41 集</a>的 GPU，底下是<a href="09.html">第 9 集</a>的并行；内容凭证底下是<a href="33.html">第 33 集</a>的数字签名。懂下面那一层，换工具时才不慌。</li>
+    <li><b>核实，再相信。</b>AI 写的代码要读、要测，给的事实要查出处。这对 AI 和对人都一样。</li>
+    <li><b>在你写的东西里做对的事。</b>写前端的人，每天都在决定收集哪些数据、弹窗怎么写、要不要让用户一键拒绝、生成的内容要不要标明。这些小决定加起来，就是用户实际感受到的"隐私"和"可信"。</li>
+    <li><b>参与讨论。</b>法律和标准还在改，开源项目和标准组织都欢迎新人。懂技术的人发声，规则才不会离现实太远。</li>
+  </ul>
+
+  <h3 style="margin-top:24px">续集地图</h3>
+  <p class="hint" style="margin-top:0">六集续集，各接原课程的一条主线。</p>
+  <div class="sq">
+    <a href="41.html"><i>41 · 硬件</i><b>GPU 与并行计算</b><span>接第 9、17、27 集：单核快不动了，靠并行</span></a>
+    <a href="42.html"><i>42 · 系统与网络</i><b>云计算</b><span>接第 18、28–30 集：虚拟机、容器、数据中心</span></a>
+    <a href="43.html"><i>43 · AI</i><b>Transformer 与大语言模型</b><span>接第 34、36 集：注意力和"猜下一个词"</span></a>
+    <a href="44.html"><i>44 · AI</i><b>生成式 AI 与智能体</b><span>接第 35、36 集：扩散模型、工具调用</span></a>
+    <a href="45.html"><i>45 · 安全</i><b>新的攻防</b><span>接第 9、31–33 集：侧信道、供应链、后量子密码</span></a>
+    <a href="46.html" class="here"><i>46 · 人与社会</i><b>2026，回看第 40 集</b><span>接第 38–40 集：就是这一集</span></a>
+  </div>
+  <p>整个系列反复出现的那个词是<b>抽象</b>：每一层把下一层的复杂藏起来，只露出简单的接口。续集里的每样新东西也是这样搭起来的。大语言模型搭在 Transformer 上，Transformer 搭在矩阵乘法上，矩阵乘法搭在 GPU 上，GPU 最后还是那一个个能通能断的开关。新的一层越强大，人越容易忘了下面还有很多层。</p>
+  <div class="callout key">
+    <span class="t">写给读到这里的你</span>
+    四十六集，从一个开关讲到一个会聊天的模型。几年以后，一定又会有第 40 集和这一集都没预料到的东西出现。到那时，希望你能像这个系列一样，一层一层往下拆，弄清它是怎么搭起来的，再决定怎么用它。感谢读完。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>第 40 集的预言</td><td>芯片和软件上的事来得比预想快（AI 硬件、对话助手）；真实世界里动手的事来得慢（服务机器人、普及的自动驾驶）</td></tr>
+      <tr><td>奇点算到哪了</td><td>单颗芯片约 2 年翻倍；前沿训练算力每年约 4–5 倍，靠堆芯片和投入；算力已越过"10⁵"线，但处理能力 ≠ 智能</td></tr>
+      <tr><td>工作四象限</td><td>大语言模型先碰到认知任务，包括非常规的；讨论从"哪份工作"变成"哪些任务"；截至 2026 年未见整体大规模失业，但年轻人入门岗位受影响</td></tr>
+      <tr><td>AI 的能耗</td><td>数据中心 2024 年约 415 太瓦时（1.5%），2030 年预计约 945 太瓦时；单次提问越来越省，总量仍在涨（杰文斯悖论）</td></tr>
+      <tr><td>隐私与监管</td><td>GDPR 2018 年适用；欧盟 AI Act 按风险分级，2024 年生效、分阶段适用、2026 年修订推迟部分期限；中国按具体技术分别立规</td></tr>
+      <tr><td>真假难辨</td><td>深度伪造；检测、水印、来源证明（C2PA 内容凭证 = 哈希 + 数字签名）；没有凭证 ≠ 假；换个渠道核实</td></tr>
+      <tr><td>连到哪几集</td><td><a href="17.html">17</a>（摩尔定律）· <a href="29.html">29</a>（校验和）· <a href="32.html">32</a>、<a href="33.html">33</a>（攻击、签名）· <a href="37.html">37</a>（机器人）· <a href="40.html">40</a>（预言、四象限）· 续集 <a href="41.html">41</a>–<a href="45.html">45</a></td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 第 40 集预言的东西里，哪类来得比预想快，哪类比预想慢？为什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">纯软件和芯片上的事来得快，比如神经网络专用硬件、对话式 AI 助手；要在真实世界里动手的事来得慢，比如家用服务机器人、普及到私家车的自动驾驶。原因之一是莫拉维克悖论：对人容易的感知和动作（走路、抓东西、应付意外路况），对机器反而难；真实世界还有安全、成本和法规的约束。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. "计算机的处理能力 2017–2026 年涨了多少"，为什么能得出差好几个数量级的答案？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">因为量的东西不同。一颗芯片的晶体管数大约两年翻一倍，九年只涨几十倍；而训练一个前沿模型动用的总算力每年涨 4–5 倍，九年是几十万到上百万倍，它主要靠堆更多芯片、训练更长时间、投入更多钱，而不是单颗芯片变快。而且无论哪个数字，都不能直接换算成"智能"。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 大语言模型怎么改变了第 40 集四象限的判断？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">第 40 集认为非常规认知工作最安全，而大语言模型最先碰到的正是写作、阅读、总结、编程这些认知任务。于是讨论从"哪份工作会被取代"变成了"一份工作里哪些任务会交给机器、人负责什么"。研究估计约 80% 的美国劳动者有至少 10% 的任务受影响；截至 2026 年未见整体大规模失业，但最容易受影响的职业里，22–25 岁年轻人的就业相对下降。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 单次 AI 提问的能耗在下降，为什么数据中心的总用电还在上升？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">用量增长得比效率提高得更快：用的人更多，用法也更重（生成图片视频、推理模型长时间思考、智能体反复调用），还有训练更大的模型。效率提高让服务更便宜，又刺激了更多使用，这就是杰文斯悖论。IEA 估计全球数据中心用电从 2024 年约 415 太瓦时增长到 2030 年约 945 太瓦时。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 内容凭证是怎么证明一张图片来源的？它有什么局限？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">相机或编辑软件对内容算哈希，连同"谁、何时、做了什么"一起用私钥签名，每次编辑追加一条签名记录；任何人都能用公钥验证。内容被改过，哈希就对不上；签名者不在可信名单里，就不可信。局限是凭证很容易在截图、转发、压缩时丢失，而没有凭证既不能证明真，也不能证明假；它也只记录声明，不会自己判断内容是否属实。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="45.html"><small>← 上一集</small>45 新的攻防</a>
+    <a class="next" href="index.html"><small>续集完 →</small>回到速成课目录</a>
+  </div>
+
+  <div class="credit">
+    续集为本站原创内容，不是 Crash Course 官方作品，写法沿用原课程的思路。正文、示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。<br>
+    参考资料：
+    Sevilla、Roldán，<a href="https://epoch.ai/publications/training-compute-of-frontier-ai-models-grows-by-4-5x-per-year" target="_blank" rel="noopener">Training compute of frontier AI models grows by 4–5x per year</a>（Epoch AI，2024）；
+    Eloundou 等，<a href="https://arxiv.org/abs/2303.10130" target="_blank" rel="noopener">GPTs are GPTs: An Early Look at the Labor Market Impact Potential of Large Language Models</a>（2023）；
+    Brynjolfsson、Chandar、Chen，<a href="https://digitaleconomy.stanford.edu/publications/canaries-in-the-coal-mine" target="_blank" rel="noopener">Canaries in the Coal Mine? Six Facts about the Recent Employment Effects of Artificial Intelligence</a>（2025-08）及<a href="https://digitaleconomy.stanford.edu/news/canariesaug26/" target="_blank" rel="noopener">2026-08 更新</a>；
+    IEA，<a href="https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai" target="_blank" rel="noopener">Energy and AI: Energy demand from AI</a>（2025-04）；
+    Google，<a href="https://cloud.google.com/blog/products/infrastructure/measuring-the-environmental-impact-of-ai-inference" target="_blank" rel="noopener">Measuring the environmental impact of AI inference</a> 及<a href="https://arxiv.org/abs/2508.15734" target="_blank" rel="noopener">技术论文</a>（2025-08）；
+    Patterson 等，<a href="https://arxiv.org/abs/2104.10350" target="_blank" rel="noopener">Carbon Emissions and Large Neural Network Training</a>（2021，GPT-3 训练能耗估算）；
+    <a href="https://eur-lex.europa.eu/eli/reg/2016/679/oj" target="_blank" rel="noopener">GDPR，Regulation (EU) 2016/679</a>；
+    <a href="https://eur-lex.europa.eu/eli/reg/2024/1689/oj" target="_blank" rel="noopener">AI Act，Regulation (EU) 2024/1689</a>；
+    <a href="https://artificialintelligenceact.eu/ai-act-explorer/digital-omnibus/" target="_blank" rel="noopener">Digital Omnibus on AI</a>（2026，Regulation (EU) 2026/1744）；
+    <a href="https://www.insideprivacy.com/international/china/china-releases-new-labeling-requirements-for-ai-generated-content/" target="_blank" rel="noopener">Covington：China Releases New Labeling Requirements for AI-Generated Content</a>（2025）；
+    <a href="https://www.scmp.com/news/hong-kong/law-and-crime/article/3263151/uk-multinational-arup-confirmed-victim-hk200-million-deepfake-scam-used-digital-version-cfo-dupe" target="_blank" rel="noopener">SCMP：Arup confirmed as victim of HK$200 million deepfake scam</a>（2024-05）；
+    <a href="https://blogs.microsoft.com/on-the-issues/2021/02/22/deepfakes-disinformation-c2pa-origin-cai/" target="_blank" rel="noopener">Microsoft：C2PA 成立</a>（2021-02-22）；
+    <a href="https://techcrunch.com/2026/03/27/waymo-skyrocketing-ridership-in-one-chart/" target="_blank" rel="noopener">TechCrunch：Waymo's skyrocketing ridership</a>（2026-03）；
+    <a href="https://www.nobelprize.org/prizes/chemistry/2024/summary/" target="_blank" rel="noopener">2024 年诺贝尔化学奖</a>。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 预言卡片 ---------- */
+(function () {
+  const P = [
+    ['虚拟现实 / 增强现实', '接下来十年会成为主流', 'half', '部分成真', '头显越做越好，2024 年 Apple Vision Pro 上市。但截至 2026 年，它们主要用在游戏、健身和一些专业场景，远没有像手机那样人手一台。'],
+    ['自动驾驶汽车', '接下来十年会成为主流', 'half', '部分成真', '截至 2026 年，Waymo 已在美国十几个城市运营无人驾驶的付费网约车，2026 年春每周约 50 万单；中国也有公司在多个城市运营。可绝大多数私家车仍是"辅助驾驶"，人得一直盯着路。'],
+    ['无人机', '接下来十年会成为主流', 'yes', '大体成真', '航拍、农田喷洒、测绘、巡检都很常见，消费级无人机不算稀奇。无人机送快递仍只在少数地区试点。'],
+    ['可穿戴计算机', '接下来十年会成为主流', 'yes', '成真', '智能手表、手环、无线耳机成了日常用品，能测心率、睡眠、摔倒报警。维瑟说的"消失进生活"，在这里最接近。不过 2017 年课程举例的 Google Glass 那类眼镜，还在找自己的位置。'],
+    ['服务机器人', '接下来十年会成为主流', 'not', '还早', '扫地机器人普及了，一些餐厅有送餐机器人。但第 40 集说的叠衣服、做家务，截至 2026 年仍主要停留在演示和试点，人形机器人离进家门还有距离。'],
+    ['让神经网络"快如闪电"的新硬件', '新的硬件会让神经网络和 3D 图形快如闪电', 'yes', '成真，超出预期', 'GPU 和专用 AI 芯片成了数据中心的主力，规模远超 2017 年的想象，见第 41 集。也带来了新问题：耗电，见本集第 4 节。'],
+    ['告别桌面隐喻，变成虚拟助手', '个人计算机也许会抛弃桌面隐喻，重生为伴随一生的虚拟助手', 'half', '一半', '对话式 AI 助手（第 43、44 集）有了数以亿计的用户，能读文件、写代码、调用工具。但桌面和手机界面都还在，助手是加在上面的新一层，而不是取代了它们。'],
+    ['新的编程语言和范式', '新的编程语言和范式会被发明出来', 'yes', '成真', 'Rust 这类内存安全语言被操作系统和浏览器采用（第 45 集）；更大的变化是"用自然语言让 AI 写代码"（第 44 集），程序员越来越多地在读和审代码。'],
+  ];
+  const pr = $('#pr');
+  pr.innerHTML = P.map(([t, q, k, r, a], i) => `<div class="pc" tabindex="0" role="button" aria-pressed="false" data-i="${i}"><div class="pc-in"><div class="pc-f"><small>2017 年的预言</small><b>${t}</b>"${q}"<small style="margin-top:6px">点一下翻面 ↻</small></div><div class="pc-b"><span class="tag ${k}">截至 2026 年：${r}</span><br>${a}</div></div></div>`).join('');
+  const cards = $$('.pc', pr);
+  function cap() {
+    const open = cards.filter(c => c.classList.contains('open'));
+    const n = k => open.filter(c => P[+c.dataset.i][2] === k).length;
+    $('#pr-cap').innerHTML = `已翻开 ${open.length} / ${P.length} 张。` + (open.length ? `成真 <b style="color:var(--ok)">${n('yes')}</b>，部分成真 <b style="color:var(--on)">${n('half')}</b>，还早 <b style="color:var(--bad)">${n('not')}</b>。` : '') + (open.length === P.length ? '<br>芯片和软件上的预言多半成真；要在真实世界里动手的，多半还在路上。' : '');
+  }
+  function flip(c, v) { c.classList.toggle('open', v); c.setAttribute('aria-pressed', c.classList.contains('open')); }
+  cards.forEach(c => {
+    c.addEventListener('click', () => { flip(c); cap(); });
+    c.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(c); cap(); } });
+  });
+  $('#pr-all').onclick = () => { cards.forEach(c => flip(c, true)); cap(); };
+  $('#pr-clr').onclick = () => { cards.forEach(c => flip(c, false)); cap(); };
+})();
+
+/* ---------- 工作四象限 2026 ---------- */
+(function () {
+  // 任务类型：ai = AI 工具常被用来帮忙，auto = 传统机器 / 软件早就在做，hu = 仍主要靠人
+  const J = [
+    ['组装玩具', 'rm', [['流水线装配', 'auto'], ['外观质检', 'ai'], ['处理卡料、换线', 'hu']]],
+    ['汽车喷漆', 'rm', [['喷涂', 'auto'], ['调参数、维护设备', 'hu']]],
+    ['厨师', 'nm', [['设计菜单、算成本', 'ai'], ['备菜、炒菜', 'hu'], ['试味道、临场调整', 'hu']]],
+    ['服务员', 'nm', [['点单、结账', 'auto'], ['送餐（部分餐厅用机器人）', 'auto'], ['照顾客人', 'hu']]],
+    ['保安', 'nm', [['盯监控画面', 'ai'], ['巡逻', 'hu'], ['处理突发情况', 'hu']]],
+    ['客服', 'rc', [['回答常见问题', 'ai'], ['总结工单', 'ai'], ['处理复杂投诉', 'hu'], ['安抚情绪', 'hu']]],
+    ['收银员', 'rc', [['扫码结账（自助收银）', 'auto'], ['处理退换货', 'hu']]],
+    ['银行柜员', 'rc', [['存取款、转账', 'auto'], ['核对单据', 'ai'], ['解释业务、提醒防诈骗', 'hu']]],
+    ['办公室助理', 'rc', [['写邮件、会议纪要', 'ai'], ['排日程', 'ai'], ['协调人和事', 'hu']]],
+    ['教师', 'nc', [['找素材、出题', 'ai'], ['批改初稿、写评语', 'ai'], ['课堂上带学生', 'hu'], ['关心每个学生', 'hu']]],
+    ['小说家', 'nc', [['查资料、润色', 'ai'], ['构思故事和人物', 'hu'], ['决定写什么、为什么写', 'hu']]],
+    ['律师', 'nc', [['检索判例、读合同', 'ai'], ['起草文书', 'ai'], ['出庭、谈判', 'hu'], ['为建议负责', 'hu']]],
+    ['医生', 'nc', [['写病历记录', 'ai'], ['辅助看影像', 'ai'], ['问诊、做判断', 'hu'], ['和病人沟通', 'hu']]],
+    ['科学家', 'nc', [['写分析代码', 'ai'], ['读文献、做综述', 'ai'], ['预测蛋白质结构等', 'ai'], ['提出问题、设计实验', 'hu']]],
+  ];
+  const NAME = { ai: 'AI 工具常用来帮忙', auto: '机器 / 传统软件早就在做', hu: '仍主要靠人' };
+  const N17 = { rm: '易受自动化冲击', nm: '易受自动化冲击', rc: '易受自动化冲击', nc: '暂时安全' };
+  let mode = '2017', sel = null;
+  J.forEach(([n, q], i) => {
+    const b = document.createElement('button'); b.textContent = n; b.dataset.i = i;
+    const c = $(`#qd .cell[data-q="${q}"]`); c.insertBefore(b, $('i', c));
+    b.onclick = () => { sel = i; show(); };
+  });
+  function share(q) {
+    const t = J.filter(j => j[1] === q).flatMap(j => j[2]);
+    return t.filter(x => x[1] === 'ai').length / t.length;
+  }
+  function show() {
+    $$('#qd-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    $$('#qd .cell').forEach(c => {
+      const q = c.dataset.q;
+      if (mode === '2017') {
+        c.style.background = q === 'nc' ? 'var(--ok-soft)' : 'var(--bad-soft)';
+        c.style.borderColor = q === 'nc' ? 'var(--ok)' : 'var(--bad)';
+        $('i', c).textContent = N17[q];
+      } else {
+        const s = share(q);
+        c.style.background = `color-mix(in srgb, var(--accent) ${Math.round(s * 45)}%, var(--panel))`;
+        c.style.borderColor = 'var(--accent)';
+        $('i', c).textContent = `AI 工具常帮忙的任务约占 ${Math.round(s * 100)}%`;
+      }
+    });
+    $$('#qd button[data-i]').forEach(b => b.classList.toggle('sel', +b.dataset.i === sel));
+    if (sel == null) {
+      $('#qd-cap').innerHTML = mode === '2017' ? '第 40 集的看法：红色三格易受自动化冲击，只有绿色的"非常规 · 认知"暂时安全。点一个工作看看。' : '换个看法：把每份工作拆成任务。注意右下角那一格，第 40 集眼里最安全的那一格，现在蓝得最深。点一个工作看看。';
+      return;
+    }
+    const [n, q, ts] = J[sel];
+    const tags = ts.map(([t, k]) => `<span class="${k}" title="${NAME[k]}">${t}</span>`).join('');
+    const ai = ts.filter(t => t[1] === 'ai').length, hu = ts.filter(t => t[1] === 'hu').length;
+    $('#qd-cap').innerHTML = `<b>${n}</b>：` + (mode === '2017' ? `2017 年的判断是"${N17[q]}"。` : `${ts.length} 项任务里，${ai} 项常有 AI 工具帮忙，${hu} 项仍主要靠人。`) +
+      `<div class="tasks">${tags}</div><span style="font-size:13px;color:var(--muted)">蓝：${NAME.ai}　灰：${NAME.auto}　橙：${NAME.hu}</span>`;
+  }
+  $$('#qd-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; show(); });
+  show();
+})();
+
+/* ---------- 能耗对比 ---------- */
+(function () {
+  const svg = $('#en');
+  // 单位：瓦时（Wh）
+  const D = [
+    ['一次 AI 文本提问（中位数，Google 2025）', 0.24, '0.24 瓦时'],
+    ['给手机充满一次电', 15, '约 15 瓦时'],
+    ['美国一户家庭一年的用电', 1.05e7, '约 1 万度'],
+    ['训练 GPT-3（2020，估算）', 1.287e9, '约 129 万度'],
+    ['全球数据中心一年（2024，IEA）', 4.15e14, '约 4150 亿度'],
+    ['全球数据中心一年（2030 预测，IEA）', 9.45e14, '约 9450 亿度'],
+    ['全世界一年的总用电（2024，按 1.5% 反推）', 2.77e16, '约 27.7 万亿度'],
+  ];
+  let mode = 'lin';
+  const X0 = 14, X1 = 530, LMIN = -1, LMAX = 16.5;
+  function draw() {
+    $$('#en-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    svg.innerHTML = '';
+    const max = D[D.length - 1][1];
+    const w = v => mode === 'lin' ? (v / max) * (X1 - X0) : (Math.log10(v) - LMIN) / (LMAX - LMIN) * (X1 - X0);
+    D.forEach(([n, v, s], i) => {
+      const y = 22 + i * 42;
+      txt(svg, X0, y, n, 't-sub');
+      const bw = Math.max(1.5, w(v));
+      el('rect', { x: X0, y: y + 6, width: bw, height: 14, rx: 3, style: `fill:${i >= 4 ? 'var(--on)' : 'var(--accent)'}` }, svg);
+      txt(svg, X0 + bw + 6, y + 18, s, 't-mono');
+    });
+    $('#en-cap').innerHTML = mode === 'lin' ?
+      '普通刻度下，前四行全都缩成了一条看不见的细线：<b>一次提问、一部手机、一户人家、甚至训练一次 GPT-3</b>，放在全球数据中心的用电旁边，都小到画不出来。换成对数刻度看看。' :
+      '对数刻度下，每往右一格就是 10 倍。从一次提问到全球数据中心，差了约 <b>15 个数量级</b>，也就是一千万亿倍。单次很小，乘上几十亿用户、每天无数次，再加上训练和其他云服务，就成了全球用电的约 1.5%。';
+  }
+  function calc() {
+    const n = +$('#en-n').value; $('#en-nv').textContent = n;
+    const yr = n * 0.24 * 365, all = 1e9 * yr;
+    $('#en-out').innerHTML = `你一年：<span class="big">${(yr / 1000).toFixed(2)}</span> 度，约等于给手机充 ${Math.round(yr / 15)} 次电<br>如果 10 亿人都这样：约 ${(all / 1e12).toFixed(1)} 太瓦时，是 2024 年全球数据中心用电的 ${(all / 4.15e14 * 100).toFixed(1)}%`;
+  }
+  $$('#en-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; draw(); });
+  $('#en-n').oninput = calc;
+  draw(); calc();
+})();
+
+/* ---------- 内容凭证 ---------- */
+(function () {
+  const PAL = ['#8ec5ff', '#ffd23f', '#5bbf6a', '#3d8b48', '#ffffff', '#7a5230'];
+  const IMG = [0, 0, 0, 0, 1, 1, 0, 4, 4, 0, 1, 1, 0, 0, 0, 0, 0, 0, 2, 2, 5, 2, 2, 2, 3, 2, 5, 3, 2, 3, 3, 3, 3, 3, 3, 3];
+  const EDIT = { 4: 4, 5: 4, 20: 1 }; // 被偷偷改掉的像素
+  const h = a => { let x = 0x811c9dc5; for (const v of a) { x ^= v + 1; x = Math.imul(x, 0x01000193) >>> 0; } return x.toString(16).padStart(8, '0'); };
+  const H0 = h(IMG);
+  const S = {
+    ok: { img: IMG, man: [['拍摄', '相机 · 某品牌 X100', '可信'], ['裁剪、调亮度', '修图软件 · PhotoApp', '可信']], hash: H0 },
+    edit: { img: IMG.map((v, i) => i in EDIT ? EDIT[i] : v), man: [['拍摄', '相机 · 某品牌 X100', '可信'], ['裁剪、调亮度', '修图软件 · PhotoApp', '可信']], hash: H0 },
+    strip: { img: IMG, man: null },
+    forge: { img: IMG, man: [['拍摄', '自称"相机 · 某品牌 X100"', '不可信']], hash: H0 },
+    ai: { img: IMG, man: [['生成', '图像生成模型 · GenImage', '可信'], ['声明', '此内容由 AI 生成', '']], hash: H0 },
+  };
+  let mode = 'ok';
+  function show() {
+    $$('#pv-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    const s = S[mode], now = h(s.img);
+    $('#pv-img').innerHTML = s.img.map((v, i) => `<i style="background:${PAL[v]}" class="${s.img[i] !== IMG[i] ? 'chg' : ''}"></i>`).join('');
+    let man, v, cap;
+    if (!s.man) {
+      man = '<div class="row"><b>内容凭证</b></div><div class="muted">（没有找到。可能被截图、转发或压缩时丢掉了）</div>';
+      v = '<span class="verdict unk">？ 无法判断</span>';
+      cap = '没有凭证。这<b>不能说明图是假的</b>，绝大多数图本来就没有凭证；也<b>不能说明它是真的</b>。来源证明只能给"有凭证"的东西作保。';
+    } else {
+      const bad = s.man.some(r => r[2] === '不可信'), mis = now !== s.hash;
+      man = '<div class="row"><b>内容凭证</b></div>' + s.man.map(([a, who, t]) => `<div class="row">✎ ${a}：${who}${t ? `<span style="color:${t === '可信' ? 'var(--ok)' : 'var(--bad)'};font-size:12px">${t === '可信' ? '签名有效，证书在可信名单里' : '签名用的私钥不在可信名单里'}</span>` : ''}</div>`).join('') +
+        `<div class="row">记录的哈希 <code>${s.hash}</code></div><div class="row">现在算出的 <code>${now}</code> ${mis ? '<span style="color:var(--bad)">✗ 不一致</span>' : '<span style="color:var(--ok)">✓ 一致</span>'}</div>`;
+      if (mis) { v = '<span class="verdict bad">✗ 验证失败</span>'; cap = '签名本身没问题，可图片内容算出的哈希和凭证里记的<b>对不上</b>：内容在最后一次签名<b>之后</b>被改过（红框的三个像素）。改一个像素，哈希就完全不同，这是哈希的性质。'; }
+      else if (bad) { v = '<span class="verdict bad">✗ 签名者不可信</span>'; cap = '任何人都能往文件里写一段"我是 X100 相机拍的"。可签名用的私钥对应的公钥，不在验证软件内置的<b>可信证书名单</b>里，所以这段声明不算数。这和浏览器验证 HTTPS 证书是同一个道理。'; }
+      else if (mode === 'ai') { v = '<span class="verdict ok">✓ 验证通过 · 标明为 AI 生成</span>'; cap = '凭证有效，而且里面写明了这是 AI 生成的。平台可以据此给它加上"AI 生成"的标签。欧盟第 50 条和中国的标识办法，要的正是这类机器可读的标记。'; }
+      else { v = '<span class="verdict ok">✓ 验证通过</span>'; cap = '每一步的签名都有效，签名者都在可信名单里，内容的哈希也对得上：这张图确实来自这台相机，之后只做过裁剪和调亮度。注意，凭证证明的是<b>来源和经过</b>，并不保证照片里拍的事情就是"真相"。'; }
+    }
+    $('#pv-man').innerHTML = man + `<div class="row" style="margin-top:4px">${v}</div>`;
+    $('#pv-cap').innerHTML = cap;
+  }
+  $$('#pv-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; show(); });
+  show();
+})();
+</script>
+</body>
+</html>

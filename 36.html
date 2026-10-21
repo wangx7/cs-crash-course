@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>36 自然语言处理 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.inrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.inrow input[type=text]{flex:1;min-width:180px;font:15px var(--mono);padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.presets button{font:13px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:16px;padding:3px 10px;cursor:pointer}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.chips span{font-size:13px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--panel);line-height:1.5}
+.chips span b{font-family:var(--mono);display:block}
+.chips span i{font-style:normal;color:var(--muted);margin-right:4px}
+.chips span i.on{color:var(--on);font-weight:700}
+.slots{border-collapse:collapse;font-size:14px;margin:8px 0}
+.slots td{border:1px solid var(--line);padding:5px 12px}
+.slots td:first-child{color:var(--muted);background:var(--bg)}
+.slots td:last-child{font-family:var(--mono);font-weight:600}
+.chat{border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:10px;height:260px;overflow-y:auto;display:flex;flex-direction:column;gap:8px}
+.chat .m{max-width:80%;padding:7px 12px;border-radius:12px;font-size:15px;line-height:1.5}
+.chat .u{align-self:flex-end;background:var(--accent);color:#fff}
+.chat .b{align-self:flex-start;background:var(--panel);border:1px solid var(--line)}
+.chat .b small{display:block;font-size:11px;color:var(--muted);margin-top:2px}
+canvas.plot{display:block;width:100%;height:auto;border-radius:10px;background:var(--code);margin:6px 0}
+.lm .row{display:grid;grid-template-columns:150px 1fr 1fr;gap:10px;align-items:center;margin:6px 0;font-size:14px}
+.lm .bar{height:18px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+.lm .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--accent)}
+.lm .bar.h i{background:var(--on)}
+.lm .bar span{position:relative;font:11px/18px var(--mono);padding-left:6px;color:var(--ink)}
+@media (max-width:600px){.lm .row{grid-template-columns:90px 1fr 1fr}}
+</style>
+</head>
+<body data-ep="36">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=37" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 36 集</div>
+  <h1>自然语言处理</h1>
+  <p class="en">Natural Language Processing</p>
+  <p class="lead">编程语言词汇少、规矩严，错一个字母都不行；人类的语言却词多义杂、口音各异、到处是省略和双关。这一集讲计算机怎么用语法规则把句子拆成分析树、怎么用知识图谱造句、聊天机器人怎么从手写规则走到机器学习；然后是声音：怎么从波形看出元音、拼出音素、在语言模型的帮助下转成文字，以及反过来把文字念出来。</p>
+  <div class="road">
+    <span>词性与短语结构规则</span><i>→</i><span>分析树</span><i>→</i><span>知识图谱与聊天机器人</span><i>→</i><span>语音识别：谱图与音素</span><i>→</i><span>语言模型</span><i>→</i><span>语音合成</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 自然语言</a></li>
+    <li><a href="#ch1">1 · 词性与分析树</a></li>
+    <li><a href="#ch2">2 · 听懂问题和命令</a></li>
+    <li><a href="#ch3">3 · 知识图谱与聊天机器人</a></li>
+    <li><a href="#ch4">4 · 语音识别的历史</a></li>
+    <li><a href="#ch5">5 · 从波形到音素</a></li>
+    <li><a href="#ch6">6 · 语言模型</a></li>
+    <li><a href="#ch7">7 · 语音合成</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>编程语言和"自然语言"</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！上集我们讲了计算机视觉——让计算机能看见并理解视觉信息。今天，我们来讲怎么让计算机理解<b>语言</b>。</p>
+  <p>你可能会说，计算机一直都有这个能力。在第 9 集和第 12 集，我们讲过机器语言指令，以及更高层的编程语言。这些当然符合"语言"的定义，但它们的词汇量往往很小，而且遵循高度结构化的规矩。代码只有在 100% 没有拼写和语法错误时，才能编译和运行。当然，这和人类的语言——所谓的<b>自然语言</b>（natural languages）——大不相同：自然语言有庞大而多样的词汇，有的词有好几种意思，说话的人有不同的口音，还有各种有趣的文字游戏。人们写作和说话时也会出错，比如把几个词含混地连在一起说、漏掉关键细节导致意思模棱两可、发错音。但在大多数情况下，人类能毫不费力地应对这些挑战。</p>
+  <p>熟练地使用语言，是让我们成为人类的重要部分。正因如此，从计算机刚被构想出来起，人们就希望它能理解和说我们的语言。这催生了<b>自然语言处理</b>（Natural Language Processing，简称 NLP）：一个结合了计算机科学和语言学的交叉学科。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>词性、短语结构规则与分析树</h2>
+  <p>把单词排成句子的方式几乎有无穷多种。我们没法给计算机一本包含所有可能句子的词典，来帮它理解人类在叨叨什么。所以 NLP 早期一个基本问题，是把句子<b>拆成一小块一小块</b>，好更容易地处理。</p>
+  <p>上学时你学过英语单词的九种基本类型：名词、代词、冠词、动词、形容词、副词、介词、连词和感叹词。这叫<b>词性</b>（parts of speech）。还有各种子类，比如单数名词和复数名词、副词的最高级和比较级，不过我们不深入讲这些。</p>
+  <p>知道一个词的词性当然有用，但不幸的是，很多词有多种意思，比如 "rose" 和 "leaves"，既能当名词也能当动词（rose：玫瑰 / 升起；leaves：叶子 / 离开）。光靠一本电子词典没法消除这种歧义，所以计算机还需要懂一些<b>语法</b>。为此，人们发展出了<b>短语结构规则</b>（phrase structure rules），用来概括一门语言的语法。比如英语里有一条规则说：一个句子可以由一个名词短语加一个动词短语组成。名词短语可以是一个冠词（比如 "the"）加一个名词，也可以是一个形容词加一个名词。你可以为整门语言制定这样的规则。</p>
+  <p>然后，用这些规则，就能比较容易地构造出所谓的<b>分析树</b>（parse tree）：它不仅给每个单词标上最可能的词性，还揭示了句子是怎么构成的。</p>
+
+  <div class="card">
+    <h3>动手：用规则给句子画分析树</h3>
+    <div class="presets" id="ps-pre"></div>
+    <div class="inrow"><input type="text" id="ps-in" aria-label="英文句子"><button class="btn primary" id="ps-go">分析</button></div>
+    <div class="chips" id="ps-chips"></div>
+    <div class="scroll-x"><svg class="diagram" id="ps-tree" viewBox="0 0 680 300" role="img" aria-label="分析树"></svg></div>
+    <div class="step-text" id="ps-cap"></div>
+    <details style="font-size:14px;margin-top:6px"><summary>本页用的规则和词典</summary>
+      <pre style="font:13px/1.6 var(--mono);background:var(--code);padding:10px;border-radius:8px;overflow-x:auto" id="ps-rules"></pre>
+    </details>
+  </div>
+  <div class="extra">
+    <span class="t">中文的第一道坎：分词</span>
+    英文单词之间有空格，中文没有。所以中文 NLP 往往在"标词性"之前，还要先<b>分词</b>：把一串汉字切成一个个词。经典的例子是"南京市长江大桥"——可以切成"南京市 / 长江大桥"，也可以切成"南京 / 市长 / 江大桥"。和 rose、leaves 一样，光看词典解决不了，要靠语法和上下文（以及常识：江大桥是谁？）来判断。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>听懂问题和命令</h2>
+  <p>这些更小的数据块，让计算机更容易获取、处理和回应信息。每次你做语音搜索时，都在进行类似的过程，比如："最近的披萨在哪里"（where's the nearest pizza）。计算机能识别出这是一个"哪里"（where）类的问题，知道你要的是名词"披萨"，而你关心的维度是"最近"。同样的过程也适用于"最大的长颈鹿是什么？"或"《Thriller》是谁唱的？"。把语言几乎当成乐高积木来对待，计算机就能相当擅长处理自然语言任务。它们能回答问题，也能处理命令，比如"设一个 2:20 的闹钟"或"用 Spotify 播放霉霉的歌"。</p>
+
+  <div class="card">
+    <h3>动手：一个只会拆积木的语音助手</h3>
+    <div class="presets" id="ia-pre"></div>
+    <div class="inrow"><input type="text" id="ia-in" aria-label="对助手说的话"><button class="btn primary" id="ia-go">交给助手</button></div>
+    <div id="ia-out"></div>
+    <p class="hint" style="margin-bottom:0">它用的是几条很死板的规则：看开头是不是 where / what / who，找以 -est 结尾的"维度"词，找"set an alarm for"、"play … on …"这样的固定句式。</p>
+  </div>
+
+  <p>但你大概也体验过，一旦你说得太花哨，它们就会失败：再也没法正确分析句子，或者抓不住你的意图。"嘿 Siri……吾以为蒙古人漫游得忒远了些，于此最温柔之仲夏日，汝意下如何？"Siri："我不太明白。"</p>
+  <p class="muted" style="font-size:13px">（英文原句是模仿莎士比亚的古英语腔调：me thinks the mongols doth roam too much, what think ye on this most gentle mid-summer's day? 字幕译得太直白，看不出这是在故意"说得花哨"。）</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>知识图谱与聊天机器人</h2>
+  <p>还要提一下，短语结构规则以及类似的把语言编码化的方法，也可以被计算机用来<b>生成</b>自然语言文本。当数据存储在一个语义信息网络里时，这种方法尤其好用：各个实体之间通过有意义的关系相互连接，提供了造出信息性句子所需的全部原料。Siri："《Thriller》于 1983 年发行，由迈克尔·杰克逊演唱。"Google 版本的这种网络叫<b>知识图谱</b>（Knowledge Graph）。到 2016 年底，它包含了大约七百亿条关于不同实体的事实和实体之间的关系。</p>
+
+  <div class="card">
+    <h3>动手：从知识图谱里造句</h3>
+    <div class="scroll-x"><svg class="diagram" id="kg" viewBox="0 0 680 280" role="img" aria-label="一个小知识图谱"></svg></div>
+    <div class="step-text" id="kg-cap">点任意一个实体（圆角框）。</div>
+  </div>
+  <div class="extra">
+    <span class="t">你天天见到它</span>
+    在 Google 搜一个名人或一部电影，结果页右侧那张信息卡片（出生日期、作品、配偶……）就是从知识图谱里取出来的。百度百科词条右侧的"基本信息"、各种语音助手回答"某某多高"，背后都是类似的"实体—关系—实体"三元组。
+  </div>
+
+  <p>分析文本和生成文本这两个过程，是自然语言<b>聊天机器人</b>（chatbots）——能和你聊天的计算机程序——最基本的组成部分。早期的聊天机器人主要是<b>基于规则</b>的：专家写下数百条规则，把用户可能说的话，映射到程序应该怎么回复。显然，这很难维护，也限制了对话能达到的复杂程度。</p>
+  <p>一个著名的早期例子是 <b>ELIZA</b>，1960 年代中期诞生于麻省理工学院。这个聊天机器人扮演心理治疗师的角色，用基本的句法规则识别用户写的内容，然后把它掉过头来向用户提问。有时候，它感觉非常像人和人之间的交流，但有时候它也会犯简单、甚至可笑的错误。</p>
+
+  <div class="card">
+    <h3>动手：和一个迷你 ELIZA 聊聊</h3>
+    <div class="chat" id="el-log" aria-live="polite"></div>
+    <div class="inrow"><input type="text" id="el-in" placeholder="用中文说点什么，回车发送" aria-label="对 ELIZA 说的话"><button class="btn primary" id="el-go">发送</button></div>
+    <div class="presets" id="el-pre"></div>
+    <p class="hint" style="margin-bottom:0">它只有十来条规则，每条回复下面都标了命中的是哪条。试试最后一个预设，看它怎么"可笑地犯错"。</p>
+  </div>
+  <div class="extra">
+    <span class="t">ELIZA 效应</span>
+    ELIZA 的作者约瑟夫·维森鲍姆后来回忆：他的秘书明明看着他写出这个程序，聊了几句后却请他离开房间，好跟 ELIZA 说点私事。人们会不自觉地把理解和感情投射到一个只会套模板的程序身上，这被称为"ELIZA 效应"。今天面对更会聊天的 AI，这个提醒依然有用。
+  </div>
+
+  <p>聊天机器人和更高级的对话系统，在过去五十年里进步了很多，如今已经相当以假乱真！现代方法基于<b>机器学习</b>：用上 GB 的真实人与人聊天记录来训练聊天机器人。如今，这项技术正被用到客服应用里，那里已经有大量现成的对话样例可供学习。人们还让聊天机器人互相聊天。在 Facebook 的一个实验里，聊天机器人甚至开始演化出自己的语言。这个实验引来了一堆听起来很吓人的报道，但其实只是计算机制定了一种简化的协议，用来互相谈判。它不邪恶，只是高效。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>语音识别：从 Audrey 到深度神经网络</h2>
+  <p>但如果一句话是<b>说出来</b>的呢？计算机怎么从声音里得到单词？这是<b>语音识别</b>（speech recognition）的领域，几十年来一直是研究的重点。贝尔实验室在 1952 年推出了第一个语音识别系统，绰号 <b>Audrey</b>，自动数字识别器。如果你说得足够慢，它能识别全部十个数字。（"5……9……7？"）这个项目没有下文，因为用手指输入电话号码要快得多。</p>
+  <p>十年后，在 1962 年的世界博览会上，IBM 展示了一台鞋盒大小、能识别 16 个单词的机器。为了推动这个领域的研究，DARPA 在 1971 年启动了一项雄心勃勃的五年资助计划，由此诞生了卡内基梅隆大学的 <b>Harpy</b>。Harpy 是第一个能识别一千多个单词的系统。但在当时的计算机上，转写速度往往比正常说话慢十倍甚至更多。幸运的是，得益于 1980、90 年代计算机性能的巨大进步，连续的实时语音识别变得可行了。</p>
+  <p>与此同时，处理自然语言的算法也在创新：从手工编写规则，转向能从现有人类语言数据集中自动学习的<b>机器学习</b>技术。如今准确率最高的语音识别系统，用的是我们在第 34 集讲过的<b>深度神经网络</b>。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>从波形到谱图，从谱图到音素</h2>
+  <p>为了了解这些技术是怎么工作的，我们来看一些语音，确切地说，是声学信号。先从元音开始，比如"啊——"和"咿——"。这是计算机麦克风录下的这两个声音的波形。正如我们在第 21 集（文件和文件格式）讨论过的，这个信号是声波让麦克风里的振膜振动时，振膜<b>位移的大小</b>。在这种视图里，横轴是时间，纵轴是位移的大小，也就是振幅。虽然能看出两个波形有区别，但看不出该指着哪里说："啊哈！这肯定是'咿'。"</p>
+  <p class="muted" style="font-size:13px">（字幕把 magnitude of displacement 译成了"振动的频率"。纵轴是振膜偏离中间位置有多远，不是频率。）</p>
+  <p>要让它一目了然，我们得用完全不同的方式看数据：<b>谱图</b>（spectrogram）。在这种视图里，横轴仍然是时间，但纵轴不再是振幅，而是组成每个声音的各个<b>频率</b>的大小。颜色越亮，那个频率成分越响。这种从波形到频率的转换，是用一个非常酷的算法完成的，叫<b>快速傅里叶变换</b>（Fast Fourier Transform，FFT）。如果你盯着看过音响上的 EQ 可视化，那基本上就是同一个东西。谱图则是把这些信息随时间画出来。</p>
+
+  <div class="card">
+    <h3>动手：同一个元音的两种看法</h3>
+    <span class="seg-btns" id="vw"><button data-v="a">啊（a）</button><button data-v="i">咿（ee）</button></span>
+    <button class="btn" id="vw-play" style="margin-left:8px">▶ 听一听</button>
+    <div style="font-size:13px;color:var(--muted);margin-top:10px">波形（横轴：时间，前 30 毫秒；纵轴：振幅）</div>
+    <canvas class="plot" id="vw-wave" aria-label="波形"></canvas>
+    <div style="font-size:13px;color:var(--muted)">频谱（FFT 之后。横轴：频率 0–4000 Hz；纵轴：这个频率有多响）</div>
+    <canvas class="plot" id="vw-spec" aria-label="频谱"></canvas>
+    <div class="step-text" id="vw-cap"></div>
+    <p class="hint" style="margin-bottom:0">这两个元音是本页用程序合成的：一串 120 Hz 的"嗡嗡"声（声带振动），再按元音的共振峰把某些频率放大。</p>
+  </div>
+
+  <p>你可能注意到了，信号里有一种像肋骨一样的条纹图案，那是我声道里的各种<b>共振</b>。为了发出不同的声音，我把声带、嘴巴和舌头挤成不同的形状，这会放大或削弱不同的共振。我们能在信号里看到这一点：有些区域更亮，有些区域更暗。如果从下往上，把频谱里的峰标出来——这些峰叫<b>共振峰</b>（formants）——就能看出两个声音的排布很不一样。所有元音都是如此。正是这类信息，让计算机能识别说出来的元音，乃至整个单词。</p>
+  <p class="muted" style="font-size:13px">（字幕把 resonances 译成了"回声"，应为"共振"。条纹是声带振动产生的一根根谐波，共振峰则是这些谐波里被声道放大的那几段。）</p>
+
+  <p>来看个更复杂的例子，比如我说："She……was……happy"（她……很……开心）。我们能在这里看到"咿"的声音，在那里看到"啊"的声音。还能看到一堆其他有特点的声音，比如 she 里的"嘘（sh）"声，was 里的"哇（w）"和"嘶（s）"声，等等。这些组成单词的声音片段叫<b>音素</b>（phonemes）。语音识别软件知道所有这些音素长什么样。英语里大约有 44 个音素，所以这件事基本上归结为高级的模式匹配。然后，你还得把一个个单词分开，弄清句子从哪里开始、到哪里结束……最终，你就把语音转成了文字，从而可以用上这集开头讨论的那些技术。</p>
+
+  <div class="card">
+    <h3>动手：一段合成语音的谱图</h3>
+    <button class="btn" id="sg-play">▶ 播放这段声音</button>
+    <canvas class="plot" id="sg" aria-label="谱图" style="margin-top:8px"></canvas>
+    <div class="step-text" id="sg-cap">横轴是时间，纵轴是频率（0–8000 Hz，下低上高），越亮越响。依次是：<b>sh</b>（嘘）、<b>ee</b>（咿）、<b>a</b>（啊）、<b>s</b>（嘶）。元音是一根根横条纹（谐波），亮的几段就是共振峰；sh、s 这样的摩擦音没有条纹，是一大片高频的"沙沙"噪声，而且 s 比 sh 更靠上。语音识别软件认的就是这些图案。</div>
+  </div>
+  <div class="extra">
+    <span class="t">在浏览器里自己做一个 EQ 可视化</span>
+    Web Audio API 里的 <code>AnalyserNode</code> 内置了 FFT：把麦克风或音乐接进去，每一帧调用 <code>getByteFrequencyData()</code>，就能拿到各个频率当前有多响，画成一排跳动的柱子就是 EQ 可视化；把每一帧的结果从左往右排起来，就是谱图。本页的频谱和谱图是用 JavaScript 自己写的 FFT 算的，原理一样。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>语言模型：happy 还是 harpy？</h2>
+  <p>因为口音、发音错误等原因，人们说同一个词的方式会略有不同。所以，结合<b>语言模型</b>（language model）——包含单词序列统计信息的模型——能大大提高转写的准确率。比如，"she was"后面最可能跟一个形容词，像"happy"；"she was"后面直接跟一个名词的情况并不常见。所以，如果语音识别器拿不准是"happy"（开心）还是"harpy"（鹰身女妖），它会选"happy"，因为语言模型会报告说这是更可能的选择。</p>
+
+  <div class="card lm">
+    <h3>动手：声音说 harpy，语言模型说 happy</h3>
+    <label style="display:flex;gap:10px;align-items:center;font-size:14px">发音更像 happy <input type="range" id="lm-x" min="0" max="1" step="0.001" value="0.6" style="flex:1"> 发音更像 harpy</label>
+    <div class="row"><b></b><b>happy</b><b>harpy</b></div>
+    <div class="row"><span>① 声学：听起来像哪个</span><div class="bar h" id="lm-a1"><i></i><span></span></div><div class="bar" id="lm-a2"><i></i><span></span></div></div>
+    <div class="row"><span>② 语言模型：<br>"she was ___"</span><div class="bar h" id="lm-l1"><i></i><span></span></div><div class="bar" id="lm-l2"><i></i><span></span></div></div>
+    <div class="row"><span>① × ② 合起来</span><div class="bar h" id="lm-c1"><i></i><span></span></div><div class="bar" id="lm-c2"><i></i><span></span></div></div>
+    <div class="step-text" id="lm-cap"></div>
+    <p class="hint" style="margin-bottom:0">语言模型的数字是示意的：在大量英文文本里，"she was happy"比"she was harpy"常见几百倍。</p>
+  </div>
+  <div class="extra">
+    <span class="t">语言模型后来长成了什么</span>
+    "根据前面的词，猜下一个词的概率"——这正是语言模型的定义。把这件事用超大的神经网络、在海量文本上做到极致，就得到了今天的大语言模型（包括制作本页的 Claude）：它们一次生成一个词，每次都在算"接下来最可能是什么"。2017 年时它还只是语音识别里帮忙挑词的配角。它后来怎么长大，见续集<a href="43.html">第 43 集</a>。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>语音合成：反过来，把文字念出来</h2>
+  <p>最后，我们要讲讲<b>语音合成</b>（speech synthesis），也就是让计算机能输出语音。它很像语音识别，只是反过来：我们可以拿一句文字，把它分解成语音成分（音素），然后从计算机扬声器里把这些声音一个接一个地播放出来。在老式的语音合成技术里，你能非常清楚地听出这种<b>音素串联</b>，比如 1937 年贝尔实验室这台手动操作的机器：</p>
+  <p style="padding-left:16px;border-left:3px solid var(--line);color:var(--muted)">"不带感情地说'She saw me'（她看见了我）。"——"She saw me."<br>"现在用它回答这些问题。谁看见你了？"——"<b>She</b> saw me."<br>"她看见了谁？"——"She saw <b>me</b>."<br>"她是看见你还是听见你了？"——"She <b>saw</b> me."</p>
+
+  <div class="card">
+    <h3>动手：把音素拼起来，再加上重音</h3>
+    <span class="seg-btns" id="vd"><button data-s="-1">平淡地说</button><button data-s="0">谁看见你了？</button><button data-s="2">她看见了谁？</button><button data-s="1">看见还是听见？</button></span>
+    <button class="btn" id="vd-play" style="margin-left:8px">▶ 用拼接的音素念</button>
+    <div class="scroll-x" style="margin-top:8px"><svg class="diagram" id="vd-svg" viewBox="0 0 680 170" role="img" aria-label="音素拼接示意"></svg></div>
+    <div class="step-text" id="vd-cap"></div>
+    <div class="btns" id="vd-tts-row"><button class="btn" id="vd-tts">▶ 对比：让浏览器自带的语音合成念</button></div>
+  </div>
+
+  <p>到了 1980 年代，这项技术已经进步了很多，但音素之间不连贯、生硬的衔接，仍然造成了那种标志性的机器人声音。（"Thriller was released in 1983 and sung by Michael Jackson."）如今，像 Siri、Cortana 和 Alexa 这样的计算机合成语音已经好了很多，但还不完全像人。不过我们已经非常、非常接近了，这个问题很可能很快就会被解决。</p>
+  <p>尤其是因为现在语音用户界面正在爆发：在我们的手机里、汽车里、家里，也许很快就直接塞进耳朵里。这种无处不在形成了一个<b>正反馈循环</b>：人们越来越频繁地使用语音交互，这又给了 Google、亚马逊和微软这样的公司更多数据来训练系统，于是准确率更高，于是人们更多地使用语音，于是准确率更高……循环不断继续！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="loop" viewBox="0 0 680 200" role="img" aria-label="语音交互的正反馈循环"></svg></div>
+      <figcaption>图 1　越用越准，越准越用。</figcaption>
+    </figure>
+  </div>
+
+  <p>很多人预测，语音技术会成为和今天的屏幕、键盘、触控板以及其他物理输入输出设备一样常见的交互方式。这对机器人来说尤其是好消息——它们可不想为了和人类交流，走到哪里都得带着个键盘。不过，我们下周再细聊机器人。到时见！</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>自然语言 / NLP</td><td>人类语言词汇大、多义、有口音和省略；NLP 结合计算机科学和语言学</td></tr>
+      <tr><td>词性</td><td>名词、代词、冠词、动词、形容词、副词、介词、连词、感叹词；rose、leaves 这类词有歧义</td></tr>
+      <tr><td>短语结构规则 / 分析树</td><td>用语法规则（句子 = 名词短语 + 动词短语……）拆句子，标出词性和结构</td></tr>
+      <tr><td>知识图谱</td><td>实体和关系组成的网络，用来回答问题、生成句子；2016 年底约 700 亿条事实</td></tr>
+      <tr><td>聊天机器人</td><td>早期靠规则（ELIZA，1960 年代中期），如今用大量真实对话训练</td></tr>
+      <tr><td>语音识别</td><td>Audrey（1952，十个数字）→ IBM 鞋盒（1962，16 个词）→ Harpy（1000+ 词）→ 深度神经网络</td></tr>
+      <tr><td>谱图 / FFT</td><td>把波形变成"各频率随时间的强弱"；元音靠共振峰区分</td></tr>
+      <tr><td>音素</td><td>组成单词的声音片段，英语约 44 个；识别 = 模式匹配 + 分词断句</td></tr>
+      <tr><td>语言模型</td><td>单词序列的统计；帮识别器在 happy / harpy 这类相近发音里挑对</td></tr>
+      <tr><td>语音合成</td><td>识别反过来：文字 → 音素 → 拼起来播放；衔接生硬就是机器人声</td></tr>
+    </tbody>
+  </table>
+
+  <ol class="timeline">
+    <li><span class="yr">1937</span>贝尔实验室的手动操作语音合成机（课程中的年份）</li>
+    <li><span class="yr">1952</span>贝尔实验室 Audrey：慢慢说，能识别十个数字</li>
+    <li><span class="yr">1962</span>IBM 在世界博览会展示鞋盒大小、能识别 16 个词的机器</li>
+    <li><span class="yr">1960s 中期</span>MIT 的 ELIZA 聊天机器人</li>
+    <li><span class="yr">1971</span>DARPA 启动五年资助计划，之后诞生了卡内基梅隆大学的 Harpy（1000+ 词）</li>
+    <li><span class="yr">1980–90s</span>计算机性能大涨，实时连续语音识别变得可行</li>
+    <li><span class="yr">2016</span>Google 知识图谱约有 700 亿条事实</li>
+  </ol>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    让计算机处理语言，就是把它拆成小块：文字用词性和短语结构规则拆成分析树，声音用 FFT 变成谱图、再认出一个个音素；拆完之后，知识图谱提供造句的原料，语言模型帮着在相近的候选里挑最可能的那个。语音合成则把这一切倒过来做。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么光有一本电子词典，计算机还是分不清 "the mongols rose from the leaves" 里 rose 的词性？它还需要什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">词典只能告诉它 rose 可能是名词（玫瑰）或动词（升起）。还需要语法：用短语结构规则（句子 = 名词短语 + 动词短语；名词短语 = 冠词 + 名词……）分析整句，"the mongols"已经是一个完整的名词短语，后面必须是动词短语，所以 rose 只能是动词。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 早期基于规则的聊天机器人（比如 ELIZA）有什么局限？现代的聊天机器人怎么做？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">要专家手写成百上千条"用户说什么 → 怎么回"的规则，很难维护，对话也复杂不起来，碰到规则外的说法就会出可笑的错。现代方法用机器学习，拿大量真实的人与人对话（比如客服记录）来训练。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么识别元音时要看谱图，而不是直接看波形？谱图上靠什么区分"啊"和"咿"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">波形只显示振幅随时间的变化，两个元音的波形虽有差别，但看不出可靠的标志。用 FFT 转成谱图后，能看到每个频率有多响；不同的口型会放大不同的共振，形成不同位置的共振峰——"啊"的第一共振峰高、第二共振峰低，"咿"正好相反。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 语音识别器听不清是 "she was happy" 还是 "she was harpy"，语言模型怎么帮忙？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">语言模型记录了单词序列的统计：在"she was"后面，形容词（如 happy）远比名词常见。识别器把"听起来像哪个"和"在这个位置有多常见"结合起来，于是即使声音上略偏 harpy，也会选 happy。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="35.html"><small>← 上一集</small>35 计算机视觉</a>
+    <a class="next" href="37.html"><small>下一集 →</small>37 机器人</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 36 集 Natural Language Processing（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+
+/* ---------- 分析树 ---------- */
+(function () {
+  const LEX = {
+    the: ['Art'], a: ['Art'], mongols: ['N'], rose: ['N', 'V'], leaves: ['N', 'V'], from: ['Prep'],
+    red: ['Adj'], old: ['Adj'], she: ['Pron'], me: ['Pron'], saw: ['V', 'N'], dog: ['N'], barks: ['V'],
+    on: ['Prep'], table: ['N'], under: ['Prep'], tree: ['N'], fell: ['V'], cat: ['N']
+  };
+  const RULES = {
+    S: [['NP', 'VP']],
+    NP: [['Art', 'N'], ['Art', 'Adj', 'N'], ['Adj', 'N'], ['N'], ['Pron']],
+    VP: [['V'], ['V', 'NP'], ['V', 'PP'], ['V', 'NP', 'PP']],
+    PP: [['Prep', 'NP']]
+  };
+  const ZH = { S: '句子', NP: '名词短语', VP: '动词短语', PP: '介词短语', Art: '冠词', N: '名词', V: '动词', Adj: '形容词', Prep: '介词', Pron: '代词' };
+  const PRE = ['the mongols rose from the leaves', 'the red rose leaves', 'she saw the old saw', 'the dog saw me under the tree', 'the leaves fell'];
+  $('#ps-rules').textContent = Object.entries(RULES).map(([k, v]) => `${k}（${ZH[k]}） → ${v.map(r => r.join(' ')).join('  |  ')}`).join('\n') + '\n\n' +
+    Object.entries(LEX).map(([w, t]) => `${w}: ${t.map(x => ZH[x]).join(' / ')}`).join('   ');
+  $('#ps-pre').innerHTML = PRE.map(s => `<button>${s}</button>`).join('');
+  // 返回所有可能：[树, 下一个位置]
+  function parse(sym, ws, i) {
+    if (!RULES[sym]) return i < ws.length && LEX[ws[i]].includes(sym) ? [[{ t: sym, w: ws[i] }, i + 1]] : [];
+    const out = [];
+    RULES[sym].forEach(rhs => {
+      let partial = [[[], i]];
+      rhs.forEach(s => { const nx = []; partial.forEach(([kids, j]) => parse(s, ws, j).forEach(([tr, k]) => nx.push([[...kids, tr], k]))); partial = nx; });
+      partial.forEach(([kids, j]) => out.push([{ t: sym, kids }, j]));
+    });
+    return out;
+  }
+  function draw(tree) {
+    const svg = $('#ps-tree'); svg.innerHTML = '';
+    const leaves = [];
+    const depth = n => n.kids ? 1 + Math.max(...n.kids.map(depth)) : 0;
+    const D = depth(tree), W = 680, dy = Math.min(56, 240 / D);
+    (function walk(n) { if (n.kids) n.kids.forEach(walk); else leaves.push(n); })(tree);
+    leaves.forEach((n, i) => n.x = 40 + (W - 80) * (leaves.length === 1 ? .5 : i / (leaves.length - 1)));
+    (function pos(n, d) { n.y = 26 + d * dy; if (n.kids) { n.kids.forEach(k => pos(k, d + 1)); n.x = n.kids.reduce((s, k) => s + k.x, 0) / n.kids.length; } })(tree, 0);
+    leaves.forEach(n => n.y = 26 + D * dy);
+    (function lines(n) { if (!n.kids) return; n.kids.forEach(k => { el('line', { x1: n.x, y1: n.y + 12, x2: k.x, y2: k.y - 12, class: 's-line', style: 'stroke-width:1.5;stroke:var(--muted)' }, svg); lines(k); }); })(tree);
+    (function nodes(n) {
+      const leaf = !n.kids;
+      el('rect', { x: n.x - 30, y: n.y - 12, width: 60, height: 24, rx: 7, class: leaf ? 's-on' : 's-acc' }, svg);
+      txt(svg, n.x, n.y + 5, n.t, 't-main mid');
+      txt(svg, n.x, n.y - 16, ZH[n.t], 't-sub mid');
+      if (leaf) { const t = txt(svg, n.x, n.y + 38, n.w, 't-main mid'); t.style.fontFamily = 'var(--mono)'; t.style.fontSize = '15px'; }
+      else n.kids.forEach(nodes);
+    })(tree);
+    svg.setAttribute('viewBox', `0 0 680 ${26 + D * dy + 54}`);
+    return leaves;
+  }
+  function go() {
+    const ws = $('#ps-in').value.toLowerCase().trim().split(/\s+/).filter(Boolean);
+    const unk = ws.filter(w => !LEX[w]);
+    if (!ws.length || unk.length) {
+      $('#ps-chips').innerHTML = ''; $('#ps-tree').innerHTML = '';
+      $('#ps-cap').innerHTML = unk.length ? `词典里没有：<b>${esc(unk.join(', '))}</b>。这个小词典只有十几个词，展开下面的"规则和词典"看看有哪些。` : '先输入一句话。';
+      return;
+    }
+    const ok = parse('S', ws, 0).filter(([, j]) => j === ws.length);
+    if (!ok.length) {
+      $('#ps-tree').innerHTML = '';
+      $('#ps-chips').innerHTML = ws.map(w => `<span><b>${esc(w)}</b>${LEX[w].map(t => `<i>${ZH[t]}</i>`).join('')}</span>`).join('');
+      $('#ps-cap').innerHTML = '每个词都认识，但<b>没有一种组合符合语法规则</b>，画不出分析树。（真实的语法有成百上千条规则，这里只有十几条。）';
+      return;
+    }
+    const leaves = draw(ok[0][0]);
+    $('#ps-chips').innerHTML = ws.map((w, i) => `<span><b>${esc(w)}</b>${LEX[w].map(t => `<i class="${t === leaves[i].t ? 'on' : ''}">${ZH[t]}</i>`).join('')}</span>`).join('');
+    const amb = [...new Set(ws.filter(w => LEX[w].length > 1))];
+    $('#ps-cap').innerHTML = (amb.length ? `词典里 <b>${amb.join('、')}</b> 有不止一种词性（上面灰色的是候选，橙色的是选中的）。按规则能拼成完整句子的只有这一种，歧义就这样被语法消除了。` : '每个词在词典里只有一种词性，规则把它们组装成了树。') +
+      (ok.length > 1 ? `　（这句话其实有 ${ok.length} 种合乎规则的分析，这里画的是第一种——句子本身就有歧义。）` : '');
+  }
+  $('#ps-go').onclick = go;
+  $('#ps-in').onkeydown = e => { if (e.key === 'Enter') go(); };
+  $$('#ps-pre button').forEach(b => b.onclick = () => { $('#ps-in').value = b.textContent; go(); });
+  $('#ps-in').value = PRE[0]; go();
+})();
+
+/* ---------- 意图拆解 ---------- */
+(function () {
+  const PRE = ["where's the nearest pizza", 'what is the biggest giraffe', 'who sang thriller', 'set an alarm for 2:20', 'play T-Swizzle on spotify', "me thinks the mongols doth roam too much, what think ye on this most gentle mid-summer's day?"];
+  $('#ia-pre').innerHTML = PRE.map((s, i) => `<button>${i === PRE.length - 1 ? '莎士比亚腔 …' : s}</button>`).join('');
+  const QW = { where: '哪里（地点）', what: '什么（事物）', who: '谁（人）', when: '什么时候（时间）' };
+  function understand(raw) {
+    const s = raw.toLowerCase().trim().replace(/[?.!]+$/, '');
+    let m;
+    if ((m = s.match(/^set an? alarm for (\d{1,2}:\d{2})$/))) return [['类型', '命令'], ['动作', '设闹钟'], ['时间', m[1]]];
+    if ((m = s.match(/^play (.+) on (\w+)$/))) return [['类型', '命令'], ['动作', '播放'], ['内容', raw.trim().split(/\s+/).slice(1, -2).join(' ')], ['用哪个应用', m[2]]];
+    if ((m = s.match(/^(where|what|who|when)(?:'s| is| are| was)?\s+(.+)$/))) {
+      const ws = m[2].split(/\s+/).filter(w => !['the', 'a', 'an'].includes(w));
+      const rows = [['类型', '提问'], ['问的是', `${m[1]} → ${QW[m[1]]}`]];
+      const sup = ws.find(w => /est$/.test(w));
+      if (sup) rows.push(['关心的维度', sup], ['要找的东西', ws[ws.length - 1]]);
+      else if (ws.length >= 2) rows.push(['关系（动词）', ws[0]], ['对象', ws.slice(1).join(' ')]);
+      else rows.push(['要找的东西', ws.join(' ')]);
+      return rows;
+    }
+    return null;
+  }
+  function go() {
+    const r = understand($('#ia-in').value);
+    $('#ia-out').innerHTML = r ? `<table class="slots">${r.map(([k, v]) => `<tr><td>${k}</td><td>${esc(v)}</td></tr>`).join('')}</table>` :
+      '<div class="step-text">助手："I\'m not sure I got that."（我不太明白。）<br><span class="muted">没有一条规则能套上：开头不是 where / what / who，也不是它认识的命令句式。</span></div>';
+  }
+  $('#ia-go').onclick = go;
+  $('#ia-in').onkeydown = e => { if (e.key === 'Enter') go(); };
+  $$('#ia-pre button').forEach((b, i) => b.onclick = () => { $('#ia-in').value = PRE[i]; go(); });
+  $('#ia-in').value = PRE[0]; go();
+})();
+
+/* ---------- 知识图谱 ---------- */
+(function () {
+  const svg = $('#kg');
+  const N = {
+    th: ['Thriller（单曲）', 230, 50, 'song'], bj: ['Billie Jean（单曲）', 230, 230, 'song'], mj: ['迈克尔·杰克逊', 420, 140, 'person'],
+    y83: ['1983 年', 70, 140, 'year'], gary: ['加里（美国印第安纳州）', 585, 60, 'place'], y58: ['1958 年', 585, 220, 'year']
+  };
+  const E = [['th', '演唱者', 'mj'], ['bj', '演唱者', 'mj'], ['th', '发行于', 'y83'], ['bj', '发行于', 'y83'], ['mj', '出生地', 'gary'], ['mj', '出生于', 'y58']];
+  let sel = null;
+  function sentence(k) {
+    const out = E.filter(e => e[0] === k), inn = E.filter(e => e[2] === k), name = N[k][0].replace(/（单曲）/, '');
+    const get = (rel, list = out) => list.filter(e => e[1] === rel).map(e => N[e[2]][0].replace(/（单曲）/, ''));
+    if (N[k][3] === 'song') return `《${name}》于 ${get('发行于')[0]}发行，由${get('演唱者')[0]}演唱。`;
+    if (N[k][3] === 'person') return `${name}${get('出生于')[0]}出生于${get('出生地')[0]}，演唱过${inn.map(e => '《' + N[e[0]][0].replace(/（单曲）/, '') + '》').join('和')}。`;
+    if (k === 'y83') return `${name}发行的歌曲有：${inn.map(e => '《' + N[e[0]][0].replace(/（单曲）/, '') + '》').join('、')}。`;
+    if (k === 'y58') return `${name}出生的人里，有${inn.map(e => N[e[0]][0]).join('、')}。`;
+    return `${name}是${inn.map(e => N[e[0]][0]).join('、')}的出生地。`;
+  }
+  function draw() {
+    svg.innerHTML = '';
+    E.forEach(([a, r, b]) => {
+      const on = sel && (a === sel || b === sel);
+      const [, x1, y1] = N[a], [, x2, y2] = N[b];
+      el('line', { x1, y1, x2, y2, style: `stroke:${on ? 'var(--on)' : 'var(--line)'};stroke-width:${on ? 3 : 2}` }, svg);
+      const t = txt(svg, (x1 + x2) / 2, (y1 + y2) / 2 - 6, r, 't-sub mid'); if (on) { t.style.fill = 'var(--on)'; t.style.fontWeight = 700; }
+    });
+    Object.entries(N).forEach(([k, [n, x, y, type]]) => {
+      const w = n.length * 13 + 24;
+      const g = el('g', { style: 'cursor:pointer', tabindex: 0, role: 'button', 'aria-label': n }, svg);
+      el('rect', { x: x - w / 2, y: y - 17, width: w, height: 34, rx: 17, style: 'fill:var(--panel)' }, g);
+      el('rect', { x: x - w / 2, y: y - 17, width: w, height: 34, rx: 17, class: k === sel ? 's-on' : type === 'year' || type === 'place' ? 's-panel' : 's-acc' }, g);
+      txt(g, x, y + 5, n, 't-main mid');
+      const pick = () => { sel = k; draw(); $('#kg-cap').innerHTML = `生成的句子：<b>${sentence(k)}</b><br><span class="muted">程序只是沿着和"${n}"相连的橙色边取出事实，套进一个句子模板。</span>`; };
+      g.onclick = pick; g.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } };
+    });
+  }
+  draw();
+})();
+
+/* ---------- 迷你 ELIZA ---------- */
+(function () {
+  const swap = s => s.replace(/我|你/g, c => c === '我' ? '你' : '我');
+  const DEF = ['请继续说。', '我明白。还有呢？', '这对你意味着什么？', '你能举个例子吗？'];
+  let di = 0;
+  const RULES = [
+    ['我觉得 / 我认为 X → 你为什么觉得 X？', /我(觉得|认为)(.+)/, m => `你为什么${m[1]}${swap(m[2])}？`],
+    ['我想 X → 如果你 X 了，会怎么样？', /我想(.+)/, m => `如果你${swap(m[1])}了，会怎么样？`],
+    ['我是 X → 你是 X 多久了？', /我是(.+)/, m => `你是${swap(m[1])}多久了？`],
+    ['我很难过 / 累 / 烦 → 多久了？', /我.{0,2}(难过|伤心|不开心|累|烦|焦虑)/, m => `你${m[1]}多久了？`],
+    ['我很开心 → 是什么让你开心？', /我.{0,2}(开心|高兴|快乐)/, m => `是什么让你这么${m[1]}？`],
+    ['提到家人 → 多说说你的家人', /(妈妈|爸爸|父母|家人|哥哥|姐姐|弟弟|妹妹)/, m => `多说说你的${m[1]}吧。`],
+    ['因为 X → 这是真正的原因吗？', /因为/, () => '这是真正的原因吗？'],
+    ['是 / 对 / 嗯 → 你看起来很肯定', /^(是|对|嗯)/, () => '你看起来很肯定。'],
+    ['说到"你" → 把话题拉回用户', /你/, () => '我们在谈论的是你，不是我。']
+  ];
+  const log = $('#el-log');
+  const add = (cls, html) => { log.insertAdjacentHTML('beforeend', `<div class="m ${cls}">${html}</div>`); log.scrollTop = log.scrollHeight; };
+  function reply(s) {
+    s = s.trim().replace(/[。！？!?.]+$/, '');
+    if (!s) return;
+    add('u', esc(s));
+    for (const [name, re, f] of RULES) { const m = s.match(re); if (m) { add('b', `${esc(f(m))}<small>命中规则：${name}</small>`); return; } }
+    add('b', `${DEF[di++ % DEF.length]}<small>没有规则命中，用默认回复</small>`);
+  }
+  const PRE = ['我觉得最近学习压力很大', '因为我妈妈总催我', '我想换个工作', '你是机器人吗', '我是说你根本没听懂我的话'];
+  $('#el-pre').innerHTML = PRE.map(s => `<button>${s}</button>`).join('');
+  $$('#el-pre button').forEach(b => b.onclick = () => reply(b.textContent));
+  const send = () => { reply($('#el-in').value); $('#el-in').value = ''; };
+  $('#el-go').onclick = send;
+  $('#el-in').onkeydown = e => { if (e.key === 'Enter') send(); };
+  add('b', '你好，我是 ELIZA。今天有什么想聊的？<small>开场白</small>');
+})();
+
+/* ---------- 声音合成与 FFT ---------- */
+const SR = 16000;
+const VOWELS = { a: [730, 1090, 2440], i: [270, 2290, 3010], aw: [570, 840, 2410], m: [250, 1200, 2200] };
+function voice(F, dur, f0 = 120, amp = 1, gains = [1, .6, .25]) {
+  const n = Math.round(dur * SR), out = new Float32Array(n), K = Math.floor(6000 / f0);
+  const A = [], ph = [];
+  for (let k = 1; k <= K; k++) {
+    const f = k * f0;
+    A[k] = F.reduce((s, Fi, j) => s + gains[j] * Math.exp(-(((f - Fi) / 110) ** 2)), 0) + .03 * Math.exp(-f / 1500);
+    ph[k] = (k * 2.39996) % (2 * Math.PI);
+  }
+  for (let i = 0; i < n; i++) { let s = 0; const t = i / SR; for (let k = 1; k <= K; k++) s += A[k] * Math.sin(2 * Math.PI * k * f0 * t + ph[k]); out[i] = s; }
+  return norm(out, amp);
+}
+function hiss(lo, hi, dur, amp = .5, seed = 1) {
+  const n = Math.round(dur * SR), out = new Float32Array(n);
+  let r = seed; const R = () => (r = (r * 16807) % 2147483647) / 2147483647;
+  const comps = Array.from({ length: 90 }, () => [lo + R() * (hi - lo), R() * 6.283]);
+  for (let i = 0; i < n; i++) { let s = 0; const t = i / SR; comps.forEach(([f, p]) => s += Math.sin(2 * Math.PI * f * t + p)); out[i] = s; }
+  return norm(out, amp);
+}
+function norm(a, amp) { let m = 0; a.forEach(v => m = Math.max(m, Math.abs(v))); const k = amp / (m || 1), f = Math.round(.012 * SR); for (let i = 0; i < a.length; i++) { const e = Math.min(1, i / f, (a.length - 1 - i) / f); a[i] *= k * e; } return a; }
+function concat(parts) { const n = parts.reduce((s, p) => s + p.length, 0), out = new Float32Array(n); let o = 0; parts.forEach(p => { out.set(p, o); o += p.length; }); return out; }
+const silence = d => new Float32Array(Math.round(d * SR));
+function fft(re, im) {
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++) { let b = n >> 1; for (; j & b; b >>= 1) j ^= b; j ^= b; if (i < j) { [re[i], re[j]] = [re[j], re[i]]; [im[i], im[j]] = [im[j], im[i]]; } }
+  for (let len = 2; len <= n; len <<= 1) {
+    const a = -2 * Math.PI / len, wr = Math.cos(a), wi = Math.sin(a);
+    for (let i = 0; i < n; i += len) { let cr = 1, ci = 0; for (let j = 0; j < len / 2; j++) { const k = i + j + len / 2, tr = re[k] * cr - im[k] * ci, ti = re[k] * ci + im[k] * cr; re[k] = re[i + j] - tr; im[k] = im[i + j] - ti; re[i + j] += tr; im[i + j] += ti; const nc = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = nc; } }
+  }
+}
+function spectrum(sig, start, N) {
+  const re = new Float64Array(N), im = new Float64Array(N);
+  for (let i = 0; i < N; i++) re[i] = (sig[start + i] || 0) * (.5 - .5 * Math.cos(2 * Math.PI * i / (N - 1)));
+  fft(re, im);
+  return Array.from({ length: N / 2 }, (_, k) => Math.hypot(re[k], im[k]));
+}
+let AC = null;
+function play(sig) {
+  try {
+    AC = AC || new (window.AudioContext || window.webkitAudioContext)();
+    const b = AC.createBuffer(1, sig.length, SR); b.copyToChannel(sig, 0);
+    const s = AC.createBufferSource(); s.buffer = b; const g = AC.createGain(); g.gain.value = .35;
+    s.connect(g).connect(AC.destination); s.start();
+  } catch (e) { /* 没有音频也不影响看图 */ }
+}
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function prepCanvas(cv, w, h) { const d = Math.min(2, devicePixelRatio || 1); cv.width = w * d; cv.height = h * d; const c = cv.getContext('2d'); c.setTransform(d, 0, 0, d, 0, 0); return c; }
+
+/* ---------- 元音：波形与频谱 ---------- */
+(function () {
+  let cur = 'a';
+  const SIG = { a: voice(VOWELS.a, .7), i: voice(VOWELS.i, .7) };
+  function draw() {
+    $$('#vw button').forEach(b => b.classList.toggle('sel', b.dataset.v === cur));
+    const sig = SIG[cur], ink = css('--ink'), acc = css('--accent'), on = css('--on'), mu = css('--muted');
+    // 波形
+    let c = prepCanvas($('#vw-wave'), 640, 120);
+    c.clearRect(0, 0, 640, 120); c.strokeStyle = mu; c.globalAlpha = .4; c.beginPath(); c.moveTo(0, 60); c.lineTo(640, 60); c.stroke(); c.globalAlpha = 1;
+    c.strokeStyle = acc; c.lineWidth = 1.5; c.beginPath();
+    const n = Math.round(.03 * SR), off = 2000;
+    for (let i = 0; i < n; i++) { const x = i / n * 640, y = 60 - sig[off + i] * 52; i ? c.lineTo(x, y) : c.moveTo(x, y); }
+    c.stroke();
+    // 频谱
+    const N = 4096, sp = spectrum(sig, 1500, N), maxF = 4000, bins = Math.round(maxF / SR * N);
+    const mx = Math.max(...sp.slice(0, bins));
+    c = prepCanvas($('#vw-spec'), 640, 170);
+    c.clearRect(0, 0, 640, 170);
+    c.strokeStyle = on; c.lineWidth = 1.3; c.beginPath();
+    for (let k = 0; k < bins; k++) { const x = k / bins * 640, y = 150 - sp[k] / mx * 130; k ? c.lineTo(x, y) : c.moveTo(x, y); }
+    c.stroke();
+    c.fillStyle = mu; c.font = '11px ui-monospace,monospace';
+    for (let f = 0; f <= 4000; f += 1000) c.fillText(f + ' Hz', Math.min(590, f / maxF * 640 + 2), 166);
+    c.fillStyle = ink; c.font = '600 13px sans-serif';
+    VOWELS[cur].forEach((F, i) => { if (F > maxF) return; const x = F / maxF * 640; c.fillText('F' + (i + 1), x - 8, 14); c.strokeStyle = ink; c.setLineDash([3, 3]); c.beginPath(); c.moveTo(x, 18); c.lineTo(x, 150); c.stroke(); c.setLineDash([]); });
+    const [F1, F2] = VOWELS[cur];
+    $('#vw-cap').innerHTML = `<b>${cur === 'a' ? '啊' : '咿'}</b>：第一共振峰 F1 ≈ ${F1} Hz，第二共振峰 F2 ≈ ${F2} Hz。` + (cur === 'a' ? '嘴张得大，F1 高；舌头靠后，F2 低，两个峰挨得近。' : '嘴张得小，F1 很低；舌头往前顶，F2 很高，两个峰离得很远。') +
+      '　切换一下：波形只是"换了个花纹"，频谱上两座峰的位置却一眼就能区分。频谱上那一根根密集的尖刺，就是每隔 120 Hz 一根的谐波——谱图里的"条纹"。';
+  }
+  $$('#vw button').forEach(b => b.onclick = () => { cur = b.dataset.v; draw(); });
+  $('#vw-play').onclick = () => play(SIG[cur]);
+  draw();
+})();
+
+/* ---------- 谱图 ---------- */
+(function () {
+  const sig = concat([hiss(1800, 4200, .28, .45, 3), voice(VOWELS.i, .38), silence(.06), voice(VOWELS.a, .38), silence(.04), hiss(4200, 7600, .28, .45, 7)]);
+  const N = 512, hop = 128, cols = Math.floor((sig.length - N) / hop);
+  const cv = $('#sg'), W = 640, H = 220, c = prepCanvas(cv, W, H);
+  const frames = []; let mx = 0;
+  for (let i = 0; i < cols; i++) { const s = spectrum(sig, i * hop, N).map(v => Math.log10(v + 1e-3)); frames.push(s); s.forEach(v => mx = Math.max(mx, v)); }
+  const lo = mx - 3.2;
+  const col = v => { v = Math.max(0, Math.min(1, (v - lo) / (mx - lo))); return `rgb(${Math.round(255 * Math.min(1, v * 1.5))},${Math.round(255 * Math.max(0, v * 1.6 - .6))},${Math.round(60 + 140 * v * (1 - v) * 2)})`; };
+  const cw = W / cols, bins = N / 2, ch = (H - 20) / bins;
+  c.fillStyle = '#05060a'; c.fillRect(0, 0, W, H);
+  frames.forEach((s, i) => s.forEach((v, k) => { c.fillStyle = col(v); c.fillRect(i * cw, H - 20 - (k + 1) * ch, cw + .6, ch + .6); }));
+  c.fillStyle = '#fff'; c.font = '600 13px ui-monospace,monospace';
+  const marks = [['sh', .14], ['ee', .47], ['a', .91], ['s', 1.26]], total = sig.length / SR;
+  marks.forEach(([s, t]) => c.fillText(s, t / total * W - 6, H - 5));
+  $('#sg-play').onclick = () => play(sig);
+})();
+
+/* ---------- 语言模型 ---------- */
+(function () {
+  const LM = [.03, .00005]; // P(happy | she was), P(harpy | she was)（示意）
+  const set = (id, v, text) => { const b = $(id); b.querySelector('i').style.width = (v * 100) + '%'; b.querySelector('span').textContent = text; };
+  function upd() {
+    const x = +$('#lm-x').value, A = [1 - x, x];
+    const C = [A[0] * LM[0], A[1] * LM[1]], s = C[0] + C[1], P = [C[0] / s, C[1] / s];
+    set('#lm-a1', A[0], (A[0] * 100).toFixed(1) + '%'); set('#lm-a2', A[1], (A[1] * 100).toFixed(1) + '%');
+    set('#lm-l1', 1, '3%'); set('#lm-l2', LM[1] / LM[0], '0.005%');
+    set('#lm-c1', P[0], (P[0] * 100).toFixed(2) + '%'); set('#lm-c2', P[1], (P[1] * 100).toFixed(2) + '%');
+    const pick = P[0] >= P[1] ? 'happy' : 'harpy';
+    $('#lm-cap').innerHTML = `最终选择："she was <b>${pick}</b>"。` + (pick === 'happy' ? (x > .5 ? '　虽然声音上更像 harpy，语言模型的票更重，结果还是 happy。要把滑块拖到几乎最右边，harpy 才能赢。' : '') : '　声音已经几乎百分之百是 harpy 了，语言模型才让步。');
+  }
+  $('#lm-x').oninput = upd; upd();
+})();
+
+/* ---------- 音素拼接 + 重音 ---------- */
+(function () {
+  // 三个词：she = sh + ee，saw = s + aw，me = m + ee
+  const WORDS = [['she', [['sh', 'hiss', 1800, 4200, .18], ['ee', 'v', 'i', .26]]], ['saw', [['s', 'hiss', 4200, 7600, .18], ['aw', 'v', 'aw', .28]]], ['me', [['m', 'v', 'm', .12], ['ee', 'v', 'i', .26]]]];
+  let stress = -1;
+  const build = () => {
+    const parts = [], segs = [];
+    WORDS.forEach(([w, ph], wi) => {
+      const st = wi === stress, f0 = st ? 150 : 110, amp = st ? 1 : .55, k = st ? 1.35 : 1;
+      ph.forEach(([p, kind, a, b, d]) => {
+        const dur = (kind === 'hiss' ? d : b) * k;
+        const sig = kind === 'hiss' ? hiss(a, b, dur, amp * .5, 5 + parts.length) : voice(VOWELS[a], dur, f0, amp * (a === 'm' ? .45 : 1), a === 'm' ? [1, .08, .04] : undefined);
+        segs.push({ p, w, dur, amp: kind === 'hiss' ? amp * .5 : amp * (a === 'm' ? .45 : 1), f0: kind === 'hiss' ? null : f0, st });
+        parts.push(sig);
+      });
+      parts.push(silence(.07)); segs.push({ gap: .07 });
+    });
+    return [concat(parts), segs];
+  };
+  function draw() {
+    $$('#vd button').forEach(b => b.classList.toggle('sel', +b.dataset.s === stress));
+    const [, segs] = build(), svg = $('#vd-svg'); svg.innerHTML = '';
+    const total = segs.reduce((s, g) => s + (g.gap || g.dur), 0), X0 = 20, W = 640;
+    let x = X0;
+    segs.forEach(g => {
+      const w = (g.gap || g.dur) / total * W;
+      if (!g.gap) {
+        const h = 24 + g.amp * 62;
+        el('rect', { x: x + 1, y: 120 - h, width: w - 2, height: h, rx: 6, class: g.st ? 's-on' : g.f0 ? 's-acc' : 's-panel' }, svg);
+        txt(svg, x + w / 2, 120 - h / 2 + 5, g.p, 't-main mid');
+        if (g.f0) txt(svg, x + w / 2, 140, g.f0 + ' Hz', 't-sub mid');
+      }
+      x += w;
+    });
+    let wx = X0;
+    WORDS.forEach(([wd], wi) => {
+      const ws = segs.filter(g => g.w === wd), wdur = ws.reduce((s, g) => s + g.dur, 0) / total * W;
+      const t = txt(svg, wx + wdur / 2, 162, wd, 't-main mid'); if (wi === stress) t.style.fill = 'var(--on)';
+      wx += wdur + .07 / total * W;
+    });
+    txt(svg, X0, 18, '方块高度 = 音量，宽度 = 时长，下面是音高（摩擦音没有音高）', 't-sub');
+    $('#vd-cap').innerHTML = stress < 0 ? '平淡地说：三个词一样高、一样响、一样长。' :
+      `重音落在 <b>${WORDS[stress][0]}</b> 上：这个词的音高从 110 Hz 提到 150 Hz，更响、更长。1937 年那台机器的操作员，就是用脚踏板和按键实时调这些参数的。` +
+      '　听一听：音素之间是硬接上去的，没有自然过渡——这就是"机器人声"。';
+  }
+  $$('#vd button').forEach(b => b.onclick = () => { stress = +b.dataset.s; draw(); });
+  $('#vd-play').onclick = () => play(build()[0]);
+  if (!('speechSynthesis' in window)) $('#vd-tts-row').style.display = 'none';
+  $('#vd-tts').onclick = () => { try { const u = new SpeechSynthesisUtterance('She saw me.'); u.lang = 'en-US'; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) { } };
+  draw();
+})();
+
+/* ---------- 正反馈循环 ---------- */
+(function () {
+  const svg = $('#loop');
+  const P = [[340, 34, '更多人用语音'], [560, 100, '公司拿到更多数据'], [340, 166, '训练出更准的系统'], [120, 100, '用起来更顺手']];
+  for (let i = 0; i < 4; i++) {
+    const [x1, y1] = P[i], [x2, y2] = P[(i + 1) % 4];
+    const mx = (x1 + x2) / 2 + (i === 0 || i === 3 ? 1 : -1) * 0, my = (y1 + y2) / 2;
+    const cx = mx + (i % 2 === 0 ? (x2 > x1 ? 40 : -40) : (x2 > x1 ? 40 : -40)), cy = my + (y2 > y1 ? -30 : 30);
+    el('path', { d: `M${x1 + (x2 > x1 ? 60 : -60)},${y1} Q${cx},${cy} ${x2},${y2 + (y2 > y1 ? -18 : 18)}`, class: 's-line', style: 'stroke-width:2;stroke:var(--on)' }, svg);
+    const ax = x2, ay = y2 + (y2 > y1 ? -18 : 18), dir = y2 > y1 ? -1 : 1;
+    el('path', { d: `M${ax - 6},${ay + dir * 8} L${ax},${ay} L${ax + 6},${ay + dir * 8}`, class: 's-line', style: 'stroke-width:2;stroke:var(--on)' }, svg);
+  }
+  P.forEach(([x, y, s]) => { el('rect', { x: x - 72, y: y - 16, width: 144, height: 32, rx: 16, class: 's-acc' }, svg); txt(svg, x, y + 5, s, 't-main mid'); });
+})();
+</script>
+</body>
+</html>

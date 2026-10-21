@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>32 黑客与攻击 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.row-ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 0;font-size:14px}
+.row-ctl input[type=text]{font:15px var(--mono);padding:5px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:0;max-width:100%}
+.row-ctl label{display:flex;align-items:center;gap:6px}
+/* 钓鱼 */
+.phish{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:600px){.phish{grid-template-columns:1fr}}
+.win{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--panel)}
+.win .bar{display:flex;align-items:center;gap:7px;padding:7px 10px;background:var(--bg);border-bottom:1px solid var(--line);font:12px var(--mono)}
+.win .d3{display:flex;gap:4px;flex:none}.win .d3 i{width:9px;height:9px;border-radius:50%;background:var(--wire);display:block}
+.win .url{flex:1;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.win .url .lock{color:var(--ok)}.win .url .no{color:var(--bad)}
+.win .body{padding:18px 16px;text-align:center}
+.win .body .logo{font-weight:700;font-size:16px;margin-bottom:12px}
+.win .body .f{height:26px;border:1px solid var(--line);border-radius:6px;background:var(--bg);margin:7px auto;max-width:210px}
+.win .body .sub{font-size:12px;color:var(--muted);margin-top:4px}
+.win .tag{font-size:13px;padding:8px 12px;border-top:1px solid var(--line);min-height:20px}
+.win.show.real .tag{color:var(--ok)}.win.show.fake .tag{color:var(--bad)}
+.win.show.fake{border-color:var(--bad)}.win.show.real{border-color:var(--ok)}
+.win .tag .hid{display:none}.win.show .tag .hid{display:inline}.win.show .tag .ini{display:none}
+.win.show.fake .url{background:var(--bad-soft)}
+/* 内存条 */
+.mem{display:flex;gap:10px;overflow-x:auto;padding:8px 2px;align-items:flex-end}
+.mem .grp{display:flex;flex-direction:column;align-items:center;gap:4px;flex:none}
+.mem .grp .lbl{font-size:11px;color:var(--muted);white-space:nowrap}
+.mem .cells{display:flex;gap:2px}
+.mem .cell{width:26px;height:34px;border:1px solid var(--line);border-radius:5px;display:flex;align-items:center;justify-content:center;background:var(--panel);font:13px var(--mono)}
+.mem .cell.fill{background:var(--accent-soft);border-color:var(--accent)}
+.mem .cell.over{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);font-weight:700}
+.mem .cell.canary{background:var(--on-soft);border-color:var(--on);font-weight:700}
+.mem .cell.flag{background:var(--ok-soft);border-color:var(--ok)}
+.mem .cell.flag.hot{background:var(--bad-soft);border-color:var(--bad);color:var(--bad);font-weight:700}
+.mem .grp.flag .cell{width:auto;padding:0 8px}
+/* SQL */
+.sqlq{font:14px/1.95 var(--mono);background:var(--bg);border-radius:10px;padding:12px 14px;word-break:break-all;margin:10px 0}
+.sqlq .inj{color:var(--bad);font-weight:700}
+.sqlq .kw{color:var(--accent);font-weight:700}
+.sqlq .cmt{color:var(--muted)}
+.sqlq .str{color:var(--ok)}
+.tbls{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tbl{border:1px solid var(--line);border-radius:8px;padding:5px 12px;font:13px var(--mono);background:var(--panel)}
+.tbl.gone{text-decoration:line-through;color:var(--bad);border-color:var(--bad);background:var(--bad-soft)}
+.tbl b{color:var(--on)}
+/* DDoS */
+.ddos-ctl{margin:8px 0}
+</style>
+</head>
+<body data-ep="32">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=33" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 32 集</div>
+  <h1>黑客与攻击</h1>
+  <p class="en">Hackers &amp; Cyber Attacks</p>
+  <p class="lead">上一集讲了怎么保护系统，这一集反过来，看看攻击者是怎么进来的。最常见的办法根本不是"黑"，而是骗人；其余的则是钻程序的漏洞。了解这些经典套路，不是为了去攻击谁，而是为了认得出它们、挡得住它们。</p>
+  <div class="road">
+    <span>白帽与黑帽</span><i>→</i><span>社会工程学</span><i>→</i><span>木马</span><i>→</i><span>暴力破解</span><i>→</i><span>缓冲区溢出</span><i>→</i><span>代码注入</span><i>→</i><span>蠕虫与僵尸网络</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 白帽、黑帽与动机</a></li>
+    <li><a href="#ch1">1 · 社会工程学</a></li>
+    <li><a href="#ch2">2 · 木马与恶意软件</a></li>
+    <li><a href="#ch3">3 · 暴力破解</a></li>
+    <li><a href="#ch4">4 · 缓冲区溢出</a></li>
+    <li><a href="#ch5">5 · 代码注入</a></li>
+    <li><a href="#ch6">6 · 蠕虫与僵尸网络</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>不是所有黑客都是坏人</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！上一集我们讲了计算机安全的基础知识，也就是用来让系统平安无事的各种原则和技术。但尽管大家尽了最大努力，新闻里还是充满了个人、公司和政府被黑客攻击的故事。这些黑客，凭着自己的技术知识，闯进了计算机系统。</p>
+  <p>不过，并不是所有黑客都是坏人。有些黑客专门寻找漏洞、设法堵上软件里的安全漏洞，让系统更安全、更有韧性，他们常被公司和政府雇来做安全评估。这些黑客叫<b>白帽</b>（White Hat），他们是好人。另一面是<b>黑帽</b>（Black Hat）：怀着窃取、利用、贩卖计算机漏洞和数据的意图的恶意黑客。黑客的动机也千差万别：有人是为了好玩和好奇；网络罪犯大多是为了钱；还有<b>黑客行动主义者</b>（hacktivist），用技术去推动某个社会或政治目标。而这些还只是冰山一角。</p>
+  <p>基本上，那种"黑客是一个待在堆满披萨盒的黑屋子里、不受欢迎的小孩"的刻板印象，拿来形容大学时代的 John Green 可能还更贴切些，而不是真正的黑客。</p>
+  <p>今天，我们不会教你怎么成为黑客。我们要做的，是讨论几个经典的例子，说明黑客是怎么闯进计算机系统的，让你对这件事有个大致概念——这样你才知道该防什么。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="hats" viewBox="0 0 680 190" role="img" aria-label="白帽、黑帽与黑客行动主义者"></svg></div>
+      <figcaption>图 1　同样的技术，不同的帽子：差别在动机和是否获得授权。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>社会工程学：骗，比黑更容易</h2>
+  <p>保护计算机系统、网络和数据的办法有很多，但黑客进入系统最常见的方式，根本不是去"黑"——而是骗用户把他们放进来。这叫<b>社会工程学</b>（social engineering）：通过操纵，让一个人泄露机密信息，或者把计算机系统配置成允许攻击者进入的样子。</p>
+  <p>最常见的一种攻击是<b>网络钓鱼</b>（phishing）。你最常遇到的形式是一封邮件，叫你登录某个网站的账户，比如你的银行。邮件会让你点里面的一个链接，把你带到一个在不仔细看的人眼里很正规的网站，但它其实是个<b>恶意的克隆</b>。当你输入用户名和密码时，这些信息就直接发给了黑客，然后他们就能以你的身份登录真正的网站。坏消息！即使成功率只有千分之一，发一百万封钓鱼邮件，也可能骗到一千个账户。</p>
+
+  <div class="card">
+    <h3>动手：这两个登录页，哪个是假的？</h3>
+    <p class="hint" style="margin-top:0">两个页面长得几乎一模一样。先别急着看地址栏，想想该从哪里看出破绽，再点下面的按钮揭晓。</p>
+    <div class="phish">
+      <div class="win" id="win-a">
+        <div class="bar"><span class="d3"><i></i><i></i><i></i></span><span class="url"><span class="lock">🔒 </span>https://www.<b>mybank</b>.com/login</span></div>
+        <div class="body"><div class="logo">🏦 MyBank 网上银行</div><div class="f"></div><div class="f"></div><div class="sub">请输入用户名和密码</div></div>
+        <div class="tag"><span class="ini">A 页</span><span class="hid"></span></div>
+      </div>
+      <div class="win" id="win-b">
+        <div class="bar"><span class="d3"><i></i><i></i><i></i></span><span class="url"><span class="no">🔓 </span>http://www.mybank.<b>secure-login</b>.com/login</span></div>
+        <div class="body"><div class="logo">🏦 MyBank 网上银行</div><div class="f"></div><div class="f"></div><div class="sub">请输入用户名和密码</div></div>
+        <div class="tag"><span class="ini">B 页</span><span class="hid"></span></div>
+      </div>
+    </div>
+    <div class="btns"><button class="btn primary" id="ph-go">揭晓</button><button class="btn" id="ph-r">重来</button></div>
+    <div class="step-text" id="ph-cap">页面内容能一字不差地照抄，唯一骗不了人的是地址栏。</div>
+  </div>
+
+  <div class="extra">
+    <span class="t">浏览器和习惯怎么帮你挡钓鱼</span>
+    真正要看的是<b>域名的主体部分</b>：<code>mybank.secure-login.com</code> 的主体是 <code>secure-login.com</code>，<code>mybank</code> 只是它的子域名，和真正的 <code>mybank.com</code> 毫无关系。此外：地址栏的小锁只代表"传输加密"，不代表"这家是真的"；浏览器的安全浏览（Safe Browsing）会拦下已知的钓鱼站；而<b>密码管理器</b>有个隐藏的好处——它只在域名完全匹配时才自动填充，域名一不对就不填，相当于替你多看了一眼。
+  </div>
+
+  <p>另一种社会工程学攻击叫<b>假托</b>（pretexting）：攻击者打电话给一家公司，然后信心十足地假装自己是他们 IT 部门的人。攻击者常常先打第一个号码，再请对方把电话转接到第二个号码，这样接电话的人看到的号码就像是公司内部的。然后，攻击者就能指挥一个毫不知情的用户把电脑配置成容易被攻击的样子，或者让他们泄露密码、网络配置之类的机密细节。</p>
+  <p style="color:var(--muted);font-style:italic">——不好意思，等一下。哦，嘿，我是 IT 部门的 Susan。我们这边遇到点网络问题，你能帮我查一个设置吗？……然后，就开始了。</p>
+  <p>攻击者可以装得非常像真的，尤其是事先做一点功课，查到关键员工的名字之类的信息。也许要打十个电话才能找到一个上当的人，但只要一个人中招就够进去了。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>木马与恶意软件</h2>
+  <p>邮件也是<b>木马</b>（trojan horse）常见的投送方式。木马是伪装成无害附件的程序，比如一张照片或一份发票，实际上却装着恶意软件，也就是 <b>malware</b>。恶意软件有很多种形态：有的会偷你的数据，比如你的银行凭证；有的会加密你的文件，然后勒索赎金，这就是所谓的<b>勒索软件</b>（ransomware）。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="trojan" viewBox="0 0 680 180" role="img" aria-label="木马伪装与恶意软件的几种形态"></svg></div>
+      <figcaption>图 2　一个看起来人畜无害的附件，点开后可能是偷数据的、加密勒索的，或是把你变成僵尸网络一员的。</figcaption>
+    </figure>
+  </div>
+
+  <p>这里的关键词是<b>伪装</b>：文件图标、后缀、名字都可以造假，一个叫 <code>发票.pdf.exe</code> 的文件，在默认隐藏后缀的系统里看起来就是一张 PDF。所以上一集那条底线依旧成立——<b>永远不要点陌生邮件里的附件和链接</b>。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>硬闯：暴力破解与 NAND 镜像</h2>
+  <p>如果攻击者没法运行恶意软件，也骗不到用户放他进来，那就只能用别的手段强行闯入了。其中一种方法我们上一集简单讲过，就是<b>暴力破解</b>密码：把所有密码组合挨个试一遍，直到进去为止。大多数现代系统会这样防御这类攻击——每失败一次，就让你等更久一点，甚至在失败一定次数后干脆把你锁在外面。</p>
+  <p>最近有一种绕过这种防御的攻破方法，叫 <b>NAND 镜像</b>（NAND Mirroring）：如果你能物理接触到这台计算机，就可以往它的内存芯片上接几根线，把里面的内容完整复制一份。有了这套装置，你就可以试一串密码，直到设备开始让你等待；一旦这样，你就把之前复制的原始内容重新刷回内存，相当于把它重置了，于是可以立刻、不用等待地继续试更多密码。这项技术曾被证明在 iPhone 5C 上奏效，但许多更新的设备已经加入了阻止这类攻击的机制。</p>
+
+  <div class="card">
+    <h3>动手：锁定为什么拦得住一台机器，却拦不住 NAND 镜像</h3>
+    <div class="row-ctl"><span>攻击方式</span><span class="seg-btns" id="nm-mode"><button data-m="lock">普通暴力破解（有锁定）</button><button data-m="nand">NAND 镜像</button></span></div>
+    <div class="scroll-x"><svg class="diagram" id="nm-svg" viewBox="0 0 680 160" role="img" aria-label="锁定计时器与 NAND 镜像"></svg></div>
+    <div class="btns"><button class="btn primary" id="nm-try">试一个密码</button><button class="btn" id="nm-r">重来</button></div>
+    <div class="step-text" id="nm-cap"></div>
+  </div>
+
+  <p>这个演示里的"密码"只是示意，重点是那条等待时间：锁定机制靠的是"越错越慢"，而 NAND 镜像通过不断把内存刷回原样，把这条计时器清零，于是防御就失效了。这也说明一个道理——一旦攻击者能<b>物理接触</b>设备，很多软件层面的防御都会松动，所以上一集才强调，面对"能接触设备、时间无限"的威胁模型，真正能依靠的是加密（下一集的主题）。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>缓冲区溢出</h2>
+  <p>如果你没法物理接触一台设备，就得想办法远程攻击它，比如通过互联网。一般来说，这需要攻击者找到并利用系统里的一个 bug。成功利用一个 bug 来获得某种能力或访问权，就叫一次<b>漏洞利用</b>（exploit）。</p>
+  <p>一种常见的漏洞利用是<b>缓冲区溢出</b>（buffer overflow）。"缓冲区"是个统称，指预留出来存放数据的一块内存。我们在<a href="23.html">第 23 集</a>讲过存像素数据的视频缓冲区。举个简单的例子，想象一个操作系统的登录界面，有用户名和密码两个输入框。在幕后，这个操作系统用缓冲区来存放输入进来的文本值。为了方便说明，假设这些缓冲区被定在大小为 10。于是在内存里，这两个文本缓冲区大概长这样。当然，操作系统记录的远不止用户名和密码，所以内存里这两个缓冲区的前后还会存着别的数据。</p>
+  <p>当用户输入用户名和密码时，这些值会被复制进缓冲区，在那里接受校验。而<b>缓冲区溢出攻击</b>做的正是它名字所说的事：把缓冲区撑爆。在这个例子里，任何长度超过 10 个字符的密码，都会覆盖掉内存里相邻的数据。有时这只会让程序或操作系统崩溃，因为重要的值被一堆乱码覆盖掉了。让系统崩溃是坏事，也许一个搞恶作剧的黑客想要的就只是这个——当个讨厌鬼。</p>
+  <p>但攻击者也可以更聪明地利用这个 bug，往程序内存里注入<b>有意的新值</b>，比如把一个"是否管理员"（is_admin）的变量设成 true。一旦有了任意篡改程序内存的能力，黑客就能绕过登录之类的检查，有时甚至能利用那个程序劫持整个系统。</p>
+
+  <div class="card">
+    <h3>动手：把密码撑出缓冲区</h3>
+    <div class="row-ctl"><label>密码 <input type="text" id="bo-in" value="hunter2" maxlength="22" aria-label="密码"></label><button class="btn" id="bo-evil">构造恶意输入</button></div>
+    <div class="row-ctl"><span>防御</span><span class="seg-btns" id="bo-def"><button data-d="none">无</button><button data-d="bounds">边界检查</button><button data-d="canary">金丝雀</button></span></div>
+    <div class="scroll-x"><div class="mem" id="bo-mem"></div></div>
+    <div class="step-text" id="bo-cap"></div>
+  </div>
+
+  <p>对付缓冲区溢出的方法有很多。最简单的是在把输入复制进缓冲区之前，总是先检查它的长度，这叫<b>边界检查</b>（bounds checking）。许多现代编程语言会自动做边界检查。程序还可以把变量（比如我们假设的那个 is_admin 标志）在内存里的位置随机化，这样黑客就不知道该覆盖哪块内存，结果更可能是把程序搞崩，而不是拿到访问权。程序也可以在缓冲区后面留一些不用的空间，盯着这些值看它们有没有变化；一旦变了，就知道有攻击者在乱动内存。这些不用的内存区域叫<b>金丝雀</b>（canary），得名于矿工从前带下矿井、用来预警危险的小鸟。</p>
+
+  <div class="extra">
+    <span class="t">为什么你写前端时不太会碰到它</span>
+    缓冲区溢出几乎是 C/C++ 这类"你自己管内存"的语言的专利。JavaScript、Python、Java、Rust 等语言默认就做边界检查、或根本不让你直接操作裸内存，数组越界会抛异常而不是悄悄覆盖别的数据。所以前端日常很少直接遇到它——但你用的运行时、解析库底层往往还是 C 写的，这也是为什么浏览器的安全更新那么频繁。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>代码注入</h2>
+  <p>另一种经典手段是<b>代码注入</b>（code injection）。它最常用来攻击使用数据库的网站，而几乎所有大网站都用数据库。我们这个系列不会专门讲数据库，所以这里用一个简单的例子来说明这类攻击。我们会用<b>结构化查询语言</b>（Structured Query Language，SQL，也念作 sequel），一种流行的数据库接口。</p>
+  <p>想象我们的登录界面现在跑在一个网页上。当用户点"登录"时，文本值被发到服务器，服务器执行代码，检查这个用户名是否存在，如果存在，再核对密码是否匹配。为此，服务器会执行一段叫 <b>SQL 查询</b>的代码。首先，它要指明我们从数据库里取什么数据——在这个例子里，我们要取密码（<code>SELECT password</code>）。它还要指明从数据库的什么地方取——这里假设所有用户数据都存在一个叫 <code>users</code> 的表里（<code>FROM users</code>）。最后，服务器不想取回数据库里每个用户的一长串密码，所以它指定只要用户名等于某个值的那条数据（<code>WHERE username='...'</code>）。用户输入的值会被服务器复制进这条查询里。还要注意，SQL 命令以分号结尾。</p>
+  <p>那怎么破解这个？办法是提交一个<b>嵌了 SQL 命令的恶意用户名</b>！正如前面提到的，分号用来分隔命令。当服务器把这个古怪的用户名复制进查询，整条语句就被拆成了两条命令：第一条去查一个多半不存在的用户（于是被拒绝，但攻击者根本不在乎），真正想要的是<b>下一条</b>命令——<code>DROP TABLE users</code>，一条我们通过摆弄用户名输入框注入进去的命令，它指示数据库把存着所有用户数据的那张表删掉。全删干净！这在银行之类的地方会造成天大的麻烦。注意，我们甚至都没有闯进系统——我们并没有猜对某个用户名和密码。即使没有任何正式的访问权，我们也靠利用一个 bug 制造了一场灾难。</p>
+
+  <div class="card">
+    <h3>动手：一次 SQL 注入，以及怎么挡住它</h3>
+    <div class="row-ctl"><span>用户名输入</span><span class="seg-btns" id="sq-user"><button data-u="normal">普通：philbin</button><button data-u="evil">恶意：whatever'; DROP TABLE users; --</button></span></div>
+    <div class="row-ctl"><span>服务器怎么处理</span><span class="seg-btns" id="sq-def"><button data-d="raw">直接拼进查询</button><button data-d="safe">先清理输入（参数化）</button></span></div>
+    <div class="sqlq" id="sq-q"></div>
+    <div class="tbls" id="sq-tbls"></div>
+    <div class="step-text" id="sq-cap"></div>
+  </div>
+
+  <p>这是代码注入一个非常简单的例子，如今几乎所有服务器都会防御这种手段。用更复杂的指令，有可能往数据库里添加记录（比如一个新的管理员账户），甚至让数据库吐出数据，使黑客能窃取信用卡号、社保号之类的东西。但我们不会教你具体怎么做。和缓冲区溢出一样，程序员应该<b>始终假定来自外部的输入是危险的</b>，并仔细检查它。网页上大多数用户名和密码表单，作为第一道防线，不让你输入分号或引号<span class="muted" style="font-size:13px">（字幕作"括号"，英文原文是 quotes，即引号）</span>这样的特殊符号。好的服务器还会在执行数据库查询之前，通过删除或修改特殊字符来<b>清理</b>（sanitize）输入。</p>
+
+  <div class="extra">
+    <span class="t">今天真正的防法：别把输入当代码</span>
+    现代做法的核心是<b>参数化查询</b>（prepared statement）：把 SQL 语句的骨架和用户填的值分开传给数据库，数据库从头到尾只把用户输入当"数据"，绝不当"命令"，于是 <code>'; DROP TABLE</code> 只会被当成一个（很奇怪的）用户名去查，什么也删不掉。各种 ORM 框架默认就这么做。顺带一提，前端还有个同源的毛病叫 <b>XSS</b>（跨站脚本）——把用户输入当 HTML/JS 执行了。防法也类似：输出到页面前先转义；React、Vue 默认转义文本，再配一条 <code>Content-Security-Policy</code> 响应头，就挡掉了大半。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>漏洞、零日、蠕虫与僵尸网络</h2>
+  <p>可用的漏洞利用常常在网上被贩卖或分享。一个 bug 越普遍，或者一个漏洞利用危害越大，它能卖出的价钱或带来的名气就越高。甚至连政府有时也会买漏洞利用，好让他们能侵入计算机做间谍之类的事。当一个可被利用的新 bug 被发现，而软件的制造者还不知道它的存在，这就叫一个<b>零日漏洞</b>（zero day vulnerability）。黑帽黑客会抢在白帽程序员为这个 bug 发布补丁之前，争分夺秒地利用它谋取最大利益。这就是为什么及时更新你电脑的软件如此重要——那些下载里有很大一部分是安全补丁。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="zero" viewBox="0 0 680 170" role="img" aria-label="零日漏洞的时间窗口"></svg></div>
+      <figcaption>图 3　"零日"指的是从漏洞被人盯上，到补丁发布之间的那段窗口——这期间防守方的补丁还是零天大。</figcaption>
+    </figure>
+  </div>
+
+  <p>如果足够多的系统上留着没堵上的 bug，黑客就能写一个程序，让它<b>自动从一台计算机跳到另一台计算机</b>，这种程序叫<b>蠕虫</b>（worm）。如果黑客能控制大量计算机，这些计算机就能被合起来使用，组成所谓的<b>僵尸网络</b>（botnet）。它可以有很多用途：比如发送海量垃圾邮件；用别人的算力和电费去挖比特币；以及对服务器发起<b>分布式拒绝服务</b>（Distributed Denial of Service，DDoS）攻击。DDoS 就是让僵尸网络里的所有计算机一起发出一大堆假消息，把服务冲垮下线，要么逼服务的主人交赎金，要么纯粹是为了作恶。</p>
+
+  <div class="card">
+    <h3>动手：一个僵尸网络能压垮多大的服务器</h3>
+    <div class="row-ctl"><span>僵尸网络规模</span><span class="seg-btns" id="dd-size"><button data-n="1">1 台（你自己）</button><button data-n="100">100 台</button><button data-n="10000">1 万台</button><button data-n="100000">10 万台</button></span></div>
+    <div class="scroll-x"><svg class="diagram" id="dd-svg" viewBox="0 0 680 200" role="img" aria-label="DDoS 压垮服务器"></svg></div>
+    <div class="btns"><button class="btn primary" id="dd-go">发起请求</button><button class="btn" id="dd-r">重来</button></div>
+    <div class="step-text" id="dd-cap"></div>
+  </div>
+
+  <p>尽管白帽们辛勤工作、漏洞利用的资料都记录在网上、软件工程也有种种最佳实践，网络攻击还是每天都在发生。它们每年给全球经济造成大约<b>五千亿美元</b>的损失，而且随着我们越来越依赖计算机系统，这个数字只会上升。这尤其让各国政府担心，因为基础设施越来越由计算机驱动：发电厂、电网、红绿灯、水处理厂、炼油厂、空中交通管制，以及许许多多其他关键系统。</p>
+  <p>许多专家预测，下一场大战将在<b>网络空间</b>里打响：一个个国家不是被物理攻击击垮，而是通过网络战在经济上、基础设施上被瘫痪。也许不会有一颗子弹射出，但人员伤亡的可能性依然很高——甚至可能高于传统战争。</p>
+  <p>所以，我们都应该养成良好的网络安全习惯。作为一个通过互联网彼此相连的共同体，我们应该确保自己的计算机，能抵御那些想把计算机的巨大潜能用于作恶的人。所以，也许别再忽略那条更新提示了？我们下周见。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>白帽 / 黑帽</td><td>同样的技术，差别在动机和是否获得授权；动机有好奇、牟利、黑客行动主义</td></tr>
+      <tr><td>社会工程学</td><td>钓鱼（假登录页）、假托（假冒 IT 打电话）；骗人比黑系统容易</td></tr>
+      <tr><td>木马 / 恶意软件</td><td>伪装成无害附件；偷数据、勒索软件（加密文件要赎金）</td></tr>
+      <tr><td>暴力破解 / NAND 镜像</td><td>挨个试密码；靠锁定、增量等待防御；NAND 镜像靠刷回内存绕过锁定</td></tr>
+      <tr><td>缓冲区溢出</td><td>超长输入覆盖相邻内存，可篡改 is_admin；防御：边界检查、地址随机化、金丝雀</td></tr>
+      <tr><td>代码注入 / SQL 注入</td><td>把 SQL 命令塞进输入框；防御：清理输入、参数化查询</td></tr>
+      <tr><td>零日漏洞</td><td>制造者还不知道的新漏洞；黑帽抢在补丁前利用，所以要及时更新</td></tr>
+      <tr><td>蠕虫 / 僵尸网络 / DDoS</td><td>蠕虫自动传播；僵尸网络发垃圾邮件、挖矿、用海量假请求冲垮服务器</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    攻击者进系统最省力的办法是骗人（社会工程学），其次才是钻程序的漏洞（缓冲区溢出、代码注入）；拿下很多机器后还能组成僵尸网络发起 DDoS。对应的防线也很朴素：不轻信陌生链接和来电、把外部输入一律当危险品检查、及时打补丁。没有绝对安全，只能层层设防、把损害关小。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么说"骗人比黑系统容易"？钓鱼和假托各骗的是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">因为技术防御再强，也挡不住用户自己把门打开。钓鱼用一个假登录页骗你亲手输入用户名和密码；假托靠假冒 IT 部门打电话，骗你泄露密码、配置，或者把电脑设置成容易被攻击的样子。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 系统"错几次就锁定"，为什么挡不住 NAND 镜像？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">锁定靠的是"越错越慢"的计时器，而计时器的状态也存在内存里。NAND 镜像事先把内存复制了一份，一旦开始被迫等待，就把原始内容刷回去，相当于把计时器清零，于是可以不受限制地继续试密码。前提是攻击者能物理接触设备。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 缓冲区溢出是怎么把 is_admin 改成 true 的？有哪些防御？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">缓冲区大小固定（比如 10），如果不检查长度就把更长的输入复制进去，多出来的字符会覆盖相邻内存，正好盖在 is_admin 这个变量上，把它改成 true。防御：复制前做边界检查、把变量位置随机化、在缓冲区后放"金丝雀"值监测是否被改动。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>whatever'; DROP TABLE users; --</code> 这个用户名为什么能删库？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">服务器把用户名直接拼进 SQL 查询，分号又能分隔命令，于是整条语句被拆成两条：先查一个不存在的用户（被拒），再执行注入进来的 <code>DROP TABLE users</code> 删掉整张用户表；末尾的 <code>--</code> 把原来的收尾注释掉。攻击者根本没登录，只是利用了"输入被当成代码"。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 为什么"参数化查询"能挡住 SQL 注入？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">参数化把查询的骨架和用户填的值分开传给数据库，数据库始终把用户输入当"数据"而不是"命令"。于是哪怕输入里有分号和 DROP TABLE，也只会被当成一个奇怪的用户名去查，什么都执行不了。</div>
+    </div>
+    <div class="q">
+      <div class="qt">6. "零日漏洞"为什么危险？普通用户能做什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">零日是制造者还不知道、还没补丁的漏洞，黑帽会抢在补丁发布前利用它。普通用户能做的最重要的一件事就是<b>及时更新软件</b>——很多更新本身就是安全补丁；再加上开启双因素认证、用密码管理器、不点陌生链接。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="31.html"><small>← 上一集</small>31 计算机安全</a>
+    <a class="next" href="33.html"><small>下一集 →</small>33 加密</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 32 集 Hackers &amp; Cyber Attacks（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 4.8 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function setSel(sel, attr, val) { $$(sel + ' button').forEach(b => b.classList.toggle('sel', b.dataset[attr] === String(val))); }
+
+/* ---------- 图 1 帽子 ---------- */
+(function () {
+  const svg = $('#hats');
+  const G = [
+    ['白帽', '寻找并修复漏洞', '受雇做安全评估 · 获授权', 120, 's-on', 'var(--ok)'],
+    ['黑帽', '窃取、利用、贩卖漏洞', '为了钱、好玩，或作恶', 340, 's-panel', 'var(--bad)'],
+    ['黑客行动主义者', '推动社会 / 政治目标', '动机介于两者之间', 560, 's-acc', 'var(--accent)']
+  ];
+  G.forEach(([n, d, m, x, cls, col]) => {
+    el('circle', { cx: x, cy: 68, r: 48, class: cls }, svg);
+    txt(svg, x, 64, n, 't-main mid');
+    txt(svg, x, 84, '🎩', 't-main mid');
+    txt(svg, x, 140, d, 't-sub mid');
+    txt(svg, x, 162, m, 't-sub mid');
+    const t = txt(svg, x, 44, '', 't-sub mid'); t.style.fill = col;
+  });
+  txt(svg, 340, 182, '帽子的颜色由动机和授权决定，技术本身是中性的', 't-sub mid');
+})();
+
+/* ---------- 图 2 木马 ---------- */
+(function () {
+  const svg = $('#trojan');
+  el('rect', { x: 40, y: 56, width: 120, height: 70, rx: 10, class: 's-panel' }, svg);
+  txt(svg, 100, 88, '📎 发票.pdf', 't-main mid');
+  txt(svg, 100, 108, '（看起来无害）', 't-sub mid');
+  txt(svg, 100, 146, '邮件附件', 't-sub mid');
+  el('path', { d: 'M165,91 H230', class: 's-line', style: 'stroke:var(--bad)' }, svg);
+  el('path', { d: 'M224,86 L230,91 L224,96', class: 's-line', style: 'stroke:var(--bad)' }, svg);
+  txt(svg, 197, 80, '点开', 't-sub mid');
+  const M = [['偷数据', '银行凭证、账号', 260], ['勒索软件', '加密文件，要赎金', 420], ['拉你进僵尸网络', '听黑客远程指挥', 560]];
+  M.forEach(([a, b, x]) => {
+    el('rect', { x: x - 60, y: 46, width: 120, height: 64, rx: 10, style: 'fill:var(--bad-soft);stroke:var(--bad)' }, svg);
+    txt(svg, x, 72, a, 't-main mid');
+    txt(svg, x, 92, b, 't-sub mid');
+  });
+  txt(svg, 420, 140, '实际上是恶意软件（malware），形态多样', 't-sub mid');
+})();
+
+/* ---------- 钓鱼 ---------- */
+(function () {
+  const A = $('#win-a'), B = $('#win-b');
+  A.querySelector('.tag .hid').textContent = '✓ 真站：域名主体是 mybank.com，且是 https';
+  B.querySelector('.tag .hid').textContent = '✗ 假站：域名主体其实是 secure-login.com，mybank 只是子域名；还是 http';
+  A.classList.add('real'); B.classList.add('fake');
+  $('#ph-go').onclick = () => {
+    A.classList.add('show'); B.classList.add('show');
+    $('#ph-cap').innerHTML = '右边是假的。它把 <code>mybank</code> 放进子域名来唬人，真正的域名主体是 <code>secure-login.com</code>，和真银行毫无关系，而且用的是没加密的 http。<b>看域名要从右往左看主体部分。</b>';
+  };
+  $('#ph-r').onclick = () => {
+    A.classList.remove('show'); B.classList.remove('show');
+    $('#ph-cap').textContent = '页面内容能一字不差地照抄，唯一骗不了人的是地址栏。';
+  };
+})();
+
+/* ---------- NAND 镜像 ---------- */
+(function () {
+  const svg = $('#nm-svg');
+  let mode = 'lock', tries = 0, wait = 0;
+  function draw() {
+    setSel('#nm-mode', 'm', mode);
+    svg.innerHTML = '';
+    el('rect', { x: 40, y: 30, width: 240, height: 100, rx: 12, class: 's-panel' }, svg);
+    txt(svg, 160, 26, '设备', 't-sub mid');
+    txt(svg, 160, 66, '已试 ' + tries + ' 次', 't-main mid');
+    // 等待计时条
+    el('rect', { x: 70, y: 90, width: 180, height: 16, rx: 8, class: 's-soft' }, svg);
+    const w = Math.min(180, wait / 8 * 180);
+    if (w > 0) el('rect', { x: 70, y: 90, width: w, height: 16, rx: 8, style: `fill:${wait >= 8 ? 'var(--bad)' : 'var(--on)'}` }, svg);
+    txt(svg, 160, 122, wait >= 8 ? '已锁定，不能再试' : wait > 0 ? '需等待 ' + wait + ' 秒' : '可以尝试', 't-sub mid');
+    if (mode === 'nand') {
+      el('rect', { x: 360, y: 40, width: 280, height: 80, rx: 12, class: 's-acc' }, svg);
+      txt(svg, 500, 66, '内存副本（NAND 镜像）', 't-main mid');
+      txt(svg, 500, 90, '随时把原始内容刷回设备', 't-sub mid');
+      el('path', { d: 'M360,80 H285', class: 's-line', style: 'stroke:var(--accent)' }, svg);
+      el('path', { d: 'M291,75 L285,80 L291,85', class: 's-line', style: 'stroke:var(--accent)' }, svg);
+    }
+  }
+  function cap() {
+    if (mode === 'lock') {
+      $('#nm-cap').innerHTML = wait >= 8
+        ? `试了 ${tries} 次后设备把等待时间越拖越长，直到<b>锁定</b>——暴力破解被挡住了。`
+        : `每失败一次，等待时间就加长一点（现在 ${wait} 秒）。继续点，看它怎么把你锁死。`;
+    } else {
+      $('#nm-cap').innerHTML = `试了 ${tries} 次，等待时间始终被压在 0：每次设备想让你等，就把内存刷回原样、清零计时器。锁定机制形同虚设——前提是攻击者能物理接触设备、接线复制内存。`;
+    }
+  }
+  $('#nm-try').onclick = () => {
+    tries++;
+    if (mode === 'lock') wait = Math.min(8, wait + 2);
+    else wait = 0;
+    draw(); cap();
+  };
+  $('#nm-r').onclick = () => { tries = 0; wait = 0; draw(); $('#nm-cap').textContent = '点"试一个密码"，对比两种方式下等待时间的变化。'; };
+  $$('#nm-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; tries = 0; wait = 0; draw(); cap(); });
+  draw(); $('#nm-cap').textContent = '点"试一个密码"，对比两种方式下等待时间的变化。';
+})();
+
+/* ---------- 缓冲区溢出 ---------- */
+(function () {
+  const inp = $('#bo-in'), box = $('#bo-mem'), cap = $('#bo-cap');
+  const CAN0 = '§';
+  let def = 'none';
+  function cell(ch, cls) { return `<div class="cell ${cls}">${ch === ' ' ? '␣' : (ch || '')}</div>`; }
+  function render() {
+    setSel('#bo-def', 'd', def);
+    let pw = inp.value;
+    let truncated = false, canaryHit = false;
+    if (def === 'bounds' && pw.length > 10) { pw = pw.slice(0, 10); truncated = true; }
+    const chars = pw.split('');
+    // password 缓冲区 10 格
+    let pwCells = '';
+    for (let i = 0; i < 10; i++) pwCells += cell(chars[i], chars[i] !== undefined ? 'fill' : '');
+    // 金丝雀 1 格（索引 10 的溢出字符落在这里）
+    const canCh = chars[10];
+    if (canCh !== undefined) canaryHit = true;
+    const canDisplay = (def !== 'none' && def === 'canary') ? (canaryHit ? (canCh) : CAN0) : (canaryHit ? canCh : CAN0);
+    const canCls = canaryHit ? 'canary over' : 'canary';
+    // is_admin（索引 11 的溢出字符落在这里）
+    const adCh = chars[11];
+    const halted = def === 'canary' && canaryHit;
+    const adHot = !halted && adCh !== undefined && adCh !== '' ;
+    const adVal = halted ? 'false' : (adHot ? 'true' : 'false');
+    // 后置数据（索引 12+）
+    const tailHit = !halted && chars.length > 12;
+    let tail = '';
+    for (let i = 0; i < 2; i++) { const c = chars[12 + i]; tail += cell(c !== undefined && !halted ? c : '·', (c !== undefined && !halted) ? 'over' : ''); }
+    box.innerHTML =
+      `<div class="grp"><span class="lbl">用户名[10]</span><div class="cells">${'<div class="cell"></div>'.repeat(10)}</div></div>` +
+      `<div class="grp"><span class="lbl">密码缓冲区[10]</span><div class="cells">${pwCells}</div></div>` +
+      `<div class="grp"><span class="lbl">金丝雀</span><div class="cells">${cell(canDisplay, canCls)}</div></div>` +
+      `<div class="grp flag"><span class="lbl">is_admin</span><div class="cells"><div class="cell flag ${adHot ? 'hot' : ''}">${adVal}</div></div></div>` +
+      `<div class="grp"><span class="lbl">后面的数据</span><div class="cells">${tail}</div></div>`;
+    // 说明
+    const n = inp.value.length;
+    if (def === 'bounds') {
+      cap.innerHTML = n > 10
+        ? `<b>边界检查</b>：输入有 ${n} 个字符，超过缓冲区大小 10，复制前就被截断/拒绝。溢出从源头被掐断，is_admin 安然无恙。`
+        : `输入 ${n} 个字符，没超过 10，一切正常。把密码加长到 10 个字符以上再看——边界检查会拦下它。`;
+    } else if (def === 'canary') {
+      cap.innerHTML = canaryHit
+        ? `<b>金丝雀</b >被改动了！程序一发现那格的预设值 "${CAN0}" 变成了 "${canCh}"，就判定有人在溢出内存，<b>立即终止</b>，根本轮不到 is_admin 被篡改。`
+        : `金丝雀那格存着一个预设值 "${CAN0}"，程序时刻盯着它。输入超过 10 个字符时，第一个溢出的字符会先砸中金丝雀——继续加长试试。`;
+    } else {
+      if (n <= 10) cap.innerHTML = `输入 ${n} 个字符，刚好装进密码缓冲区，没有溢出。把它加长到 12 个字符以上，或者点"构造恶意输入"。`;
+      else if (adHot && tailHit) cap.innerHTML = `溢出了！多出来的字符盖过金丝雀、把 <b>is_admin 改成了 true</b>，还接着覆盖后面的数据——真实情况下程序可能直接崩溃。`;
+      else if (adHot) cap.innerHTML = `溢出了！多出来的字符一路覆盖到 <b>is_admin，把它变成 true</b>——于是没有密码也成了管理员。这就是攻击者"注入有意的值"。`;
+      else cap.innerHTML = `输入 ${n} 个字符，已经溢出密码缓冲区、砸中了金丝雀那格。再长一点就会改到 is_admin。`;
+    }
+  }
+  $('#bo-evil').onclick = () => { inp.value = 'AAAAAAAAAA' + '!' + '1'; render(); };
+  $$('#bo-def button').forEach(b => b.onclick = () => { def = b.dataset.d; render(); });
+  inp.oninput = render;
+  render();
+})();
+
+/* ---------- SQL 注入 ---------- */
+(function () {
+  let user = 'normal', def = 'raw';
+  const NORMAL = 'philbin', EVIL = "whatever'; DROP TABLE users; --";
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  function render() {
+    setSel('#sq-user', 'u', user); setSel('#sq-def', 'd', def);
+    const raw = user === 'normal' ? NORMAL : EVIL;
+    const q = $('#sq-q'), tb = $('#sq-tbls'), cap = $('#sq-cap');
+    const head = `<span class="kw">SELECT</span> password <span class="kw">FROM</span> users <span class="kw">WHERE</span> username=`;
+    if (def === 'safe') {
+      // 参数化：输入整体作为一个字符串值，引号被转义
+      const shown = esc(raw).replace(/'/g, '<span class="cmt">\\\'</span>');
+      q.innerHTML = `${head}<span class="str">'${shown}'</span>;`;
+      tb.innerHTML = `<span class="tbl"><b>users</b> 表完好</span>`;
+      cap.innerHTML = user === 'normal'
+        ? `普通用户名，查询照常执行，返回 philbin 的密码去核对。`
+        : `<b>参数化查询</b>：整个输入被当成<b>一个字符串值</b>（引号已转义），数据库只会去找一个叫 <code>whatever'; DROP TABLE users; --</code> 的用户，找不到就拒绝。命令和数据分开，注入失效，<b>表安然无恙</b>。`;
+      return;
+    }
+    // 直接拼接
+    if (user === 'normal') {
+      q.innerHTML = `${head}<span class="str">'${NORMAL}'</span>;`;
+      tb.innerHTML = `<span class="tbl"><b>users</b> 表完好</span>`;
+      cap.innerHTML = `普通用户名，拼出来是一条正常查询：找 philbin，核对密码。直接拼接这次没出事，是因为输入里没有特殊字符。`;
+    } else {
+      q.innerHTML = `${head}<span class="str">'whatever'</span>; <span class="inj">DROP TABLE users</span>; <span class="cmt">--'</span>;`;
+      tb.innerHTML = `<span class="tbl gone"><b>users</b> 表被删除</span>`;
+      cap.innerHTML = `<b>直接拼接</b>：分号把语句拆成两条——① 查用户 <code>whatever</code>（不存在，被拒）；② <span class="inj">DROP TABLE users</span> 删掉整张用户表；末尾 <code>--</code> 把原来的收尾注释掉。攻击者没登录，却把库删了。`;
+    }
+  }
+  $$('#sq-user button').forEach(b => b.onclick = () => { user = b.dataset.u; render(); });
+  $$('#sq-def button').forEach(b => b.onclick = () => { def = b.dataset.d; render(); });
+  render();
+})();
+
+/* ---------- 图 3 零日 ---------- */
+(function () {
+  const svg = $('#zero');
+  el('line', { x1: 30, x2: 650, y1: 95, y2: 95, class: 's-line' }, svg);
+  // 零日窗口阴影
+  el('rect', { x: 250, y: 55, width: 240, height: 80, rx: 6, style: 'fill:var(--bad-soft);stroke:var(--bad);stroke-dasharray:5 4' }, svg);
+  txt(svg, 370, 48, '零日窗口：补丁还没出，已被利用', 't-sub mid').style.fill = 'var(--bad)';
+  const P = [
+    [100, '漏洞产生', '藏在代码里', 'var(--muted)'],
+    [250, '被发现 / 被盯上', '黑帽开始利用', 'var(--bad)'],
+    [490, '白帽发布补丁', '', 'var(--ok)'],
+    [600, '更新的人安全', '没更新的仍危险', 'var(--on)']
+  ];
+  P.forEach(([x, a, b, col]) => {
+    const c = el('circle', { cx: x, cy: 95, r: 7, class: 's-panel' }, svg); c.style.stroke = col; c.style.strokeWidth = '2.5';
+    txt(svg, x, 78, a, 't-sub mid').style.fill = col;
+    if (b) txt(svg, x, 120, b, 't-sub mid');
+  });
+})();
+
+/* ---------- DDoS ---------- */
+(function () {
+  const svg = $('#dd-svg');
+  const CAP = 100; // 服务器每秒能处理的请求
+  const PER = 50;  // 每台机器每秒发出的请求
+  let n = 1, fired = false, timer = null;
+  function draw(load) {
+    svg.innerHTML = '';
+    // 服务器
+    const offline = fired && load > CAP;
+    el('rect', { x: 500, y: 50, width: 150, height: 110, rx: 12, class: offline ? 's-panel' : 's-on', style: offline ? 'stroke:var(--bad);fill:var(--bad-soft)' : '' }, svg);
+    txt(svg, 575, 44, '服务器', 't-sub mid');
+    txt(svg, 575, 84, offline ? '⚠ 离线' : '在线', 't-main mid').style.fill = offline ? 'var(--bad)' : 'var(--ok)';
+    // 负载条
+    el('rect', { x: 515, y: 100, width: 120, height: 14, rx: 7, class: 's-soft' }, svg);
+    const w = Math.min(120, load / CAP * 120);
+    el('rect', { x: 515, y: 100, width: w, height: 14, rx: 7, style: `fill:${load > CAP ? 'var(--bad)' : 'var(--ok)'}` }, svg);
+    txt(svg, 575, 134, `负载 ${fired ? Math.round(load / CAP * 100) : 0}%`, 't-sub mid');
+    // 僵尸网络
+    el('rect', { x: 30, y: 40, width: 150, height: 90, rx: 12, class: 's-acc' }, svg);
+    txt(svg, 105, 34, `僵尸网络：${n.toLocaleString()} 台`, 't-sub mid');
+    const dots = Math.min(16, n); const cols = 8;
+    for (let i = 0; i < dots; i++) el('circle', { cx: 50 + (i % cols) * 15, cy: 70 + Math.floor(i / cols) * 22, r: 5, style: 'fill:var(--bad)' }, svg);
+    if (n > dots) txt(svg, 105, 122, '…', 't-sub mid');
+    // 正常用户
+    el('circle', { cx: 105, cy: 165, r: 10, style: 'fill:var(--ok)' }, svg);
+    txt(svg, 150, 169, '正常用户', 't-sub');
+    // 箭头
+    if (fired) {
+      el('path', { d: 'M185,85 H495', class: 's-line', style: `stroke:${load > CAP ? 'var(--bad)' : 'var(--on)'};stroke-width:3` }, svg);
+      el('path', { d: 'M489,80 L497,85 L489,90', class: 's-line', style: `stroke:${load > CAP ? 'var(--bad)' : 'var(--on)'}` }, svg);
+      txt(svg, 340, 76, `${PER} × ${n.toLocaleString()} = ${(PER * n).toLocaleString()} 请求/秒`, 't-sub mid');
+      // 正常用户能否进入
+      el('path', { d: 'M120,160 C300,150 400,140 500,130', class: 's-dash', style: `stroke:${offline ? 'var(--bad)' : 'var(--ok)'}` }, svg);
+      txt(svg, 330, 158, offline ? '正常用户被挤掉，连不上' : '正常用户还能连上', 't-sub mid').style.fill = offline ? 'var(--bad)' : 'var(--ok)';
+    }
+  }
+  function run() {
+    const load = PER * n;
+    if (REDUCE || !fired) { draw(fired ? load : 0); return cap(load); }
+    let cur = 0; clearInterval(timer);
+    timer = setInterval(() => { cur = Math.min(load, cur + Math.max(1, load / 20)); draw(cur); if (cur >= load) { clearInterval(timer); cap(load); } }, 40);
+  }
+  function cap(load) {
+    const pct = Math.round(load / CAP * 100);
+    $('#dd-cap').innerHTML = !fired ? '选一个僵尸网络规模，然后点"发起请求"。' :
+      load > CAP
+        ? `${n.toLocaleString()} 台机器一起发，合计约 ${load.toLocaleString()} 请求/秒，是服务器处理能力（${CAP}/秒）的 <b>${pct}%</b>。服务器被冲垮<b>下线</b>，连正常用户也挤不进来——这就是 DDoS。`
+        : `${n.toLocaleString()} 台发出约 ${load.toLocaleString()} 请求/秒，还在服务器 ${CAP}/秒的处理能力之内（${pct}%），服务正常。一台机器掀不起风浪，<b>人多</b>才是 DDoS 的关键。`;
+  }
+  $$('#dd-size button').forEach(b => b.onclick = () => { n = +b.dataset.n; setSel('#dd-size', 'n', n); if (fired) run(); else { draw(0); cap(0); } });
+  $('#dd-go').onclick = () => { fired = true; run(); };
+  $('#dd-r').onclick = () => { fired = false; clearInterval(timer); draw(0); $('#dd-cap').textContent = '选一个僵尸网络规模，然后点"发起请求"。'; };
+  setSel('#dd-size', 'n', n); draw(0);
+})();
+</script>
+</body>
+</html>

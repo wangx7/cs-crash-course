@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>34 机器学习与人工智能 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.sl{display:grid;grid-template-columns:150px 1fr 70px;gap:10px;align-items:center;font-size:14px;margin:4px 0}
+.sl output{font:600 14px var(--mono);text-align:right}
+@media (max-width:600px){.sl{grid-template-columns:110px 1fr 60px}}
+.cm{border-collapse:collapse;font-size:14px;margin:8px 0}
+.cm th,.cm td{border:1px solid var(--line);padding:5px 12px;text-align:center}
+.cm td.ok{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.cm td.no{background:var(--bad-soft);color:var(--bad);font-weight:700}
+.cm th{font-weight:600;background:var(--bg)}
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+@media (max-width:700px){.split{grid-template-columns:1fr}}
+pre.code{font:13px/1.6 var(--mono);background:var(--code);border-radius:10px;padding:10px 12px;margin:0;overflow-x:auto}
+pre.code b{color:var(--on)}
+.acc{font:600 15px var(--mono)}
+.rl-stats{font:13px/1.8 var(--mono);background:var(--code);border-radius:8px;padding:8px 12px}
+.ai-two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.ai-two div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);font-size:14px}
+.ai-two b{display:block;font-size:16px;margin-bottom:4px}
+@media (max-width:600px){.ai-two{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-ep="34">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=35" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 34 集</div>
+  <h1>机器学习与人工智能</h1>
+  <p class="en">Machine Learning &amp; Artificial Intelligence</p>
+  <p class="lead">计算机擅长存数据、查数据，但如果想让它根据数据<b>做决定</b>呢？这就是机器学习：从数据中学习，然后做预测。我们用一个分飞蛾的例子，从"画几条线"的决策树，一路走到人工神经网络和深度学习，最后看看弱 AI、强 AI 和靠反复试错变强的强化学习。</p>
+  <div class="road">
+    <span>特征与标记数据</span><i>→</i><span>决策边界</span><i>→</i><span>决策树 / 支持向量机</span><i>→</i><span>神经网络</span><i>→</i><span>深度学习</span><i>→</i><span>弱 AI · 强 AI · 强化学习</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从数据中做决定</a></li>
+    <li><a href="#ch1">1 · 分类：飞蛾与决策边界</a></li>
+    <li><a href="#ch2">2 · 决策树、森林与支持向量机</a></li>
+    <li><a href="#ch3">3 · 更多特征、更多维度</a></li>
+    <li><a href="#ch4">4 · 人工神经网络</a></li>
+    <li><a href="#ch5">5 · 深度学习</a></li>
+    <li><a href="#ch6">6 · 弱 AI、强 AI 与强化学习</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从"取数据"到"做决定"</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！这个系列里我们多次提到，计算机非常擅长存放、整理、获取和处理海量数据。这很适合有上百万件商品的电商网站，或者存几十亿条健康记录、让医生快速查看。但如果我们想让计算机不只是获取和显示数据，而是真正<b>根据数据做决定</b>呢？</p>
+  <p>这就是<b>机器学习</b>（machine learning）的本质：让计算机能够从数据中学习、然后做出预测和决定的算法。有这种能力的程序，在回答下面这类问题时非常有用：这封邮件是垃圾邮件吗？这个人的心脏有心律失常吗？YouTube 在这个视频之后该推荐哪个？</p>
+  <p>虽然有用，但我们大概不会像形容人类智能那样，说这些程序是"智能"的。所以，尽管这两个词经常混着用，大多数计算机科学家会说：机器学习是一套技术，位于一个更宏大的目标——<b>人工智能</b>（Artificial Intelligence，简称 AI）——之内。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="nest" viewBox="0 0 680 200" role="img" aria-label="人工智能包含机器学习，机器学习包含深度学习"></svg></div>
+      <figcaption>图 1　AI ⊃ 机器学习 ⊃ 深度学习。本集从外往里讲，最后再回到外圈。</figcaption>
+    </figure>
+  </div>
+
+  <p>机器学习和 AI 算法往往相当复杂，所以我们不深入讲它们具体怎么运作，而是着重讲这些算法在<b>概念上</b>做了什么。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>分类：月蛾还是帝蛾？</h2>
+  <p>我们从一个简单的例子开始：判断一只飞蛾是<b>月蛾</b>（Luna Moth）还是<b>帝蛾</b>（Emperor Moth）。这个判断过程叫<b>分类</b>（classification），做分类的算法叫<b>分类器</b>（classifier）。</p>
+  <p>虽然也有技术能直接用原始数据——比如照片和声音——来训练，但很多算法会把现实世界中物体和现象的复杂性，简化成所谓的<b>特征</b>（features）。特征是一些数值，能有效地刻画我们想分类的东西。在飞蛾的例子里，我们用两个特征："<b>翼展</b>"和"<b>重量</b>"。</p>
+  <p>为了训练机器学习分类器、让它做出好的预测，我们需要<b>训练数据</b>（training data）。为此，我们派一位昆虫学家到森林里，收集月蛾和帝蛾的数据。专家能认出不同的飞蛾，所以他们不只记录特征值，还会给每条数据标上真正的种类。这叫<b>标记数据</b>（labeled data）。</p>
+  <p>因为只有两个特征，用散点图把数据画出来很容易。这里我画了 100 只帝蛾（红色）和 100 只月蛾（蓝色）。可以看到两个种类大致分成了两组，但中间有一些重叠，所以怎么把两者分得最好，不是一眼就能看出来的。这正是机器学习算法要做的事：<b>找出最佳的分割</b>！</p>
+
+  <div class="card">
+    <h3>动手：画决策边界</h3>
+    <span class="seg-btns" id="mode"><button data-m="box">两条直线（决策树）</button><button data-m="line">一条斜线（像支持向量机）</button></span>
+    <div class="scroll-x" style="margin-top:8px"><svg class="diagram" id="sc" viewBox="0 0 680 370" role="img" aria-label="飞蛾的翼展-重量散点图与决策边界" style="cursor:crosshair"></svg></div>
+    <div id="box-ctl">
+      <div class="sl"><label for="th-w">翼展边界（毫米）</label><input type="range" id="th-w" min="30" max="60" step="0.5" value="45"><output id="th-wv"></output></div>
+      <div class="sl"><label for="th-m">重量边界</label><input type="range" id="th-m" min="0.3" max="1.2" step="0.01" value="0.75"><output id="th-mv"></output></div>
+    </div>
+    <div class="btns"><button class="btn primary" id="fit">让算法找最佳边界</button><button class="btn" id="reset-b">回到 45 / 0.75</button><button class="btn" id="clr-u">清除未知飞蛾</button></div>
+    <div class="split" style="margin-top:6px">
+      <div>
+        <table class="cm" id="cm"></table>
+        <div class="acc" id="acc"></div>
+      </div>
+      <div class="step-text" id="sc-cap" style="margin:0"></div>
+    </div>
+    <p class="hint">在图上任意位置点一下，就是在森林里碰到了一只"未知飞蛾"——看分类器猜它是什么。</p>
+  </div>
+
+  <p>我就用肉眼估一下：翼展小于 45 毫米的，很可能是帝蛾。还可以再加一条分割：重量也必须小于 0.75，我们才猜它是帝蛾。这些把决策空间切开的线，叫<b>决策边界</b>（decision boundaries）。</p>
+  <p>仔细看数据会发现：86 只帝蛾会正确地落在帝蛾的决策区域里，但有 14 只会错误地落进月蛾的地盘。另一方面，82 只月蛾分对了，18 只落在了错误的一侧。像这样展示分类器哪里对、哪里错的表格，叫<b>混淆矩阵</b>（confusion matrix）……这个名字大概也该拿来当《黑客帝国》三部曲后两部的片名！</p>
+  <p class="muted" style="font-size:13px">（本页散点是程序生成的示意数据，特意调成了在 45 / 0.75 时恰好得到视频里的 86 / 14 和 82 / 18。）</p>
+  <p>注意，我们没办法画出能达到 100% 准确率的线。如果降低翼展的决策边界，就会把更多帝蛾错分成月蛾；如果提高，就会错分更多月蛾。从高层次看，机器学习算法的工作，就是<b>最大化正确的分类、同时最小化错误</b>。在我们的训练数据上，有 168 只分对、32 只分错，平均分类准确率是 84%。</p>
+  <p>现在，用这些决策边界，如果我们走进森林、碰到一只不认识的飞蛾，就可以测量它的特征，把它画进决策空间里。这叫<b>未标记数据</b>（unlabeled data）。决策边界给出了一个关于它是什么种类的猜测。在这个例子里，我们会预测它是月蛾。</p>
+  <div class="extra">
+    <span class="t">训练集上的 84%，不等于实战的 84%</span>
+    "让算法找最佳边界"时，你会发现准确率能比 84% 再高一点——但那是在<b>同一批</b>训练数据上量的，边界难免迁就了这 200 只蛾子的偶然分布。所以实际做法是把标记数据分成两份：一份用来训练（找边界），另一份留着不看，最后拿来<b>测试</b>。测试集上的准确率，才是碰到新飞蛾时更可信的预期。模型把训练数据记得太死、在新数据上反而变差，叫<b>过拟合</b>（overfitting）。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>决策树、森林与支持向量机</h2>
+  <p>这种把决策空间切成一个个盒子的简单方法，可以用所谓的<b>决策树</b>（decision tree）来表示。画成图是左边这样，用 if 语句写成代码是右边这样：</p>
+
+  <div class="card">
+    <div class="split">
+      <svg class="diagram" id="tree" viewBox="0 0 340 220" role="img" aria-label="决策树" style="max-width:380px;margin:0 auto"></svg>
+      <pre class="code" id="tree-code"></pre>
+    </div>
+    <p class="hint" style="margin-bottom:0">它跟着上面散点图里的滑块变化。切到"一条斜线"模式时，看看它变成了什么。</p>
+  </div>
+
+  <p>一个生成决策树的机器学习算法，需要选择用哪些特征来分割，以及每个特征用什么值来分割。决策树只是机器学习技术中一个基础的例子。如今计算机科学文献里有数百种算法，而且新的算法还在不断发表。有些算法甚至让许多决策树一起工作来做预测。计算机科学家得意地把它们叫做<b>森林</b>（Forests），因为里面有很多树嘛。</p>
+  <p>也有不基于树的方法，比如<b>支持向量机</b>（Support Vector Machines），它本质上是用任意的线来切分决策空间。这些线也不一定是直线，可以是多项式或者其他花哨的数学函数。和之前一样，机器学习算法的工作是找出最好的线，给出最准确的决策边界。</p>
+  <div class="extra">
+    <span class="t">"让算法找最佳边界"按钮在干什么</span>
+    本页的做法很笨：把成千上万种边界挨个试一遍，留下在训练数据上分对最多的那个（两条直线模式试的是不同的翼展、重量组合；斜线模式试的是不同的倾斜角度和位置）。真正的决策树算法会用"信息增益""基尼不纯度"这类指标聪明地挑分割点；支持向量机则不只要分对，还要让边界离两边最近的点<b>尽量远</b>——那几个最近的点就叫"支持向量"，名字就是这么来的。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>更多特征、更多维度</h2>
+  <p>到目前为止，我的例子只有两个特征，人类也能轻松搞定。如果加上第三个特征，比如<b>触角长度</b>，那么我们的 2D 线就变成了 3D 平面，在三个维度上形成决策边界。这些平面也不一定是平的。而且，一个真正有用的分类器要应付很多不同种类的飞蛾。</p>
+  <p>我想你会同意，这已经复杂到没法手工算出来了。但即使这样也只是个很基础的例子：只有 3 个特征、5 种飞蛾。我们还能用 3D 散点图把它画出来。不幸的是，没有好办法能一次性看 4 个特征，或者 20 个特征，更别说几百甚至几千个特征了。但这正是很多现实中的机器学习问题要面对的。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="dims" viewBox="0 0 680 190" role="img" aria-label="特征越多，决策边界的维度越高"></svg></div>
+      <figcaption>图 2　每多一个特征，决策空间就多一维：2 个特征用线切，3 个用面切，再往上就是"超平面"。</figcaption>
+    </figure>
+  </div>
+
+  <p>你能想象，在一个一千维的决策空间里，为一个起伏的<b>超平面</b>（hyperplane）找出方程吗？大概不行。但计算机用聪明的机器学习算法可以，而且它们正这么做着——在 Google、Facebook、微软、亚马逊这些地方的计算机上，一天到晚都在做。</p>
+  <p>决策树、支持向量机这类技术深深扎根于<b>统计学</b>领域。早在计算机出现之前，统计学就在研究怎么用数据做出可靠的决定。有一大类广泛使用的统计机器学习技术，但也有一些方法并不起源于统计学。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>人工神经网络</h2>
+  <p>其中最值得注意的是<b>人工神经网络</b>（artificial neural networks），灵感来自我们大脑里的神经元！想了解生物神经元的入门知识，可以看我们（Crash Course 其他系列）的三集概述。简单说，神经元是一种细胞，用电信号和化学信号来处理和传递信息。它从其他细胞接收一个或多个输入，处理这些信号，然后发出自己的信号。它们组成巨大的互联网络，能处理复杂的信息。就像你的大脑正在看这个视频一样。</p>
+  <p>人工神经元很类似。每个都接收一系列输入，把它们组合起来，然后发出一个信号。只不过它用的不是电信号或化学信号，而是<b>吃进数字、吐出数字</b>。它们被组织成一层一层，层与层之间用连接相连，形成一个神经元的网络，这就是名字的由来。</p>
+  <p>我们回到飞蛾的例子，看看神经网络怎么用来分类。第一层是<b>输入层</b>，提供一只待分类飞蛾的数据。我们还是用重量和翼展。另一端是<b>输出层</b>，有两个神经元：一个代表帝蛾，一个代表月蛾。最"兴奋"的那个神经元，就是我们的分类结果。中间是<b>隐藏层</b>，负责把输入变成输出，干分类这件重活。</p>
+  <p>为了看看它是怎么做到的，我们把隐藏层里的一个神经元放大来看。神经元做的第一件事，是把每个输入乘以一个特定的<b>权重</b>（weight），比如第一个输入乘 2.8，第二个输入乘 0.1。然后把这些加权后的输入加起来，这个例子里总和是 9.74。然后神经元对这个结果加上一个<b>偏置</b>（bias）——换句话说，加上或减去一个固定值，比如减 6，得到新的值 3.74。</p>
+  <p class="muted" style="font-size:13px">（字幕误作"2.8 是第一个输入，0.1 是第二个输入"。英文原文说的是给第一个输入 2.8 的<b>权重</b>、第二个输入 0.1 的权重。输入本身是 0.55 和 82：0.55 × 2.8 + 82 × 0.1 = 1.54 + 8.2 = 9.74。）</p>
+
+  <div class="card">
+    <h3>动手：一个神经元</h3>
+    <div class="scroll-x"><svg class="diagram" id="neu" viewBox="0 0 680 210" role="img" aria-label="一个人工神经元：加权、求和、偏置、激活"></svg></div>
+    <div class="sl"><label for="n-w1">权重 1（乘重量）</label><input type="range" id="n-w1" min="-5" max="5" step="0.1" value="2.8"><output id="n-w1v"></output></div>
+    <div class="sl"><label for="n-w2">权重 2（乘翼展）</label><input type="range" id="n-w2" min="-0.5" max="0.5" step="0.01" value="0.1"><output id="n-w2v"></output></div>
+    <div class="sl"><label for="n-b">偏置</label><input type="range" id="n-b" min="-15" max="15" step="0.5" value="-6"><output id="n-bv"></output></div>
+    <div style="margin-top:8px"><span style="font-size:14px;margin-right:8px">激活函数</span><span class="seg-btns" id="act"><button data-a="lin">线性（原样输出）</button><button data-a="tanh">限制在 −1 ~ 1</button><button data-a="relu">负数变 0</button></span></div>
+    <div class="step-text" id="neu-cap"></div>
+  </div>
+
+  <p>神经网络刚创建时，这些偏置和输入权重一开始都设成<b>随机值</b>。然后由一个算法介入，开始调整所有这些值来训练神经网络，用标记数据来训练和测试。这个过程要经过很多次迭代，准确率逐渐提高——非常像人类学习的过程。</p>
+  <p>最后，神经元还有一个<b>激活函数</b>（activation function），也叫<b>传递函数</b>（transfer function），作用在输出上，对结果做最后一次数学修改。比如把值限制在 −1 到 +1 之间，或者把所有负数改成 0。我们这里用线性传递函数，它让值原样通过，所以 3.74 还是 3.74。所以对我们这个例子神经元来说，输入 0.55 和 82，输出是 3.74。</p>
+  <div class="extra">
+    <span class="t">那两个激活函数的名字</span>
+    "限制在 −1 到 +1"常用的是 <b>tanh</b>（双曲正切），"负数改成 0"叫 <b>ReLU</b>（修正线性单元），后者是如今深度网络里最常用的。激活函数要是非线性的才有意义：如果每一层都只是"乘权重、相加"，叠多少层在数学上都等于一层，网络就只能画直线边界。
+  </div>
+
+  <p>这只是一个神经元。但"加权、求和、加偏置、套激活函数"这个过程，会对一层里所有神经元都算一遍，然后这些值在网络里<b>向前传播</b>，一次一层。在这个例子里，值最高的输出神经元就是我们的决定：月蛾。</p>
+
+  <div class="card">
+    <h3>动手：一只飞蛾穿过整个网络</h3>
+    <div class="sl"><label for="nn-m">重量</label><input type="range" id="nn-m" min="0.2" max="1.3" step="0.01" value="0.55"><output id="nn-mv"></output></div>
+    <div class="sl"><label for="nn-w">翼展（毫米）</label><input type="range" id="nn-w" min="25" max="90" step="1" value="82"><output id="nn-wv"></output></div>
+    <div class="scroll-x" style="margin-top:6px"><svg class="diagram" id="nn" viewBox="0 0 680 280" role="img" aria-label="输入层、隐藏层、输出层的神经网络"></svg></div>
+    <div class="step-text" id="nn-cap"></div>
+    <p class="hint" style="margin-bottom:0">线的粗细表示权重大小，<span style="color:var(--accent)">蓝色</span>为正、<span style="color:var(--bad)">红色</span>为负。最上面那个隐藏神经元，就是上一个动手里的那个（2.8、0.1、−6）。其余权重是本页手工设的，不是训练出来的。</p>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>深度学习</h2>
+  <p>重要的是，隐藏层不必只有一层，它可以有很多层深。这就是<b>深度学习</b>（deep learning）一词的由来。训练这些更复杂的网络，需要多得多的计算量和数据。尽管神经网络五十多年前就发明了，深度神经网络直到最近才变得实用，这要感谢强大的处理器，但更要感谢超快的 GPU。所以，谢谢游戏玩家们对丝滑帧率的苛刻要求！</p>
+  <div class="extra">
+    <span class="t">为什么偏偏是 GPU</span>
+    回想第 27 集：GPU 里有成千上万个小核心，同时给海量三角形和像素做同样的运算。神经网络一层的计算——每个神经元把所有输入乘权重再相加——本质是一次大矩阵乘法，正好也是"同样的运算做很多遍"。为游戏造的硬件，刚好适合拿来训练网络。
+  </div>
+  <p>几年前，Google 和 Facebook 展示了能在照片里找出人脸、而且和人类一样准的深度神经网络——人类可是非常擅长这个的！这是个巨大的里程碑。现在，深度神经网络在开车、翻译人类语言、诊断疾病，还有很多别的事情。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>弱 AI、强 AI 与强化学习</h2>
+  <p>这些算法非常复杂，但它们该不该被描述成"智能"，就没那么清楚了。它们真的只能做一件事：分类飞蛾、找人脸，或者翻译语言。这类 AI 叫<b>弱 AI</b>（Weak AI）或<b>窄 AI</b>（Narrow AI），只在特定任务上智能。但这不意味着它没用：能做诊断的医疗设备、能自己开的汽车，真是太棒了！可我们需要这些计算机在空闲时间作曲、找美味食谱吗？大概不需要。虽然那样还挺酷的。</p>
+
+  <div class="ai-two">
+    <div><b>弱 AI / 窄 AI</b>只在一件特定任务上聪明：分飞蛾、找人脸、翻译、下围棋。今天所有实际在用的 AI 都属于这类。</div>
+    <div><b>强 AI</b>真正通用、像人一样聪明全面的 AI。还没有人做出过接近人类水平的。</div>
+  </div>
+
+  <p>真正通用、像人一样聪明全面的 AI，叫<b>强 AI</b>（Strong AI）。目前还没有人展示过任何接近人类水平的人工智能。有人认为这根本不可能，但很多人指出，数字化知识的爆炸——比如维基百科文章、网页和 YouTube 视频——是强 AI 的完美引火物。你一天最多只能看 24 小时的 YouTube，但计算机可以看上百万小时。比如，IBM 的<b>沃森</b>（Watson）会查阅并综合 2 亿页内容的信息，包括维基百科全文。虽然不是强 AI，但沃森相当聪明，早在 2011 年就在智力竞赛节目《危险边缘》（Jeopardy!）中碾压了人类对手。</p>
+  <p>AI 不仅能吞下海量信息，还能随着时间学习，而且往往比人类快得多。2016 年，Google 推出了 <b>AlphaGo</b>，一个会下极其复杂的围棋的窄 AI。它变得那么强、能打败最顶尖人类棋手的方法之一，是和自己的克隆版下了成百上千万盘棋。它学会了什么管用、什么不管用，一路上自己发现了成功的策略。这叫<b>强化学习</b>（Reinforcement Learning），是一种超级强大的方法。</p>
+
+  <div class="card">
+    <h3>动手：一个靠试错学走迷宫的小机器人</h3>
+    <div class="scroll-x"><svg class="diagram" id="rl" viewBox="0 0 680 260" role="img" aria-label="强化学习：机器人在网格迷宫里试错"></svg></div>
+    <div class="btns"><button class="btn primary" id="rl-one">走 1 局（看它怎么走）</button><button class="btn" id="rl-many">快速练 50 局</button><button class="btn" id="rl-reset">忘掉一切，重来</button></div>
+    <div class="rl-stats" id="rl-stats"></div>
+    <p class="hint" style="margin-bottom:0">规则：走一步扣 1 分，掉进陷阱扣 10 分并结束，到达终点得 10 分。没人告诉它路怎么走，它只知道每次得了多少分。格子里的箭头是它目前认为"从这里往哪走最好"，颜色越深表示它越看好这个格子。</p>
+  </div>
+  <div class="extra">
+    <span class="t">小机器人用的是 Q 学习</span>
+    它给每个格子的每个方向记一个分数（Q 值），表示"在这里往这边走，往后大概能得多少分"。每走一步，就用实际拿到的分数加上下一格的最好分数，把这个估计往正确的方向挪一点。大多数时候它挑分数最高的方向，但有 20% 的时候随便走走，免得错过更好的路——这叫"探索与利用"的平衡。AlphaGo 的原理要复杂得多（还结合了深度神经网络和搜索），但"自己和环境打交道、按得分调整"的思路是一样的。
+  </div>
+
+  <p>事实上，这和人类的学习方式非常相似。人不是魔法般地天生会走路的……要花上千个小时的反复试错才能学会。计算机现在正处在靠试错学习的突破边缘，而对于很多窄的问题，强化学习已经被广泛使用了。有趣的是，看这类学习技术能不能更广泛地应用，去创造像人一样的强 AI——像小孩一样学习，但速度快得多。如果真的发生了，人类将面临一些相当大的变化——这个话题我们以后会再谈。感谢收看，我们下周见。</p>
+  <div class="extra">
+    <span class="t">2017 年之后</span>
+    这一集播出于 2017 年。同一年，Google 的研究者提出了 Transformer 网络结构；之后出现的大语言模型——包括制作这个图文版的 Claude——也都是深度神经网络，在海量文本上训练，再结合强化学习等方法调整。它们能做的事比"只分飞蛾"宽得多，算不算、离"强 AI"还有多远，至今仍有争论。续集<a href="43.html">第 43 集</a>专门讲它们是怎么工作的。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>机器学习</td><td>从数据中学习，然后做预测和决定；是实现 AI 的一套技术</td></tr>
+      <tr><td>分类 / 分类器</td><td>把东西归到某一类；用特征（翼展、重量）描述对象</td></tr>
+      <tr><td>标记数据</td><td>带着正确答案的训练数据；碰到的新东西是未标记数据</td></tr>
+      <tr><td>决策边界</td><td>切分决策空间的线；没法 100% 准确，目标是对的最多、错的最少</td></tr>
+      <tr><td>混淆矩阵</td><td>真实类别 × 预测类别，看清哪里分对、哪里分错</td></tr>
+      <tr><td>决策树 / 森林 / 支持向量机</td><td>切成盒子（可写成 if 语句）/ 多棵树一起投票 / 用任意线、曲线切</td></tr>
+      <tr><td>高维</td><td>特征越多维度越高，人画不出来，算法照样能找超平面</td></tr>
+      <tr><td>人工神经元</td><td>输入 × 权重 → 求和 → 加偏置 → 激活函数；权重从随机开始，靠训练调整</td></tr>
+      <tr><td>神经网络 / 深度学习</td><td>输入层、隐藏层、输出层，一层层向前传播；隐藏层很多层就是"深度"，靠 GPU 才实用</td></tr>
+      <tr><td>弱 AI / 强 AI</td><td>只会特定任务 / 像人一样通用（还没人做出来）</td></tr>
+      <tr><td>强化学习</td><td>反复试错、按结果调整，自己发现策略（AlphaGo）</td></tr>
+    </tbody>
+  </table>
+
+  <ol class="timeline">
+    <li><span class="yr">1950s</span>人工神经网络被发明（"五十多年前"）</li>
+    <li><span class="yr">2011</span>IBM 沃森在《危险边缘》中击败人类冠军</li>
+    <li><span class="yr">2014 前后</span>Google、Facebook 的深度神经网络找人脸达到人类水平</li>
+    <li><span class="yr">2016</span>Google 的 AlphaGo 靠强化学习击败顶尖人类围棋棋手</li>
+  </ol>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    机器学习就是让计算机用标记数据自己找出"决策边界"：两个特征时人眼也能画，几千个特征时只有算法能找。决策树把空间切成盒子，神经网络则让一层层"加权求和再激活"的神经元从随机权重开始慢慢调好。今天的 AI 都是只擅长一件事的弱 AI，而强化学习让它们能像人一样靠试错变强。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 什么是"特征"和"标记数据"？在飞蛾的例子里分别是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">特征是能有效刻画要分类对象的数值，这里是翼展和重量。标记数据是带着正确答案的数据：昆虫学家不仅记录了每只飞蛾的翼展和重量，还标上了它到底是月蛾还是帝蛾。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 86 只帝蛾分对、14 只分错；82 只月蛾分对、18 只分错。准确率是多少？为什么把翼展边界往下挪不一定更好？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">(86 + 82) / 200 = 168 / 200 = 84%。两组数据有重叠，没有能 100% 分对的线：边界往下挪，月蛾错得少了，但会有更多帝蛾被错分成月蛾。机器学习要找的是总体对得最多、错得最少的位置。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 一个神经元收到输入 0.55 和 82，权重 2.8 和 0.1，偏置 −6，激活函数是线性的。输出多少？如果激活函数换成"负数变 0"呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">0.55 × 2.8 + 82 × 0.1 = 9.74，加偏置 −6 得 3.74，线性激活原样输出 3.74。换成"负数变 0"（ReLU）也还是 3.74，因为它不是负数。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. AlphaGo 是弱 AI 还是强 AI？它主要靠什么方法变强？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">弱 AI（窄 AI）：它只会下围棋。它变强的方法之一是强化学习——和自己的克隆版下几百万盘棋，学会什么管用、什么不管用，自己发现成功的策略。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="33.html"><small>← 上一集</small>33 加密</a>
+    <a class="next" href="35.html"><small>下一集 →</small>35 计算机视觉</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 34 集 Machine Learning &amp; Artificial Intelligence（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt = (v, d = 2) => (Math.round(v * 10 ** d) / 10 ** d).toString();
+
+/* ---------- AI ⊃ ML ⊃ DL ---------- */
+(function () {
+  const svg = $('#nest');
+  el('rect', { x: 20, y: 10, width: 640, height: 180, rx: 20, class: 's-soft' }, svg);
+  txt(svg, 44, 40, '人工智能 AI', 't-main');
+  txt(svg, 44, 60, '让计算机像人一样聪明的宏大目标', 't-sub');
+  el('rect', { x: 230, y: 30, width: 410, height: 140, rx: 16, class: 's-acc' }, svg);
+  txt(svg, 252, 58, '机器学习', 't-main t-acc');
+  txt(svg, 252, 78, '从数据中学习，再做预测和决定', 't-sub');
+  txt(svg, 252, 100, '决策树 · 森林 · 支持向量机 …', 't-sub');
+  el('rect', { x: 440, y: 70, width: 180, height: 80, rx: 12, class: 's-on' }, svg);
+  txt(svg, 530, 104, '深度学习', 't-main mid');
+  txt(svg, 530, 126, '很多层的神经网络', 't-sub mid');
+})();
+
+/* ---------- 飞蛾数据（示意，种子 25） ---------- */
+function rng(seed) { return function () { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+const MOTHS = (function () {
+  const R = rng(25), cl = (v, a, b) => Math.min(b, Math.max(a, v));
+  const g = () => { let u = 0; while (!u) u = R(); const v = R(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const M = [];
+  for (let i = 0; i < 100; i++) { const w = 39 + g() * 4.5; M.push({ sp: 0, w: cl(w, 26, 64), m: cl(0.56 + 0.02 * (w - 39) + g() * 0.1, 0.22, 1.28) }); }
+  for (let i = 0; i < 100; i++) { const w = 49 + g() * 5; M.push({ sp: 1, w: cl(w, 26, 64), m: cl(0.8 + 0.03 * (w - 49) + g() * 0.11, 0.22, 1.28) }); }
+  return M;
+})();
+const SP = ['帝蛾', '月蛾'];
+
+/* ---------- 散点图 + 决策边界 + 决策树 ---------- */
+(function () {
+  const svg = $('#sc');
+  const X0 = 70, X1 = 650, Y0 = 320, Y1 = 20, W0 = 25, W1 = 65, M0 = 0.2, M1 = 1.3;
+  const sx = w => X0 + (w - W0) / (W1 - W0) * (X1 - X0);
+  const sy = m => Y0 - (m - M0) / (M1 - M0) * (Y0 - Y1);
+  // 归一化坐标（斜线模式用）
+  const nu = w => (w - W0) / (W1 - W0), nv = m => (m - M0) / (M1 - M0);
+  let mode = 'box', TW = 45, TM = 0.75, L = null, unknown = [];
+
+  const region = el('g', {}, svg);
+  // 坐标轴
+  el('path', { d: `M${X0},${Y1} V${Y0} H${X1}`, class: 's-line', style: 'stroke-width:1.5' }, svg);
+  for (let w = 30; w <= 60; w += 10) { el('line', { x1: sx(w), x2: sx(w), y1: Y0, y2: Y0 + 5, style: 'stroke:var(--ink)' }, svg); txt(svg, sx(w), Y0 + 20, w, 't-sub mid'); }
+  for (let m = 0.4; m <= 1.21; m += 0.2) { el('line', { x1: X0 - 5, x2: X0, y1: sy(m), y2: sy(m), style: 'stroke:var(--ink)' }, svg); txt(svg, X0 - 9, sy(m) + 4, m.toFixed(1), 't-sub end'); }
+  txt(svg, (X0 + X1) / 2, Y0 + 42, '翼展（毫米）', 't-sub mid');
+  const yl = txt(svg, 22, (Y0 + Y1) / 2, '重量', 't-sub mid'); yl.setAttribute('transform', `rotate(-90 22 ${(Y0 + Y1) / 2})`);
+  const dots = el('g', {}, svg);
+  MOTHS.forEach(p => el('circle', { cx: sx(p.w), cy: sy(p.m), r: 3.6, style: `fill:${p.sp ? 'var(--accent)' : 'var(--bad)'};opacity:.8` }, dots));
+  const lines = el('g', {}, svg);
+  const unk = el('g', {}, svg);
+  el('circle', { cx: X1 - 120, cy: Y1 + 12, r: 5, style: 'fill:var(--bad)' }, svg); txt(svg, X1 - 110, Y1 + 16, '帝蛾', 't-sub');
+  el('circle', { cx: X1 - 60, cy: Y1 + 12, r: 5, style: 'fill:var(--accent)' }, svg); txt(svg, X1 - 50, Y1 + 16, '月蛾', 't-sub');
+
+  const predict = (w, m) => {
+    if (mode === 'box') return (w < TW && m < TM) ? 0 : 1;
+    return (Math.cos(L.a) * nu(w) + Math.sin(L.a) * nv(m) < L.t) === L.lowEmp ? 0 : 1;
+  };
+  const score = () => { const c = [[0, 0], [0, 0]]; MOTHS.forEach(p => c[p.sp][predict(p.w, p.m)]++); return c; };
+
+  // 斜线模式：枚举角度和位置，找训练集上最准的
+  function fitLine() {
+    let best = null;
+    for (let deg = 0; deg < 180; deg += 2) {
+      const a = deg * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+      const pr = MOTHS.map(p => ({ v: c * nu(p.w) + s * nv(p.m), sp: p.sp })).sort((x, y) => x.v - y.v);
+      let e0 = 0; // 左侧（v < t）里帝蛾数
+      for (let i = 0; i <= pr.length; i++) {
+        const left = i, l0 = e0, l1 = left - l0, r0 = 100 - l0, r1 = 100 - l1;
+        const okLow = l0 + r1, okHigh = l1 + r0;
+        const t = i === 0 ? pr[0].v - 0.01 : i === pr.length ? pr[i - 1].v + 0.01 : (pr[i - 1].v + pr[i].v) / 2;
+        if (!best || okLow > best.ok) best = { ok: okLow, a, t, lowEmp: true };
+        if (okHigh > best.ok) best = { ok: okHigh, a, t, lowEmp: false };
+        if (i < pr.length && pr[i].sp === 0) e0++;
+      }
+    }
+    return best;
+  }
+  function fitBox() {
+    let best = { ok: -1 };
+    for (let w = 30; w <= 60; w += 0.5) for (let m = 0.3; m <= 1.2001; m += 0.01) {
+      let ok = 0; MOTHS.forEach(p => { const e = p.w < w && p.m < m; if (e === !p.sp) ok++; });
+      if (ok > best.ok) best = { ok, w, m: Math.round(m * 100) / 100 };
+    }
+    return best;
+  }
+
+  // 斜线与单位方框的交点
+  function lineSeg() {
+    const c = Math.cos(L.a), s = Math.sin(L.a), P = [];
+    if (Math.abs(s) > 1e-6) [0, 1].forEach(u => { const v = (L.t - c * u) / s; if (v >= 0 && v <= 1) P.push([u, v]); });
+    if (Math.abs(c) > 1e-6) [0, 1].forEach(v => { const u = (L.t - s * v) / c; if (u >= 0 && u <= 1) P.push([u, v]); });
+    const toS = ([u, v]) => [X0 + u * (X1 - X0), Y0 - v * (Y0 - Y1)];
+    return P.slice(0, 2).map(toS);
+  }
+
+  function draw() {
+    $$('#mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    $('#box-ctl').style.display = mode === 'box' ? '' : 'none';
+    region.innerHTML = ''; lines.innerHTML = '';
+    if (mode === 'box') {
+      el('rect', { x: X0, y: sy(TM), width: sx(TW) - X0, height: Y0 - sy(TM), style: 'fill:var(--bad-soft)' }, region);
+      el('line', { x1: sx(TW), x2: sx(TW), y1: Y1, y2: Y0, style: 'stroke:var(--ink);stroke-width:2;stroke-dasharray:6 4' }, lines);
+      el('line', { x1: X0, x2: sx(TW), y1: sy(TM), y2: sy(TM), style: 'stroke:var(--ink);stroke-width:2;stroke-dasharray:6 4' }, lines);
+      txt(lines, X0 + 8, Y0 - 10, '帝蛾区域', 't-sub').style.fill = 'var(--bad)';
+      $('#th-wv').textContent = TW; $('#th-mv').textContent = TM.toFixed(2);
+    } else {
+      const seg = lineSeg();
+      // 帝蛾一侧涂色：把绘图区矩形按半平面裁剪（Sutherland–Hodgman）
+      const c = Math.cos(L.a), s = Math.sin(L.a);
+      const f = ([u, v]) => (L.lowEmp ? 1 : -1) * (L.t - c * u - s * v); // ≥0 即帝蛾一侧
+      const box = [[0, 0], [1, 0], [1, 1], [0, 1]], poly = [];
+      box.forEach((P, i) => {
+        const Q2 = box[(i + 1) % 4], fp = f(P), fq = f(Q2);
+        if (fp >= 0) poly.push(P);
+        if ((fp >= 0) !== (fq >= 0)) { const k = fp / (fp - fq); poly.push([P[0] + k * (Q2[0] - P[0]), P[1] + k * (Q2[1] - P[1])]); }
+      });
+      if (poly.length) el('path', { d: 'M' + poly.map(([u, v]) => `${X0 + u * (X1 - X0)},${Y0 - v * (Y0 - Y1)}`).join(' L') + ' Z', style: 'fill:var(--bad-soft)' }, region);
+      if (seg.length === 2) el('line', { x1: seg[0][0], y1: seg[0][1], x2: seg[1][0], y2: seg[1][1], style: 'stroke:var(--ink);stroke-width:2;stroke-dasharray:6 4' }, lines);
+    }
+    const c = score(), ok = c[0][0] + c[1][1];
+    $('#cm').innerHTML = `<tr><th rowspan="2" colspan="2"></th><th colspan="2">预测</th></tr><tr><th>帝蛾</th><th>月蛾</th></tr>
+      <tr><th rowspan="2">真实</th><th>帝蛾</th><td class="ok">${c[0][0]}</td><td class="no">${c[0][1]}</td></tr>
+      <tr><th>月蛾</th><td class="no">${c[1][0]}</td><td class="ok">${c[1][1]}</td></tr>`;
+    $('#acc').textContent = `准确率 ${ok} / 200 = ${(ok / 2).toFixed(1)}%`;
+    unk.innerHTML = '';
+    unknown.forEach(([w, m]) => {
+      const p = predict(w, m), x = sx(w), y = sy(m);
+      el('path', { d: `M${x},${y - 9} L${x + 9},${y} L${x},${y + 9} L${x - 9},${y} Z`, style: `fill:var(--panel);stroke:${p ? 'var(--accent)' : 'var(--bad)'};stroke-width:2.5` }, unk);
+      txt(unk, x + 12, y - 8, '？→ ' + SP[p], 't-main').style.fill = p ? 'var(--accent)' : 'var(--bad)';
+    });
+    const last = unknown[unknown.length - 1];
+    $('#sc-cap').innerHTML = (mode === 'box'
+      ? `规则：翼展 &lt; <b>${TW}</b> 且重量 &lt; <b>${TM.toFixed(2)}</b> → 帝蛾，否则 → 月蛾。拖动滑块，看混淆矩阵怎么变：总有些点落在错误的一侧。`
+      : '斜线模式：边界不再只能横平竖直，可以斜着切。斜线是算法在训练数据上试出来的最佳位置。')
+      + (last ? `<br>刚碰到的未知飞蛾：翼展 ${last[0].toFixed(1)}，重量 ${last[1].toFixed(2)} → 预测是<b>${SP[predict(...last)]}</b>。` : '');
+    drawTree();
+  }
+
+  function drawTree() {
+    const t = $('#tree'); t.innerHTML = '';
+    const code = $('#tree-code');
+    if (mode === 'box') {
+      const node = (x, y, s, w) => { el('rect', { x: x - w / 2, y: y - 18, width: w, height: 36, rx: 10, class: 's-acc' }, t); txt(t, x, y + 5, s, 't-main mid'); };
+      const leaf = (x, y, k) => { el('rect', { x: x - 40, y: y - 16, width: 80, height: 32, rx: 16, style: `fill:${k ? 'var(--accent-soft)' : 'var(--bad-soft)'};stroke:${k ? 'var(--accent)' : 'var(--bad)'};stroke-width:2` }, t); txt(t, x, y + 5, SP[k], 't-main mid'); };
+      const edge = (x1, y1, x2, y2, s) => { el('path', { d: `M${x1},${y1} L${x2},${y2}`, class: 's-line', style: 'stroke-width:1.5' }, t); txt(t, (x1 + x2) / 2 + (x2 < x1 ? -12 : 12), (y1 + y2) / 2, s, 't-sub mid'); };
+      edge(170, 48, 90, 100, '是'); edge(170, 48, 270, 190, '否');
+      edge(90, 136, 40, 186, '是'); edge(90, 136, 160, 186, '否');
+      node(170, 30, `翼展 < ${TW}？`, 150);
+      node(90, 118, `重量 < ${TM.toFixed(2)}？`, 150);
+      leaf(40, 196, 0); leaf(160, 196, 1); leaf(275, 196, 1);
+      code.innerHTML = `<b>function</b> classify(wingspan, mass) {
+  <b>if</b> (wingspan &lt; ${TW}) {
+    <b>if</b> (mass &lt; ${TM.toFixed(2)}) <b>return</b> '帝蛾';
+    <b>else</b> <b>return</b> '月蛾';
+  }
+  <b>return</b> '月蛾';
+}`;
+    } else {
+      // 把归一化方程换回原单位：a×翼展 + b×重量 < c
+      const c = Math.cos(L.a) / (W1 - W0), s = Math.sin(L.a) / (M1 - M0);
+      const k = L.t + Math.cos(L.a) * W0 / (W1 - W0) + Math.sin(L.a) * M0 / (M1 - M0);
+      const sg = L.lowEmp ? '&lt;' : '&gt;';
+      txt(t, 170, 90, '斜线没法拆成"先比翼展、', 't-main mid');
+      txt(t, 170, 114, '再比重量"的两个 if 了', 't-main mid');
+      txt(t, 170, 146, '它是两个特征的加权和', 't-sub mid');
+      code.innerHTML = `<b>function</b> classify(wingspan, mass) {
+  <b>if</b> (${c.toPrecision(3)} * wingspan
+      + ${s.toPrecision(3)} * mass ${sg} ${k.toPrecision(3)})
+    <b>return</b> '帝蛾';
+  <b>return</b> '月蛾';
+}
+<span style="color:var(--muted)">// 和第 4 节的神经元很像：乘权重、相加、比大小</span>`;
+    }
+  }
+
+  $('#th-w').oninput = e => { TW = +e.target.value; draw(); };
+  $('#th-m').oninput = e => { TM = +e.target.value; draw(); };
+  $$('#mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; if (mode === 'line' && !L) L = fitLine(); draw(); });
+  $('#fit').onclick = () => {
+    if (mode === 'box') { const b = fitBox(); TW = b.w; TM = b.m; $('#th-w').value = TW; $('#th-m').value = TM; }
+    else L = fitLine();
+    draw();
+    $('#sc-cap').insertAdjacentHTML('afterbegin', '算法把成千上万种边界都试了一遍，留下训练数据上分对最多的。<br>');
+  };
+  $('#reset-b').onclick = () => { mode = 'box'; TW = 45; TM = 0.75; $('#th-w').value = 45; $('#th-m').value = 0.75; draw(); };
+  $('#clr-u').onclick = () => { unknown = []; draw(); };
+  svg.addEventListener('click', e => {
+    const pt = svg.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+    const p = pt.matrixTransform(svg.getScreenCTM().inverse());
+    if (p.x < X0 || p.x > X1 || p.y < Y1 || p.y > Y0) return;
+    unknown.push([W0 + (p.x - X0) / (X1 - X0) * (W1 - W0), M0 + (Y0 - p.y) / (Y0 - Y1) * (M1 - M0)]);
+    if (unknown.length > 5) unknown.shift();
+    draw();
+  });
+  draw();
+})();
+
+/* ---------- 维度 ---------- */
+(function () {
+  const svg = $('#dims');
+  // 2D：线
+  el('rect', { x: 30, y: 20, width: 150, height: 130, rx: 6, class: 's-soft' }, svg);
+  [[50, 120], [70, 100], [65, 130], [90, 115]].forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 4, style: 'fill:var(--bad)' }, svg));
+  [[130, 50], [150, 70], [120, 40], [160, 45]].forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 4, style: 'fill:var(--accent)' }, svg));
+  el('line', { x1: 45, y1: 40, x2: 170, y2: 140, style: 'stroke:var(--ink);stroke-width:2;stroke-dasharray:5 3' }, svg);
+  txt(svg, 105, 172, '2 个特征 → 用线切', 't-sub mid');
+  // 3D：面
+  const ox = 260, oy = 140;
+  el('path', { d: `M${ox},${oy} h150 M${ox},${oy} v-120 M${ox},${oy} l60,-45`, class: 's-line', style: 'stroke-width:1.2' }, svg);
+  el('path', { d: `M${ox + 20},${oy - 20} L${ox + 130},${oy - 90} L${ox + 175},${oy - 60} L${ox + 65},${oy + 10} Z`, style: 'fill:var(--on-soft);stroke:var(--on);stroke-width:1.5' }, svg);
+  [[ox + 30, oy - 70], [ox + 50, oy - 95], [ox + 20, oy - 100]].forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 4, style: 'fill:var(--accent)' }, svg));
+  [[ox + 120, oy - 20], [ox + 140, oy - 10], [ox + 100, oy - 5]].forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 4, style: 'fill:var(--bad)' }, svg));
+  txt(svg, ox + 80, 172, '3 个特征（加触角长度）→ 用面切', 't-sub mid');
+  // 高维
+  el('rect', { x: 500, y: 30, width: 160, height: 110, rx: 10, style: 'fill:var(--code);stroke:var(--line)' }, svg);
+  txt(svg, 580, 70, '4 维、20 维、', 't-main mid');
+  txt(svg, 580, 92, '1000 维……', 't-main mid');
+  txt(svg, 580, 118, '画不出来，算法照算', 't-sub mid');
+  txt(svg, 580, 172, '很多特征 → 超平面', 't-sub mid');
+})();
+
+/* ---------- 一个神经元 ---------- */
+(function () {
+  const svg = $('#neu');
+  const IN = [0.55, 82], NAMES = ['重量', '翼展'];
+  let act = 'lin';
+  const F = { lin: v => v, tanh: v => Math.tanh(v), relu: v => Math.max(0, v) };
+  const FN = { lin: '线性', tanh: 'tanh', relu: 'ReLU' };
+  function draw() {
+    const w1 = +$('#n-w1').value, w2 = +$('#n-w2').value, b = +$('#n-b').value;
+    $('#n-w1v').textContent = w1; $('#n-w2v').textContent = w2; $('#n-bv').textContent = b;
+    $$('#act button').forEach(x => x.classList.toggle('sel', x.dataset.a === act));
+    const p1 = IN[0] * w1, p2 = IN[1] * w2, s = p1 + p2, z = s + b, out = F[act](z);
+    svg.innerHTML = '';
+    [[60, 1], [150, 2]].forEach(([y, i]) => {
+      const w = i === 1 ? w1 : w2;
+      el('circle', { cx: 60, cy: y, r: 26, class: 's-acc' }, svg);
+      txt(svg, 60, y + 5, IN[i - 1], 't-main mid');
+      txt(svg, 60, y + 44, NAMES[i - 1], 't-sub mid');
+      el('path', { d: `M86,${y} L300,105`, class: 's-line', style: `stroke-width:${1 + Math.min(5, Math.abs(i === 1 ? p1 : p2) / 2)};stroke:${w >= 0 ? 'var(--accent)' : 'var(--bad)'}` }, svg);
+      txt(svg, 190, y === 60 ? 70 : 158, `× ${w} = ${fmt(i === 1 ? p1 : p2)}`, 't-mono mid');
+    });
+    el('circle', { cx: 330, cy: 105, r: 30, class: 's-panel' }, svg);
+    txt(svg, 330, 101, 'Σ', 't-main mid');
+    txt(svg, 330, 118, fmt(s), 't-mono mid');
+    txt(svg, 330, 158, '求和', 't-sub mid');
+    el('path', { d: 'M360,105 H410', class: 's-line' }, svg);
+    el('rect', { x: 410, y: 80, width: 80, height: 50, rx: 10, class: 's-panel' }, svg);
+    txt(svg, 450, 101, (b >= 0 ? '+ ' : '− ') + Math.abs(b), 't-main mid');
+    txt(svg, 450, 120, fmt(z), 't-mono mid');
+    txt(svg, 450, 158, '偏置', 't-sub mid');
+    el('path', { d: 'M490,105 H520', class: 's-line' }, svg);
+    el('rect', { x: 520, y: 80, width: 70, height: 50, rx: 10, class: 's-on' }, svg);
+    txt(svg, 555, 110, FN[act], 't-main mid');
+    txt(svg, 555, 158, '激活函数', 't-sub mid');
+    el('path', { d: 'M590,105 H615', class: 's-line' }, svg);
+    txt(svg, 650, 111, fmt(out), 't-main mid').style.fontSize = '18px';
+    txt(svg, 650, 158, '输出', 't-sub mid');
+    $('#neu-cap').innerHTML = `${IN[0]} × ${w1} + ${IN[1]} × ${w2} = <b>${fmt(s)}</b>；加偏置 ${b} → <b>${fmt(z)}</b>；${FN[act]}激活 → 输出 <b>${fmt(out)}</b>。` +
+      (act === 'tanh' ? '　tanh 把任何数都压进 −1 ~ 1 之间。' : act === 'relu' ? '　ReLU 遇到负数就输出 0，正数原样放行。把偏置拖到 −15 试试。' : '');
+  }
+  ['#n-w1', '#n-w2', '#n-b'].forEach(s => $(s).oninput = draw);
+  $$('#act button').forEach(x => x.onclick = () => { act = x.dataset.a; draw(); });
+  draw();
+})();
+
+/* ---------- 小神经网络（权重手工设定） ---------- */
+(function () {
+  const svg = $('#nn');
+  const H = [[2.8, 0.1, -6], [5, 0.2, -13], [-3, -0.15, 9]]; // [乘重量, 乘翼展, 偏置]
+  const O = [[-0.5, -0.5, 1, 0], [0.6, 0.6, -0.4, 0]];      // 帝蛾、月蛾：[乘 h1, h2, h3, 偏置]
+  const IX = 80, HX = 340, OX = 590;
+  const iy = [100, 190], hy = [60, 145, 230], oy = [100, 190];
+  function draw() {
+    const m = +$('#nn-m').value, w = +$('#nn-w').value;
+    $('#nn-mv').textContent = m.toFixed(2); $('#nn-wv').textContent = w;
+    const h = H.map(([a, b, c]) => a * m + b * w + c);
+    const o = O.map(([a, b, c, d]) => a * h[0] + b * h[1] + c * h[2] + d);
+    const win = o[0] > o[1] ? 0 : 1;
+    svg.innerHTML = '';
+    const edge = (x1, y1, x2, y2, wt, scale) => el('line', { x1, y1, x2, y2, style: `stroke:${wt >= 0 ? 'var(--accent)' : 'var(--bad)'};stroke-width:${Math.max(.8, Math.min(6, Math.abs(wt) * scale))};opacity:.55` }, svg);
+    H.forEach((r, j) => { edge(IX, iy[0], HX, hy[j], r[0], 1); edge(IX, iy[1], HX, hy[j], r[1], 20); });
+    O.forEach((r, k) => r.slice(0, 3).forEach((wt, j) => edge(HX, hy[j], OX, oy[k], wt, 5)));
+    [['重量', m.toFixed(2)], ['翼展', w]].forEach(([n, v], i) => { el('circle', { cx: IX, cy: iy[i], r: 28, class: 's-acc' }, svg); txt(svg, IX, iy[i] + 5, v, 't-main mid'); txt(svg, IX - 36, iy[i] + 5, n, 't-sub end'); });
+    h.forEach((v, j) => { el('circle', { cx: HX, cy: hy[j], r: 28, class: 's-panel' }, svg); txt(svg, HX, hy[j] + 5, fmt(v), 't-mono mid'); });
+    o.forEach((v, k) => {
+      el('circle', { cx: OX, cy: oy[k], r: 28, style: k === win ? 'fill:var(--on-soft);stroke:var(--on);stroke-width:3' : 'fill:var(--panel);stroke:var(--ink);stroke-width:2' }, svg);
+      txt(svg, OX, oy[k] + 5, fmt(v), 't-mono mid');
+      txt(svg, OX + 36, oy[k] + 5, SP[k], k === win ? 't-main' : 't-sub');
+    });
+    txt(svg, IX, 268, '输入层', 't-sub mid'); txt(svg, HX, 272, '隐藏层', 't-sub mid'); txt(svg, OX, 268, '输出层', 't-sub mid');
+    $('#nn-cap').innerHTML = `隐藏层：${h.map(v => fmt(v)).join('、')}　→　输出层：帝蛾 ${fmt(o[0])}，月蛾 ${fmt(o[1])}。最兴奋的是<b>${SP[win]}</b>，所以分类结果是${SP[win]}。` +
+      (m === 0.55 && w === 82 ? '　（这正是课程里的那只：0.55 和 82。）' : '　试试拖到重量 0.55、翼展 38 附近。');
+  }
+  $('#nn-m').oninput = draw; $('#nn-w').oninput = draw;
+  draw();
+})();
+
+/* ---------- 强化学习：Q 学习走迷宫 ---------- */
+(function () {
+  const svg = $('#rl');
+  const C = 6, Rw = 4, S = 54, GX = 20, GY = 18;
+  const WALL = new Set(['1,1', '2,1', '1,3', '2,3', '3,3']);
+  const START = [3, 0], GOAL = [0, 5], PIT = [1, 4];
+  const D = [[-1, 0], [0, 1], [1, 0], [0, -1]], ARW = ['↑', '→', '↓', '←'];
+  const key = (r, c) => r + ',' + c;
+  let Q, episodes, hist, agent = null, busy = false;
+  const reset = () => { Q = {}; episodes = 0; hist = []; agent = null; };
+  const q = s => (Q[s] = Q[s] || [0, 0, 0, 0]);
+  const R = rng(7);
+  const best = s => { const v = q(s); let b = 0; for (let i = 1; i < 4; i++) if (v[i] > v[b]) b = i; return b; };
+  function step([r, c], a) {
+    let nr = r + D[a][0], nc = c + D[a][1];
+    if (nr < 0 || nr >= Rw || nc < 0 || nc >= C || WALL.has(key(nr, nc))) { nr = r; nc = c; }
+    if (nr === GOAL[0] && nc === GOAL[1]) return [[nr, nc], 10, 'goal'];
+    if (nr === PIT[0] && nc === PIT[1]) return [[nr, nc], -10, 'pit'];
+    return [[nr, nc], -1, null];
+  }
+  function episode(record) {
+    let s = START.slice(), n = 0, end = null, path = [s];
+    while (!end && n < 100) {
+      const k = key(...s);
+      const a = R() < 0.2 ? Math.floor(R() * 4) : best(k);
+      const [s2, rw, e] = step(s, a);
+      const target = rw + (e ? 0 : 0.95 * Math.max(...q(key(...s2))));
+      q(k)[a] += 0.5 * (target - q(k)[a]);
+      s = s2; end = e; n++; if (record) path.push(s);
+    }
+    episodes++; hist.push({ n, end }); if (hist.length > 60) hist.shift();
+    return path;
+  }
+  function draw() {
+    svg.innerHTML = '';
+    let maxV = 1; Object.values(Q).forEach(v => maxV = Math.max(maxV, Math.max(...v)));
+    for (let r = 0; r < Rw; r++) for (let c = 0; c < C; c++) {
+      const x = GX + c * S, y = GY + r * S, k = key(r, c);
+      const isG = r === GOAL[0] && c === GOAL[1], isP = r === PIT[0] && c === PIT[1];
+      let fill = 'var(--panel)';
+      if (WALL.has(k)) fill = 'var(--wire)';
+      else if (isG) fill = 'var(--ok-soft)';
+      else if (isP) fill = 'var(--bad-soft)';
+      el('rect', { x, y, width: S - 3, height: S - 3, rx: 6, style: `fill:${fill};stroke:var(--line)` }, svg);
+      if (!WALL.has(k) && !isG && !isP && Q[k]) {
+        const v = Math.max(...Q[k]);
+        if (v > 0) el('rect', { x, y, width: S - 3, height: S - 3, rx: 6, style: `fill:var(--accent);opacity:${Math.min(.35, v / maxV * .35)}` }, svg);
+        if (Q[k].some(z => z !== 0)) txt(svg, x + S / 2 - 1, y + S / 2 + 6, ARW[best(k)], 't-main mid').style.fontSize = '18px';
+      }
+      if (isG) txt(svg, x + S / 2 - 1, y + S / 2 + 5, '终点', 't-main mid');
+      if (isP) txt(svg, x + S / 2 - 1, y + S / 2 + 5, '陷阱', 't-main mid');
+      if (r === START[0] && c === START[1]) txt(svg, x + 6, y + 14, '起点', 't-sub');
+    }
+    if (agent) el('circle', { cx: GX + agent[1] * S + S / 2 - 1, cy: GY + agent[0] * S + S / 2 - 1, r: 13, style: 'fill:var(--on);stroke:var(--panel);stroke-width:2' }, svg);
+    // 学习曲线
+    const cx = 380, cy = 30, cw = 280, ch = 170;
+    el('rect', { x: cx, y: cy, width: cw, height: ch, rx: 8, class: 's-soft' }, svg);
+    txt(svg, cx + 10, cy + 18, '每局走了几步（最近 60 局）', 't-sub');
+    const bw = cw / 60;
+    hist.forEach((h, i) => {
+      const bh = Math.min(100, h.n) / 100 * (ch - 34);
+      el('rect', { x: cx + i * bw + 1, y: cy + ch - 6 - bh, width: Math.max(1, bw - 1.5), height: bh, style: `fill:${h.end === 'goal' ? 'var(--ok)' : h.end === 'pit' ? 'var(--bad)' : 'var(--muted)'}` }, svg);
+    });
+    const y8 = cy + ch - 6 - 8 / 100 * (ch - 34);
+    el('line', { x1: cx, x2: cx + cw, y1: y8, y2: y8, style: 'stroke:var(--ok);stroke-dasharray:4 3' }, svg);
+    txt(svg, cx + cw - 6, cy + 18, '虚线：最短 8 步', 't-sub end').style.fill = 'var(--ok)';
+    txt(svg, cx, cy + ch + 22, '绿：到终点　红：掉陷阱　灰：100 步没走到', 't-sub');
+    const last = hist[hist.length - 1];
+    $('#rl-stats').innerHTML = `已练 <b>${episodes}</b> 局` + (last ? `　最近一局：${last.n} 步，${last.end === 'goal' ? '到达终点' : last.end === 'pit' ? '掉进陷阱' : '没走到'}` : '　还没开始，它对迷宫一无所知');
+  }
+  $('#rl-one').onclick = () => {
+    if (busy) return;
+    const path = episode(true);
+    if (REDUCE) { agent = path[path.length - 1]; draw(); return; }
+    busy = true; let i = 0;
+    const t = setInterval(() => { agent = path[i++]; draw(); if (i >= path.length) { clearInterval(t); busy = false; } }, Math.max(25, 1500 / path.length));
+  };
+  $('#rl-many').onclick = () => { if (busy) return; for (let i = 0; i < 50; i++) episode(false); agent = null; draw(); };
+  $('#rl-reset').onclick = () => { if (busy) return; reset(); draw(); };
+  reset(); draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>42 云计算 · 计算机科学速成课 · 续集</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.slider{display:flex;align-items:center;gap:10px;font-size:14px;margin:10px 0;flex-wrap:wrap}
+.slider input{flex:1;min-width:160px}
+.slider b{font-family:var(--mono);min-width:4.5em}
+.readout .warn{color:var(--bad);font-weight:700}
+.readout .good{color:var(--ok);font-weight:700}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;min-height:36px}
+.chips button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:3px 12px;cursor:pointer}
+.chips button small{font-family:var(--mono);color:var(--muted);margin-left:4px}
+.chips button.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.bp-srv{cursor:pointer}
+.bp-srv:hover .bp-frame{stroke:var(--accent)}
+.bp-item{cursor:pointer}
+.bp-item:hover rect{opacity:.75}
+.lat .row{display:grid;grid-template-columns:64px 1fr;gap:10px;align-items:center;margin:6px 0;font-size:14px}
+.lat .bar{height:20px;border-radius:4px;background:var(--line);position:relative;overflow:hidden}
+.lat .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--on);transition:width .3s}
+.lat .bar.fast i{background:var(--ok)}
+.lat .bar span{position:relative;font:12px/20px var(--mono);padding-left:6px;color:var(--ink)}
+</style>
+</head>
+<body data-ep="42">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="18.html">回顾原课程第 18 集 · 操作系统</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 续集 · 第 42 集</div>
+  <h1>云计算</h1>
+  <p class="en">Cloud Computing</p>
+  <p class="lead">原课程里，一家公司要建网站，得自己买服务器、找机房、接网线。今天，大多数网站和手机应用背后的计算机，主人并不是做这个应用的公司。它们是从亚马逊、微软、Google 这些公司按小时、甚至按毫秒租来的，放在世界各地的巨型数据中心里。这一集讲这件事是怎么一步步做到的：先让一台计算机假装成很多台，再让成千上万台计算机像一台那样被调度。</p>
+  <div class="road">
+    <span>自己的机房</span><i>→</i><span>虚拟机</span><i>→</i><span>数据中心</span><i>→</i><span>容器</span><i>→</i><span>弹性与按需付费</span><i>→</i><span>内容分发网络</span><i>→</i><span>端与云</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：本站续写的原创内容（不是 Crash Course 官方作品）</span>
+    <span class="l-add">蓝色虚线框：延伸与补充</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从第 18、28–30 集说起</a></li>
+    <li><a href="#ch1">1 · 自己的机房</a></li>
+    <li><a href="#ch2">2 · 虚拟机</a></li>
+    <li><a href="#ch3">3 · 数据中心</a></li>
+    <li><a href="#ch4">4 · 容器</a></li>
+    <li><a href="#ch5">5 · 弹性与按需付费</a></li>
+    <li><a href="#ch6">6 · 内容分发网络</a></li>
+    <li><a href="#ch7">7 · 端与云</a></li>
+    <li><a href="#ch8">8 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从第 18、28–30 集说起</h2>
+  <p>这一集同时接着两条线讲：操作系统和网络。先回忆几集：</p>
+  <ul>
+    <li><a href="18.html">第 18 集</a>讲操作系统怎么管理其他程序。<b>多任务</b>让几个程序轮流用一个 CPU；<b>虚拟内存</b>让每个程序以为自己从地址 0 开始独占一整块内存；<b>内存保护</b>让一个程序出错时不会写坏别人的内存；<b>分时</b>系统让几十个用户坐在终端前，共用一台大型主机。</li>
+    <li><a href="28.html">第 28 集</a>讲局域网、以太网和交换机，最后讲到分组交换。</li>
+    <li><a href="29.html">第 29 集</a>讲数据包怎样经过一个个路由器跨越大洋，TCP 怎样保证不丢不乱，DNS 怎样把域名翻译成 IP 地址。</li>
+    <li><a href="30.html">第 30 集</a>讲万维网：浏览器用 HTTP 向服务器要网页。</li>
+  </ul>
+  <p>第 18 集反复出现一个思路：<b>操作系统给每个程序一个假象，让它以为自己独占了资源</b>。如果把这个思路再往前推一步，让一台物理计算机假装成好几台完整的计算机呢？第 30 集里那些"服务器"，又是放在哪里、由谁来管的？这两个问题的答案合起来，就是云计算。</p>
+  <p>先从 2000 年前后一家普通公司的机房说起。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>自己的机房</h2>
+  <p>假设你在 2000 年开一家网店。要让网站上线，得先买几台服务器：订货、等送货、装系统、拉网线，几个星期就过去了。服务器得放在一个有空调、有备用电源的房间里，还得有人值班，半夜硬盘坏了要有人去换。</p>
+  <p>更难的是<b>买多少台</b>。平时一台就够，可年底大促那几天，访问量可能翻十倍。按平时买，大促那天网站会被挤垮；按大促买，一年里大部分时间机器都闲着。大多数公司只能按高峰买，而且还会多买一点留余量。</p>
+  <p>还有一个习惯让情况更糟：<b>一个程序一台服务器</b>。第 18 集的内存保护只能防住程序之间互相写内存，防不住别的冲突：两个程序要的系统库版本不同，一个程序要重启操作系统打补丁，另一个程序要一直在线；一个程序出了问题把整台机器拖垮，另一个也跟着遭殃。最省事的办法是各用各的机器。于是机房里摆满了服务器，每台只跑一个程序，大部分时间都闲着。</p>
+  <div class="callout key">
+    <span class="t">一个统计数字</span>
+    美国自然资源保护委员会（NRDC）2014 年的报告引用的研究显示：2006 到 2012 年间，数据中心里服务器的平均利用率一直停在 <b>12% 到 18%</b>。也就是说，花钱买来、插着电、开着空调的服务器，八成以上的算力白白浪费了。同一份报告估计，规模很大的云服务商能把利用率做到 40% 到 70%。
+  </div>
+  <p>要把这些闲着的算力用起来，第一步是打破"一个程序一台服务器"：让几个程序共用一台物理机，但彼此仍然像在不同的机器上一样互不干扰。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>虚拟机：一台计算机假装成很多台</h2>
+  <p>这个想法比云计算老得多。1960 年代中期，IBM 在美国剑桥的科学中心有个小组，想做一套分时系统。<a href="18.html">第 18 集</a>里的分时系统，是给每个用户一份 CPU 时间；这个小组想得更彻底：<b>给每个用户一台完整的虚拟计算机</b>。用户可以在自己的虚拟计算机上装任何操作系统，就像真有一台机器一样。这套系统叫 CP-40，1967 年 1 月投入使用。后来它移植到 IBM System/360-67 上叫 CP-67，1972 年演变成 IBM 的商业产品 VM/370。</p>
+  <p>这里有两个角色。真正跑在硬件上、负责分配资源的程序，叫<b>虚拟机监控器</b>（hypervisor）。它管着几台<b>虚拟机</b>，每台虚拟机里跑一个完整的<b>客人操作系统</b>，客人操作系统上再跑程序。</p>
+  <p>难点在于：客人操作系统本身就想管硬件。它要改页表、要关中断、要直接跟磁盘说话，这些都靠<b>特权指令</b>。如果让它真的执行，它就能改掉别的虚拟机的内存。办法是让客人操作系统跑在 CPU 的<b>用户态</b>，第 18 集讲内存保护时说过，用户态的程序碰特权指令，CPU 会停下来交给上一层处理。于是：</p>
+
+  <div class="card">
+    <h3>动手：陷入，再模拟</h3>
+    <div class="scroll-x"><svg class="diagram" id="tr" viewBox="0 0 680 280" role="img" aria-label="虚拟机监控器拦截特权指令的过程"></svg></div>
+    <div class="btns"><button class="btn primary" id="tr-next">下一步</button><button class="btn" id="tr-reset">重来</button></div>
+    <div class="step-text" id="tr-cap"></div>
+  </div>
+
+  <p>这个办法叫<b>陷入再模拟</b>（trap-and-emulate）。1974 年，杰拉尔德·波佩克（Gerald Popek）和罗伯特·戈德堡（Robert Goldberg）把它总结成一条定理：只要一台计算机上所有"敏感"的指令（会读或改系统状态的指令）都是特权指令，碰到就会陷入，就一定能在它上面造出虚拟机监控器。他们给虚拟机下的定义很有名："一台真实机器的高效、隔离的复制品"。高效，是说大多数普通指令直接在 CPU 上跑，不用监控器插手；隔离，是说虚拟机之间互相看不见、碰不着。</p>
+  <p>可个人电脑和服务器用的 x86 处理器<b>不满足这个条件</b>。它有十几条敏感指令在用户态执行时不会陷入，只是悄悄返回一个不对的结果。客人操作系统读到错误的信息，监控器却根本不知道。所以很长一段时间里，人们认为 x86 没法高效地虚拟化。</p>
+  <p>1998 年，斯坦福大学的门德尔·罗森布拉姆（Mendel Rosenblum）等人创办了 VMware，1999 年 5 月推出 VMware Workstation。它用了一个巧办法：普通程序的代码照常直接运行；客人操作系统内核的代码，先由监控器<b>边运行边改写</b>，把那些不会陷入的敏感指令换成安全的指令序列，这叫<b>二进制翻译</b>。2005 年 11 月，英特尔推出了第一批支持 VT-x 的处理器，AMD 随后也推出了 AMD-V：芯片自己加了一层"比内核还高"的特权级，专门留给监控器，敏感指令都能陷入了。从此虚拟化成了 x86 服务器的标配。</p>
+  <div class="callout key">
+    <span class="t">虚拟化让服务器"变软"了</span>
+    一台虚拟机说到底只是几个文件：一个装着整块"硬盘"的大文件，加一份写着几个 CPU、多少内存的配置。于是可以像复制文件一样复制一台机器，几分钟就能"装好"一台新服务器；可以给虚拟机拍快照，出错了就退回去；甚至可以在虚拟机运行时把它从一台物理机<b>搬到另一台</b>，里面的程序几乎察觉不到。机器变成了可以随时创建、删除、搬家的软件。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>数据中心：把计算机当成水电来卖</h2>
+  <p>有了虚拟机，一家公司就能把十台闲着的服务器合并成两台。但规模真正拉开，是在一些公司发现：<b>自己建的大机房，可以把虚拟机租给别人用</b>。</p>
+  <p>亚马逊为了应付每年的购物季，建了很多服务器，也积累了一套管理大量服务器的工具。2006 年 3 月 14 日，亚马逊网络服务（Amazon Web Services，AWS）推出了第一个公开服务 S3：任何人都可以往亚马逊的数据中心里存文件，每 GB 每月 15 美分，用多少付多少。同年 8 月 25 日，EC2 开始有限公测：按小时租一台虚拟机，每小时 10 美分。不用签合同，不用等送货，一个 API 请求，几分钟后就有一台服务器可用。之后微软、Google 等公司陆续推出了自己的云。</p>
+  <p>这些"云"背后，是一座座巨型<b>数据中心</b>。走进去，是一排排齐腰高到一人多高的机柜，每个机柜里插着几十台扁平的服务器；成千上万根网线和光纤把它们连成一张大网（<a href="28.html">第 28 集</a>的交换机，在这里一层层堆起来）；另外还有变电站、柴油发电机、大型冷却系统。一个大型园区可能有几十万台服务器。</p>
+  <p>到了这个规模，有两件事变得和以前不一样。</p>
+  <h3>一、坏，是常态</h3>
+  <p>一块硬盘一年坏的概率也许只有百分之一二，可数据中心里有上百万块硬盘，每天都有一批在坏。所以云的软件从一开始就<b>假设硬件随时会坏</b>：每份数据存好几份副本，放在不同的机柜、甚至不同的楼里；一台服务器不响应了，上面的虚拟机就自动在别处重新启动。云服务商把数据中心分成若干个<b>可用区</b>（每个有独立的供电和网络），几个相距不远的可用区组成一个<b>区域</b>。程序同时部署在几个可用区里，一栋楼停电也不会停服务。</p>
+  <h3>二、每一度电都要算</h3>
+  <p>数据中心的电，不全是服务器用的，冷却、照明、变电损耗也要用电。衡量这件事的指标叫<b>电能使用效率</b>（PUE）：整个数据中心的总耗电，除以服务器等 IT 设备的耗电。PUE 是 2.0，就是每给服务器供 1 度电，还要另外花 1 度在别的地方。Google 公布的全部大型数据中心过去 12 个月的平均 PUE 是 1.09；Uptime Institute 2024 年的调查里，行业平均大约是 1.56。大规模的好处之一，就是能在这些地方精打细算。</p>
+  <div class="extra">
+    <span class="t">规模和代价</span>
+    市场研究公司 Synergy Research 统计，到 2025 年底，全世界有 1360 个"超大规模"数据中心，占全球数据中心总容量的 48%。国际能源署估计，2024 年全球数据中心用电约 415 太瓦时，大约是全世界用电量的 1.5%，而且增长很快，其中越来越多是给 AI 用的（第 46 集会细讲）。<br>
+    集中也意味着一处出事，影响很大。2025 年 10 月 20 日，AWS 在美国弗吉尼亚北部的 us-east-1 区域出了故障：一个管理 DNS 记录的自动化系统里有个潜伏的竞态条件，把数据库服务 DynamoDB 的域名解析记录清成了空的。<a href="29.html">第 29 集</a>讲过，DNS 查不到地址，就连不上服务器。依赖它的其他云服务接连出错，许多网站和应用中断了大半天。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>容器：不必每次都带一整个操作系统</h2>
+  <p>虚拟机隔离得很彻底，但也很"重"。每台虚拟机里都有一个完整的操作系统，光是系统本身就要占几百 MB 到几 GB 内存；启动一台虚拟机，要像开机一样从头引导，往往需要几十秒。如果同一台物理机上跑二十个程序，就要同时跑二十份操作系统内核。</p>
+  <p>很多时候，人们要的并不是"一台独立的计算机"，而只是"<b>一个干净、独立的运行环境</b>"：程序看到自己的文件、自己的进程、自己的网络端口，用的 CPU 和内存有上限，不会影响邻居。这件事，一个操作系统内核自己就能做到，这就是<b>容器</b>（container）。</p>
+  <ul>
+    <li><b>隔开"看得见什么"</b>：Linux 内核的<b>命名空间</b>（namespace）让一组进程有自己的一套文件目录、进程编号、网络接口和主机名。容器里的程序以为自己是这台机器上的 1 号进程，看不到别的容器。</li>
+    <li><b>限制"能用多少"</b>：<b>控制组</b>（cgroups）给一组进程规定 CPU、内存、磁盘读写的上限。它是 Google 的工程师从 2006 年开始做的，2008 年 1 月随 Linux 2.6.24 进入主线内核。</li>
+  </ul>
+  <p>在这之前也有类似的东西，比如 2000 年 FreeBSD 4.0 里的"监狱"（jail）。容器里的程序和普通程序一样，直接跑在同一个内核上，没有客人操作系统，<b>启动只要一两秒，额外开销很小</b>。</p>
+
+  <div class="card">
+    <h3>动手：往服务器里装程序</h3>
+    <div class="seg-btns" id="bp-mode"><button data-m="vm" class="sel">每个程序一台虚拟机</button><button data-m="ct">每个程序一个容器</button></div>
+    <div class="scroll-x"><svg class="diagram" id="bp" viewBox="0 0 680 300" role="img" aria-label="把程序装进服务器的装箱游戏"></svg></div>
+    <div class="chips" id="bp-apps"></div>
+    <div class="btns"><button class="btn" id="bp-auto">自动装（先放大的）</button><button class="btn" id="bp-reset">清空</button></div>
+    <div class="readout" id="bp-out"></div>
+    <p class="hint">先点下面一个程序，再点一台服务器把它放进去；点服务器里的方块可以拿出来。每台服务器 16 GB 内存，最下面 1 GB 留给监控器或宿主操作系统；虚拟机模式下，每个程序还要多带 2 GB 的客人操作系统（灰色）。</p>
+  </div>
+
+  <p>同样 8 个程序，用虚拟机要开 4 台服务器，用容器 2 台就装得下。省下来的不只是内存：容器启动快，就可以随时开、随时关，这是下一节"弹性"的基础。</p>
+  <p>容器真正流行，是因为 2013 年 3 月发布的 <b>Docker</b>。它没有发明新的隔离技术，而是把程序和它需要的所有库、配置打成一个<b>镜像</b>：在笔记本上能跑的镜像，原样拿到任何一台装了 Docker 的服务器上，都能一模一样地跑起来。"在我电脑上明明是好的"这句老话，终于有了解法。Docker 的标志是一条驮着集装箱的鲸鱼：集装箱统一了尺寸，港口就不用关心箱子里装的是什么。</p>
+  <p>程序拆成成百上千个容器之后，又冒出新问题：谁来决定每个容器放在哪台机器上？容器挂了谁来重启？Google 内部早就用一套叫 Borg 的系统管理自家所有的程序。2014 年 6 月，Google 公布了按这些经验重新写的开源项目 <b>Kubernetes</b>（希腊语"舵手"），2015 年 7 月发布 1.0。你只要告诉它"网店要跑 5 份"，它就自己找有空位的机器把容器放上去，坏了一个就补一个。上面的装箱游戏，就是它每时每刻在大规模地做的事。</p>
+  <div class="extra">
+    <span class="t">容器的代价</span>
+    容器共用一个内核，这既是它轻的原因，也是它的弱点：内核里只要有一个漏洞，一个容器里的程序就可能"越狱"，碰到同一台机器上的其他容器。所以在云上，不同客户的容器通常不会直接混放在同一个内核上，而是先各自装进一台很小的轻量虚拟机。两种技术不是谁取代谁，而是叠在一起用。软件里的漏洞怎样被利用，第 45 集会讲。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>弹性与按需付费</h2>
+  <p>回到第 1 节那家网店。上了云之后，买多少台服务器这个难题有了另一个答案：<b>不用事先买，用多少租多少</b>。监控程序盯着访问量，忙了就自动多开几台虚拟机或容器，闲了就关掉，这叫<b>自动扩缩容</b>。关掉的那些，钱也就不用付了。</p>
+
+  <div class="card">
+    <h3>动手：两天的访问量，两种付费方式</h3>
+    <div class="seg-btns" id="as-mode"><button data-m="flat" class="sel">一直很平稳</button><button data-m="day">白天忙，夜里闲</button><button data-m="spike">第二天下午上了热搜</button></div>
+    <div class="slider"><span>自己买几台服务器</span><input type="range" id="as-n" min="1" max="32" step="1" value="12" aria-label="自己买的服务器台数"><b id="as-nv">12 台</b></div>
+    <div class="scroll-x"><svg class="diagram" id="as" viewBox="0 0 680 280" role="img" aria-label="访问量曲线与自动扩缩容"></svg></div>
+    <div class="readout" id="as-out"></div>
+    <p class="hint">柱子是每小时需要几台服务器才扛得住，红色部分是自己的服务器扛不住、被丢掉的请求。绿线是云上自动扩缩容的台数：它看上一个小时的访问量，多留三成余量再加一台。价格是示意值：自己的服务器折算到每台每小时 1 元（机器、电费、人工都算上），云上按需租一台每小时 1.6 元。</p>
+  </div>
+
+  <p>可以看到，按需付费<b>不总是更便宜</b>。访问量平稳时，自己买刚好够用的服务器，单价低，反而省钱；云服务商也因此推出了"预留实例"，承诺用一年、三年，换更低的价格。可访问量起伏越大、越难预料，弹性就越值钱：不用为了一年里几个小时的高峰，养着一大堆机器。对一家刚起步的公司来说，更要紧的是<b>不用先拿出一大笔钱买设备</b>，生意做起来了再加。</p>
+  <p>把这个思路推到头，就是 2014 年 11 月 13 日 AWS 发布的 <b>Lambda</b>。程序员连"开几台服务器"都不用管，只要上传一段函数，说清楚什么事情发生时运行它，比如"有人上传了一张图片，就生成一张缩略图"。没有请求时一分钱不花；一下子来了一万个请求，平台就同时启动一万份。这类服务后来被叫做<b>无服务器计算</b>（serverless）。服务器当然还在，只是你不用再管它了。</p>
+  <div class="callout key">
+    <span class="t">云的本质：分时，又回来了</span>
+    <a href="18.html">第 18 集</a>的分时系统，让很多用户分一台大型主机的时间，按用了多少计费。个人电脑兴起后，每个人都有了自己的计算机。云计算又把计算集中到了少数几家公司的大机房里，按秒、按毫秒分给成千上万的客户。只不过这一次，"终端"变成了全世界的浏览器和手机，"主机"变成了几十万台服务器组成的数据中心。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>内容分发网络：把数据放到离你近的地方</h2>
+  <p>算力可以随便加，但有一样东西加不了：<b>距离</b>。光在光纤里每秒大约走 20 万公里，也就是每毫秒 200 公里。北京到美国东海岸直线一万多公里，光缆还得绕路，一个来回就是一百多毫秒。更麻烦的是，打开一个加密网页，在拿到第一个字节之前，要先来回好几趟：<a href="29.html">第 29 集</a>的 TCP 要先"握手"建立连接，接着还要为加密再握手一次，然后才发出 HTTP 请求（<a href="30.html">第 30 集</a>）。一个网页还有几十张图片、几十个脚本要取。</p>
+  <p>解决办法和<a href="09.html">第 9 集</a>讲的 CPU 缓存是一个道理：<b>常用的东西，放在离用的人近的地方</b>。在世界各地的城市里放上很多台"边缘服务器"，把图片、视频、脚本这些不常变的内容复制一份存在那里。用户访问网站时，DNS（<a href="29.html">第 29 集</a>）会把他指到离他最近的那台边缘服务器。这张由边缘服务器组成的网，叫<b>内容分发网络</b>（Content Delivery Network，CDN）。</p>
+
+  <div class="card">
+    <h3>动手：从五座城市打开同一个网站</h3>
+    <div class="seg-btns" id="cd-mode"><button data-m="none" class="sel">不用 CDN</button><button data-m="hit">用 CDN，边缘已有缓存</button><button data-m="miss">用 CDN，边缘还没缓存</button></div>
+    <div class="scroll-x"><svg class="diagram" id="cd" viewBox="0 0 680 300" role="img" aria-label="各城市访问美国东海岸源站与访问附近边缘服务器的示意图"></svg></div>
+    <div class="lat" id="cd-rows"></div>
+    <div class="readout" id="cd-out"></div>
+    <p class="hint">网站的源站放在美国弗吉尼亚。延迟是按距离估算的示意值：光纤路线按直线距离的 1.5 倍算，每个来回另加 4 毫秒的处理时间，第一个字节到手前要来回 3 趟（TCP 握手、加密握手、请求数据）。</p>
+  </div>
+
+  <p>边缘没缓存时，第一个用户要多等一下，边缘服务器得先去源站取一次；之后同一座城市的人再来，就都是"缓存命中"了。热门内容几乎总是命中。</p>
+  <p>CDN 也是云最早的样子之一。1998 年，麻省理工学院的数学教授汤姆·雷顿（Tom Leighton）和他的研究生丹尼·卢因（Danny Lewin）创办了 Akamai，最初的动机就是网站一遇到访问高峰就被挤垮。他们设计了把内容复制、分发到大量服务器上的算法，把"送内容"做成了一项服务。2012 年，Netflix 开始建自己的 CDN"Open Connect"，干脆把装满电影的服务器免费送进各地网络运营商的机房，晚上闲时把第二天可能热门的片子先拷进去。今天你看的视频，很可能就来自离你家几公里内的某个机柜。</p>
+  <div class="extra">
+    <span class="t">边缘不只能存，也能算</span>
+    CDN 的边缘服务器离用户这么近，后来人们也让它们跑一些代码：检查登录、按用户所在国家改写网页、挡住攻击流量。这叫<b>边缘计算</b>。一个大型 CDN 能把恶意流量分散到全世界几百个城市的服务器上去消化，这也是今天抵御分布式拒绝服务攻击（<a href="32.html">第 32 集</a>）的主要办法之一。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>端与云</h2>
+  <p>如果云这么好，为什么不把所有计算都放上去，让手机只当一块屏幕？因为有几样东西，云给不了：</p>
+  <ul>
+    <li><b>延迟</b>：上一节算过，光速是硬限制。游戏手柄的一次按键、汽车的一次刹车判断，等不起一个跨洋来回。</li>
+    <li><b>离线</b>：在地铁里、飞机上、信号不好的山里，程序也得能用。</li>
+    <li><b>隐私</b>：照片、健康数据、聊天记录，有些人宁可不让它们离开自己的设备。</li>
+    <li><b>成本</b>：几十亿台手机里本来就有很强的芯片（<a href="41.html">第 41 集</a>），用它们算，不花服务商的电费。</li>
+  </ul>
+  <p>所以今天的软件，通常是<b>端和云一起干活</b>：手机负责要快、要私密的部分，云负责要大算力、要大数据、要多人同步的部分。AI 是最新的例子。2024 年 6 月，苹果发布 Apple Intelligence：一个约 30 亿参数的语言模型直接跑在 iPhone 上，处理简单的请求；处理不了的，才发到苹果自己的服务器上运行更大的模型。苹果为这些服务器设计了一套叫"私密云计算"的机制，声称请求处理完就不保存数据，而且允许外部研究人员检查服务器上跑的软件。</p>
+  <ul class="timeline">
+    <li><span class="yr">1960s</span>大型主机和分时系统：计算在中心，用户面前只有终端（<a href="18.html">第 18 集</a>）。</li>
+    <li><span class="yr">1980s</span>个人电脑：计算搬到每个人的桌上（<a href="25.html">第 25 集</a>）。</li>
+    <li><span class="yr">2006</span>AWS 推出 S3 和 EC2，计算又开始往数据中心集中。</li>
+    <li><span class="yr">2010s</span>智能手机加上云：手机上装的是应用，数据和大部分计算在云上。</li>
+    <li><span class="yr">2020s</span>手机和电脑里有了专门的 AI 芯片，模型一部分在端上跑，一部分在云上跑，按需分工。</li>
+  </ul>
+  <div class="callout">
+    <span class="t">钟摆还在摆</span>
+    计算在"集中"和"分散"之间来回摆了几十年，每一次摆动，都是因为某样东西变便宜了：大型主机时代是人力比计算机便宜，个人电脑时代是芯片便宜了，云时代是网络带宽便宜了。截至 2026 年，答案不是"全在云上"或"全在端上"，而是由软件按每一项任务的延迟、成本和隐私需要，决定它在哪里算。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>自己的机房</td><td>按高峰买机器，一个程序一台服务器；2006–2012 年服务器平均利用率只有 12%–18%</td></tr>
+      <tr><td>虚拟机</td><td>虚拟机监控器让一台物理机假装成很多台；陷入再模拟（CP-40，1967；Popek 与 Goldberg，1974）；x86 靠二进制翻译（VMware，1999）和硬件支持（VT-x，2005）</td></tr>
+      <tr><td>数据中心</td><td>AWS 2006 年开始按用量出租存储和虚拟机；假设硬件随时会坏，用副本和可用区容错；用 PUE 衡量能效</td></tr>
+      <tr><td>容器</td><td>共用一个内核，用命名空间隔开、用 cgroups 限量；比虚拟机轻、启动快；Docker（2013）打包镜像，Kubernetes（2014）调度容器</td></tr>
+      <tr><td>弹性与按需付费</td><td>自动扩缩容，用多少付多少；访问量起伏越大越划算；无服务器计算（Lambda，2014）连服务器都不用管</td></tr>
+      <tr><td>内容分发网络</td><td>光速限制了延迟；把内容缓存到离用户近的边缘服务器（Akamai，1998）</td></tr>
+      <tr><td>端与云</td><td>延迟、离线、隐私、成本决定在哪里算；计算在集中和分散之间来回摆</td></tr>
+      <tr><td>连到哪几集</td><td><a href="09.html">9</a>（缓存）· <a href="18.html">18</a>（虚拟内存、内存保护、分时）· <a href="25.html">25</a>（个人电脑）· <a href="28.html">28</a>（局域网、交换机）· <a href="29.html">29</a>（TCP、DNS）· <a href="30.html">30</a>（HTTP）· <a href="41.html">41</a>（GPU）</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 第 18 集的虚拟内存和这一集的虚拟机，是什么关系？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">两者是同一个思路，只是隔离的层次不同。虚拟内存由操作系统给每个程序一个假象，让它以为自己独占一整块内存；虚拟机由虚拟机监控器给每个操作系统一个假象，让它以为自己独占一整台计算机，包括 CPU、内存、磁盘和网卡。监控器甚至要替客人操作系统管理它的页表，把客人眼中的"物理地址"再换算成真正的物理地址。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 什么是"陷入再模拟"？为什么它在早期的 x86 上行不通？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">让客人操作系统跑在用户态，它一执行特权指令，CPU 就陷入，把控制权交给监控器；监控器检查后替它完成这件事（模拟），再交回去。Popek 和 Goldberg 证明，只要所有敏感指令都是特权指令，这个办法就可行。早期 x86 有一些敏感指令在用户态不会陷入，只会悄悄返回错误的结果，监控器拦不住。VMware 用二进制翻译改写这些指令绕过了问题，2005 年起处理器又加入了 VT-x、AMD-V 这样的硬件支持。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 虚拟机和容器有什么区别？为什么同样的程序，用容器能少开几台服务器？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">每台虚拟机里都有一份完整的客人操作系统，隔离彻底，但每份都要占内存，启动要几十秒。容器共用宿主的一个内核，只用命名空间隔开它能看见什么、用 cgroups 限制它能用多少，没有额外的操作系统，占用少，一两秒就能启动。省下的内存能多放程序，所以服务器用得少。代价是隔离没有虚拟机那么强，内核有漏洞时容器之间可能互相影响。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 什么样的业务适合在云上按需付费？什么样的业务自己买服务器可能更省？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">访问量起伏大、难预料（比如有促销高峰、可能突然爆红）或者刚起步、不想先投一大笔钱的业务，适合按需付费，因为自己买就得按高峰买，平时大部分机器闲着。访问量一直平稳、可以预测的业务，自己买刚好够用的服务器（或者在云上买长期的预留实例），单价更低，往往更省。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. CDN 为什么能让网页打开得更快？同一座城市里，为什么第一个访问的人会慢一些？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">网络延迟受光速限制，距离越远，每个来回越慢，而打开一个加密网页要先来回好几趟。CDN 把内容缓存到离用户近的边缘服务器上，这几趟来回都只走很短的距离。第一个访问的人赶上边缘还没有缓存，边缘服务器得先去远处的源站取一次；取回来存下之后，后面的人就直接命中缓存了。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="41.html"><small>← 上一集</small>41 GPU 与并行计算</a>
+    <a class="next" href="43.html"><small>下一集 →</small>43 Transformer 与大语言模型</a>
+  </div>
+
+  <div class="credit">
+    续集为本站原创内容，不是 Crash Course 官方作品，写法沿用原课程的思路。正文、示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。<br>
+    参考资料：
+    NRDC 与 Anthesis，<a href="https://www.nrdc.org/sites/default/files/data-center-efficiency-assessment-IP.pdf" target="_blank" rel="noopener">Data Center Efficiency Assessment</a>（2014）；
+    <a href="https://en.wikipedia.org/wiki/Virtualization" target="_blank" rel="noopener">Virtualization</a>（CP-40、CP-67、VM/370）；
+    Popek 与 Goldberg，<a href="https://doi.org/10.1145/361011.361073" target="_blank" rel="noopener">Formal Requirements for Virtualizable Third Generation Architectures</a>（1974）；
+    Bugnion 等，<a href="https://www.cse.iitb.ac.in/~mythili/virtcc/papers/vmware.pdf" target="_blank" rel="noopener">Bringing Virtualization to the x86 Architecture with the Original VMware Workstation</a>（2012）；
+    <a href="https://en.wikipedia.org/wiki/X86_virtualization" target="_blank" rel="noopener">x86 virtualization</a>（VT-x，2005）；
+    <a href="https://aws.amazon.com/blogs/aws/twenty-years-of-amazon-s3-and-building-whats-next/" target="_blank" rel="noopener">AWS：Twenty years of Amazon S3</a>；
+    <a href="https://en.wikipedia.org/wiki/Amazon_Elastic_Compute_Cloud" target="_blank" rel="noopener">Amazon EC2</a>（2006）；
+    <a href="https://datacenters.google/efficiency/" target="_blank" rel="noopener">Google 数据中心：PUE</a>；
+    Uptime Institute，Global Data Center Survey（2024）；
+    <a href="https://www.srgresearch.com/articles/hyperscale-operators-to-account-for-67-of-all-data-center-capacity-by-2031" target="_blank" rel="noopener">Synergy Research：超大规模数据中心</a>（2026-04）；
+    <a href="https://www.iea.org/reports/energy-and-ai/energy-demand-from-ai" target="_blank" rel="noopener">IEA：Energy and AI</a>（2025）；
+    <a href="https://aws.amazon.com/message/101925/" target="_blank" rel="noopener">AWS：us-east-1 DynamoDB 服务中断总结</a>（2025-10）；
+    <a href="https://en.wikipedia.org/wiki/Cgroups" target="_blank" rel="noopener">cgroups</a>；
+    <a href="https://en.wikipedia.org/wiki/Docker_(software)" target="_blank" rel="noopener">Docker</a>（2013）；
+    <a href="https://en.wikipedia.org/wiki/Kubernetes" target="_blank" rel="noopener">Kubernetes</a>（2014）；
+    <a href="https://press.aboutamazon.com/news-releases/news-release-details/amazon-web-services-announces-aws-lambda" target="_blank" rel="noopener">Amazon：AWS Lambda 发布</a>（2014-11-13）；
+    <a href="https://www.akamai.com/company/company-history" target="_blank" rel="noopener">Akamai 公司历史</a>；
+    <a href="https://techcrunch.com/2012/06/04/netflix-open-connect/" target="_blank" rel="noopener">TechCrunch：Netflix Open Connect</a>（2012-06）；
+    <a href="https://www.apple.com/newsroom/2024/06/introducing-apple-intelligence-for-iphone-ipad-and-mac/" target="_blank" rel="noopener">Apple：Apple Intelligence</a>（2024-06）；
+    <a href="https://machinelearning.apple.com/research/introducing-apple-foundation-models" target="_blank" rel="noopener">Apple：On-Device and Server Foundation Models</a>（2024-06）。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const seg = (id, fn) => $$(id + ' button').forEach(b => b.onclick = () => { $$(id + ' button').forEach(x => x.classList.toggle('sel', x === b)); fn(b.dataset); });
+
+/* ---------- 陷入再模拟 ---------- */
+(function () {
+  const svg = $('#tr');
+  const STEPS = [
+    { hi: [], cap: '三台虚拟机跑在同一台物理机上。每台里都有一个完整的操作系统，它们都以为自己独占这台计算机。点"下一步"。' },
+    { hi: ['os2'], cap: '第 1 步：虚拟机 2 里的操作系统想改页表（第 18 集的虚拟内存就靠页表），给它的程序分一块内存。改页表是特权指令。' },
+    { hi: ['os2', 'hv'], arrow: 'down', cap: '第 2 步：可它其实跑在 CPU 的用户态。CPU 发现这是特权指令，不执行，而是"陷入"（trap），把控制权交给虚拟机监控器。' },
+    { hi: ['hv', 'm2'], cap: '第 3 步：监控器检查这次修改：虚拟机 2 只能用分给它的那一段内存。它把客人眼中的"物理地址"换算成真正的物理地址，替客人完成修改。这一步叫"模拟"（emulate）。' },
+    { hi: ['os2'], arrow: 'up', cap: '第 4 步：监控器把控制权交回去。虚拟机 2 接着往下跑，不知道中间被拦了一下；虚拟机 1 和 3 完全不受影响。' },
+  ];
+  let k = 0;
+  const box = (key, x, y, w, h, label, hi, base) => {
+    el('rect', { x, y, width: w, height: h, rx: 6, class: hi.includes(key) ? 's-on' : (base || 's-panel') }, svg);
+    txt(svg, x + w / 2, y + h / 2 + 5, label, 't-main mid');
+  };
+  function draw() {
+    const s = STEPS[k], hi = s.hi;
+    svg.innerHTML = '';
+    el('defs', {}, svg).innerHTML = '<marker id="tr-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="var(--on)"/></marker>';
+    [0, 1, 2].forEach(i => {
+      const x = 40 + i * 210;
+      el('rect', { x, y: 14, width: 180, height: 140, rx: 10, class: 's-soft' }, svg);
+      txt(svg, x + 90, 34, '虚拟机 ' + (i + 1), 't-sub mid');
+      box('app' + (i + 1), x + 14, 44, 152, 40, '程序', hi);
+      box('os' + (i + 1), x + 14, 96, 152, 46, '客人操作系统', hi);
+    });
+    box('hv', 40, 168, 600, 36, '虚拟机监控器（hypervisor）', hi, 's-acc');
+    el('rect', { x: 40, y: 218, width: 600, height: 50, rx: 8, class: 's-soft' }, svg);
+    txt(svg, 52, 236, '硬件', 't-sub');
+    box('cpu', 52, 240, 90, 22, 'CPU', hi);
+    [0, 1, 2].forEach(i => {
+      const key = 'm' + (i + 1);
+      el('rect', { x: 160 + i * 110, y: 240, width: 104, height: 22, rx: 4, class: hi.includes(key) ? 's-on' : 's-panel' }, svg);
+      txt(svg, 212 + i * 110, 255, '内存 · 给 VM' + (i + 1), 't-sub mid');
+    });
+    box('io', 498, 240, 130, 22, '硬盘 · 网卡', hi);
+    if (s.arrow) {
+      const d = s.arrow === 'down' ? 'M340,142 V166' : 'M300,168 V144';
+      el('path', { d, style: 'stroke:var(--on);stroke-width:3;fill:none', 'marker-end': 'url(#tr-a)' }, svg);
+      txt(svg, 352, 160, s.arrow === 'down' ? '陷入' : '交回', 't-on').style.fontSize = '13px';
+    }
+    $('#tr-cap').textContent = s.cap;
+    $('#tr-next').disabled = k === STEPS.length - 1;
+  }
+  $('#tr-next').onclick = () => { if (k < STEPS.length - 1) { k++; draw(); } };
+  $('#tr-reset').onclick = () => { k = 0; draw(); };
+  draw();
+})();
+
+/* ---------- 装箱：虚拟机 vs 容器 ---------- */
+(function () {
+  const svg = $('#bp'), CAP = 16, HOST = 1, PX = 13, TOP = 30, BASE = TOP + CAP * PX, NS = 4;
+  const APPS = [['数据库', 6], ['网店', 5], ['图片处理', 5], ['搜索', 4], ['聊天', 3], ['监控', 3], ['博客', 2], ['定时任务', 2]];
+  let mode = 'vm', srv, sel = null, msg = '';
+  const OS = () => mode === 'vm' ? 2 : 0, size = i => APPS[i][1] + OS();
+  const used = s => HOST + srv[s].reduce((a, i) => a + size(i), 0);
+  const placed = i => srv.some(l => l.includes(i));
+  function reset() { srv = Array.from({ length: NS }, () => []); sel = null; }
+  function put(i, s) {
+    if (used(s) + size(i) > CAP) { msg = `${APPS[i][0]}放不进服务器 ${s + 1}：只剩 ${CAP - used(s)} GB，它要 ${size(i)} GB${OS() ? '（含 2 GB 客人操作系统）' : ''}。`; return false; }
+    srv[s].push(i); return true;
+  }
+  function draw() {
+    svg.innerHTML = '';
+    for (let s = 0; s < NS; s++) {
+      const x = 40 + s * 160, w = 120, g = el('g', { class: 'bp-srv' }, svg);
+      el('rect', { x, y: TOP, width: w, height: CAP * PX, rx: 6, class: 'bp-frame', style: 'fill:var(--bg);stroke:var(--line);stroke-width:2' }, g);
+      el('rect', { x, y: BASE - HOST * PX, width: w, height: HOST * PX, style: 'fill:var(--metal);opacity:.5' }, g);
+      txt(g, x + w / 2, BASE - 3, mode === 'vm' ? '监控器' : '宿主系统', 't-sub mid').style.fontSize = '10px';
+      g.onclick = () => {
+        if (sel == null) msg = '先在下面点一个程序，再点服务器。';
+        else if (put(sel, s)) { msg = ''; sel = null; }
+        draw();
+      };
+      let y = BASE - HOST * PX;
+      srv[s].forEach(i => {
+        const it = el('g', { class: 'bp-item' }, svg);
+        if (OS()) {
+          y -= 2 * PX;
+          el('rect', { x: x + 4, y: y + 1, width: w - 8, height: 2 * PX - 2, rx: 3, style: 'fill:var(--line);stroke:var(--wire)' }, it);
+          txt(it, x + w / 2, y + 2 * PX - 7, '客人 OS 2G', 't-sub mid').style.fontSize = '10px';
+        }
+        const h = APPS[i][1] * PX;
+        y -= h;
+        el('rect', { x: x + 4, y: y + 1, width: w - 8, height: h - 2, rx: 3, class: mode === 'vm' ? 's-acc' : 's-on' }, it);
+        txt(it, x + w / 2, y + h / 2 + 4, `${APPS[i][0]} ${APPS[i][1]}G`, 't-sub mid').style.fill = 'var(--ink)';
+        it.onclick = e => { e.stopPropagation(); srv[s] = srv[s].filter(j => j !== i); msg = ''; draw(); };
+      });
+      const u = used(s), on = srv[s].length > 0;
+      txt(svg, x + w / 2, BASE + 20, '服务器 ' + (s + 1), on ? 't-main mid' : 't-sub mid');
+      txt(svg, x + w / 2, BASE + 38, on ? `${u} / ${CAP} GB` : '关机', 't-sub mid');
+    }
+    const box = $('#bp-apps');
+    box.innerHTML = '';
+    APPS.forEach(([n, m], i) => {
+      if (placed(i)) return;
+      const b = document.createElement('button');
+      b.innerHTML = `${n}<small>${m}G</small>`;
+      b.classList.toggle('sel', sel === i);
+      b.onclick = () => { sel = sel === i ? null : i; msg = ''; draw(); };
+      box.appendChild(b);
+    });
+    if (!box.children.length) box.innerHTML = '<span class="muted" style="font-size:14px">全部装好了。</span>';
+    const on = srv.filter(l => l.length).length, n = srv.flat().length;
+    const appMem = srv.flat().reduce((a, i) => a + APPS[i][1], 0), osMem = n * OS() + on * HOST;
+    let out = `开着 <span class="big">${on}</span> 台服务器，已装 ${n} / 8 个程序。`;
+    if (on) out += `<br>程序自己用 ${appMem} GB，操作系统和监控器占 ${osMem} GB，开着的服务器内存利用率 ${Math.round(appMem / (on * CAP) * 100)}%。`;
+    if (n === 8) out += mode === 'vm' ? '<br><span class="warn">8 份客人操作系统就占了 16 GB，整整一台服务器。</span>切到"容器"再装一次。' : '<br><span class="good">没有客人操作系统，同样 8 个程序 2 台就够了。</span>';
+    if (msg) out += `<br><span class="warn">${msg}</span>`;
+    $('#bp-out').innerHTML = out;
+  }
+  $('#bp-auto').onclick = () => {
+    reset(); msg = '';
+    APPS.map((a, i) => i).sort((a, b) => size(b) - size(a)).forEach(i => {
+      for (let s = 0; s < NS; s++) if (used(s) + size(i) <= CAP) { srv[s].push(i); break; }
+    });
+    draw();
+  };
+  $('#bp-reset').onclick = () => { reset(); msg = ''; draw(); };
+  seg('#bp-mode', d => { mode = d.m; reset(); msg = ''; draw(); });
+  reset(); draw();
+})();
+
+/* ---------- 自动扩缩容 ---------- */
+(function () {
+  const svg = $('#as'), H = 48, X0 = 56, X1 = 650, Y0 = 232, Y1 = 22, YM = 32, OWN = 1, CLOUD = 1.6;
+  const day = t => { const h = t % 24; return 2 + (h >= 8 && h <= 22 ? 9 * Math.sin(Math.PI * (h - 8) / 14) : 0); };
+  const SPIKE = { 38: 8, 39: 16, 40: 19, 41: 19, 42: 14, 43: 8, 44: 3 };
+  const PAT = {
+    flat: t => 7 + 0.8 * Math.sin(2 * Math.PI * t / 24),
+    day,
+    spike: t => day(t) + (SPIKE[t] || 0),
+  };
+  let pat = 'flat';
+  const sx = t => X0 + t / H * (X1 - X0), sy = v => Y0 - Math.min(v, YM) / YM * (Y0 - Y1);
+  function draw() {
+    const N = +$('#as-n').value, D = Array.from({ length: H }, (_, t) => +PAT[pat](t).toFixed(1));
+    const C = D.map((d, t) => Math.ceil((t ? D[t - 1] : d) * 1.3 + 1));
+    $('#as-nv').textContent = N + ' 台';
+    svg.innerHTML = '';
+    for (let v = 0; v <= YM; v += 8) {
+      el('line', { x1: X0, x2: X1, y1: sy(v), y2: sy(v), class: 's-dash', style: 'opacity:.3' }, svg);
+      txt(svg, X0 - 8, sy(v) + 4, v, 't-sub end');
+    }
+    [0, 12, 24, 36, 48].forEach(t => txt(svg, sx(t), Y0 + 18, t === 24 ? '第二天 0 点' : (t % 24) + ' 点', 't-sub mid'));
+    txt(svg, X0 - 2, Y1 - 8, '需要的服务器台数', 't-sub');
+    const bw = (X1 - X0) / H - 2;
+    D.forEach((d, t) => {
+      const x = sx(t) + 1, ok = Math.min(d, N);
+      el('rect', { x, y: sy(ok), width: bw, height: Y0 - sy(ok), style: 'fill:var(--accent);opacity:.35' }, svg);
+      if (d > N) el('rect', { x, y: sy(d), width: bw, height: sy(N) - sy(d), style: 'fill:var(--bad);opacity:.75' }, svg);
+    });
+    el('path', { d: `M${X0},${Y1} V${Y0} H${X1}`, class: 's-thin' }, svg);
+    el('line', { x1: X0, x2: X1, y1: sy(N), y2: sy(N), style: 'stroke:var(--accent);stroke-width:2.5;stroke-dasharray:7 4' }, svg);
+    txt(svg, X1 - 4, sy(N) - 6, `自己买的 ${N} 台`, 't-acc end');
+    let p = '';
+    C.forEach((c, t) => { p += (p ? 'L' : 'M') + sx(t).toFixed(1) + ',' + sy(c).toFixed(1) + 'L' + sx(t + 1).toFixed(1) + ',' + sy(c).toFixed(1); });
+    el('path', { d: p, style: 'fill:none;stroke:var(--ok);stroke-width:2.5' }, svg);
+    const sum = D.reduce((a, b) => a + b, 0);
+    const lostOwn = D.reduce((a, d) => a + Math.max(0, d - N), 0), hrsOwn = D.filter(d => d > N).length;
+    const lostCloud = D.reduce((a, d, t) => a + Math.max(0, d - C[t]), 0);
+    const costOwn = N * H * OWN, costCloud = Math.round(C.reduce((a, b) => a + b, 0) * CLOUD);
+    const pct = x => (x / sum * 100).toFixed(x / sum < 0.01 && x > 0 ? 1 : 0) + '%';
+    let out = `<span style="color:var(--accent)">■</span> 自己买 ${N} 台：两天成本 <span class="big">${costOwn}</span> 元，` +
+      (hrsOwn ? `<span class="warn">有 ${hrsOwn} 个小时扛不住，丢掉 ${pct(lostOwn)} 的请求</span>` : '<span class="good">一个请求都没丢</span>') + '<br>' +
+      `<span style="color:var(--ok)">■</span> 云上自动扩缩：两天成本 <span class="big">${costCloud}</span> 元，` +
+      (lostCloud > 0 ? `<span class="warn">扩容慢了一步，丢掉 ${pct(lostCloud)} 的请求</span>` : '<span class="good">一个请求都没丢</span>');
+    if (!hrsOwn) out += `<br><span class="muted" style="font-size:14px">${costOwn < costCloud ? '在不丢请求的前提下，这种访问量自己买更便宜。' : '要不丢请求，自己买就得按高峰买，比云上按需付费更贵。'}试着把滑块拉到刚好不丢请求的位置再比较。</span>`;
+    $('#as-out').innerHTML = out;
+  }
+  seg('#as-mode', d => { pat = d.m; draw(); });
+  $('#as-n').oninput = draw;
+  draw();
+})();
+
+/* ---------- CDN 延迟 ---------- */
+(function () {
+  const svg = $('#cd'), ORIGIN = ['弗吉尼亚', 38.9, -77.4], EDGE_KM = 100;
+  const CITIES = [['北京', 39.9, 116.4], ['伦敦', 51.5, -0.1], ['圣保罗', -23.5, -46.6], ['悉尼', -33.9, 151.2], ['旧金山', 37.8, -122.4]];
+  const px = lon => 340 + lon / 180 * 315, py = lat => 150 - lat / 90 * 135;
+  const rad = d => d * Math.PI / 180;
+  const km = (a, b) => { const h = Math.sin(rad(b[1] - a[1]) / 2) ** 2 + Math.cos(rad(a[1])) * Math.cos(rad(b[1])) * Math.sin(rad(b[2] - a[2]) / 2) ** 2; return 2 * 6371 * Math.asin(Math.sqrt(h)); };
+  const rtt = d => 2 * d * 1.5 / 200 + 4;
+  let mode = 'none';
+  function draw() {
+    svg.innerHTML = '';
+    el('rect', { x: 25, y: 15, width: 630, height: 270, rx: 10, class: 's-soft' }, svg);
+    for (let lon = -120; lon <= 120; lon += 60) el('line', { x1: px(lon), x2: px(lon), y1: 15, y2: 285, class: 's-dash', style: 'opacity:.25' }, svg);
+    [-60, 0, 60].forEach(lat => el('line', { x1: 25, x2: 655, y1: py(lat), y2: py(lat), class: 's-dash', style: lat ? 'opacity:.25' : 'opacity:.5' }, svg));
+    txt(svg, 645, py(0) - 5, '赤道', 't-sub end');
+    txt(svg, 340, 279, '示意：按经纬度摆放，没有画出大陆', 't-sub mid');
+    const ox = px(ORIGIN[2]), oy = py(ORIGIN[1]);
+    const rows = [];
+    CITIES.forEach(c => {
+      const cx = px(c[2]), cy = py(c[1]), dO = km(c, ORIGIN);
+      let ms;
+      if (mode === 'none') {
+        el('line', { x1: cx, y1: cy, x2: ox, y2: oy, style: 'stroke:var(--on);stroke-width:2;opacity:.8' }, svg);
+        ms = 3 * rtt(dO);
+      } else {
+        const ex = cx + 14, ey = cy + 14;
+        if (mode === 'miss') el('line', { x1: ex, y1: ey, x2: ox, y2: oy, style: 'stroke:var(--on);stroke-width:1.5;stroke-dasharray:5 4' }, svg);
+        el('line', { x1: cx, y1: cy, x2: ex, y2: ey, style: 'stroke:var(--ok);stroke-width:3' }, svg);
+        el('rect', { x: ex - 6, y: ey - 6, width: 12, height: 12, rx: 2, style: 'fill:var(--ok);stroke:var(--panel);stroke-width:1.5' }, svg);
+        ms = 3 * rtt(EDGE_KM) + (mode === 'miss' ? rtt(dO) : 0);
+      }
+      el('circle', { cx, cy, r: 6, style: 'fill:var(--accent);stroke:var(--panel);stroke-width:2' }, svg);
+      txt(svg, cx, cy - 11, c[0], 't-main mid');
+      rows.push([c[0], ms, Math.round(dO)]);
+    });
+    el('rect', { x: ox - 9, y: oy - 9, width: 18, height: 18, rx: 3, style: 'fill:var(--on);stroke:var(--panel);stroke-width:2' }, svg);
+    txt(svg, ox + 14, oy + 22, '源站（弗吉尼亚）', 't-on').style.fontSize = '13px';
+    if (mode !== 'none') txt(svg, 40, 36, '■ 绿色小方块：各城市的边缘服务器', 't-sub').style.fill = 'var(--ok)';
+    $('#cd-rows').innerHTML = rows.map(([n, ms, d]) =>
+      `<div class="row"><span>${n}</span><div class="bar${ms < 100 ? ' fast' : ''}"><i style="width:${Math.min(100, ms / 750 * 100)}%"></i><span>${Math.round(ms)} ms${mode === 'none' ? `　距源站约 ${d.toLocaleString()} km` : ''}</span></div></div>`).join('');
+    const avg = rows.reduce((a, r) => a + r[1], 0) / rows.length;
+    $('#cd-out').innerHTML = `五座城市拿到第一个字节，平均要 <span class="big">${Math.round(avg)}</span> 毫秒。` +
+      (mode === 'none' ? '<br><span class="muted" style="font-size:14px">离源站越远越慢，北京、悉尼要等半秒以上，这还只是第一个文件。</span>'
+        : mode === 'hit' ? '<br><span class="good">每座城市都在本地拿到了内容，距离几乎不再重要。</span>'
+          : '<br><span class="muted" style="font-size:14px">握手只跟附近的边缘服务器做，边缘再用早已建好的连接去源站取一趟，所以还是比不用 CDN 快。取回来以后就缓存住了。</span>');
+  }
+  seg('#cd-mode', d => { mode = d.m; draw(); });
+  draw();
+})();
+</script>
+</body>
+</html>

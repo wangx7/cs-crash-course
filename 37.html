@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>37 机器人 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.sl{display:grid;grid-template-columns:150px 1fr 56px;gap:10px;align-items:center;font-size:14px;margin:4px 0}
+.sl output{font:600 14px var(--mono);text-align:right}
+@media (max-width:600px){.sl{grid-template-columns:100px 1fr 50px}}
+.asklog{font:13px/1.7 var(--mono);background:var(--code);border-radius:8px;padding:8px 12px;min-height:7.2em}
+.asklog .no{color:var(--muted)} .asklog .yes{color:var(--ok);font-weight:700}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.two div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);font-size:14px;line-height:1.8}
+.two b{display:block;font-size:16px;margin-bottom:4px}
+@media (max-width:600px){.two{grid-template-columns:1fr}}
+.laws{counter-reset:law -1;list-style:none;padding:0;margin:10px 0}
+.laws li{counter-increment:law;border:1px solid var(--line);border-radius:10px;padding:8px 12px 8px 46px;margin:6px 0;background:var(--panel);position:relative;font-size:15px}
+.laws li::before{content:counter(law);position:absolute;left:12px;top:8px;width:24px;height:24px;border-radius:50%;background:var(--on-soft);color:var(--on);font:700 14px/24px var(--mono);text-align:center}
+.laws li.z{border-style:dashed}
+</style>
+</head>
+<body data-ep="37">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=38" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 37 集</div>
+  <h1>机器人</h1>
+  <p class="en">Robots</p>
+  <p class="lead">机器人不是未来科技——它们已经有几百万台，在工厂里焊接、喷漆、搬运。这一集从会"吃饭"的机械鸭和藏着人的下棋机器讲起，到计算机数控机床和第一台工业机器人；然后看机器人最核心的软件：负反馈控制回路和 PID 控制器；最后是那些人类觉得轻而易举、机器人却做不好的事，以及机器人带来的伦理难题。</p>
+  <div class="road">
+    <span>自动机</span><i>→</i><span>CNC 与工业机器人</span><i>→</i><span>负反馈回路</span><i>→</i><span>PID 控制器</span><i>→</i><span>难在哪里</span><i>→</i><span>机器人伦理</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 什么是机器人</a></li>
+    <li><a href="#ch1">1 · 自动机</a></li>
+    <li><a href="#ch2">2 · CNC 与工业机器人</a></li>
+    <li><a href="#ch3">3 · 负反馈控制回路</a></li>
+    <li><a href="#ch4">4 · PID 控制器</a></li>
+    <li><a href="#ch5">5 · 对人简单、对机器人难</a></li>
+    <li><a href="#ch6">6 · 机器人与伦理</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>什么是机器人</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！今天我们要讲机器人。你脑子里冒出的第一个形象，大概是一个<b>类人机器人</b>，就像我们常在电视剧和电影里看到的那样。有时它们是我们的朋友和同事，但更多时候，它们阴险、冷漠、身经百战。我们也常把机器人看成未来的技术。但现实是：它们已经在这里了——数以百万计——而且是我们的工作伙伴，帮我们把事情做得更难、更好、更快、更强。</p>
+  <p>机器人有很多种定义，但一般来说，机器人是<b>由计算机控制、能自动执行一系列动作的机器</b>。它们长什么样并不重要：机器人可以是给汽车喷漆的工业机械臂、会飞的无人机、协助外科医生的蛇形医疗机器人，也可以是人形的机器人助手。虽然"机器人"这个词有时也被用来指互动的虚拟角色，但把它们叫作 "bot"，或者更好的叫法 "agent"（智能体），会更合适。因为"机器人"这个词带有一种<b>实体</b>的含义：一台生活在现实世界、并在现实世界中行动的机器。</p>
+  <p>"robot"这个词最早出现在 1920 年的一部捷克戏剧里，用来指人造的、像人一样的角色。这个词来自斯拉夫语里的 "robota"，意思是被强迫的劳工，指的是十九世纪欧洲封建制度下被迫服劳役的农民。这部戏剧没怎么讲技术细节。但即使过了一个世纪，这仍是一种常见的描绘：大规模生产、高效、不知疲倦、外表像人，却没有感情、不在乎自我保存、缺乏创造力。</p>
+  <div class="extra">
+    <span class="t">那部戏剧</span>
+    它是卡雷尔·恰佩克的《R.U.R.》（罗素姆万能机器人）。恰佩克说，"robot"这个词其实是他的哥哥、画家约瑟夫·恰佩克建议的。戏里的"机器人"其实更像人造的生物，最后起来反抗人类——"机器人造反"这个题材，从这个词诞生的那一刻起就有了。
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>自动机：机械鸭与藏着人的棋手</h2>
+  <p>更广义的"能自己运转的机器"这个想法，比 1920 年代还要古老得多。很多古代发明家造出了能自动执行功能的机械装置，比如计时、整点敲钟。还有很多做成动物和人形的自动装置，会跳舞、唱歌、打鼓，做各种动作。这些不用电、当然更没有电子元件的机器，叫<b>自动机</b>（automatons）。</p>
+  <p>例如，1739 年法国人雅克·德·沃康松造了一个早期的自动机，叫 <b>Canard Digérateur</b>，也就是"消化鸭"：一台鸭子形状的机器，看上去能吃下谷粒，然后排便。伏尔泰在 1739 年写道："要是没有勒莫尔的歌声和沃康松的鸭子，你就没有什么能让你想起法国的荣光了。"</p>
+  <p class="muted" style="font-size:13px">（字幕漏掉了"勒莫尔的歌声"：le Maure 是当时巴黎著名的女歌唱家。伏尔泰是把这只鸭子和一位明星歌手相提并论。）</p>
+  <p>最臭名昭著的例子之一是"<b>土耳其机器人</b>"（Mechanical Turk）：一个会下国际象棋的人形自动机。它在 1770 年造好后，巡游了整个欧洲，以出人意料的高超棋艺让观众惊叹。它看起来像是一种机械的人工智能。可惜，这是个骗局——机器里塞着一个身材小巧的真人。</p>
+  <div class="extra">
+    <span class="t">今天还有一个"土耳其机器人"</span>
+    亚马逊有个众包平台就叫 Amazon Mechanical Turk：把给图片打标签、转写录音这类"计算机还做不好"的小任务，分给世界各地的真人去做。它的名字正是在调侃那台下棋机器——看上去是机器在干活，里面其实是人。第 34 集说的"标记数据"，有很多就是这样由人一条条标出来的。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>计算机数控与第一台工业机器人</h2>
+  <p>第一批由计算机控制的机器出现在 1940 年代末。这些<b>计算机数控</b>（Computer Numerical Control，简称 <b>CNC</b>）机器，可以运行程序，按程序指示执行一连串操作。这种程度的控制，也让制造新产品成为可能，比如从一整块铝里铣出设计复杂的螺旋桨——用标准机床很难做到，而且公差小到没法手工加工。CNC 机器对工业是巨大的福音，不仅因为它提高了制造能力和精度，还因为它把人的工作自动化、降低了人工成本——这个话题我们会在后面的一集里再谈。</p>
+  <p>第一次商业部署的，是一台叫 <b>Unimate</b> 的可编程工业机器人，1960 年卖给了通用汽车公司，用来从压铸机里夹起炽热的金属件并把它们码好。机器人产业由此起步。很快，机器人就开始码放货盘、焊接零件、给汽车喷漆，以及做很多别的事。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>"到了吗？"——负反馈控制回路</h2>
+  <p>对于简单的运动——比如一个在轨道上来回移动的机械爪——可以命令机器人移动到某个特定位置，它会一直朝那个方向移动，直到到达目标位置，然后停下。这种行为可以用一个简单的<b>控制回路</b>（control loop）实现。首先，感知机器人的位置。到了吗？没有。那就继续走。再感知一次位置。到了吗？没有，继续走。到了吗？到了！那就可以停下了——也拜托别再问了！</p>
+
+  <div class="card">
+    <h3>动手：在轨道上移动机械爪</h3>
+    <span class="seg-btns" id="gr-w"><button data-h="0">轻的爪子</button><button data-h="1">很重的爪子</button></span>
+    <div class="scroll-x" style="margin-top:8px"><svg class="diagram" id="gr" viewBox="0 0 680 262" role="img" aria-label="轨道上的机械爪和位置曲线"></svg></div>
+    <div class="btns"><button class="btn primary" id="gr-go">移动到 70 厘米</button></div>
+    <div class="asklog" id="gr-log"></div>
+  </div>
+
+  <p>因为我们在不断缩小"感知到的位置"和"想要的位置"之间的距离，所以更确切地说，这个控制回路是一个<b>负反馈回路</b>（negative feedback loop）。负反馈控制回路有三个关键部分。一个<b>传感器</b>，测量现实世界里的东西，比如水压、电机位置、气温，或者任何你想控制的东西。根据这个测量值，我们算出离想要的位置还差多远——这叫<b>误差</b>（error）。然后由<b>控制器</b>来解读这个误差，决定怎么指挥系统去减小误差。最后，系统通过泵、电机、加热元件和其他物理<b>执行器</b>作用于现实世界。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="loop" viewBox="0 0 680 210" role="img" aria-label="负反馈控制回路"></svg></div>
+      <figcaption>图 1　负反馈控制回路：测量 → 算误差 → 决定怎么做 → 动手 → 世界变了 → 再测量。</figcaption>
+    </figure>
+  </div>
+
+  <p>在严格受控的环境里，这样简单的控制回路效果还行。但在很多现实应用中，事情要复杂一些。假设我们的机械爪非常重，即使控制回路说"停"，惯性也会让它冲过目标位置。这会让控制回路再次接管，这回让爪子往回退。一个调得不好的控制回路可能会冲过头、冲过头、再冲过头，甚至永远晃个不停。更糟的是，在现实环境里，通常还有各种外部的、不断变化的力作用在机器人身上，比如摩擦力、风、重量各不相同的物品。要优雅地应对这些，就需要更复杂的控制逻辑。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>PID 控制器：比例、积分、微分</h2>
+  <p>一种用得很广的控制回路反馈机制，是<b>比例-积分-微分控制器</b>（proportional–integral–derivative controller）。这名字有点拗口，所以大家叫它 <b>PID 控制器</b>。它们以前是机械装置，但现在全都是在软件里实现的。</p>
+  <p>想象一个送咖啡的机器人。它的目标是以每秒两米的速度在顾客之间穿行，这个速度被认为是既安全又快捷的理想速度。当然，环境并不总是配合：有时有风，有时有上坡和下坡，还有各种影响机器人速度的东西。所以它得加大或减小电机的功率，来保持想要的速度。用机器人的速度传感器，我们可以跟踪它的实际速度，把它和想要的速度画在一起。PID 控制器从这些数据算出三个值。</p>
+  <p>首先是<b>比例值</b>（proportional）：最近这一刻、也就是现在，想要的值和实际值之间的差。这就是我们之前那个简单控制回路用的东西。实际和想要差得越多，你就越用力地朝目标推。换句话说，它是比例控制。</p>
+  <p class="muted" style="font-size:13px">（字幕把 at the most recent instant in time or the present 译成了"实际值可能有一定滞后，或者是实时的"。原文的意思只是"此时此刻的差值"。）</p>
+  <p>接着算<b>积分值</b>（integral）：一段时间窗口内——比如最近几秒——误差的总和。这种回顾有助于弥补<b>稳态误差</b>，比如开上一段长坡时产生的那种。如果这个值很大，就说明比例控制不够，还得再加把劲。最后是<b>微分值</b>（derivative）：想要的值和实际值之间（的差）的变化率。它有助于应对未来可能出现的误差，有时也叫<b>预期控制</b>。比如，如果你正飞快地冲向目标，就需要稍微松一点，免得冲过头。这三个值按不同的权重加在一起，产生控制器的输出，交给系统去执行。</p>
+
+  <div class="card">
+    <h3>动手：给送咖啡机器人调 PID</h3>
+    <div class="presets" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px" id="pid-pre"></div>
+    <div class="sl"><label for="kp">P 比例权重</label><input type="range" id="kp" min="0" max="40" step="0.5"><output id="kpv"></output></div>
+    <div class="sl"><label for="ki">I 积分权重</label><input type="range" id="ki" min="0" max="30" step="0.5"><output id="kiv"></output></div>
+    <div class="sl"><label for="kd">D 微分权重</label><input type="range" id="kd" min="0" max="20" step="0.5"><output id="kdv"></output></div>
+    <div class="scroll-x" style="margin-top:6px"><svg class="diagram" id="pid" viewBox="0 0 680 300" role="img" aria-label="速度随时间变化的曲线"></svg></div>
+    <div class="step-text" id="pid-cap"></div>
+    <p class="hint" style="margin-bottom:0">30 秒的路程：第 3 秒有一阵逆风，第 8～16 秒是一段长上坡，第 20～24 秒是下坡。橙线是实际速度，虚线是目标 2 m/s。电机的反应有一点延迟，就像真实的电机一样。</p>
+  </div>
+  <div class="extra">
+    <span class="t">积分的"窗口"和前端里的弹簧动画</span>
+    课程说积分是"一段时间内"的误差总和；最常见的实现其实是从开始一直累加，再给它设个上限，防止上坡时攒下太多、到了平地刹不住（这叫"积分饱和"，你在本页"P + I"那条曲线下坡后的冲高里能看到它的影子）。另外，前端动画库里的"弹簧"效果（比如 Vue 和 React 生态里常见的 spring 动画），用的是"拉力 ∝ 离目标的距离，阻尼 ∝ 速度"——这和 PD 控制几乎是一回事：P 负责拉过去，D 负责别晃。
+  </div>
+
+  <p>PID 控制器无处不在：从你车里的定速巡航，到自动调整旋翼转速以保持水平飞行的无人机，还有更奇特的机器人，比如这个靠在一个球上保持平衡来移动的机器人。高级的机器人往往需要很多控制回路并行运行、协同工作，管理从身体平衡到四肢位置的一切。</p>
+  <p>正如我们讨论过的，控制回路负责让机器人的各项属性（比如位置）达到想要的值。你可能会好奇这些"想要的值"是从哪来的。这是<b>更高层的机器人软件</b>的职责：它规划并执行机器人的动作，比如绕开感知到的障碍物规划一条路径，或者把"捡起一个球"这样的物理任务，分解成一个个简单、按顺序的动作。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>对人轻而易举，对机器人难如登天</h2>
+  <p>用这些技术，机器人已经取得了一些令人瞩目的成就：它们到过地球海洋的最深处，在火星上漫游了十多年。但有趣的是，很多对人类来说微不足道的事，结果对机器人来说却极其困难：比如用两条腿走路、开门、拿起东西而不把它捏碎、穿 T 恤，或者摸摸狗。这些事你可能想都不用想就能做，但一个有超级计算机撑腰的机器人却会败得一塌糊涂。这类任务都是机器人研究中活跃的领域。</p>
+
+  <div class="two">
+    <div><b>机器人早就能做</b>以 0.1 毫米的精度连续焊接一整天<br>给汽车喷出均匀的漆<br>潜到海洋最深处<br>在火星上跑十多年</div>
+    <div><b>小孩都比它强</b>用两条腿走路<br>开一扇门<br>拿起鸡蛋又不捏碎<br>穿上一件 T 恤<br>摸摸狗</div>
+  </div>
+  <div class="extra">
+    <span class="t">莫拉维克悖论</span>
+    机器人学家汉斯·莫拉维克在 1980 年代就指出了这个反差：下棋、做微积分这类人类觉得"难"的推理，对计算机反而容易；感知、走路、抓东西这类人类觉得"不用想"的能力，却最难做出来。一种解释是，后者是动物花了几亿年进化打磨出来的，我们只是意识不到它有多复杂。
+  </div>
+
+  <p>我们前几集讨论过的人工智能技术，也许是克服这些挑战最有希望的途径。例如，Google 一直在做一项实验：让一组机械臂整天把各种杂物从一个盒子搬到另一个盒子，通过反复试错来学习。经过几千小时的练习，这些机器人把错误率降低了一半。当然，和人类不同，机器人可以一天 24 小时运转，还能让很多条手臂同时练习。所以，它们变得擅长抓东西，可能只是时间问题。但目前，蹒跚学步的小孩都比它们会抓。</p>
+  <p>近年来最大、也最显眼的机器人突破之一，是<b>自动驾驶汽车</b>。仔细想想，汽车没有太多系统输入：你可以加速或减速，可以往左或往右打方向盘。难的是感知车道、读懂路标，以及预判车流、在车流中穿行，还要留意行人、骑自行车的人和一大堆障碍物。除了布满近距离传感器，这些机器人车辆还非常依赖我们在第 35 集讨论过的<b>计算机视觉</b>算法。</p>
+  <p>我们也看到了非常原始的<b>仿生人</b>（androids）——外表和行为都像人的机器人——开始出现。可以说，这两个目标我们都还差得远：它们往往看起来很怪，行为更怪。至少我们还有《西部世界》可看。不管怎样，对机器人学家来说，这仍是个诱人的目标，要结合我们最近几集讲过的很多计算机科学课题，比如人工智能、计算机视觉和自然语言处理。至于人类为什么如此着迷于造出自己的人工化身，那你得去看《哲学速成课》了。在可预见的未来，逼真的仿生人仍将只存在于科幻作品中。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>机器人与伦理</h2>
+  <p>军队对机器人也很感兴趣：它们不仅可以替换，还能在力量、耐力、注意力和准确性等方面超越人类。拆弹机器人和侦察无人机如今已经相当常见。但完全自主、全副武装的机器人也在慢慢出现，比如韩国部署的三星 SGR-A1 哨兵枪。有智能、也有能力夺走人命的机器人，被称为<b>致命性自主武器</b>（lethal autonomous weapons）。它们被普遍认为是一个复杂而棘手的问题。</p>
+  <p>毫无疑问，这些系统可以把士兵从战场上撤下来、让他们远离危险，从而挽救士兵的生命。它甚至可能让人们根本不敢开战——不过值得注意的是，人们对炸药和核武器也说过同样的话。另一方面，我们可能在创造冷酷而高效的杀人机器，它们不会在复杂局势中运用人的判断力或同情心——而战争迷雾可以说是最复杂、最混沌的局势了。这些机器人会接受命令，并尽可能高效地执行，而有时候，人类下达的命令其实非常糟糕。这场辩论会持续很长时间，随着机器人技术的进步，双方的评论者也会越来越大声。</p>
+  <p>这也是一场古老的辩论。科幻作家<b>艾萨克·阿西莫夫</b>很早就看到了其中的危险，他在 1942 年的短篇小说《转圈圈》（Runaround）里提出了虚构的"<b>机器人三定律</b>"，后来又加了一条<b>第零定律</b>。简单说，这是一套给机器人的行为准则或道德指南，引导它们不去伤害，尤其是不伤害人类。</p>
+
+  <ol class="laws">
+    <li class="z">机器人不得伤害人类整体，或因不作为而使人类整体受到伤害。<span class="muted" style="font-size:13px">（后来加的第零定律）</span></li>
+    <li>机器人不得伤害人类个体，或因不作为而使人类个体受到伤害。</li>
+    <li>机器人必须服从人类的命令，除非该命令与第一定律冲突。</li>
+    <li>在不违反第一、第二定律的前提下，机器人必须保护自己的存在。</li>
+  </ol>
+  <p class="muted" style="font-size:13px">（三定律的大意，据阿西莫夫原作转述；课程本身没有逐条列出。）</p>
+
+  <div class="card">
+    <h3>动手：《转圈圈》里那个卡住的机器人</h3>
+    <p class="hint" style="margin-top:0">小说里，机器人"速必敌"被派去水银湖边取硒。命令下得很随意（第二定律的驱动力弱），而它是个昂贵的机器人，自我保护被特意调强了（第三定律的驱动力强）。越靠近湖越危险——于是它在某个距离上，两股力刚好抵消，绕着湖一圈圈打转。</p>
+    <div class="sl"><label for="ra-o">命令的强度</label><input type="range" id="ra-o" min="0.3" max="2.6" step="0.05" value="0.8"><output id="ra-ov"></output></div>
+    <div class="scroll-x"><svg class="diagram" id="ra" viewBox="0 0 680 340" role="img" aria-label="机器人在危险区边缘打转"></svg></div>
+    <div class="btns"><button class="btn" id="ra-human">人类走进危险区</button><button class="btn" id="ra-reset">重来</button></div>
+    <div class="step-text" id="ra-cap"></div>
+  </div>
+
+  <p>它在实际应用中相当不够用，也留下了大量模棱两可的空间。但阿西莫夫三定律仍然激发了大量科幻作品和学术讨论，如今已经有专门讨论<b>机器人伦理</b>的会议。重要的是，阿西莫夫写这些虚构的规则，是为了反驳他童年读的小说里常见的"<b>机器人是威胁</b>"套路：在那些故事里，机器人失控，伤害甚至毁灭了它们的创造者。阿西莫夫则设想机器人是有用、可靠、甚至可爱的机器。</p>
+  <p>我希望你今天带着这种<b>两面性</b>去思考。就像这个系列讨论过的很多技术一样，它既有善意的用途，也有恶意的用途。我们的工作，是认真思考计算的潜力与危险，运用我们的创造才能去改善这个世界。而机器人，是对这份责任最有力的提醒之一。我们下周见。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>机器人</td><td>由计算机控制、能自动执行一系列动作的机器，外形不重要；虚拟的更适合叫 bot / agent</td></tr>
+      <tr><td>自动机</td><td>不用电的自动机械：消化鸭（1739）、土耳其机器人（1770，里面藏着人）</td></tr>
+      <tr><td>CNC</td><td>1940 年代末起，计算机按程序控制机床，精度和复杂度远超手工</td></tr>
+      <tr><td>Unimate</td><td>1960 年卖给通用汽车的第一台商用工业机器人，机器人产业的开端</td></tr>
+      <tr><td>负反馈回路</td><td>传感器测量 → 算误差 → 控制器决策 → 执行器动作；不断缩小误差</td></tr>
+      <tr><td>PID</td><td>P：现在差多少；I：过去一段时间累计差多少（消除稳态误差）；D：误差变化多快（预判、防止冲过头）</td></tr>
+      <tr><td>高层软件</td><td>决定"想要的值"：规划路径、把任务拆成动作序列</td></tr>
+      <tr><td>难题</td><td>走路、开门、抓东西、穿衣服；靠 AI 试错学习；自动驾驶靠计算机视觉</td></tr>
+      <tr><td>伦理</td><td>致命性自主武器的争论；阿西莫夫三定律（1942）+ 第零定律；技术有两面性</td></tr>
+    </tbody>
+  </table>
+
+  <ol class="timeline">
+    <li><span class="yr">1739</span>沃康松的"消化鸭"</li>
+    <li><span class="yr">1770</span>下棋的"土耳其机器人"，其实里面藏着人</li>
+    <li><span class="yr">1920</span>捷克戏剧《R.U.R.》，"robot"一词诞生</li>
+    <li><span class="yr">1942</span>阿西莫夫在《转圈圈》中提出机器人三定律</li>
+    <li><span class="yr">1940s 末</span>计算机数控（CNC）机器出现</li>
+    <li><span class="yr">1960</span>Unimate 卖给通用汽车，机器人产业开始</li>
+  </ol>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    机器人是由计算机控制、在现实世界里行动的机器。它最核心的软件是负反馈控制回路：测量、算误差、调整、再测量；PID 控制器用"现在差多少、累计差多少、差得变化多快"三个量，让机器人在风、坡、惯性的干扰下也能稳稳到达目标。人觉得最简单的走路、抓东西，反而是机器人最难的事；而越强大的机器人，越提醒我们要想清楚怎么用它。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 负反馈控制回路的三个关键部分是什么？为什么叫"负"反馈？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">传感器（测量现实中的量，算出和目标的误差）、控制器（根据误差决定怎么做）、执行器（泵、电机、加热元件等，作用于现实世界）。叫"负"反馈，是因为它的动作总是朝着<b>减小</b>误差的方向——测得的值和想要的值差得越多，就越往回拉。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 送咖啡机器人只用 P（比例）控制，在平地上为什么也到不了 2 m/s？在长坡上又会怎样？I（积分）怎么解决这个问题？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">要维持速度就要持续出力（克服阻力），而只用 P 时，出力 = 比例权重 × 误差，误差为零就没有出力了，所以只能停在"差一点"的地方，这就是稳态误差；上坡时需要的力更大，误差也更大，速度掉得很厉害。积分把一段时间的误差累加起来，只要一直差一点，它就越攒越大、越推越用力，直到误差真正消失。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么说"开门、拿鸡蛋"比"在火星上跑十年"对机器人更难？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">在火星上行驶的任务目标清楚、动作简单，可以慢慢规划；而开门、拿鸡蛋需要在千变万化的现实里实时感知（门把手形状、蛋壳多脆）、精细控制力度，还要应对各种意外。这些对人来说是不用想的本能，对机器人却要同时解决感知、控制和规划的难题（莫拉维克悖论）。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 阿西莫夫为什么要写"机器人三定律"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">为了反驳他童年读的小说里常见的"机器人是威胁"的套路——机器人失控、伤害甚至毁灭创造者。他想象的是有用、可靠、甚至可爱的机器人，三定律就是给它们的行为准则：不伤害人、服从命令、保护自己，优先级依次降低。虽然现实中不够用，但它引发了大量关于机器人伦理的讨论。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="36.html"><small>← 上一集</small>36 自然语言处理</a>
+    <a class="next" href="38.html"><small>下一集 →</small>38 计算机心理学</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 37 集 Robots（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const pathOf = (pts, sx, sy) => pts.map(([a, b], i) => (i ? 'L' : 'M') + sx(a).toFixed(1) + ',' + sy(b).toFixed(1)).join('');
+
+/* ---------- 机械爪 ---------- */
+(function () {
+  const svg = $('#gr');
+  const T = 70, TOL = 1, DT = 0.01, DUR = 12;
+  let heavy = 0, timer = null;
+  function simulate() {
+    let x = 10, v = 0; const pts = [], asks = [];
+    for (let t = 0, k = 0; t <= DUR; t += DT, k++) {
+      const e = T - x, there = Math.abs(e) <= TOL;
+      if (heavy) { const a = there ? 0 : Math.sign(e) * 20; v += a * DT; v = Math.max(-25, Math.min(25, v)); v *= 1 - .3 * DT; }
+      else v = there ? 0 : Math.sign(e) * 30;
+      x += v * DT;
+      pts.push([t, x]);
+      if (k % 50 === 0) asks.push([t, x, there]);
+    }
+    return [pts, asks];
+  }
+  const X0 = 60, X1 = 640, sx = cm => X0 + cm / 100 * (X1 - X0);
+  const PX0 = 60, PX1 = 640, PY0 = 236, PY1 = 110, px = t => PX0 + t / DUR * (PX1 - PX0), py = cm => PY0 - cm / 100 * (PY0 - PY1);
+  function frame(pts, k, asks) {
+    svg.innerHTML = '';
+    // 轨道
+    el('line', { x1: X0, x2: X1, y1: 60, y2: 60, style: 'stroke:var(--ink);stroke-width:4' }, svg);
+    for (let c = 0; c <= 100; c += 10) { el('line', { x1: sx(c), x2: sx(c), y1: 64, y2: 70, style: 'stroke:var(--muted)' }, svg); txt(svg, sx(c), 84, c, 't-sub mid'); }
+    el('line', { x1: sx(T), x2: sx(T), y1: 30, y2: 92, style: 'stroke:var(--ok);stroke-width:2;stroke-dasharray:4 3' }, svg);
+    txt(svg, sx(T), 24, '目标 70', 't-sub mid').style.fill = 'var(--ok)';
+    const x = pts[k][1];
+    const g = el('g', { transform: `translate(${sx(x)},60)` }, svg);
+    el('rect', { x: -16, y: -14, width: 32, height: 14, rx: 3, style: `fill:${heavy ? 'var(--ink)' : 'var(--accent)'}` }, g);
+    el('path', { d: 'M-10,0 V16 L-4,22 M10,0 V16 L4,22', class: 's-line', style: 'stroke-width:3' }, g);
+    // 曲线
+    txt(svg, PX0, PY1 - 8, '位置（厘米）随时间', 't-sub');
+    el('line', { x1: PX0, x2: PX1, y1: py(T), y2: py(T), style: 'stroke:var(--ok);stroke-dasharray:4 3' }, svg);
+    el('path', { d: `M${PX0},${PY1} V${PY0} H${PX1}`, class: 's-line', style: 'stroke-width:1' }, svg);
+    el('path', { d: pathOf(pts.slice(0, k + 1).filter((_, i) => i % 4 === 0 || i === k), px, py), style: 'fill:none;stroke:var(--on);stroke-width:2.5' }, svg);
+    txt(svg, PX1, PY0 + 16, DUR + ' 秒', 't-sub end');
+    const t = pts[k][0];
+    const shown = asks.filter(a => a[0] <= t).slice(-5);
+    $('#gr-log').innerHTML = shown.map(([tt, xx, th]) => th ? `<div class="yes">${tt.toFixed(1)} 秒 到了吗？到了！停下。</div>` : `<div class="no">${tt.toFixed(1)} 秒 到了吗？没有（在 ${xx.toFixed(1)}，${xx < T ? '还差' : '冲过了'} ${Math.abs(T - xx).toFixed(1)} 厘米）→ ${xx < T ? '往右走' : '往左退'}</div>`).join('') || '<div class="no">点"移动到 70 厘米"。</div>';
+  }
+  function run() {
+    clearInterval(timer);
+    const [pts, asks] = simulate();
+    if (REDUCE) { frame(pts, pts.length - 1, asks); return; }
+    let k = 0;
+    timer = setInterval(() => { k = Math.min(pts.length - 1, k + 4); frame(pts, k, asks); if (k >= pts.length - 1) clearInterval(timer); }, 16);
+  }
+  function sel() { $$('#gr-w button').forEach(b => b.classList.toggle('sel', +b.dataset.h === heavy)); const [pts, asks] = simulate(); frame(pts, 0, asks); $('#gr-log').innerHTML = heavy ? '<div class="no">很重的爪子：电机推得动它，但停不住。点按钮看看。</div>' : '<div class="no">轻的爪子：电机一停它就停。点按钮看看。</div>'; }
+  $$('#gr-w button').forEach(b => b.onclick = () => { clearInterval(timer); heavy = +b.dataset.h; sel(); });
+  $('#gr-go').onclick = run;
+  sel();
+})();
+
+/* ---------- 负反馈回路图 ---------- */
+(function () {
+  const svg = $('#loop');
+  const box = (x, y, w, t, s, cls) => { el('rect', { x: x - w / 2, y: y - 26, width: w, height: 52, rx: 12, class: cls }, svg); txt(svg, x, y - 3, t, 't-main mid'); txt(svg, x, y + 16, s, 't-sub mid'); };
+  const arrow = (d, ex, ey, dir) => { el('path', { d, class: 's-line', style: 'stroke-width:2' }, svg); const [a, b] = dir === 'r' ? [[-8, -5], [-8, 5]] : dir === 'l' ? [[8, -5], [8, 5]] : dir === 'u' ? [[-5, 8], [5, 8]] : [[-5, -8], [5, -8]]; el('path', { d: `M${ex + a[0]},${ey + a[1]} L${ex},${ey} L${ex + b[0]},${ey + b[1]}`, class: 's-line', style: 'stroke-width:2' }, svg); };
+  box(110, 50, 160, '传感器', '测水压、位置、温度…', 's-acc');
+  box(340, 50, 170, '算误差', '想要的值 − 测到的值', 's-panel');
+  box(570, 50, 160, '控制器', '决定怎么减小误差', 's-on');
+  box(570, 160, 160, '执行器', '泵、电机、加热元件', 's-acc');
+  box(110, 160, 160, '现实世界', '位置、速度、温度变了', 's-soft');
+  arrow('M190,50 H253', 253, 50, 'r'); arrow('M425,50 H488', 488, 50, 'r');
+  arrow('M570,76 V132', 570, 132, 'd'); arrow('M490,160 H192', 192, 160, 'l'); arrow('M110,134 V78', 110, 78, 'u');
+  txt(svg, 340, 128, '一圈一圈地转，误差越来越小', 't-sub mid');
+  txt(svg, 340, 22, '想要的值（目标）↓', 't-sub mid').style.fill = 'var(--ok)';
+})();
+
+/* ---------- PID 送咖啡机器人 ---------- */
+(function () {
+  const PRE = { '只有 P': [8, 0, 0], 'P + I': [20, 8, 0], 'P + I + D': [20, 8, 10], '调坏了': [5, 20, 0] };
+  const load = t => (t >= 8 && t < 16 ? 14 : 0) + (t >= 20 && t < 24 ? -9 : 0) + (t >= 3 && t < 4.5 ? 6 : 0);
+  function sim(Kp, Ki, Kd) {
+    const m = 10, c = 2, tau = .6, dt = .01; let v = 0, f = 0, I = 0, pe = 2; const out = [], parts = [];
+    for (let t = 0; t <= 30; t += dt) {
+      const e = 2 - v; I += e * dt; const D = (e - pe) / dt; pe = e;
+      let u = Kp * e + Ki * I + Kd * D; u = Math.max(-40, Math.min(40, u));
+      f += (u - f) / tau * dt; v += (f - c * v - load(t)) / m * dt;
+      out.push([t, v]);
+    }
+    return out;
+  }
+  $('#pid-pre').innerHTML = Object.keys(PRE).map(k => `<button class="btn">${k}</button>`).join('');
+  const svg = $('#pid');
+  const X0 = 50, X1 = 660, Y0 = 250, Y1 = 20, V0 = -1, V1 = 5;
+  const sx = t => X0 + t / 30 * (X1 - X0), sy = v => Y0 - (Math.max(V0, Math.min(V1, v)) - V0) / (V1 - V0) * (Y0 - Y1);
+  function draw() {
+    const g = ['kp', 'ki', 'kd'].map(id => +$('#' + id).value);
+    ['kp', 'ki', 'kd'].forEach((id, i) => $('#' + id + 'v').textContent = g[i]);
+    const pts = sim(...g);
+    svg.innerHTML = '';
+    // 路况
+    [[3, 4.5, '逆风', 'var(--accent-soft)'], [8, 16, '上坡', 'var(--bad-soft)'], [20, 24, '下坡', 'var(--ok-soft)']].forEach(([a, b, n, c]) => { el('rect', { x: sx(a), y: Y1, width: sx(b) - sx(a), height: Y0 - Y1, style: `fill:${c}` }, svg); txt(svg, (sx(a) + sx(b)) / 2, Y1 + 14, n, 't-sub mid'); });
+    for (let v = 0; v <= 4; v++) { el('line', { x1: X0, x2: X1, y1: sy(v), y2: sy(v), style: 'stroke:var(--line)' }, svg); txt(svg, X0 - 6, sy(v) + 4, v, 't-sub end'); }
+    el('line', { x1: X0, x2: X1, y1: sy(2), y2: sy(2), style: 'stroke:var(--ink);stroke-width:1.5;stroke-dasharray:6 4' }, svg);
+    el('path', { d: pathOf(pts.filter((_, i) => i % 5 === 0), sx, sy), style: 'fill:none;stroke:var(--on);stroke-width:2.5' }, svg);
+    for (let t = 0; t <= 30; t += 5) txt(svg, sx(t), Y0 + 18, t + ' 秒', 't-sub mid');
+    txt(svg, X0 - 6, Y1 - 6, 'm/s', 't-sub end');
+    const seg = (a, b) => pts.filter(([t]) => t >= a && t < b).map(p => p[1]);
+    const flat = seg(5, 8), hill = seg(8, 16), after = seg(16, 20), end = seg(26, 30);
+    const avg = a => a.reduce((s, x) => s + x, 0) / a.length;
+    const swing = Math.max(...end) - Math.min(...end);
+    let msg = `平地上（5～8 秒）平均 <b>${avg(flat).toFixed(2)}</b> m/s；上坡时最低掉到 <b>${Math.min(...hill).toFixed(2)}</b>；坡顶之后最高冲到 <b>${Math.max(...after).toFixed(2)}</b>。`;
+    if (swing > 1) msg += '　<b style="color:var(--bad)">一直在剧烈地来回晃</b>——积分攒得太猛、比例又太弱，每次都冲过头再拼命往回拉。端着咖啡的话，已经全洒了。';
+    else if (g[1] === 0) msg += '　只有 P 时，平地上也到不了 2 m/s：要维持速度就得持续出力，而 P 的出力 = 权重 × 误差，误差小了力就不够——永远"差一点"。上坡时差得更多。';
+    else if (g[2] === 0) msg += '　加上 I 之后，平地能稳稳到 2 m/s，上坡也能慢慢追回来；但上坡时攒下的积分在坡顶来不及消掉，会冲过头。';
+    else msg += '　加上 D 之后，"误差变化得很快"时提前松劲，上坡掉得少、冲过头也少了。';
+    $('#pid-cap').innerHTML = msg;
+  }
+  const setG = g => { ['kp', 'ki', 'kd'].forEach((id, i) => $('#' + id).value = g[i]); draw(); };
+  $$('#pid-pre button').forEach(b => b.onclick = () => setG(PRE[b.textContent]));
+  ['kp', 'ki', 'kd'].forEach(id => $('#' + id).oninput = draw);
+  setG(PRE['只有 P']);
+})();
+
+/* ---------- 《转圈圈》 ---------- */
+(function () {
+  const svg = $('#ra');
+  const BASE = [70, 170], POOL = [480, 170], PR = 34;
+  let pos, ang, mode, human, raf = null;
+  const reset = () => { pos = BASE.slice(); ang = Math.PI; mode = 'go'; human = null; };
+  const rStar = () => Math.max(0, 170 - 70 * +$('#ra-o').value); // 两股力抵消的距离（离湖心）
+  function draw() {
+    svg.innerHTML = '';
+    // 危险渐变圈
+    [165, 125, 88, 58].forEach((r, i) => el('circle', { cx: POOL[0], cy: POOL[1], r, style: `fill:var(--bad);opacity:${.05 + i * .03}` }, svg));
+    el('circle', { cx: POOL[0], cy: POOL[1], r: PR, style: 'fill:#9aa6b2;stroke:var(--ink)' }, svg);
+    txt(svg, POOL[0], POOL[1] + 5, '水银湖', 't-main mid');
+    el('rect', { x: BASE[0] - 34, y: BASE[1] - 22, width: 68, height: 44, rx: 8, class: 's-panel' }, svg);
+    txt(svg, BASE[0], BASE[1] + 5, '基地', 't-main mid');
+    const r = rStar();
+    if (r > PR) el('circle', { cx: POOL[0], cy: POOL[1], r, style: 'fill:none;stroke:var(--on);stroke-dasharray:5 4;stroke-width:1.5' }, svg);
+    if (human) { el('circle', { cx: human[0], cy: human[1], r: 9, style: 'fill:var(--accent)' }, svg); txt(svg, human[0], human[1] - 14, '人', 't-main mid'); }
+    el('circle', { cx: pos[0], cy: pos[1], r: 10, style: 'fill:var(--on);stroke:var(--panel);stroke-width:2' }, svg);
+  }
+  function caption() {
+    const o = +$('#ra-o').value, r = rStar();
+    $('#ra-ov').textContent = o.toFixed(2);
+    $('#ra-cap').innerHTML = mode === 'rescue' || mode === 'home' ? '<b>第一定律压倒一切</b>：有人身处危险，机器人立刻放下"转圈"，冲过去把人带回基地。小说里，主角正是用这一招把速必敌从死循环里救了出来。' :
+      mode === 'done' ? '人安全回到基地。' :
+      r <= PR ? '命令下得足够强硬，第二定律的驱动力超过了自我保护——机器人一路走到湖边，完成任务。' :
+      `离湖心 ${Math.round(r)} 像素处，"服从命令"往里拉、"保护自己"往外推，两股力刚好相等（橙色虚线）。机器人到了这里既不前进也不后退，只能沿着这条线<b>一圈圈打转</b>。把命令调强，这个圈就会缩小。`;
+  }
+  function step() {
+    const r = rStar(), sp = 3;
+    const to = (p, q, s) => { const dx = q[0] - p[0], dy = q[1] - p[1], d = Math.hypot(dx, dy); if (d <= s) { p[0] = q[0]; p[1] = q[1]; return true; } p[0] += dx / d * s; p[1] += dy / d * s; return false; };
+    if (mode === 'go' || mode === 'circle') {
+      const dx = pos[0] - POOL[0], dy = pos[1] - POOL[1], d = Math.hypot(dx, dy);
+      const target = Math.max(r, PR + 12);
+      if (Math.abs(d - target) > 2.5) { mode = 'go'; const k = d > target ? -1 : 1; pos[0] += dx / d * sp * k; pos[1] += dy / d * sp * k; ang = Math.atan2(dy, dx); }
+      else if (r > PR) { mode = 'circle'; ang += sp / target; pos = [POOL[0] + Math.cos(ang) * target, POOL[1] + Math.sin(ang) * target]; }
+    } else if (mode === 'rescue') { if (to(pos, human, 5)) mode = 'home'; }
+    else if (mode === 'home') { to(human, BASE, 4); pos = [human[0] + 12, human[1]]; if (human[0] === BASE[0] && human[1] === BASE[1]) mode = 'done'; }
+    draw(); caption();
+    raf = requestAnimationFrame(step);
+  }
+  function start() { cancelAnimationFrame(raf); if (REDUCE) { // 直接画到平衡位置
+      const r = Math.max(rStar(), PR + 12); if (mode === 'go' || mode === 'circle') pos = [POOL[0] - r, POOL[1]]; if (mode === 'rescue' || mode === 'home') { mode = 'done'; human = BASE.slice(); pos = [BASE[0] + 12, BASE[1]]; } draw(); caption(); return; }
+    step(); }
+  $('#ra-o').oninput = () => { if (mode === 'circle') mode = 'go'; if (REDUCE) start(); else caption(); };
+  $('#ra-human').onclick = () => { human = [POOL[0] - 80, POOL[1] + 60]; mode = 'rescue'; if (REDUCE) start(); };
+  $('#ra-reset').onclick = () => { reset(); start(); };
+  // 只在卡片可见时运行动画
+  reset();
+  new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) start(); else cancelAnimationFrame(raf); })).observe(svg);
+  draw(); caption();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>28 计算机网络 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.frame{display:flex;flex-wrap:wrap;font:13px var(--mono);margin:8px 0;border-radius:8px;overflow:hidden;border:1px solid var(--line);width:max-content;max-width:100%}
+.frame span{padding:5px 10px}
+.frame .h{background:var(--on-soft)}
+.frame .d{background:var(--panel)}
+.pc{cursor:pointer}
+.rt{font-size:13px;border-collapse:collapse;margin-top:6px}
+.rt td,.rt th{border:1px solid var(--line);padding:3px 10px}
+.rt th{background:var(--bg);font-weight:600}
+.rt tr.cur td{background:var(--on-soft);font-weight:700}
+.ip{display:grid;grid-template-columns:repeat(4,auto);gap:4px 14px;justify-content:center;font:15px var(--mono);text-align:center}
+.ip b{font-size:22px}
+.ip small{color:var(--muted);font-size:12px}
+@media (max-width:560px){.ip{grid-template-columns:repeat(2,auto)}}
+</style>
+</head>
+<body data-ep="28">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=29" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 28 集</div>
+  <h1>计算机网络</h1>
+  <p class="en">Computer Networks</p>
+  <p class="lead">网络三集的第一集：一根共享的网线上，几台计算机怎么知道数据是发给谁的、同时说话撞车了怎么办；网络再大一些，数据又怎么一站一站走到远方——最后的答案是把数据切成小包，各自找路。</p>
+  <div class="road">
+    <span>局域网</span><i>→</i><span>以太网与 MAC 地址</span><i>→</i><span>冲突与指数退避</span><i>→</i><span>交换机</span><i>→</i><span>电路交换 / 报文交换</span><i>→</i><span>分组交换与 IP</span><i>→</i><span>ARPANET</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 为什么要联网</a></li>
+    <li><a href="#ch1">1 · 以太网与 MAC 地址</a></li>
+    <li><a href="#ch2">2 · 冲突与指数退避</a></li>
+    <li><a href="#ch3">3 · 交换机</a></li>
+    <li><a href="#ch4">4 · 电路交换与报文交换</a></li>
+    <li><a href="#ch5">5 · 分组交换</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>为什么要联网</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！互联网太棒了。敲几下键盘，就能在 YouTube 上看视频——哈喽！——在维基百科上读文章、在亚马逊上买东西、和朋友视频聊天、发一条关于天气的推特。毫无疑问，计算机和它们的用户在全球通信网络上收发信息的能力，永远地改变了世界。</p>
+  <p>150 年前，从伦敦寄一封信到加州要两到三周，而且这还是付了特快邮费的情况。如今一封电子邮件只要几分之一秒。<b>时延</b>（latency，传递一条消息所需的时间）改善了上百万倍，给全球经济打了一针强心剂，让现代世界借着遍布全球的光纤，以光速运转。</p>
+  <p>你可能以为计算机和网络一直是形影不离的，但实际上，1970 年以前的大多数计算机都在独自运转。不过，随着大型计算机到处出现、低成本机器开始摆上人们的书桌，共享数据和资源变得越来越有用，第一批计算机网络就出现了。今天起，我们用三集来讲计算机网络是怎么诞生的，以及支撑它们的基本原理和技术。</p>
+  <p>第一批计算机网络出现在 1950、60 年代，通常在一个机构内部使用，比如公司或研究实验室，方便不同的人和计算机之间交换信息。这比以前的办法更快更可靠——以前是让人抱着一摞穿孔卡片或一盘磁带，走到楼另一头的计算机那儿，后来这被戏称为<b>"球鞋网络"</b>（sneakernet）。</p>
+  <p>网络的第二个好处是能共享物理资源。比如，与其每台计算机配一台打印机，不如大家共享一台联网的打印机。早期网络上也常有大容量的共享存储，因为它们太贵了，没法每台机器都配一个。这种由距离很近的计算机组成的较小网络，叫<b>局域网</b>（Local Area Network，LAN）。局域网可以小到同一个房间里的两台机器，也可以大到一整个有上千台计算机的大学校园。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>以太网与 MAC 地址</h2>
+  <p>人们开发和部署过很多种局域网技术，其中最著名、最成功的是<b>以太网</b>（Ethernet），1970 年代初诞生于施乐 PARC，今天仍在广泛使用。</p>
+  <p>以太网最简单的形式，是一串计算机连在同一根公共的以太网电缆上。一台计算机想给另一台发数据时，就把数据以电信号的形式写到电缆上。当然，因为电缆是共享的，接在网络上的每台计算机都能看到这次传输，但它们不知道数据是发给自己的还是别人的。为了解决这个问题，以太网要求每台计算机有一个唯一的<b>媒体访问控制地址</b>（Media Access Control address），简称 <b>MAC 地址</b>。这个唯一的地址放在一个<b>头部</b>（header）里，作为前缀加在发出的所有数据前面。于是，计算机只需要监听以太网电缆，只有在头部里看到自己的地址时，才处理这份数据。</p>
+
+  <div class="card">
+    <h3>动手：在共享电缆上发一份数据</h3>
+    <p class="hint" style="margin-top:0">先点一台计算机当发送方，再点另一台当接收方。</p>
+    <div class="scroll-x"><svg class="diagram" id="bus" viewBox="0 0 680 200" role="img" aria-label="共享以太网电缆"></svg></div>
+    <div class="frame" id="bus-frame"></div>
+    <div class="step-text" id="bus-cap"></div>
+  </div>
+
+  <p>这个办法很好用。今天造出来的每台计算机，都自带唯一的 MAC 地址，用于以太网和 WiFi。</p>
+  <p>多台计算机共享一个传输媒介的这种做法，统称为<b>载波侦听多路访问</b>（Carrier Sense Multiple Access），简称 <b>CSMA</b>。这里的"载体"（carrier）指任何承载数据的共享传输媒介：以太网的载体是铜线，WiFi 的载体是传播无线电波的空气。很多计算机可以同时侦听载体，所以叫"侦听"和"多路访问"。载体传输数据的速率，叫<b>带宽</b>（bandwidth）。</p>
+  <div class="extra">
+    <span class="t">看看你自己的 MAC 地址</span>
+    MAC 地址是 48 位，通常写成 6 组十六进制数，比如 <code>3c:22:fb:9a:01:7e</code>。在 Mac 上打开"系统设置 → 网络 → 详细信息 → 硬件"就能看到。今天的家用网络早就不是"一根同轴电缆串起所有电脑"了，但 WiFi 仍然是一个所有设备共享的"空气载体"，道理一模一样。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>冲突与指数退避</h2>
+  <p>不幸的是，共享载体有一个很大的缺点。网络流量小的时候，计算机可以等载体上没有信号了再发送数据。但随着流量增加，两台计算机同时写数据的概率也会上升。这叫<b>冲突</b>（collision），数据全都乱成一团，就像两个人同时在电话里说话。</p>
+  <p>幸运的是，计算机可以通过监听电线上的信号来检测冲突。最明显的办法是停止发送，等安静下来再试一次。问题是，另一台计算机也会这么做；网络上其他一直在等载体空闲的计算机，也会在任何停顿的间隙抢着插进来。这只会导致越来越多的冲突。很快，每个人都在抢着说话，还积压了一堆话要说，就像在家庭节日聚餐上和男朋友分手——馊主意！</p>
+  <p>以太网有一个出奇简单又有效的解决办法。发送的计算机检测到冲突后，先等一小段时间再重新发送，为了举例就说 1 秒吧。当然，如果所有计算机都等同样长的时间，这是没用的——它们会在 1 秒后再撞一次。所以要加上一段<b>随机</b>时间：一台计算机可能等 1.3 秒，另一台等 1.5 秒。运气好的话，等 1.3 秒的那台醒来，发现载体空闲，就开始发送；等 1.5 秒的那台稍后醒来，看到载体被占用，就等对方发完。</p>
+  <p>这确实有帮助，但不能完全解决问题，所以还用了一个额外的技巧。刚才说过，计算机在发送时检测到冲突，会等 1 秒加一段随机时间。但如果它又撞了——这说明网络拥塞——这次就不再等 1 秒，而是等 2 秒；再撞就等 4 秒，然后 8 秒、16 秒，以此类推，直到发送成功。因为计算机都在退让，冲突率下降，数据重新流动起来，网络就畅通了。家庭聚餐得救了！</p>
+
+  <div class="card">
+    <h3>动手：几台计算机同时想发数据</h3>
+    <div class="ctrl" style="display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;font-size:14px">
+      <span class="seg-btns" id="bo-mode"><button data-m="fixed">都等 1 秒</button><button data-m="rand">1 秒 + 随机</button><button data-m="exp">指数退避</button></span>
+      <label>计算机数 <select id="bo-n"><option>2</option><option>4</option><option selected>6</option><option>8</option></select></label>
+      <button class="btn" id="bo-run">再跑一次</button>
+    </div>
+    <div class="scroll-x"><svg class="diagram" id="bo" viewBox="0 0 680 260" role="img" aria-label="冲突与退避时间线"></svg></div>
+    <div class="step-text" id="bo-cap"></div>
+  </div>
+
+  <p>这种用指数增长的等待时间来"退让"的做法，叫<b>指数退避</b>（Exponential Backoff）。以太网和 WiFi 都用它，很多其他传输协议也用。</p>
+  <div class="extra">
+    <span class="t">前端也在用指数退避</span>
+    请求失败后自动重试时，好的做法正是"等 1 秒、2 秒、4 秒……再加一点随机抖动（jitter）"。如果一万个浏览器在服务器出故障后都整齐地每隔 1 秒重试一次，服务器刚恢复就会被同时涌来的请求再次打垮——和以太网上大家一起等 1 秒是同一个问题。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>交换机：把冲突域拆小</h2>
+  <p>但即使有指数退避这样的聪明技巧，也不可能把整个大学的计算机都接在同一根共享以太网电缆上。为了减少冲突、提高效率，需要减少同一个共享载体上的设备数量，这个范围叫<b>冲突域</b>（collision domain）。</p>
+  <p>回到之前以太网的例子：一根共享电缆上有六台计算机，也就是一个冲突域。为了减少冲突的可能，可以用<b>交换机</b>（network switch）把这个网络拆成两个冲突域。交换机位于两个较小的网络之间，只在必要时才在它们之间传数据。它的做法是记一张表，写着哪些 MAC 地址在网络的哪一边。</p>
+
+  <div class="card">
+    <h3>动手：交换机什么时候转发</h3>
+    <div class="btns" id="sw-btns" style="margin-top:0">
+      <button class="btn" data-s="AC">A → C</button>
+      <button class="btn" data-s="AC,EF">A → C 同时 E → F</button>
+      <button class="btn" data-s="FA">F → A</button>
+    </div>
+    <div class="scroll-x"><svg class="diagram" id="sw" viewBox="0 0 680 220" role="img" aria-label="交换机把网络拆成两个冲突域"></svg></div>
+    <div class="step-text" id="sw-cap"></div>
+  </div>
+
+  <p>所以如果 A 要发给 C，交换机不会把数据转发到另一边的网络，没必要。这意味着如果 E 想在同一时间发给 F，那边的网络完全空着，两次传输可以同时进行。但如果 F 要发给 A，交换机就会把数据转过去，两边的网络都会被短暂占用。</p>
+  <p>大型计算机网络基本上就是这样搭起来的，包括其中最大的那个——<b>互联网</b>（Internet）。它的字面意思就是把一堆较小的网络互相连接（inter-connect）起来，让不同网络之间能够通信（inter-network）。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>路由：电路交换与报文交换</h2>
+  <p>这些大型网络有意思的地方在于，从一个地方到另一个地方，往往有多条路线可走。这就引出了网络的另一个基本话题：<b>路由</b>（routing）。</p>
+  <h3>电路交换</h3>
+  <p>连接两台相距遥远的计算机或网络，最简单的办法是分配一条通信线路给它们专用。早期电话系统就是这样运作的。比如，印第安纳波利斯和米苏拉之间可能有 5 条电话线。如果在 1910 年代，John 拿起电话想打给 Hank，他会告诉人工接线员要打到哪里，接线员就把 John 的电话线实实在在地接到一条通往米苏拉的空闲线路上。通话期间这条线一直被占用；如果 5 条线都在用，John 就得等某一条空出来。</p>
+
+  <div class="card">
+    <h3>动手：5 条线的电话局</h3>
+    <div class="scroll-x"><svg class="diagram" id="circ" viewBox="0 0 680 210" role="img" aria-label="电路交换"></svg></div>
+    <div class="btns"><button class="btn primary" id="circ-call">再来一通电话</button><button class="btn" id="circ-hang">挂断最早的一通</button></div>
+    <div class="step-text" id="circ-cap"></div>
+  </div>
+
+  <p>这种方式叫<b>电路交换</b>（circuit switching），因为它真的是在切换整条电路，把通信导向正确的目的地。它能用，但比较不灵活，也比较贵，因为经常有闲置的容量。好处是，一旦你有了一条自己专用的线路——或者你有钱买一条私用——就可以用满它的全部容量，不用和别人分享。因此军队、银行和其他重要机构，至今仍会购买专用线路来连接它们的数据中心。</p>
+
+  <h3>报文交换</h3>
+  <p>把数据从一处送到另一处的另一种方法是<b>报文交换</b>（message switching），有点像邮政系统。不是从 A 到 B 有一条专用线路，而是消息要经过好几个站点。如果 John 给 Hank 写一封信，信可能从印第安纳波利斯到芝加哥，再跳到明尼阿波利斯，然后比林斯，最后到达米苏拉。每个站点都知道下一站该送到哪里，因为它们都有一张表，记着给定目的地址时信该往哪儿转。</p>
+
+  <div class="card">
+    <h3>动手：一封信一站一站地走</h3>
+    <span class="seg-btns" id="rt-mode"><button data-m="normal">正常寄信</button><button data-m="storm">明尼阿波利斯暴风雪</button><button data-m="loop">路由表出错</button></span>
+    <div class="scroll-x" style="margin-top:8px"><svg class="diagram" id="map" viewBox="0 0 680 250" role="img" aria-label="城市之间的报文交换"></svg></div>
+    <div class="btns"><button class="btn primary" id="rt-next">下一跳</button><button class="btn" id="rt-reset">重新寄</button></div>
+    <div id="rt-table"></div>
+    <div class="step-text" id="rt-cap"></div>
+  </div>
+
+  <p>报文交换的妙处在于可以走不同的路线，让通信更可靠、更能容错。还是用寄信的例子：如果明尼阿波利斯遇上暴风雪，一切都停摆了，芝加哥的邮件中心可以决定改走奥马哈。在这个例子里，城市就像网络中的<b>路由器</b>。</p>
+  <p>消息沿路线跳转的次数叫<b>跳数</b>（hop count）。记录跳数很有用，因为它能帮助发现路由问题。比如，假设芝加哥认为去米苏拉最快的路线是经过奥马哈，而奥马哈认为最快的路线是经过芝加哥。这就糟了：两个城市看到目的地址是米苏拉，就会把消息在彼此之间无休止地传来传去。这不仅浪费带宽，而且是一个需要修复的路由错误！这种错误能被发现，是因为跳数和消息存在一起，一路上不断更新。如果开始看到跳数很高的消息，那基本可以肯定路由出了问题！这个阈值叫<b>跳数限制</b>（hop limit）。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>分组交换与 IP</h2>
+  <p>报文交换的一个缺点是，有时报文很大。它们会堵塞网络，因为整个报文必须从一站完整地传到下一站，才能继续往下走。一个大文件在传的时候，整条链路都被占着。即使你只有一封 1 KB 的小邮件要过去，它也只能等大文件传完，或者绕一条效率更低的路。这就糟了。</p>
+  <p>解决办法是把大的传输切成很多小块，叫<b>数据包</b>（packet）。和报文交换一样，每个数据包都带着网络上的目的地址，这样路由器就知道往哪儿转发。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="pkt" viewBox="0 0 680 236" role="img" aria-label="报文交换与分组交换对比"></svg></div>
+      <figcaption>图 1　同一条链路，大文件先开始传，小邮件稍后到达。整份报文传输时，邮件只能干等；切成数据包后，邮件的包可以插在中间先走。</figcaption>
+    </figure>
+  </div>
+
+  <p>数据包的格式由<b>互联网协议</b>（Internet Protocol，简称 <b>IP</b>）定义，这是 1970 年代制定的一个标准。每台联网的计算机都有一个 <b>IP 地址</b>。你可能见过，它写成 4 个 8 位的数字，中间用点隔开。比如 172.217.7.238 是谷歌某台服务器的 IP 地址。</p>
+
+  <div class="card">
+    <div class="ip" id="ip"></div>
+    <p class="hint" style="text-align:center;margin-bottom:0">4 个数字，每个是 8 位二进制（0~255），合起来 32 位。</p>
+  </div>
+
+  <p>几百万台计算机在线上不停交换数据，瓶颈可能在几毫秒内出现又消失。网络路由器不断尝试在它们知道的各条路线之间平衡负载，确保传送又快又可靠，这叫<b>拥塞控制</b>（congestion control）。有时，同一个报文的不同数据包会走网络中不同的路线，这就可能导致数据包乱序到达目的地，对某些应用来说这是个问题。幸好，有些协议运行在 IP 之上，比如 TCP/IP，能处理这个问题。我们下周再细讲。</p>
+  <p>把数据切成小数据包，沿着有空闲容量的灵活路线传递，这种方式非常高效又容错，今天整个互联网都靠它运转。这种路由方式叫<b>分组交换</b>（packet switching）。它还有一个很好的特性：<b>去中心化</b>，没有中央权威，也没有单点故障。事实上，正是因为冷战时期核打击的威胁，人们才开发了分组交换！</p>
+  <p>今天，全球的路由器协同工作，寻找高效的路线，它们之间用一些专门的协议交换信息，比如<b>互联网控制消息协议</b>（ICMP）和<b>边界网关协议</b>（BGP）。</p>
+  <div class="extra">
+    <span class="t">在终端里亲眼看看</span>
+    <code>ping google.com</code> 用的就是 ICMP：发一个小包过去，量一下来回要多少毫秒（时延）。<code>traceroute google.com</code> 能列出数据包一路经过的每一个路由器。它巧妙地利用了跳数限制：先发跳数限制为 1 的包，第一个路由器把它丢掉、回一条 ICMP 消息"超限了"，于是就知道了第一跳是谁；再发限制为 2 的……一跳一跳地摸出整条路线。
+  </div>
+
+  <h3>ARPANET</h3>
+  <p>世界上第一个分组交换网络，也是现代互联网的祖先，是 <b>ARPANET</b>，名字来自资助它的美国机构——高级研究计划局（Advanced Research Projects Agency，ARPA）。1974 年的整个 ARPANET 是这样的：每个小圆圈代表一个地点，比如一所大学或一个研究实验室，那里运行着一台路由器，并且接着一台或多台计算机——能看到 PDP-1、IBM System/360，甚至还有一台在伦敦的 ATLAS，是通过卫星链路接进来的。</p>
+  <p>显然，此后几十年互联网突飞猛进。今天联网的不再是几十台计算机，据估计已接近 100 亿台。而且它还在快速增长，特别是随着联网冰箱、恒温器和其他智能家电的出现，形成了<b>"物联网"</b>（internet of things）。</p>
+  <p>第一部分到此结束，这是计算机网络的概览。网络是一堆管子吗？嗯，算是吧。下周我们会讨论一些更高层的传输协议，慢慢往上，讲到万维网。到时见！</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>问题</th><th>办法</th></tr></thead>
+    <tbody>
+      <tr><td>共享电缆上，数据是发给谁的？</td><td>每台计算机有唯一的 MAC 地址，写在数据前面的头部里；只处理发给自己的</td></tr>
+      <tr><td>两台计算机同时发，冲突了</td><td>CSMA：先听再发；撞了就等 1 秒 + 随机时间，再撞就 2、4、8、16 秒……（指数退避）</td></tr>
+      <tr><td>一个冲突域里设备太多</td><td>交换机拆分冲突域，按 MAC 地址表决定转不转发</td></tr>
+      <tr><td>远距离怎么连</td><td>电路交换（专线，独占但浪费）→ 报文交换（逐站转发，能绕路）</td></tr>
+      <tr><td>路由出错，消息兜圈子</td><td>消息带着跳数，超过跳数限制就说明出错了</td></tr>
+      <tr><td>大报文堵住链路</td><td>切成数据包，各带 IP 地址，各自找路 = 分组交换；乱序由 IP 之上的 TCP 处理</td></tr>
+    </tbody>
+  </table>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    局域网里，大家共享一根"线"，靠 MAC 地址认人、靠指数退避化解冲突、靠交换机拆小冲突域；网络连成互联网后，数据被切成带 IP 地址的小包，由路由器一跳一跳、去中心化地转发——这就是分组交换，ARPANET 是它的第一个实例。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 共享一根以太网电缆时，每台计算机都能"听到"所有数据，怎么知道哪些是给自己的？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">每台计算机有唯一的 MAC 地址。发送时把目的 MAC 地址放在头部、加在数据前面；其他计算机监听电缆，只有在头部看到自己的地址才处理这份数据。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 检测到冲突后，为什么不能所有计算机都"等 1 秒再试"？指数退避又解决了什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">大家等一样长，1 秒后会再次同时发送、再次冲突。加入随机时间能把它们错开；但网络拥塞时仍会反复冲突，所以每多撞一次，等待时间就翻倍（1、2、4、8、16 秒……），大家退让得越来越多，冲突率下降，网络恢复畅通。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 交换机把网络分成两边后，A→C、E→F、F→A 三种传输分别会占用哪些网段？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">A→C 都在左边，交换机不转发，只占左边；E→F 都在右边，只占右边，所以可以和 A→C 同时进行；F→A 跨两边，交换机转发，两边都被短暂占用。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 电路交换、报文交换、分组交换各有什么特点？互联网用的是哪种？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">电路交换：分配一条专用线路，能独占全部容量，但不灵活、昂贵、常有闲置。报文交换：整份消息逐站转发，每站查表决定下一站，能绕开故障，但大报文会堵住链路。分组交换：把数据切成带目的地址的小包，各自沿灵活路线转发，高效、容错、去中心化——互联网用的就是它。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="27.html"><small>← 上一集</small>27 3D 图形</a>
+    <a class="next" href="29.html"><small>下一集 →</small>29 互联网</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 28 集 Computer Networks（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const MAC = { A: '0A', B: '1B', C: '2C', D: '3D', E: '4E', F: '5F' };
+const macOf = n => `00:1A:2B:3C:4D:${MAC[n]}`;
+function pcIcon(svg, x, y, name, sub) {
+  const g = el('g', { class: 'pc', 'data-n': name }, svg);
+  el('rect', { x: x - 26, y: y - 22, width: 52, height: 36, rx: 5, class: 's-panel', style: 'stroke-width:1.6' }, g);
+  el('rect', { x: x - 10, y: y + 14, width: 20, height: 6, style: 'fill:var(--ink)' }, g);
+  txt(g, x, y + 2, name, 't-main mid');
+  if (sub) txt(g, x, y + 38, sub, 't-sub mid').style.fontSize = '11px';
+  return g;
+}
+
+/* ---------- 共享电缆 ---------- */
+(function () {
+  const svg = $('#bus');
+  const N = ['A', 'B', 'C', 'D', 'E', 'F'];
+  const cable = el('line', { x1: 30, x2: 650, y1: 140, y2: 140, style: 'stroke:var(--wire);stroke-width:6;stroke-linecap:round' }, svg);
+  txt(svg, 340, 190, '一根共享的以太网电缆', 't-sub mid');
+  const drops = [], tags = [], pcs = [];
+  N.forEach((n, i) => {
+    const x = 70 + i * 108;
+    drops.push(el('line', { x1: x, x2: x, y1: 74, y2: 140, style: 'stroke:var(--wire);stroke-width:3' }, svg));
+    pcs.push(pcIcon(svg, x, 50, n));
+    tags.push(txt(svg, x, 164, '…' + MAC[n], 't-mono mid'));
+    tags[i].style.fontSize = '11px';
+  });
+  const marks = N.map((n, i) => txt(svg, 70 + i * 108, 116, '', 't-sub mid'));
+  let from = null, to = null;
+  function paint() {
+    pcs.forEach((g, i) => { const r = g.querySelector('rect'); r.style.stroke = N[i] === from ? 'var(--on)' : N[i] === to ? 'var(--ok)' : 'var(--ink)'; r.style.strokeWidth = (N[i] === from || N[i] === to) ? 3 : 1.6; });
+    const live = from && to;
+    cable.style.stroke = live ? 'var(--on)' : 'var(--wire)';
+    drops.forEach(d => d.style.stroke = live ? 'var(--on)' : 'var(--wire)');
+    marks.forEach((m, i) => { m.textContent = !live || N[i] === from ? '' : N[i] === to ? '✓ 是我，收下' : '✗ 不是我'; m.style.fill = N[i] === to ? 'var(--ok)' : 'var(--muted)'; });
+    $('#bus-frame').innerHTML = live ? `<span class="h">目的 MAC ${macOf(to)}</span><span class="h">源 MAC ${macOf(from)}</span><span class="d">数据：你好，${to}！</span>` : '<span class="d" style="color:var(--muted)">（还没有数据在电缆上）</span>';
+    $('#bus-cap').innerHTML = !from ? '点一台计算机当发送方。' : !to ? `${from} 准备发送。再点接收方。` : `${from} 把数据写到电缆上，<b>整根电缆都带上了信号</b>，所有计算机都"听"到了。只有 ${to} 在头部看到了自己的 MAC 地址，其他计算机直接丢弃。`;
+  }
+  pcs.forEach((g, i) => g.addEventListener('click', () => {
+    const n = N[i];
+    if (!from || (from && to)) { from = n; to = null; }
+    else if (n !== from) to = n;
+    paint();
+  }));
+  paint();
+})();
+
+/* ---------- 冲突与退避 ---------- */
+(function () {
+  const svg = $('#bo');
+  let mode = 'exp', n = 6;
+  const D = 3, FR = 3, TMAX = 400; // 每格 0.1 秒；发一份数据占 0.3 秒；每台有 3 份数据要发
+  function sim(m, rec) {
+    const st = Array.from({ length: n }, () => ({ next: 0, coll: 0, left: FR, wait: -1, segs: [] }));
+    let busy = 0, t = 0, collisions = 0;
+    for (; t < TMAX; t++) {
+      if (st.every(s => !s.left)) break;
+      st.forEach(s => { if (s.left && s.next === t && t < busy) s.wait = t; });
+      const go = st.filter(s => s.left && t >= busy && (s.next === t || s.wait >= 0));
+      go.forEach(s => { if (s.wait >= 0 && rec) s.segs.push([s.wait, t, 'wait']); s.wait = -1; });
+      if (go.length === 1) { const s = go[0]; if (rec) s.segs.push([t, t + D, 'tx']); s.left--; s.coll = 0; busy = t + D; s.next = t + D; }
+      else if (go.length > 1) {
+        collisions++; busy = t + 1;
+        go.forEach(s => {
+          s.coll++;
+          const base = m === 'exp' ? 10 * Math.pow(2, s.coll - 1) : 10;
+          const extra = m === 'fixed' ? 0 : Math.floor(Math.random() * 10);
+          if (rec) { s.segs.push([t, t + 1, 'col']); s.segs.push([t + 1, t + 1 + base + extra, 'wait']); }
+          s.next = t + 1 + base + extra;
+        });
+      }
+    }
+    return { st, end: t, collisions, sent: st.reduce((a, s) => a + FR - s.left, 0) };
+  }
+  function avg(m) { let c = 0; for (let i = 0; i < 200; i++) c += sim(m).collisions; return (c / 200).toFixed(1); }
+  function run() {
+    const { st, end, collisions, sent } = sim(mode, true);
+    svg.innerHTML = '';
+    const X0 = 60, X1 = 660, rowH = Math.min(26, 200 / n), Y0 = 20;
+    const T = Math.max(end, 40), k = (X1 - X0) / T;
+    svg.setAttribute('viewBox', `0 0 680 ${Y0 + n * rowH + 50}`);
+    st.forEach((s, i) => {
+      const y = Y0 + i * rowH;
+      txt(svg, X0 - 10, y + rowH / 2 + 4, '电脑' + (i + 1), 't-sub end');
+      el('line', { x1: X0, x2: X1, y1: y + rowH / 2, y2: y + rowH / 2, style: 'stroke:var(--line)' }, svg);
+      s.segs.forEach(([a, b, ty]) => {
+        if (a > T) return; b = Math.min(b, T);
+        if (ty === 'wait') el('rect', { x: X0 + a * k, y: y + rowH / 2 - 2, width: Math.max(1, (b - a) * k), height: 4, style: 'fill:var(--muted);opacity:.35' }, svg);
+        else el('rect', { x: X0 + a * k, y: y + 3, width: Math.max(4, (b - a) * k), height: rowH - 6, rx: 2, style: `fill:${ty === 'tx' ? 'var(--ok)' : 'var(--bad)'}` }, svg);
+      });
+    });
+    const yA = Y0 + n * rowH + 6;
+    el('line', { x1: X0, x2: X1, y1: yA, y2: yA, style: 'stroke:var(--ink)' }, svg);
+    const step = T <= 60 ? 1 : T <= 150 ? 2 : 5;
+    for (let s = 0; s * 10 <= T; s += step) { const x = X0 + s * 10 * k; el('line', { x1: x, x2: x, y1: yA, y2: yA + 4, style: 'stroke:var(--ink)' }, svg); txt(svg, x, yA + 17, s + 's', 't-sub mid').style.fontSize = '11px'; }
+    const lg = txt(svg, X0, yA + 36, '', 't-sub');
+    [['■ ', 'var(--ok)'], ['发送成功　', ''], ['■ ', 'var(--bad)'], ['冲突　', ''], ['— ', 'var(--muted)'], ['等待中', '']].forEach(([t, c]) => { const ts = el('tspan', c ? { style: 'fill:' + c } : {}, lg); ts.textContent = t; });
+    let cap;
+    if (mode === 'fixed') cap = `大家撞车后都等整整 1 秒，于是 1 秒后又一起开口——${TMAX / 10} 秒里冲突了 ${collisions} 次，<b>一份数据也没发出去</b>。`;
+    else {
+      cap = (sent < n * FR ? `${TMAX / 10} 秒内发出了 ${sent} / ${n * FR} 份数据` : `${n} 台计算机的 ${n * FR} 份数据在 ${(end / 10).toFixed(1)} 秒内全部发完`) + `，这一次冲突了 ${collisions} 次。`;
+      cap += `<br>同样 ${n} 台计算机各跑 200 次的平均冲突次数：1 秒 + 随机 <b>${avg('rand')}</b> 次，指数退避 <b>${avg('exp')}</b> 次。`;
+      if (mode === 'exp') cap += '每撞一次等待时间翻倍，大家越退越远，冲突就少了。（这里沿用课程"1 秒"的例子，等待被放大了；真实以太网的基本等待只有几十微秒，所以退避不会让网络变慢多少。）';
+      else cap += '随机时间能把大家错开，但计算机一多，还是反复撞车。';
+    }
+    $('#bo-cap').innerHTML = cap;
+  }
+  $$('#bo-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; $$('#bo-mode button').forEach(x => x.classList.toggle('sel', x === b)); run(); });
+  $('#bo-n').onchange = e => { n = +e.target.value; run(); };
+  $('#bo-run').onclick = run;
+  $$('#bo-mode button').forEach(x => x.classList.toggle('sel', x.dataset.m === mode));
+  run();
+})();
+
+/* ---------- 交换机 ---------- */
+(function () {
+  const svg = $('#sw');
+  const L = ['A', 'B', 'C'], R = ['D', 'E', 'F'];
+  const pos = {};
+  const cl = el('line', { x1: 30, x2: 270, y1: 130, y2: 130, style: 'stroke:var(--wire);stroke-width:6;stroke-linecap:round' }, svg);
+  const cr = el('line', { x1: 410, x2: 650, y1: 130, y2: 130, style: 'stroke:var(--wire);stroke-width:6;stroke-linecap:round' }, svg);
+  [...L, ...R].forEach((n, i) => {
+    const x = i < 3 ? 60 + i * 90 : 440 + (i - 3) * 90; pos[n] = x;
+    el('line', { x1: x, x2: x, y1: 70, y2: 130, style: 'stroke:var(--wire);stroke-width:3' }, svg);
+    pcIcon(svg, x, 46, n);
+  });
+  el('rect', { x: 290, y: 106, width: 100, height: 48, rx: 8, class: 's-acc' }, svg);
+  txt(svg, 340, 128, '交换机', 't-main mid');
+  txt(svg, 340, 146, '左 ABC｜右 DEF', 't-sub mid').style.fontSize = '11px';
+  el('line', { x1: 270, x2: 290, y1: 130, y2: 130, style: 'stroke:var(--wire);stroke-width:6' }, svg);
+  el('line', { x1: 390, x2: 410, y1: 130, y2: 130, style: 'stroke:var(--wire);stroke-width:6' }, svg);
+  txt(svg, 150, 180, '冲突域 1', 't-sub mid'); txt(svg, 530, 180, '冲突域 2', 't-sub mid');
+  const arrows = el('g', {}, svg);
+  const defs = el('defs', {}, svg); const m = el('marker', { id: 'swA', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto' }, defs); el('path', { d: 'M0,0 L10,5 L0,10 z', style: 'fill:var(--on)' }, m);
+  const side = n => L.includes(n) ? 'L' : 'R';
+  function show(spec) {
+    const pairs = spec.split(',').map(p => [p[0], p[1]]);
+    let useL = false, useR = false; arrows.innerHTML = '';
+    pairs.forEach(([a, b]) => {
+      if (side(a) === 'L' || side(b) === 'L') useL = true;
+      if (side(a) === 'R' || side(b) === 'R') useR = true;
+      el('path', { d: `M${pos[a]},${118} Q${(pos[a] + pos[b]) / 2},${side(a) === side(b) ? 92 : 80} ${pos[b]},${118}`, style: 'fill:none;stroke:var(--on);stroke-width:2.5', 'marker-end': 'url(#swA)' }, arrows);
+    });
+    cl.style.stroke = useL ? 'var(--on)' : 'var(--wire)';
+    cr.style.stroke = useR ? 'var(--on)' : 'var(--wire)';
+    $$('#sw-btns .btn').forEach(b => b.classList.toggle('primary', b.dataset.s === spec));
+    $('#sw-cap').innerHTML = {
+      'AC': 'A → C：交换机查表，C 在左边，<b>不转发</b>。只有左边被占用，右边空着。',
+      'AC,EF': 'A → C 和 E → F：两边各传各的，<b>两次传输同时进行</b>，互不冲突。',
+      'FA': 'F → A：A 在另一边，交换机<b>转发</b>过去，两边的网络都被短暂占用。'
+    }[spec];
+  }
+  $$('#sw-btns .btn').forEach(b => b.onclick = () => show(b.dataset.s));
+  show('AC');
+})();
+
+/* ---------- 电路交换 ---------- */
+(function () {
+  const svg = $('#circ');
+  pcIcon(svg, 60, 100, '☎', '印第安纳波利斯');
+  pcIcon(svg, 620, 100, '☎', '米苏拉');
+  el('rect', { x: 110, y: 20, width: 70, height: 170, rx: 8, class: 's-soft' }, svg); txt(svg, 145, 205, '接线员', 't-sub mid');
+  el('rect', { x: 500, y: 20, width: 70, height: 170, rx: 8, class: 's-soft' }, svg); txt(svg, 535, 205, '接线员', 't-sub mid');
+  const lines = [], labels = [];
+  for (let i = 0; i < 5; i++) {
+    const y = 40 + i * 32;
+    lines.push(el('line', { x1: 232, x2: 500, y1: y, y2: y, style: 'stroke:var(--wire);stroke-width:5;stroke-linecap:round' }, svg));
+    labels.push(txt(svg, 340, y - 7, '', 't-sub mid'));
+    txt(svg, 190, y + 4, '线 ' + (i + 1), 't-sub').style.fontSize = '11px';
+  }
+  const NAMES = ['John', 'Mary', 'Bob', 'Lucy', 'Tom', 'Ann', 'Sam', 'Kim'];
+  let busy = Array(5).fill(null), queue = [], who = 0, order = [];
+  function paint(msg) {
+    busy.forEach((b, i) => { lines[i].style.stroke = b ? 'var(--on)' : 'var(--wire)'; labels[i].textContent = b ? `${b} 通话中（整条线独占）` : '空闲'; });
+    $('#circ-cap').innerHTML = msg + (queue.length ? `　<b>排队等线：${queue.join('、')}</b>` : '');
+  }
+  $('#circ-call').onclick = () => {
+    const name = NAMES[who++ % NAMES.length];
+    const i = busy.indexOf(null);
+    if (i < 0) { queue.push(name); paint(`5 条线都占满了，${name} 只能等。`); return; }
+    busy[i] = name; order.push(i); paint(`接线员把 ${name} 的电话接到线 ${i + 1} 上。挂断之前，这条线谁也用不了——哪怕两人都不说话。`);
+  };
+  $('#circ-hang').onclick = () => {
+    if (!order.length) return;
+    const i = order.shift(), old = busy[i]; busy[i] = null;
+    let msg = `${old} 挂断，线 ${i + 1} 空出来了。`;
+    if (queue.length) { const nx = queue.shift(); busy[i] = nx; order.push(i); msg += `排队的 ${nx} 马上接了上去。`; }
+    paint(msg);
+  };
+  paint('点"再来一通电话"。');
+})();
+
+/* ---------- 报文交换地图 ---------- */
+(function () {
+  const svg = $('#map');
+  const C = { Mis: [70, 70, '米苏拉'], Bil: [200, 95, '比林斯'], Min: [400, 60, '明尼阿波利斯'], Oma: [360, 175, '奥马哈'], Chi: [520, 120, '芝加哥'], Ind: [600, 195, '印第安纳波利斯'] };
+  const E = [['Ind', 'Chi'], ['Chi', 'Min'], ['Min', 'Bil'], ['Bil', 'Mis'], ['Chi', 'Oma'], ['Oma', 'Bil'], ['Oma', 'Min']];
+  const edges = {};
+  E.forEach(([a, b]) => edges[a + b] = edges[b + a] = el('line', { x1: C[a][0], y1: C[a][1], x2: C[b][0], y2: C[b][1], style: 'stroke:var(--wire);stroke-width:4;stroke-linecap:round' }, svg));
+  const nodes = {};
+  Object.entries(C).forEach(([k, [x, y, n]]) => {
+    nodes[k] = el('circle', { cx: x, cy: y, r: 13, class: 's-acc' }, svg);
+    txt(svg, x, y + (k === 'Min' ? -20 : 30), n, 't-sub mid');
+  });
+  const storm = txt(svg, C.Min[0] + 22, C.Min[1] + 6, '', 't-main');
+  const letter = el('g', {}, svg);
+  el('rect', { x: -14, y: -10, width: 28, height: 20, rx: 3, style: 'fill:var(--paper);stroke:var(--ink)' }, letter);
+  el('path', { d: 'M-14,-10 L0,2 L14,-10', style: 'fill:none;stroke:var(--ink)' }, letter);
+  const hopT = txt(svg, 14, 24, '', 't-mono');
+  const TABLE = {
+    normal: { Ind: 'Chi', Chi: 'Min', Min: 'Bil', Oma: 'Bil', Bil: 'Mis' },
+    storm: { Ind: 'Chi', Chi: 'Oma', Min: 'Bil', Oma: 'Bil', Bil: 'Mis' },
+    loop: { Ind: 'Chi', Chi: 'Oma', Min: 'Bil', Oma: 'Chi', Bil: 'Mis' }
+  };
+  const LIMIT = 8;
+  let mode = 'normal', at = 'Ind', hops = 0, path = ['Ind'], dropped = false;
+  function paint() {
+    Object.values(edges).forEach(e => e.style.stroke = 'var(--wire)');
+    for (let i = 1; i < path.length; i++) edges[path[i - 1] + path[i]].style.stroke = 'var(--on)';
+    if (mode === 'storm') { edges.ChiMin.style.strokeDasharray = '4 6'; edges.MinBil.style.strokeDasharray = '4 6'; storm.textContent = '❄ 暴风雪'; }
+    else { edges.ChiMin.style.strokeDasharray = ''; edges.MinBil.style.strokeDasharray = ''; storm.textContent = ''; }
+    Object.entries(nodes).forEach(([k, c]) => c.setAttribute('class', k === at ? 's-on' : 's-acc'));
+    letter.setAttribute('transform', `translate(${C[at][0]},${C[at][1] - 26})`);
+    letter.style.opacity = dropped ? .3 : 1;
+    hopT.textContent = `信：发往 米苏拉　跳数 = ${hops}　跳数限制 = ${LIMIT}`;
+    const T = TABLE[mode];
+    $('#rt-table').innerHTML = at === 'Mis' || dropped ? '' : `<table class="rt"><tr><th colspan="2">${C[at][2]} 的路由表</th></tr><tr><th>目的地</th><th>下一站</th></tr><tr class="cur"><td>米苏拉</td><td>${C[T[at]][2]}</td></tr></table>`;
+    const cap = $('#rt-cap');
+    if (at === 'Mis') cap.innerHTML = `送到了！路线：${path.map(p => C[p][2]).join(' → ')}，共 ${hops} 跳。`;
+    else if (dropped) cap.innerHTML = `跳数到了 ${hops}，超过跳数限制 ${LIMIT}，这封信被丢弃。<b>芝加哥以为该走奥马哈，奥马哈以为该走芝加哥</b>，信在两地之间兜圈子——跳数异常高，说明路由表出错了，需要修复。`;
+    else if (hops === 0) cap.innerHTML = { normal: 'John 在印第安纳波利斯寄出一封给 Hank 的信。每一站查自己的路由表，决定下一站。', storm: '明尼阿波利斯遇上暴风雪，芝加哥的路由表把去米苏拉的下一站改成了奥马哈。', loop: '芝加哥的表说"去米苏拉走奥马哈"，奥马哈的表却说"走芝加哥"……' }[mode];
+    else cap.innerHTML = `信到了${C[at][2]}，跳数 +1 = ${hops}。`;
+    $('#rt-next').disabled = at === 'Mis' || dropped;
+  }
+  $('#rt-next').onclick = () => {
+    const nx = TABLE[mode][at]; at = nx; hops++; path.push(nx);
+    if (hops >= LIMIT && at !== 'Mis') dropped = true;
+    paint();
+  };
+  function reset() { at = 'Ind'; hops = 0; path = ['Ind']; dropped = false; paint(); }
+  $('#rt-reset').onclick = reset;
+  $$('#rt-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; $$('#rt-mode button').forEach(x => x.classList.toggle('sel', x === b)); reset(); });
+  $$('#rt-mode button')[0].classList.add('sel');
+  reset();
+})();
+
+/* ---------- 报文 vs 分组 ---------- */
+(function () {
+  const svg = $('#pkt');
+  const X0 = 140, U = 40;
+  const row = (y, label, seq) => {
+    txt(svg, X0 - 12, y + 22, label, 't-main end');
+    el('line', { x1: X0, x2: X0 + 12 * U, y1: y + 36, y2: y + 36, style: 'stroke:var(--line)' }, svg);
+    seq.forEach(([t, w, kind, lab]) => {
+      el('rect', { x: X0 + t * U + 1, y: y + 4, width: w * U - 2, height: 30, rx: 4, style: `fill:${kind === 'big' ? 'var(--accent-soft)' : 'var(--on)'};stroke:${kind === 'big' ? 'var(--accent)' : 'var(--on)'}` }, svg);
+      if (lab) txt(svg, X0 + (t + w / 2) * U, y + 24, lab, 't-sub mid');
+    });
+  };
+  row(44, '报文交换', [[0, 10, 'big', '大文件（整份一起传）'], [10, 1, 'mail', '邮件']]);
+  el('path', { d: `M${X0 + 1 * U},${46} V${32} H${X0 + 10 * U} V${46}`, class: 's-dash', style: 'stroke:var(--bad)' }, svg);
+  txt(svg, X0 + 5.5 * U, 24, '邮件 1 时刻就到了，却要干等到 10', 't-sub mid').style.fill = 'var(--bad)';
+  const seq = []; for (let i = 0; i < 11; i++) seq.push(i === 1 ? [1, 1, 'mail', '邮件'] : [i, 1, 'big', '包' + (i < 1 ? 1 : i)]);
+  row(130, '分组交换', seq);
+  for (let t = 0; t <= 11; t++) { const x = X0 + t * U; el('line', { x1: x, x2: x, y1: 206, y2: 210, style: 'stroke:var(--ink)' }, svg); txt(svg, x, 224, t, 't-sub mid').style.fontSize = '11px'; }
+  el('line', { x1: X0, x2: X0 + 11 * U, y1: 206, y2: 206, style: 'stroke:var(--ink)' }, svg);
+  txt(svg, X0 - 12, 224, '时间', 't-sub end');
+})();
+
+/* ---------- IP ---------- */
+(function () {
+  $('#ip').innerHTML = [172, 217, 7, 238].map((n, i) => `<div><b>${n}</b>${i < 3 ? '<span class="muted"> .</span>' : ''}<br>${n.toString(2).padStart(8, '0')}<br><small>第 ${i + 1} 个 8 位</small></div>`).join('');
+})();
+</script>
+</body>
+</html>

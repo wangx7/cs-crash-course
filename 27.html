@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>27 3D 图形 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ctrl{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;margin:10px 0;font-size:14px}
+.ctrl label{display:inline-flex;align-items:center;gap:8px}
+.ctrl input[type=range]{width:140px}
+.stage{display:block;width:100%;max-width:560px;margin:0 auto;border-radius:10px;background:var(--bg);touch-action:none;cursor:grab}
+#rast{image-rendering:pixelated;image-rendering:crisp-edges}
+.zlist{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;font-size:14px}
+.zlist span{border:1px solid var(--line);border-radius:8px;padding:3px 10px;background:var(--panel)}
+.zlist span.cur{border-color:var(--on);background:var(--on-soft)}
+.readout-sm{font:13px var(--mono);color:var(--muted);text-align:center;margin-top:6px}
+</style>
+</head>
+<body data-ep="27">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=28" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 27 集</div>
+  <h1>3D 图形</h1>
+  <p class="en">3D Graphics</p>
+  <p class="lead">屏幕是平的，世界是立体的。把三维的东西画到二维屏幕上，要经过一整条流水线：投影、拼三角形、扫描线填色、处理遮挡、打光、贴纹理——最后交给成千上万个核心的 GPU 并行去算。</p>
+  <div class="road">
+    <span>3D 投影</span><i>→</i><span>多边形与网格</span><i>→</i><span>扫描线与抗锯齿</span><i>→</i><span>遮挡：画家算法、深度缓冲</span><i>→</i><span>光照</span><i>→</i><span>纹理</span><i>→</i><span>GPU</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 3D 投影</a></li>
+    <li><a href="#ch1">1 · 多边形与网格</a></li>
+    <li><a href="#ch2">2 · 扫描线与抗锯齿</a></li>
+    <li><a href="#ch3">3 · 遮挡</a></li>
+    <li><a href="#ch4">4 · 光照与纹理</a></li>
+    <li><a href="#ch5">5 · GPU</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>3D 投影：把立体"拍平"</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！过去五集，我们从基于电传打字机的文字界面，讲到了像素化的位图图形，上集又讲了图形用户界面和它的种种美妙。但这些例子都是 2D 的。可我们生活在 3D 世界里——"我也是个三维女孩"！所以今天来讲 3D 计算机图形的一些基本方法，以及怎么把 3D 图形渲染到 2D 屏幕上。</p>
+  <p>之前讲过，可以写一个函数，在任意两点 A 和 B 之间画一条线<span class="muted" style="font-size:13px">（课程说是第 24 集，实际在第 23 集）</span>。通过控制 A 和 B 的 (X, Y) 坐标，就能控制这条线。在 3D 图形里，点的坐标不再是两个值，而是三个：X、Y、Z。当然，2D 的屏幕上不可能真有 XYZ 立体坐标轴，所以有图形算法负责把 3D 坐标"拍平"，显示到 2D 屏幕上。这叫 <b>3D 投影</b>。</p>
+  <p>所有点都从 3D 转成 2D 之后，就可以用画 2D 线段的函数把这些点连起来。这叫<b>线框渲染</b>（wireframe rendering）。想象用筷子做一个立方体，然后用手电筒照它：墙上的影子就是投影，是平的。如果旋转立方体，投影看起来就像个 3D 物体，尽管投影面是平的。计算机也是这样把 3D 转成 2D 的，只不过用的是大量数学，而不是筷子。</p>
+
+  <div class="card">
+    <h3>动手：旋转一个线框立方体</h3>
+    <div class="ctrl">
+      <span class="seg-btns" id="proj"><button data-p="ortho">正交投影</button><button data-p="persp">透视投影</button></span>
+      <button class="btn" id="cube-play">暂停旋转</button>
+    </div>
+    <svg class="stage" id="cube" viewBox="0 0 560 300" role="img" aria-label="旋转的线框立方体"></svg>
+    <div class="readout-sm" id="cube-read"></div>
+    <div class="step-text" id="cube-cap"></div>
+  </div>
+
+  <p>3D 投影有好几种。上面一开始看到的叫<b>正交投影</b>（orthographic projection），立方体里互相平行的边，在投影里也互相平行。但在真实的 3D 世界里，平行线越远越会汇聚到一点，就像远处的马路汇成一点。这叫<b>透视投影</b>（perspective projection）。过程类似，只是数学稍有不同。有时你想要透视效果，有时不想，这由开发者决定。</p>
+  <div class="extra">
+    <span class="t">两种投影的数学差在哪</span>
+    正交投影直接丢掉 Z：屏幕坐标 = (X, Y) × 缩放。透视投影要除以距离：屏幕坐标 = (X, Y) × 缩放 ÷ (Z + 相机距离)。离得越远（Z 越大），除出来越小，所以远处的边缩短、平行线汇聚。上面读数里那个点的坐标变化就是这么算的。CSS 里的 <code>perspective</code> 属性做的也是这件事。
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>多边形与网格：三角形万岁</h2>
+  <p>画立方体这种简单图形，直线就够了。但对更复杂的图形，三角形更好。在 3D 图形学里，我们把三角形叫作<b>多边形</b>（polygon）。看看这个用多边形拼成的漂亮茶壶。一堆多边形的集合叫<b>网格</b>（mesh）。网格越密，表面越光滑，细节越多，但也意味着更多计算量。游戏设计者要在角色的真实感和多边形数量之间取得平衡：数量太多，帧率就会掉到肉眼能感觉到的程度，用户会觉得卡。所以有专门简化网格的算法。</p>
+  <p>之所以常用三角形，而不是正方形或其他更复杂的形状，是因为三角形简单：空间中<b>三个点确定一个平面</b>。给我三个 3D 点，我就能画出一个平面，而且只有这一个答案。四个或更多点就不一定了；两个点又不够，只能确定一条线段。所以 3 是最完美的数字。三角形万岁！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="plane3" viewBox="0 0 680 220" role="img" aria-label="三点确定一个平面"></svg></div>
+      <figcaption>图 1　两点只能定一条线，绕着它能转出无数个平面；三点恰好定一个平面；四个点可能不在同一个平面上，"四边形"就会折起来。</figcaption>
+    </figure>
+  </div>
+  <div class="extra">
+    <span class="t">茶壶从哪来</span>
+    课程里那只茶壶很有名，叫"犹他茶壶"：1975 年犹他大学的研究者马丁·纽厄尔照着自家茶壶建了模型，后来几十年里成了图形学测试渲染算法的标准道具。本页用一个球来代替它，网格、光照、纹理的道理完全一样。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>扫描线渲染与抗锯齿</h2>
+  <p>线框渲染虽然很酷，但 3D 图像需要填充。填充图形的经典算法叫<b>扫描线渲染</b>（scanline rendering），1967 年诞生于犹他大学。为了简单，我们只看一个多边形，想想它怎么变成一块填满像素的区域。</p>
+  <p>先铺一层像素网格。扫描线算法先读多边形的三个点，找出最大和最小的 Y 值，只在这两者之间工作。然后从上往下，一次处理一行：计算这一行和多边形相交的两个点——因为是三角形，如果和一条边相交，就必然和另一条边也相交——然后把两个交点之间的像素填满。下一行，再下一行……所以叫扫描……线……渲染。扫到底部就完成了。计算机填充多边形的速度叫<b>填充率</b>（fillrate）。</p>
+
+  <div class="card">
+    <h3>动手：一行一行地扫</h3>
+    <div class="scroll-x"><svg class="diagram" id="scan" viewBox="0 0 580 350" role="img" aria-label="扫描线填充三角形"></svg></div>
+    <div class="btns">
+      <button class="btn primary" id="scan-next">扫下一行</button>
+      <button class="btn" id="scan-all">全部扫完</button>
+      <button class="btn" id="scan-aa">开启抗锯齿</button>
+      <button class="btn" id="scan-reset">重来</button>
+    </div>
+    <div class="step-text" id="scan-cap"></div>
+  </div>
+
+  <p>当然，这样的三角形挺丑的，边缘全是锯齿。像素小的时候不那么明显，但你肯定在游戏里见过这种效果，特别是在配置低的电脑上。减轻锯齿的一种方法叫<b>抗锯齿</b>（antialiasing）。与其每个像素都涂成一样的颜色，不如看多边形切过这个像素的程度来调整颜色：像素完全在多边形内部，就直接涂色；多边形只划过像素的一部分，颜色就浅一些。这种边缘羽化的效果看起来舒服多了。</p>
+  <p>抗锯齿用得很广，比如字体和图标。如果你把脸贴近屏幕——近点……再近点——就能看到浏览器里的字是抗锯齿的，超级平滑。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>遮挡：画家算法与深度缓冲</h2>
+  <p>3D 场景里到处都是多边形，但只有一部分能看见，其他的被挡住了。这叫<b>遮挡</b>（occlusion）。最直接的处理办法是用排序算法，把多边形从远到近排好，然后从远到近渲染。这叫<b>画家算法</b>（Painter's Algorithm），因为画家也是先画背景，再画近处的东西。</p>
+  <p>看这个例子：三个互相重叠的多边形，为了简单画成不同颜色，并假设它们都和屏幕平行（实际应用里，比如游戏中，多边形可能是倾斜的）。三个多边形 A、B、C，距离分别是 20、12、14。</p>
+  <p>还有一种方法叫<b>深度缓冲</b>（Z-buffering），做的事情一样，但方法不同。它不用排序，所以更快。简单说，深度缓冲会记录场景里每个像素和摄像机的距离，在内存里存一个数字矩阵，叫 Z 缓冲区。</p>
+
+  <div class="card">
+    <h3>动手：两种算法处理同一个场景</h3>
+    <span class="seg-btns" id="occ-mode"><button data-m="painter">画家算法</button><button data-m="z">深度缓冲</button></span>
+    <div class="zlist" id="occ-list"></div>
+    <div class="scroll-x"><svg class="diagram" id="occ" viewBox="0 0 440 290" role="img" aria-label="遮挡处理"></svg></div>
+    <div class="btns"><button class="btn primary" id="occ-next">下一步</button><button class="btn" id="occ-reset">重来</button><button class="btn" id="occ-fight">让 A、B 距离都等于 20</button></div>
+    <div class="step-text" id="occ-cap"></div>
+  </div>
+
+  <p>深度缓冲的过程是这样的：一开始，每个像素的距离都初始化为"无限大"。然后从列表里第一个多边形开始处理，这里是 A。它和扫描线算法的逻辑相同，只是不给像素涂色，而是把多边形的距离和 Z 缓冲区里记录的距离比较，总是记下更小的那个。A 距离 20，每次都比"无限大"小，所以缓冲区记下 20。处理完 A，再处理列表里的下一个，以此类推。因为没有对多边形排序，后处理的多边形不一定会覆盖前面的：处理 C 时，缓冲区里只有一部分值被换成了新的最小距离。</p>
+  <p>完成的 Z 缓冲区会和一个更高级的扫描线算法配合使用：它不仅计算交点，还会查一下这个像素在最终画面里是否可见；不可见就跳过，继续往下。</p>
+  <p>两个多边形距离相同时，会出现一个有趣的问题。比如 A 和 B 距离都是 20，该画哪个在上面？多边形在内存里不断被挪来挪去，访问顺序一直在变；再加上浮点运算天生有舍入误差，所以哪个画在上面往往无法预测。结果就是一种闪烁效果，叫 <b>Z-fighting</b>。如果你玩过 3D 游戏，肯定见过。</p>
+  <p>说到故障，3D 图形里还有一个常见的优化，叫<b>背面剔除</b>（back-face culling）。想想看，三角形有两面：正面和背面。像游戏角色的头部、游戏里的地面，你只应该看到一面——朝外的那一面。所以为了节省处理时间，渲染流水线经常忽略多边形的背面，这样要处理的多边形面数少了一半。这很好，但有个 bug：如果你钻进模型内部往外看，头和地面会消失。下面的球可以打开背面剔除，看看少处理了多少三角形。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>光照与纹理</h2>
+  <p>接下来讲光照，也叫<b>明暗处理</b>（shading），因为 3D 场景里物体表面应该有明暗变化。回到茶壶网格：用扫描线算法渲染所有多边形后，茶壶看起来是这样——没什么 3D 感。我们来加点光照，提高真实感。</p>
+  <p>从茶壶不同位置挑三个多边形。和之前的例子不同，这次要考虑这些多边形面朝的方向：它们不平行于屏幕，而是朝着不同的 3D 方向倾斜。多边形面朝的方向叫<b>表面法线</b>（surface normal），可以用一个垂直于表面的小箭头来表示。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="normals" viewBox="0 0 680 262" role="img" aria-label="表面法线与光照"></svg></div>
+      <figcaption>图 2　同一个光源，法线朝向不同的三个面亮度不同：法线越对着光，反射到观察者这里的光越多。</figcaption>
+    </figure>
+  </div>
+
+  <p>现在加一个光源。每个多边形被照亮的程度不同，有的更亮，因为它们的朝向让更多光反射到观察者这里。比如底部的多边形向下倾斜、背离光源，所以更暗；最右边的多边形更背对光源，所以只被照亮一部分；左上角的多边形朝向的角度会把光反射到我们这里，所以显得更亮。对每个多边形都这样做，茶壶看起来就真实多了！这叫<b>平面着色</b>（flat shading），是最基本的光照算法。</p>
+  <p>不幸的是，平面着色让多边形的边界非常明显，看起来不光滑。所以人们开发了更多算法，比如<b>高洛德着色</b>（Gouraud shading）和<b>冯氏着色</b>（Phong shading）。它们不是给整个多边形涂一种颜色，而是用巧妙的方式在多边形内部改变颜色，效果更好。</p>
+  <p>还要说说<b>纹理</b>。图形学里的纹理指的是外观，而不是手感。和光照算法一样，纹理也有多种算法，能做出各种花哨效果。最简单的是<b>纹理映射</b>（texture mapping）。回到单个多边形：用扫描线算法填充时，可以去查内存里的一张纹理图像，决定每个像素用什么颜色。为此，需要把多边形的坐标和纹理的坐标对应起来。扫描线算法要填第一个像素时，纹理算法会去查纹理，从相应区域取平均颜色，填进多边形。重复这个过程，就贴上了纹理。</p>
+
+  <div class="card">
+    <h3>动手：从线框到贴图，一个软件渲染的小球</h3>
+    <p class="hint" style="margin-top:0">下面每一帧都是页面里的 JavaScript 一个像素一个像素算出来的（深度缓冲 + 光照 + 纹理），故意用低分辨率，好让你看清像素。可以拖动小球旋转。</p>
+    <div class="ctrl">
+      <span class="seg-btns" id="rmode">
+        <button data-r="wire">线框</button><button data-r="fill">只填色</button><button data-r="flat">平面着色</button><button data-r="smooth">平滑着色</button><button data-r="tex">纹理</button>
+      </span>
+    </div>
+    <canvas class="stage" id="rast" width="280" height="180" aria-label="软件渲染的小球"></canvas>
+    <div class="ctrl">
+      <label>网格密度 <input type="range" id="r-seg" min="6" max="40" step="2" value="14"></label>
+      <label>光源方向 <input type="range" id="r-light" min="-180" max="180" value="-50"></label>
+      <label><input type="checkbox" id="r-cull"> 背面剔除</label>
+      <button class="btn" id="r-play">暂停旋转</button>
+    </div>
+    <div class="readout-sm" id="r-read"></div>
+    <div class="step-text" id="r-cap"></div>
+  </div>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="texmap" viewBox="0 0 680 220" role="img" aria-label="纹理映射"></svg></div>
+      <figcaption>图 3　纹理映射：三角形的每个顶点都记着自己对应纹理图上的哪个位置（纹理坐标），填充像素时按位置去纹理上取颜色。</figcaption>
+    </figure>
+  </div>
+
+  <p>把这集讲的所有技巧结合起来，就能得到一只精致的小茶壶。这只茶壶还可以放进一个更大的场景里，场景由数百万个多边形组成。渲染这样的场景需要大量计算，但重要的是，不管场景多大，过程都一样：对数百万个多边形，一遍又一遍地做扫描线填充、抗锯齿、光照和纹理。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>GPU：为图形专门造的处理器</h2>
+  <p>不过，有几种办法可以加速渲染。第一，可以为这类特定运算造专门的硬件，让它快如闪电。第二，可以把 3D 场景分解成很多小块，然后<b>并行</b>渲染，而不是一块接一块按顺序渲染。</p>
+  <p>CPU 不是为此设计的，所以图形运算不快。于是计算机工程师给图形做了专门的处理器，叫 <b>GPU</b>（图形处理单元，Graphics Processing Unit）。GPU 在显卡上，周围有专用的 RAM，所有网格和纹理都放在里面，让 GPU 的众多核心能高速访问。现代显卡，比如 GeForce GTX 1080 Ti，有 3584 个处理核心，提供大规模并行处理，每秒能处理上亿个多边形！</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="gpu" viewBox="0 0 680 240" role="img" aria-label="CPU 与 GPU 的核心对比"></svg></div>
+      <figcaption>图 4　CPU 是少数几个"什么都会"的大核心；GPU 是成千上万个只擅长简单运算的小核心，正好适合"对每个像素、每个三角形做同样的事"。</figcaption>
+    </figure>
+  </div>
+  <div class="extra">
+    <span class="t">GPU 后来不只画图</span>
+    "大量简单运算同时做"这个特点，后来被发现特别适合神经网络训练——那也是海量的乘法和加法。今天 AI 用的加速卡，就是从显卡演化来的（第 34 集讲机器学习）。浏览器里的 WebGL / WebGPU，就是让网页的 JavaScript 能把这类工作交给 GPU。
+  </div>
+  <p>好了，本集对 3D 图形的介绍到此结束。下周我们聊一个全新的话题，到时会 ping 你~</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>步骤</th><th>做什么</th><th>关键词</th></tr></thead>
+    <tbody>
+      <tr><td>投影</td><td>3D 坐标 (X, Y, Z) 拍平成 2D 屏幕坐标</td><td>正交投影、透视投影、线框渲染</td></tr>
+      <tr><td>建模</td><td>用三角形拼出物体表面；三点定一个平面</td><td>多边形、网格、多边形数量 vs 帧率</td></tr>
+      <tr><td>填充</td><td>逐行算出和三角形边的交点，填满中间的像素</td><td>扫描线渲染（1967，犹他大学）、填充率、抗锯齿</td></tr>
+      <tr><td>遮挡</td><td>近的挡住远的</td><td>画家算法（排序）、深度缓冲（Z-buffer）、Z-fighting、背面剔除</td></tr>
+      <tr><td>光照</td><td>按表面法线和光源的夹角决定明暗</td><td>平面着色、高洛德着色、冯氏着色</td></tr>
+      <tr><td>纹理</td><td>按纹理坐标去图像里取颜色</td><td>纹理映射</td></tr>
+      <tr><td>加速</td><td>专用硬件 + 分块并行</td><td>GPU、显存，GTX 1080 Ti 有 3584 个核心</td></tr>
+    </tbody>
+  </table>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    3D 渲染就是对海量三角形重复同一套流程：投影到屏幕、扫描线填像素、用深度缓冲决定谁在前面、按法线打光、按纹理坐标贴图。因为每个三角形、每个像素的工作都一样且互不相干，所以最适合交给成千上万个核心的 GPU 并行去做。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 正交投影和透视投影有什么区别？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">正交投影里，物体中平行的边在投影后仍然平行，远近一样大；透视投影模拟真实世界，越远越小，平行线在远处汇聚到一点。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 3D 图形为什么偏爱用三角形拼网格？网格越密有什么好处和代价？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">三个点恰好确定唯一一个平面，四个以上的点不一定共面，两个点不够。网格越密表面越光滑、细节越多，但计算量越大，多了会让帧率下降、画面卡顿。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 画家算法和深度缓冲各怎么处理遮挡？A、B、C 距离 20、12、14 时，深度缓冲处理完 C 后哪些格子会变？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">画家算法把多边形从远到近排序，按顺序画，近的盖住远的。深度缓冲不排序，给每个像素记一个最近距离（初始为无限大），处理每个多边形时只在它更近的像素上更新。处理 C（14）时，只有 C 和 A 重叠、而 B 没盖住的那些格子（原来是 20）和原来空着的格子会变成 14；被 B（12）占着的格子不变。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 平面着色有什么缺点？GPU 为什么比 CPU 更适合做图形运算？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">平面着色给整个多边形一个颜色，多边形边界很明显、看起来不光滑，所以有了高洛德、冯氏着色。图形运算是对大量多边形和像素重复同样的简单计算，可以拆成小块并行；GPU 有成千上万个核心和专用显存，正为此设计。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="26.html"><small>← 上一集</small>26 图形用户界面</a>
+    <a class="next" href="28.html"><small>下一集 →</small>28 计算机网络</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 27 集 3D Graphics（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+const hex = h => { h = h.replace('#', ''); if (h.length === 3) h = h.split('').map(c => c + c).join(''); return [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16)); };
+
+/* ---------- 线框立方体 ---------- */
+(function () {
+  const svg = $('#cube');
+  const V = []; for (const x of [-1, 1]) for (const y of [-1, 1]) for (const z of [-1, 1]) V.push([x, y, z]);
+  const E = []; V.forEach((a, i) => V.forEach((b, j) => { if (i < j && a.filter((v, k) => v !== b[k]).length === 1) E.push([i, j]); }));
+  const lines = E.map(() => el('line', { class: 's-line', style: 'stroke:var(--accent);stroke-width:2.2' }, svg));
+  const dots = V.map((v, i) => el('circle', { r: i === 7 ? 6 : 3.5, style: i === 7 ? 'fill:var(--on)' : 'fill:var(--accent)' }, svg));
+  txt(svg, 14, 22, '拖动可以手动旋转', 't-sub');
+  let mode = 'ortho', ay = 0.6, ax = -0.45, playing = !REDUCE, last = 0;
+  function rot([x, y, z]) {
+    let c = Math.cos(ay), s = Math.sin(ay); [x, z] = [x * c + z * s, -x * s + z * c];
+    c = Math.cos(ax); s = Math.sin(ax); [y, z] = [y * c - z * s, y * s + z * c];
+    return [x, y, z];
+  }
+  function proj([x, y, z]) {
+    const S = 70, D = 3.6;
+    const k = mode === 'ortho' ? S : S * D / (z + D);
+    return [280 + x * k, 150 - y * k];
+  }
+  function draw() {
+    const R = V.map(rot), P = R.map(proj);
+    E.forEach(([i, j], n) => { lines[n].setAttribute('x1', P[i][0]); lines[n].setAttribute('y1', P[i][1]); lines[n].setAttribute('x2', P[j][0]); lines[n].setAttribute('y2', P[j][1]); });
+    dots.forEach((d, i) => { d.setAttribute('cx', P[i][0]); d.setAttribute('cy', P[i][1]); });
+    const r = R[7].map(v => v.toFixed(2)), p = P[7].map(v => v.toFixed(0));
+    $('#cube-read').textContent = `橙色顶点：3D (${r.join(', ')}) → 屏幕 (${p.join(', ')})`;
+  }
+  function loop(t) { if (playing) { ay += (t - last) * 0.0006; draw(); } last = t; requestAnimationFrame(loop); }
+  requestAnimationFrame(t => { last = t; loop(t); });
+  function setMode(m) {
+    mode = m; $$('#proj button').forEach(b => b.classList.toggle('sel', b.dataset.p === m));
+    $('#cube-cap').innerHTML = m === 'ortho' ? '<b>正交投影</b>：立方体的平行边投影后仍然平行，远近的边一样长。' : '<b>透视投影</b>：离你远的面变小，平行边往远处汇聚，更像真实世界。';
+    draw();
+  }
+  $$('#proj button').forEach(b => b.onclick = () => setMode(b.dataset.p));
+  $('#cube-play').onclick = () => { playing = !playing; $('#cube-play').textContent = playing ? '暂停旋转' : '继续旋转'; };
+  if (!playing) $('#cube-play').textContent = '继续旋转';
+  let drag = null;
+  svg.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; svg.setPointerCapture(e.pointerId); });
+  svg.addEventListener('pointermove', e => { if (!drag) return; ay += (e.clientX - drag[0]) * 0.01; ax += (e.clientY - drag[1]) * 0.01; drag = [e.clientX, e.clientY]; draw(); });
+  svg.addEventListener('pointerup', () => drag = null);
+  setMode('ortho');
+})();
+
+/* ---------- 三点定平面 ---------- */
+(function () {
+  const svg = $('#plane3');
+  const pt = (x, y) => el('circle', { cx: x, cy: y, r: 5, style: 'fill:var(--on)' }, svg);
+  // 两点
+  el('line', { x1: 40, y1: 150, x2: 180, y2: 60, class: 's-line' }, svg);
+  el('path', { d: 'M40,150 L180,60 L195,95 L55,185 Z', style: 'fill:var(--accent-soft);stroke:var(--accent);stroke-dasharray:4 3' }, svg);
+  el('path', { d: 'M40,150 L180,60 L165,25 L25,115 Z', style: 'fill:var(--accent-soft);stroke:var(--accent);stroke-dasharray:4 3' }, svg);
+  pt(40, 150); pt(180, 60);
+  txt(svg, 110, 212, '2 个点：无数个平面', 't-sub mid');
+  // 三点
+  el('path', { d: 'M260,150 L400,130 L330,50 Z', class: 's-acc' }, svg);
+  pt(260, 150); pt(400, 130); pt(330, 50);
+  txt(svg, 330, 212, '3 个点：恰好一个平面', 't-main mid');
+  // 四点
+  el('path', { d: 'M480,150 L600,160 L560,80 Z', class: 's-acc' }, svg);
+  el('path', { d: 'M480,150 L560,80 L520,40 Z', style: 'fill:var(--on-soft);stroke:var(--on)' }, svg);
+  pt(480, 150); pt(600, 160); pt(560, 80); pt(520, 40);
+  txt(svg, 508, 36, '第 4 个点翘起来', 't-sub end');
+  txt(svg, 550, 212, '4 个点：不一定共面', 't-sub mid');
+})();
+
+/* ---------- 扫描线 ---------- */
+(function () {
+  const svg = $('#scan');
+  const C = 28, COLS = 20, ROWS = 12, OX = 10, OY = 10;
+  const T = [[3.2, 0.6], [18.4, 4.3], [7.1, 11.4]];
+  const ys = T.map(p => p[1]), ymin = Math.min(...ys), ymax = Math.max(...ys);
+  const rows = []; for (let r = 0; r < ROWS; r++) { const yc = r + .5; if (yc >= ymin && yc <= ymax) rows.push(r); }
+  function span(yc) {
+    const xs = [];
+    for (let i = 0; i < 3; i++) { const [a, b] = [T[i], T[(i + 1) % 3]]; if ((yc - a[1]) * (yc - b[1]) <= 0 && a[1] !== b[1]) xs.push(a[0] + (yc - a[1]) / (b[1] - a[1]) * (b[0] - a[0])); }
+    return [Math.min(...xs), Math.max(...xs)];
+  }
+  function inside(x, y) {
+    let s = 0; for (let i = 0; i < 3; i++) { const [a, b] = [T[i], T[(i + 1) % 3]]; const c = (b[0] - a[0]) * (y - a[1]) - (b[1] - a[1]) * (x - a[0]); s += c > 0 ? 1 : c < 0 ? -1 : 0; }
+    return Math.abs(s) === 3;
+  }
+  const cov = []; for (let r = 0; r < ROWS; r++) { cov.push([]); for (let c = 0; c < COLS; c++) { let n = 0; for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) if (inside(c + (i + .5) / 4, r + (j + .5) / 4)) n++; cov[r].push(n / 16); } }
+  const cells = [];
+  for (let r = 0; r < ROWS; r++) { cells.push([]); for (let c = 0; c < COLS; c++) cells[r].push(el('rect', { x: OX + c * C, y: OY + r * C, width: C, height: C, style: 'fill:var(--panel);stroke:var(--line)' }, svg)); }
+  el('polygon', { points: T.map(([x, y]) => `${OX + x * C},${OY + y * C}`).join(' '), style: 'fill:none;stroke:var(--accent);stroke-width:2' }, svg);
+  T.forEach(([x, y]) => el('circle', { cx: OX + x * C, cy: OY + y * C, r: 4, style: 'fill:var(--accent)' }, svg));
+  const sl = el('line', { x1: OX, x2: OX + COLS * C, style: 'stroke:var(--on);stroke-width:2;display:none' }, svg);
+  const ix = [0, 1].map(() => el('circle', { r: 5, style: 'fill:var(--on);display:none' }, svg));
+  let k = -1, aa = false;
+  function paint() {
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      let f = 0;
+      if (aa) f = cov[r][c];
+      else if (rows.indexOf(r) !== -1 && rows.indexOf(r) <= k) { const [a, b] = span(r + .5); f = (c + .5 >= a && c + .5 <= b) ? 1 : 0; }
+      cells[r][c].style.fill = f ? `color-mix(in srgb, var(--on) ${Math.round(f * 100)}%, var(--panel))` : 'var(--panel)';
+    }
+    const show = !aa && k >= 0 && k < rows.length;
+    sl.style.display = show ? '' : 'none'; ix.forEach(d => d.style.display = show ? '' : 'none');
+    if (show) {
+      const yc = rows[k] + .5, [a, b] = span(yc), y = OY + yc * C;
+      sl.setAttribute('y1', y); sl.setAttribute('y2', y);
+      ix[0].setAttribute('cx', OX + a * C); ix[1].setAttribute('cx', OX + b * C); ix.forEach(d => d.setAttribute('cy', y));
+      $('#scan-cap').innerHTML = `第 ${rows[k] + 1} 行：和三角形的两条边交于 x = ${a.toFixed(1)} 和 x = ${b.toFixed(1)}，把中心落在这两点之间的像素填满。（${k + 1} / ${rows.length}）`;
+    } else if (aa) $('#scan-cap').innerHTML = '<b>抗锯齿</b>：按三角形盖住每个像素的比例调颜色深浅——完全在里面的涂满色，只被划过一角的涂浅色。边缘看起来平滑多了。';
+    else if (k < 0) $('#scan-cap').textContent = `先找出三个顶点里最小和最大的 Y，只在这之间的 ${rows.length} 行工作。点"扫下一行"。`;
+    else $('#scan-cap').textContent = '扫到底部，完成！可是边缘全是锯齿。试试"开启抗锯齿"。';
+    $('#scan-next').disabled = aa || k >= rows.length;
+    $('#scan-aa').textContent = aa ? '关闭抗锯齿' : '开启抗锯齿';
+  }
+  $('#scan-next').onclick = () => { k++; paint(); };
+  $('#scan-all').onclick = () => { aa = false; k = rows.length; paint(); };
+  $('#scan-aa').onclick = () => { aa = !aa; if (!aa) k = rows.length; paint(); };
+  $('#scan-reset').onclick = () => { aa = false; k = -1; paint(); };
+  paint();
+})();
+
+/* ---------- 画家算法 / 深度缓冲 ---------- */
+(function () {
+  const svg = $('#occ');
+  const C = 30, COLS = 14, ROWS = 9, OX = 10, OY = 10;
+  const P0 = { A: { d: 20, x: [0, 7], y: [0, 5], col: 'var(--accent)' }, B: { d: 12, x: [6, 13], y: [3, 8], col: 'var(--on)' }, C: { d: 14, x: [3, 9], y: [2, 7], col: 'var(--ok)' } };
+  let P = JSON.parse(JSON.stringify(P0));
+  const cells = [], nums = [];
+  for (let r = 0; r < ROWS; r++) { cells.push([]); nums.push([]); for (let c = 0; c < COLS; c++) { cells[r].push(el('rect', { x: OX + c * C, y: OY + r * C, width: C, height: C, style: 'fill:var(--panel);stroke:var(--line)' }, svg)); nums[r].push(txt(svg, OX + c * C + C / 2, OY + r * C + C / 2 + 4, '', 't-sub mid')); nums[r][c].style.fontSize = '11px'; } }
+  let mode = 'painter', k = 0, fight = false, fightTimer = null;
+  const inR = (p, c, r) => c >= p.x[0] && c <= p.x[1] && r >= p.y[0] && r <= p.y[1];
+  const order = () => mode === 'painter' ? Object.keys(P).sort((a, b) => P[b].d - P[a].d) : Object.keys(P);
+  const maxK = () => Object.keys(P).length + (mode === 'painter' ? 1 : 0);
+  function compute(rnd) {
+    const color = [], z = [];
+    for (let r = 0; r < ROWS; r++) { color.push(Array(COLS).fill(null)); z.push(Array(COLS).fill(Infinity)); }
+    const list = order(); const done = mode === 'painter' ? Math.max(0, k - 1) : k;
+    for (let i = 0; i < done; i++) {
+      const n = list[i], p = P[n];
+      for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) if (inR(p, c, r)) {
+        if (mode === 'painter') color[r][c] = n;
+        else if (p.d < z[r][c] || (p.d === z[r][c] && rnd && Math.random() < .5)) { z[r][c] = p.d; color[r][c] = n; }
+      }
+    }
+    return { color, z, list, done };
+  }
+  function paint(rnd) {
+    const { color, z, list, done } = compute(rnd);
+    for (let r = 0; r < ROWS; r++) for (let c = 0; c < COLS; c++) {
+      const n = color[r][c];
+      cells[r][c].style.fill = n ? `color-mix(in srgb, ${P[n].col} 55%, var(--panel))` : 'var(--panel)';
+      nums[r][c].textContent = mode === 'z' ? (z[r][c] === Infinity ? '∞' : z[r][c]) : '';
+    }
+    $('#occ-list').innerHTML = (mode === 'painter' && k === 0 ? Object.keys(P) : list).map((n, i) => `<span class="${(mode === 'painter' ? i === done - 1 && k > 1 : i === done - 1) ? 'cur' : ''}" style="border-left:4px solid ${P[n].col}">${n} · 距离 ${P[n].d}</span>`).join('') + (mode === 'painter' && k >= 1 ? '<span class="muted" style="border:0;background:none">← 已从远到近排好</span>' : '');
+    const cap = $('#occ-cap');
+    if (fight) cap.innerHTML = ['A、B 距离都设成 20。缓冲区先全是 ∞。', 'A（20）：覆盖的格子全记下 20。', 'B（20）：在和 A 重叠的地方，20 不比 20 小也不比 20 大——谁画在上面，取决于内存里的处理顺序和浮点舍入误差，没法预测。'][k] + (k === 2 ? '<br><b>Z-fighting</b>：每一帧结果都可能不同，重叠处就闪个不停。' : '');
+    else if (mode === 'painter') cap.innerHTML = ['原始列表：A 20、B 12、C 14。第一步是从远到近排序。', '排好了：A（20）→ C（14）→ B（12）。现在用扫描线一个个填。', '先画最远的 A。', '再画第二远的 C，盖住了 A 的一部分。', '最后画最近的 B。完成，近的在前面！'][k];
+    else cap.innerHTML = ['每个像素的距离先初始化为 ∞（不排序，直接按列表顺序 A、B、C 处理）。', 'A（20）：在它覆盖的格子里，20 都比 ∞ 小，全部记下 20。', 'B（12）：12 比 20 和 ∞ 都小，B 覆盖的格子全记下 12。', 'C（14）：只有原来是 20 或 ∞ 的格子换成 14；B 占着的格子是 12，比 14 近，保持不变。'][k];
+    $('#occ-next').disabled = k >= maxK();
+  }
+  function setMode(m) { mode = m; k = 0; if (fight) { fight = false; P = JSON.parse(JSON.stringify(P0)); $('#occ-fight').textContent = '让 A、B 距离都等于 20'; } $$('#occ-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === m)); stopFight(); paint(); }
+  function stopFight() { clearInterval(fightTimer); fightTimer = null; }
+  function startFight() { stopFight(); if (fight && mode === 'z' && k === maxK()) { paint(true); if (!REDUCE) fightTimer = setInterval(() => paint(true), 140); } }
+  $$('#occ-mode button').forEach(b => b.onclick = () => setMode(b.dataset.m));
+  $('#occ-next').onclick = () => { k++; paint(); startFight(); };
+  $('#occ-reset').onclick = () => { k = 0; stopFight(); paint(); };
+  $('#occ-fight').onclick = () => {
+    fight = !fight; P = JSON.parse(JSON.stringify(P0)); if (fight) { P.B.d = 20; delete P.C; }
+    $('#occ-fight').textContent = fight ? '恢复原来的距离' : '让 A、B 距离都等于 20';
+    if (fight) { mode = 'z'; $$('#occ-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === 'z')); k = 2; }
+    else k = 0;
+    paint(); startFight();
+  };
+  setMode('painter');
+})();
+
+/* ---------- 法线 ---------- */
+(function () {
+  const svg = $('#normals');
+  const cx = 280, cy = 115, R = 70;
+  const L = [80, 30];
+  el('circle', { cx: L[0], cy: L[1], r: 14, style: 'fill:#ffd34d;stroke:var(--ink)' }, svg);
+  txt(svg, L[0], L[1] + 32, '光源', 't-sub mid');
+  el('circle', { cx, cy, r: R, class: 's-dash' }, svg);
+  txt(svg, cx, cy + 4, '茶壶（剖面）', 't-sub mid');
+  const defs = el('defs', {}, svg); const m = el('marker', { id: 'nA', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto' }, defs); el('path', { d: 'M0,0 L10,5 L0,10 z', style: 'fill:var(--ink)' }, m);
+  [[-130, '左上：正对光', 1], [10, '右边：侧对光，部分照亮', .45], [95, '底部：背对光', 0]].forEach(([deg, name, b]) => {
+    const a = deg * Math.PI / 180, w = 0.32;
+    const p1 = [cx + R * Math.cos(a - w), cy + R * Math.sin(a - w)], p2 = [cx + R * Math.cos(a + w), cy + R * Math.sin(a + w)];
+    const mid = [(p1[0] + p2[0]) / 2, (p1[1] + p2[1]) / 2], n = [Math.cos(a), Math.sin(a)];
+    const shade = Math.round(15 + b * 85);
+    el('line', { x1: p1[0], y1: p1[1], x2: p2[0], y2: p2[1], style: `stroke:color-mix(in srgb, var(--on) ${shade}%, #000);stroke-width:12;stroke-linecap:round` }, svg);
+    el('line', { x1: mid[0], y1: mid[1], x2: mid[0] + n[0] * 40, y2: mid[1] + n[1] * 40, style: 'stroke:var(--ink);stroke-width:1.6', 'marker-end': 'url(#nA)' }, svg);
+    const tx = mid[0] + n[0] * 56, ty = mid[1] + n[1] * 56 + (n[1] > 0.5 ? 10 : 0);
+    txt(svg, tx + (n[0] > 0.3 ? 4 : n[0] < -0.3 ? -4 : 0), ty + 4, name, 't-sub ' + (n[0] > 0.3 ? '' : n[0] < -0.3 ? 'end' : 'mid'));
+    if (b === 1) el('line', { x1: L[0], y1: L[1], x2: mid[0], y2: mid[1], class: 's-dash', style: 'stroke:#d9a400' }, svg);
+  });
+  txt(svg, 470, 36, '小箭头 = 表面法线', 't-main');
+  txt(svg, 470, 58, '（垂直于这个面，表示面朝哪）', 't-sub');
+  txt(svg, 470, 84, '法线越对着光源，这个面越亮', 't-sub');
+  txt(svg, 470, 104, '（示意：实际光源在斜前方）', 't-sub');
+})();
+
+/* ---------- 软件渲染的小球 ---------- */
+(function () {
+  const cv = $('#rast'), ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  const img = ctx.createImageData(W, H), buf = img.data, zb = new Float32Array(W * H);
+  let mode = 'flat', seg = 14, lightDeg = -50, cull = false, ay = 0.4, ax = 0.35, playing = !REDUCE, last = 0;
+  let mesh;
+  function build() {
+    const n = seg / 2, verts = [], tris = [];
+    for (let i = 0; i <= n; i++) { const th = i / n * Math.PI; for (let j = 0; j <= seg; j++) { const ph = j / seg * 2 * Math.PI; verts.push({ p: [Math.sin(th) * Math.cos(ph), Math.cos(th), Math.sin(th) * Math.sin(ph)], uv: [j / seg, i / n] }); } }
+    const id = (i, j) => i * (seg + 1) + j;
+    for (let i = 0; i < n; i++) for (let j = 0; j < seg; j++) {
+      if (i > 0) tris.push([id(i, j), id(i + 1, j), id(i, j + 1)]);
+      if (i < n - 1) tris.push([id(i, j + 1), id(i + 1, j), id(i + 1, j + 1)]);
+    }
+    mesh = { verts, tris };
+  }
+  function rot([x, y, z]) {
+    let c = Math.cos(ay), s = Math.sin(ay); [x, z] = [x * c + z * s, -x * s + z * c];
+    c = Math.cos(ax); s = Math.sin(ax); [y, z] = [y * c - z * s, y * s + z * c];
+    return [x, y, z];
+  }
+  const D = 3.2, F = 175;
+  function frame() {
+    const bg = hex(css('--bg')), base = hex(css('--on')), ink = hex(css('--ink'));
+    for (let i = 0; i < W * H; i++) { buf[i * 4] = bg[0]; buf[i * 4 + 1] = bg[1]; buf[i * 4 + 2] = bg[2]; buf[i * 4 + 3] = 255; zb[i] = Infinity; }
+    const la = lightDeg * Math.PI / 180; const Lv = [Math.sin(la) * 0.8, 0.55, -Math.cos(la) * 0.8]; const ll = Math.hypot(...Lv); Lv.forEach((v, i) => Lv[i] = v / ll);
+    const R = mesh.verts.map(v => { const p = rot(v.p); return { p, s: [W / 2 + p[0] * F / (p[2] + D), H / 2 - p[1] * F / (p[2] + D)], uv: v.uv, I: 0.18 + 0.82 * Math.max(0, p[0] * Lv[0] + p[1] * Lv[1] + p[2] * Lv[2]) }; });
+    let drawn = 0, culled = 0;
+    if (mode === 'wire') {
+      ctx.putImageData(img, 0, 0);
+      ctx.strokeStyle = css('--accent'); ctx.lineWidth = 0.6; ctx.beginPath();
+      for (const t of mesh.tris) { const [a, b, c] = t.map(i => R[i].s); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.lineTo(c[0], c[1]); ctx.closePath(); }
+      ctx.stroke(); drawn = mesh.tris.length;
+    } else {
+      for (const t of mesh.tris) {
+        const [A, B, C] = t.map(i => R[i]);
+        const e1 = A.p.map((v, i) => B.p[i] - v), e2 = A.p.map((v, i) => C.p[i] - v);
+        let nx = e1[1] * e2[2] - e1[2] * e2[1], ny = e1[2] * e2[0] - e1[0] * e2[2], nz = e1[0] * e2[1] - e1[1] * e2[0];
+        const cen = [0, 1, 2].map(i => (A.p[i] + B.p[i] + C.p[i]) / 3);
+        if (nx * cen[0] + ny * cen[1] + nz * cen[2] < 0) { nx = -nx; ny = -ny; nz = -nz; }
+        const nl = Math.hypot(nx, ny, nz) || 1; nx /= nl; ny /= nl; nz /= nl;
+        const toCam = [-cen[0], -cen[1], -D - cen[2]];
+        if (cull && nx * toCam[0] + ny * toCam[1] + nz * toCam[2] <= 0) { culled++; continue; }
+        drawn++;
+        const flatI = 0.18 + 0.82 * Math.max(0, nx * Lv[0] + ny * Lv[1] + nz * Lv[2]);
+        const [a, b, c] = [A.s, B.s, C.s];
+        const area = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+        if (Math.abs(area) < 1e-6) continue;
+        const x0 = Math.max(0, Math.floor(Math.min(a[0], b[0], c[0]))), x1 = Math.min(W - 1, Math.ceil(Math.max(a[0], b[0], c[0])));
+        const y0 = Math.max(0, Math.floor(Math.min(a[1], b[1], c[1]))), y1 = Math.min(H - 1, Math.ceil(Math.max(a[1], b[1], c[1])));
+        for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) {
+          const px = x + .5, py = y + .5;
+          const w0 = ((b[0] - px) * (c[1] - py) - (b[1] - py) * (c[0] - px)) / area;
+          const w1 = ((c[0] - px) * (a[1] - py) - (c[1] - py) * (a[0] - px)) / area;
+          const w2 = 1 - w0 - w1;
+          if (w0 < 0 || w1 < 0 || w2 < 0) continue;
+          const z = w0 * A.p[2] + w1 * B.p[2] + w2 * C.p[2];
+          const k = y * W + x;
+          if (z >= zb[k]) continue;
+          zb[k] = z;
+          let I = 1, col = base;
+          if (mode === 'flat') I = flatI;
+          else if (mode === 'smooth' || mode === 'tex') I = w0 * A.I + w1 * B.I + w2 * C.I;
+          if (mode === 'tex') {
+            const u = w0 * A.uv[0] + w1 * B.uv[0] + w2 * C.uv[0], v = w0 * A.uv[1] + w1 * B.uv[1] + w2 * C.uv[1];
+            col = ((Math.floor(u * 12) + Math.floor(v * 6)) % 2) ? base : ink;
+          }
+          buf[k * 4] = col[0] * I; buf[k * 4 + 1] = col[1] * I; buf[k * 4 + 2] = col[2] * I;
+        }
+      }
+      ctx.putImageData(img, 0, 0);
+    }
+    $('#r-read').textContent = `网格：${mesh.tris.length} 个三角形　本帧画了 ${drawn} 个` + (cull && mode !== 'wire' ? `，剔除背面 ${culled} 个` : '');
+  }
+  const CAP = {
+    wire: '<b>线框</b>：只把每个三角形的顶点投影后连线。网格密度越高，三角形越多。',
+    fill: '<b>只填色</b>：用扫描线把每个三角形填成同一种颜色（深度缓冲决定谁在前），结果就是一个平平的圆片，没什么 3D 感。',
+    flat: '<b>平面着色</b>：每个三角形按自己的法线和光源的夹角算一个亮度，整块涂这一个颜色。立体感出来了，但能看见一块块的多边形边界。',
+    smooth: '<b>平滑着色</b>：先在每个顶点算亮度，再在三角形内部渐变过去（这就是高洛德着色的思路），边界消失了。把网格密度调低再对比一下平面着色。',
+    tex: '<b>纹理</b>：每个顶点带着纹理坐标 (u, v)，填像素时按插值出来的 (u, v) 去查一张棋盘格纹理取颜色，再乘上光照亮度。'
+  };
+  function setMode(m) { mode = m; $$('#rmode button').forEach(b => b.classList.toggle('sel', b.dataset.r === m)); $('#r-cap').innerHTML = CAP[m]; frame(); }
+  $$('#rmode button').forEach(b => b.onclick = () => setMode(b.dataset.r));
+  $('#r-seg').oninput = e => { seg = +e.target.value; build(); frame(); };
+  $('#r-light').oninput = e => { lightDeg = +e.target.value; frame(); };
+  $('#r-cull').onchange = e => { cull = e.target.checked; frame(); };
+  $('#r-play').onclick = () => { playing = !playing; $('#r-play').textContent = playing ? '暂停旋转' : '继续旋转'; };
+  if (!playing) $('#r-play').textContent = '继续旋转';
+  let drag = null;
+  cv.addEventListener('pointerdown', e => { drag = [e.clientX, e.clientY]; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => { if (!drag) return; ay += (e.clientX - drag[0]) * 0.012; ax += (e.clientY - drag[1]) * 0.012; drag = [e.clientX, e.clientY]; frame(); });
+  cv.addEventListener('pointerup', () => drag = null);
+  let visible = true;
+  new IntersectionObserver(es => visible = es[0].isIntersecting).observe(cv);
+  function loop(t) { if (playing && visible) { ay += (t - last) * 0.0005; frame(); } last = t; requestAnimationFrame(loop); }
+  build(); setMode('flat');
+  requestAnimationFrame(t => { last = t; loop(t); });
+})();
+
+/* ---------- 纹理映射 ---------- */
+(function () {
+  const svg = $('#texmap');
+  const S = 32, OX = 30, OY = 30;
+  const cols = ['var(--on)', 'var(--panel)'];
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) el('rect', { x: OX + c * S, y: OY + r * S, width: S, height: S, style: `fill:${cols[(r + c) % 2]};stroke:var(--line)` }, svg);
+  txt(svg, OX + 80, 210, '内存里的纹理图', 't-sub mid');
+  const tc = [[0.1, 0.1], [0.9, 0.3], [0.3, 0.9]].map(([u, v]) => [OX + u * 5 * S, OY + v * 5 * S]);
+  el('polygon', { points: tc.map(p => p.join(',')).join(' '), style: 'fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:5 3' }, svg);
+  const tri = [[430, 40], [640, 90], [480, 190]];
+  const defs = el('defs', {}, svg);
+  const cp = el('clipPath', { id: 'triClip' }, defs); el('polygon', { points: tri.map(p => p.join(',')).join(' ') }, cp);
+  const g = el('g', { 'clip-path': 'url(#triClip)' }, svg);
+  // 仿射映射：纹理三角形 tc → 屏幕三角形 tri
+  const [p0, p1, p2] = tc, [q0, q1, q2] = tri;
+  const det = (p1[0] - p0[0]) * (p2[1] - p0[1]) - (p2[0] - p0[0]) * (p1[1] - p0[1]);
+  const a = ((q1[0] - q0[0]) * (p2[1] - p0[1]) - (q2[0] - q0[0]) * (p1[1] - p0[1])) / det;
+  const c2 = ((q2[0] - q0[0]) * (p1[0] - p0[0]) - (q1[0] - q0[0]) * (p2[0] - p0[0])) / det;
+  const b = ((q1[1] - q0[1]) * (p2[1] - p0[1]) - (q2[1] - q0[1]) * (p1[1] - p0[1])) / det;
+  const d = ((q2[1] - q0[1]) * (p1[0] - p0[0]) - (q1[1] - q0[1]) * (p2[0] - p0[0])) / det;
+  const e = q0[0] - a * p0[0] - c2 * p0[1], f = q0[1] - b * p0[0] - d * p0[1];
+  const inner = el('g', { transform: `matrix(${a},${b},${c2},${d},${e},${f})` }, g);
+  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) el('rect', { x: OX + c * S, y: OY + r * S, width: S, height: S, style: `fill:${cols[(r + c) % 2]}` }, inner);
+  el('polygon', { points: tri.map(p => p.join(',')).join(' '), style: 'fill:none;stroke:var(--ink);stroke-width:2' }, svg);
+  tc.forEach((p, i) => {
+    el('circle', { cx: p[0], cy: p[1], r: 4, style: 'fill:var(--accent)' }, svg);
+    el('circle', { cx: tri[i][0], cy: tri[i][1], r: 4, style: 'fill:var(--accent)' }, svg);
+    el('path', { d: `M${p[0]},${p[1]} C${p[0] + 120},${p[1]} ${tri[i][0] - 120},${tri[i][1]} ${tri[i][0]},${tri[i][1]}`, class: 's-dash', style: 'stroke:var(--accent)' }, svg);
+  });
+  txt(svg, 540, 210, '屏幕上的三角形（贴好纹理）', 't-sub mid');
+  txt(svg, 300, 22, '顶点 ↔ 纹理坐标', 't-sub mid t-acc');
+})();
+
+/* ---------- CPU vs GPU ---------- */
+(function () {
+  const svg = $('#gpu');
+  el('rect', { x: 20, y: 30, width: 220, height: 180, rx: 12, class: 's-panel' }, svg);
+  txt(svg, 130, 22, 'CPU', 't-main mid');
+  for (let i = 0; i < 4; i++) { const x = 36 + (i % 2) * 100, y = 46 + Math.floor(i / 2) * 80; el('rect', { x, y, width: 88, height: 68, rx: 8, class: 's-acc' }, svg); txt(svg, x + 44, y + 39, '核心', 't-sub mid'); }
+  txt(svg, 130, 230, '几个强大的通用核心', 't-sub mid');
+  el('rect', { x: 290, y: 30, width: 370, height: 180, rx: 12, class: 's-panel' }, svg);
+  txt(svg, 475, 22, 'GPU（显卡上，旁边是专用显存）', 't-main mid');
+  for (let r = 0; r < 10; r++) for (let c = 0; c < 26; c++) el('rect', { x: 302 + c * 13.6, y: 42 + r * 13, width: 10, height: 10, rx: 2, class: 's-on', style: 'stroke-width:1' }, svg);
+  el('rect', { x: 302, y: 176, width: 346, height: 26, rx: 6, style: 'fill:var(--code);stroke:var(--line)' }, svg);
+  txt(svg, 475, 194, '显存：网格和纹理都在这里', 't-sub mid');
+  txt(svg, 475, 230, '成千上万个简单核心（GTX 1080 Ti：3584 个）', 't-sub mid');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,400 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>39 教育科技 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.tips{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.tips div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);font-size:14px;line-height:1.7}
+.tips b{display:block;font-size:16px;margin-bottom:4px;color:var(--on)}
+@media (max-width:700px){.tips{grid-template-columns:1fr}}
+.eq{font:600 26px var(--mono);text-align:center;background:var(--code);border-radius:10px;padding:12px;margin:10px 0}
+.opts{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.opts button{font:15px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;padding:6px 14px;cursor:pointer}
+.opts button.ok{border-color:var(--ok);background:var(--ok-soft)}
+.opts button.no{border-color:var(--bad);background:var(--bad-soft)}
+.rules{display:grid;gap:6px;margin:10px 0}
+.rules div{font:13px/1.6 var(--mono);border:1px solid var(--line);border-left-width:4px;border-radius:6px;padding:6px 10px;background:var(--panel)}
+.rules div.bug{border-left-color:var(--bad)}
+.rules div.good{border-left-color:var(--ok)}
+.rules div.fire{box-shadow:0 0 0 2px var(--on);background:var(--on-soft)}
+.rules small{display:block;font-family:inherit;color:var(--muted)}
+.sl{display:grid;grid-template-columns:200px 1fr 56px;gap:10px;align-items:center;font-size:14px;margin:4px 0}
+.sl output{font:600 14px var(--mono);text-align:right}
+@media (max-width:600px){.sl{grid-template-columns:120px 1fr 48px}}
+.math{font:13px/1.9 var(--mono);background:var(--code);border-radius:8px;padding:8px 12px;overflow-wrap:anywhere}
+.math b{color:var(--on)}
+.skills{display:grid;gap:8px;margin:10px 0}
+.skills .row{display:grid;grid-template-columns:150px 1fr 60px;gap:10px;align-items:center;font-size:14px}
+.skills .bar{height:20px;border-radius:5px;background:var(--line);position:relative;overflow:hidden}
+.skills .bar i{position:absolute;inset:0 auto 0 0;background:var(--accent)}
+.skills .bar i.m{background:var(--ok)}
+.skills .bar u{position:absolute;top:0;bottom:0;left:95%;border-left:2px dashed var(--ink);text-decoration:none}
+.skills .row.pick span:first-child{color:var(--on);font-weight:700}
+.skills output{font:13px var(--mono);text-align:right}
+@media (max-width:600px){.skills .row{grid-template-columns:100px 1fr 46px}}
+</style>
+</head>
+<body data-ep="39">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=40" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 39 集</div>
+  <h1>教育科技</h1>
+  <p class="en">Educational Technology</p>
+  <p class="lead">信息从来没有这么容易获得，可"能看到"不等于"学会了"。这一集先给你三个看教学视频的小技巧，再看 MOOC 为什么没有终结大学，然后拆开一个智能辅导系统：用产生式规则判断你哪一步错在哪，用贝叶斯知识追踪估计你到底会了没有，再决定下一题出什么。最后，是对未来教育的一些畅想。</p>
+  <div class="road">
+    <span>信息 ≠ 学习</span><i>→</i><span>主动学习</span><i>→</i><span>MOOC</span><i>→</i><span>智能辅导系统</span><i>→</i><span>贝叶斯知识追踪</span><i>→</i><span>教育数据挖掘与未来</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 信息不等于学习</a></li>
+    <li><a href="#ch1">1 · 远程教育与看视频的技巧</a></li>
+    <li><a href="#ch2">2 · MOOC 与规模的难题</a></li>
+    <li><a href="#ch3">3 · 智能辅导系统：领域模型</a></li>
+    <li><a href="#ch4">4 · 学生模型：贝叶斯知识追踪</a></li>
+    <li><a href="#ch5">5 · 教育数据挖掘与未来</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>能获取信息，不等于学会了</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！计算技术带来的最戏剧性的变化之一，是信息的大量创造和随处可得。目前互联网上有 13 亿个网站。光是维基百科就有 500 万篇英文文章，内容从"1518 年舞蹈瘟疫"到"卫生纸卷的正确朝向"无所不包。Google 每天要处理 40 亿次搜索来访问这些信息。YouTube 上每分钟有 350 万个视频被观看，用户每分钟上传 400 小时的<b>新</b>视频。其中很多观看量来自《江南 Style》和《Despacito》，但也有很大一部分可以算是教育内容，就像你现在正在看的这个。</p>
+  <p>这座惊人的信息宝库，只要在手机上点几下就能访问。随时随地。但是，<b>能获取信息，不等于从中学到了东西</b>。先说清楚，我们 Crash Course 非常推崇课堂上的互动学习、有引导的讨论和动手实践，它们都是强有力的学习工具。但我们也相信，教育科技在课堂内外都能锦上添花。所以今天我们要稍微"元"一点，具体聊聊计算机科学如何通过教育科技来支持学习。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>远程教育，以及看教学视频的三个技巧</h2>
+  <p>科技——从纸和笔，到最近基于机器学习的智能系统——几千年来一直在支持教育，甚至早在人类为了留给后代而在洞穴里画下狩猎场景的时候就开始了。<b>远距离教学</b>一直是教育科技的推动力。比如，大约公元 50 年，圣保罗就在寄送书信，为在亚洲新建立的教会讲授宗教教义。从那以后，好几波重大的技术浪潮都曾许诺要彻底改变教育，从广播和电视，到 DVD 和激光影碟。事实上，早在 1913 年，托马斯·爱迪生就预言："书本很快就会在学校里过时……用电影来教授人类知识的每一个分支是可能的。我们的学校体系将在未来十年内彻底改变。"当然，你知道这并没有发生。但以视频等形式发布教育材料，确实变得越来越流行。</p>
+  <p>在讨论教育科技研究能为你做什么之前，研究已经表明，有一些简单的事情，你在看这样的教学视频时就可以做，能显著提高你学到和记住的东西：</p>
+
+  <div class="tips">
+    <div><b>① 调速度</b>视频的速度天生是可以调的，所以要确保节奏适合你：用视频的倍速控制（YouTube 在屏幕右下角）。你应该既能听懂，又有足够的时间思考内容。</div>
+    <div><b>② 暂停！</b>在难的地方停下来，你会学到更多。停下时问问自己刚才看的内容，看能不能答上来；或者猜猜接下来会讲什么，再继续播放，看自己猜得对不对。</div>
+    <div><b>③ 自己动手</b>视频里出现的例子或练习，都自己试一遍。就算不是程序员，也可以在纸上写写伪代码，甚至试着写写代码。</div>
+  </div>
+
+  <p>像这样的<b>主动学习</b>（active learning）技巧，已被证明能让学习效果提高到十倍。如果你想了解更多这类内容，我们有一整个系列专门讲这个。</p>
+  <div class="extra">
+    <span class="t">这个图文版就是照这个思路做的</span>
+    你读的这一页，其实就是把视频变成了可以按自己节奏读的文字（技巧 ①），每一节都有可以自己动手的"动手"卡片（技巧 ③），最后是"合上页面，试着回答"的自测题（技巧 ②）。学习科学里把"自己试着回想答案"叫<b>提取练习</b>（retrieval practice），它比反复重读有效得多；再隔几天重新测一次，效果更好，这叫<b>间隔重复</b>（spaced repetition），Anki 这类记忆卡片软件就是按这个原理排复习时间的。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>MOOC，以及"一个老师、一百万个学生"的难题</h2>
+  <p>在过去的一个世纪里，用视频传播优质教育的想法吸引了很多人。这个想法最新的化身，是<b>大规模开放在线课程</b>（Massive Open Online Courses，简称 <b>MOOC</b>）。事实上，《纽约时报》把 2012 年称为"MOOC 元年"！很多早期的 MOOC 只是名教授讲课的录像。有一段时间，一些人以为这可能意味着我们所熟知的大学要终结了。不管你对此是担忧还是兴奋，那样的未来也并没有真正到来，大部分炒作已经消散了。</p>
+  <p>这可能主要是因为：当你用技术把学习规模扩大到同时容纳上百万学生、却只有很少的教学人员——甚至一个都没有——你会碰到很多问题。幸运的是，这些问题引起了计算机科学家、更具体地说是<b>教育技术专家</b>的兴趣，他们正在想办法解决。比如，有效的学习需要得到及时而相关的反馈，但如果你有上百万个学习者却只有一位老师，怎么给出好的反馈？说到这个，一个老师怎么批改一百万份作业？</p>
+  <p>解决很多这类问题，意味着要创造<b>人与技术混合</b>的系统。一个有用但有争议的见解是：学生可以成为互相提供反馈的很好资源。不幸的是，他们往往做得很差——他们既不是学科专家，也不是老师。不过，我们可以用技术来支持他们的努力。比如，用算法从可能多达数百万种的分组方式中，为学生匹配出最合适的学习伙伴。另外，评分的一部分可以由自动化系统完成，其余部分由人来做。例如，给 SAT 写作部分打分的计算机算法，已被发现和专门雇来手工评分的人一样准确。</p>
+  <div class="extra">
+    <span class="t">MOOC 的完成率</span>
+    MOOC 最常被提到的问题是<b>完成率很低</b>：很多课程注册了几万人，最后学完的往往只有百分之几到十几。没有同学、没有截止日期、没有人在你卡住时拉一把——这正是课程所说的"规模扩大后缺少反馈"的问题。后来的在线课程纷纷加入了互评作业、学习小组、自动批改的编程题和固定的开课时间表。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>智能辅导系统：产生式规则与领域模型</h2>
+  <p>还有一些正在开发的算法，提供<b>个性化</b>的学习体验，很像 Netflix 的个性化电影推荐或 Google 的个性化搜索结果。为此，软件需要了解学习者知道什么、不知道什么。有了这种了解，软件就能在正确的时间呈现正确的材料，让每个学习者针对自己觉得最难的东西练习，而不是练那些他们已经很擅长的。这类系统——大多由人工智能驱动——被统称为<b>智能辅导系统</b>（Intelligent Tutoring Systems）。</p>
+  <p>我们来拆解一个遵循常见做法的假想系统。想象一个学生正在我们这个假想的辅导软件里做这道代数题。解题的正确下一步是两边同时减 7。做这一步所需的知识，可以用一种叫<b>产生式规则</b>（production rule）的东西来表示。它把步骤描述成 IF-THEN 语句。这一步的产生式规则，伪代码是这样的：<b>如果</b>变量的同一边有一个常数，<b>那么</b>两边同时减去这个常数。</p>
+  <p class="muted" style="font-size:13px">（字幕把 production rule 译作"判断规则"。人工智能和认知科学里的标准译名是"产生式规则"。）</p>
+  <p>产生式规则酷的地方在于，它也可以用来表示学生可能犯的<b>常见错误</b>。这些产生式规则叫<b>错误规则</b>（buggy rules）。比如，学生可能不减常数，而是错误地去减系数。这可不行！完全有可能在学生做完一步后，有好几条相互竞争的产生式规则都被触发了——我们不一定完全清楚是什么错误理解导致了学生的答案。所以，产生式规则会和一个<b>挑选最可能那条规则的算法</b>结合起来，这样就能给学生一条有用的反馈。这些产生式规则加上挑选算法，组成了所谓的<b>领域模型</b>（Domain Model）：对某个学科——比如代数——的知识、步骤和技能的形式化表示。</p>
+
+  <div class="card">
+    <h3>动手：做一道题，看辅导系统怎么判断你</h3>
+    <div class="eq" id="tu-eq"></div>
+    <p class="hint" style="margin:0" id="tu-q"></p>
+    <div class="opts" id="tu-opts"></div>
+    <div class="step-text" id="tu-cap"></div>
+    <div class="rules" id="tu-rules"></div>
+    <div class="btns"><button class="btn" id="tu-reset">重新做</button></div>
+  </div>
+
+  <p>领域模型可以帮学习者解决任何单个的问题，但不足以带领学习者走完一整门课程，因为它不跟踪随时间推移的进度。为此，智能辅导系统会建立并维护一个<b>学生模型</b>（student model）——它跟踪的东西包括：学生已经掌握了哪些产生式规则，哪些地方还需要练习。这正是正确地个性化辅导所需要的。</p>
+  <div class="extra">
+    <span class="t">"认知导师"</span>
+    这种用产生式规则描述解题步骤、逐步检查学生每一步的做法，来自卡内基梅隆大学约翰·安德森等人的认知科学研究，最有名的产品叫 Cognitive Tutor（认知导师），在美国很多中学的数学课上用了几十年。它最大的特点是"跟着你一步一步走"（模型追踪），而不是只看最后的答案。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>学生模型：贝叶斯知识追踪</h2>
+  <p>这听起来不难，但只根据学生对一些问题的回答，就要弄清他们知道什么、不知道什么，其实是个很大的挑战。解决这个问题的一种常用技术，是<b>贝叶斯知识追踪</b>（Bayesian knowledge tracing）。这个算法把学生的知识看作一组<b>隐变量</b>（latent variables）：它们的真实值，对外部观察者——比如我们的软件——是隐藏的。现实世界里也是这样：老师并不能确切知道一个学生是不是完全掌握了某样东西，而是会用一次测验来探查，看学生能不能答对。同样，贝叶斯知识追踪通过观察学生每次用到这项技能时答得对不对，来更新它对学生知识的估计。</p>
+  <p>为此，软件维护着<b>四个概率</b>。第一个是学生<b>已经学会</b>某项技能的概率，比如"从代数方程两边减去常数"这项技能。假设我们的学生正确地给两边减了 7。因为她做对了，我们可能会假设她知道怎么做这一步。但也有可能她是碰巧做对的，并没有真正理解怎么解题。这是<b>猜对的概率</b>（guess）。类似地，如果学生做错了，你可能会假设她不会这一步。但也有可能她其实会，只是粗心犯了个错，或者手滑了。这叫<b>失误的概率</b>（slip）。贝叶斯知识追踪计算的最后一个概率，是学生开始做题时还不会这一步，但通过做这道题学会了的概率。这叫<b>转移概率</b>（transit），也就是"做题过程中学会"的概率。</p>
+  <p>这四个概率被用在一组方程里来更新学生模型，对学生应该掌握的每项技能持续进行评估。第一个方程问的是：学生已经学会某项技能的概率是多少？它考虑了"之前就已经学会"的概率和转移概率。就像老师一样，我们对"之前已经学会"这个概率的估计，取决于我们观察到学生答对还是答错，所以有两个方程可选。算出合适的值后，我们把它代入第一个方程，更新学生学会某项技能的概率，然后存进他们的学生模型。</p>
+
+  <div class="card">
+    <h3>动手：贝叶斯知识追踪，一题一题地更新</h3>
+    <div class="sl"><label for="b-l0">一开始就会的概率 P(L₀)</label><input type="range" id="b-l0" min="0" max="0.9" step="0.01" value="0.3"><output id="b-l0v"></output></div>
+    <div class="sl"><label for="b-g">猜对的概率 P(G)</label><input type="range" id="b-g" min="0" max="0.5" step="0.01" value="0.2"><output id="b-gv"></output></div>
+    <div class="sl"><label for="b-s">失误的概率 P(S)</label><input type="range" id="b-s" min="0" max="0.5" step="0.01" value="0.1"><output id="b-sv"></output></div>
+    <div class="sl"><label for="b-t">做题中学会的概率 P(T)</label><input type="range" id="b-t" min="0" max="0.5" step="0.01" value="0.15"><output id="b-tv"></output></div>
+    <div class="btns"><button class="btn primary" id="b-ok">✓ 学生答对</button><button class="btn primary" id="b-no" style="background:var(--bad);border-color:var(--bad)">✗ 学生答错</button><button class="btn" id="b-reset">清空重来</button></div>
+    <div class="scroll-x"><svg class="diagram" id="bkt" viewBox="0 0 680 220" role="img" aria-label="掌握概率随答题次数的变化"></svg></div>
+    <div class="math" id="b-math"></div>
+    <div class="step-text" id="b-cap"></div>
+  </div>
+
+  <p>虽然也有其他方法，但智能辅导系统常常用贝叶斯知识追踪来支持所谓的<b>掌握学习</b>（mastery learning）：学生反复练习一项技能，直到深刻理解为止。为了最高效地做到这一点，软件会挑选最合适的题目给学生，帮他们达到掌握，这叫<b>自适应排序</b>（adaptive sequencing），是个性化的一种形式。</p>
+  <p class="muted" style="font-size:13px">（字幕把 adaptive sequencing 译成"自适应式程序"，其实说的是"自适应地安排出题顺序"。）</p>
+
+  <div class="card">
+    <h3>动手：系统自己决定下一题练什么</h3>
+    <p class="hint" style="margin-top:0">一个虚拟学生要学三项技能。系统看不到他真实的水平，只能根据答题对错，用上面同样的公式（P(G)=0.2，P(S)=0.1，P(T)=0.15）估计每项技能的掌握概率，然后每次挑一项<b>还没掌握、估计值最低</b>的技能出题。估计值超过 0.95 就算掌握（虚线）。</p>
+    <div class="skills" id="ad"></div>
+    <div class="btns"><button class="btn primary" id="ad-one">让学生做 1 题</button><button class="btn" id="ad-ten">连做 10 题</button><button class="btn" id="ad-reset">换个学生重来</button></div>
+    <div class="step-text" id="ad-cap"></div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>教育数据挖掘，以及未来</h2>
+  <p>不过，我们的例子处理的还只是一个学生的数据。联网的教育应用和网站，如今让老师和研究人员能够收集上百万学习者的数据。从这些数据里，我们可以发现常见的陷阱、学生在哪里感到挫败等等。除了学生对问题的回答，还可以看他们输入答案前停顿了多久、在视频的哪些地方加速播放，以及他们在讨论区里怎样和其他学生互动。这个领域叫<b>教育数据挖掘</b>（Educational Data Mining），它能利用所有那些"捂脸"和"啊哈"的时刻，帮助改进未来的个性化学习。</p>
+  <p>说到未来，教育技术专家经常从科幻小说中汲取创新的灵感。尤其是很多研究者受到了尼尔·斯蒂芬森的小说《钻石年代》（The Diamond Age）中所描绘的未来的启发。书里讲一个小女孩从一本书里学习，书中有一组虚拟角色，用自然语言和她互动，扮演教练、老师和导师的角色，并随着她的成长而成长、改变。它们能察觉她知道什么、感觉如何，给出恰到好处的反馈和支持，帮助她学习。</p>
+  <p class="muted" style="font-size:13px">（字幕把 They can detect what she knows 译成了"直到她学会了什么"，原意是"它们能察觉她知道什么"。）</p>
+  <p>如今，也有非科幻领域的研究者，比如贾斯汀·卡塞尔，在打造<b>教学用的虚拟智能体</b>，它们能"展现出人类对话中的言语和肢体行为，并以此和人类学生建立信任、融洽关系，甚至友谊"。也许 2040 年的速成课，会有一个住在你 iPhone 30 里的迷你约翰·格林 AI。</p>
+  <p>教育科技和设备如今正在从笔记本和台式电脑上走开：走向巨大的桌面触摸屏，让学生能分组协作；也走向小小的移动设备，让学生能随时随地学习。虚拟现实和增强现实也让人们兴奋不已，为学习者带来全新的教育体验：潜入深海、探索太空、穿行于人体之中，或者和他们在现实生活中可能永远不会接触到的文化互动。</p>
+  <p>如果我们看向遥远的未来，<b>教育的界面</b>可能会完全消失，取而代之的是直接的大脑学习：新技能可以直接上传进人的大脑。这可能看起来非常遥远，但科学家们已经有所进展，比如仅凭大脑信号，就能检测出一个人是否知道某样东西。这引出了一个有趣的问题：如果我们能把东西下载<b>进</b>大脑，我们能不能把大脑里的内容上传出来呢？我们会在下周的系列最终集里，探讨计算的遥远未来。到时见！</p>
+  <p class="muted" style="font-size:13px">（字幕把 educational interfaces might disappear entirely 译成"教育可能会完全消失"。消失的是"界面"，不是教育本身。）</p>
+  <div class="extra">
+    <span class="t">2017 年之后</span>
+    这一集里"会用自然语言和你对话、知道你会什么、随你一起成长的导师"，在 2017 年还是科幻。如今的大语言模型已经能做到其中一部分：用自然语言讲解、按你的水平调整、追问你的理解。但"它到底知不知道你真的会了"——也就是本集讲的学生模型——仍然是难题；而且学习科学告诉我们，答案来得太容易，反而可能学不进去。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>信息 ≠ 学习</td><td>信息随处可得，但要主动学：调速度、暂停自问、自己动手（主动学习）</td></tr>
+      <tr><td>远程教育</td><td>从书信、广播电视到视频；爱迪生 1913 年预言电影将取代书本（没成真）</td></tr>
+      <tr><td>MOOC</td><td>2012 "MOOC 元年"；规模扩大后难以反馈和批改 → 人机混合：同伴互评、算法分组、自动评分</td></tr>
+      <tr><td>智能辅导系统</td><td>AI 驱动的个性化学习：在正确的时间给正确的练习</td></tr>
+      <tr><td>领域模型</td><td>产生式规则（IF-THEN，含错误规则）+ 挑选最可能规则的算法</td></tr>
+      <tr><td>学生模型</td><td>记录学生掌握了哪些规则；常用贝叶斯知识追踪</td></tr>
+      <tr><td>贝叶斯知识追踪</td><td>四个概率：已学会 P(L)、猜对 P(G)、失误 P(S)、做题中学会 P(T)；按对错更新</td></tr>
+      <tr><td>掌握学习 / 自适应排序</td><td>练到掌握为止；系统挑最需要练的题</td></tr>
+      <tr><td>教育数据挖掘</td><td>从百万学习者的答题、停顿、倍速、讨论中找规律</td></tr>
+      <tr><td>未来</td><td>教学虚拟智能体、桌面与移动设备、VR / AR、直接的大脑学习</td></tr>
+    </tbody>
+  </table>
+
+  <ol class="timeline">
+    <li><span class="yr">约 50 年</span>圣保罗用书信给新建的教会远程授课</li>
+    <li><span class="yr">1913</span>爱迪生预言"书本很快会在学校里过时"</li>
+    <li><span class="yr">1995</span>尼尔·斯蒂芬森出版《钻石年代》</li>
+    <li><span class="yr">2012</span>《纽约时报》称之为"MOOC 元年"</li>
+  </ol>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    教育科技要解决的不是"让信息更多"，而是"让人真的学会"。智能辅导系统用领域模型（产生式规则 + 错误规则）判断你每一步对在哪、错在哪，用学生模型（贝叶斯知识追踪）根据答对答错估计你掌握了多少，再自适应地挑下一题，直到你真正掌握。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 看教学视频时，研究表明哪三件简单的事能显著提高学习效果？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">① 调整播放速度，既能听懂又有时间思考；② 在难的地方暂停，问自己问题、或预测接下来讲什么；③ 自己动手做视频里的例子和练习（比如写伪代码）。这些都属于主动学习。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 产生式规则和"错误规则"分别是什么？为什么还需要一个挑选算法？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">产生式规则用 IF-THEN 描述一个正确的解题步骤，比如"如果变量同一边有常数，那么两边减去这个常数"。错误规则用同样的形式描述常见的错误做法，比如"两边减去系数"。学生的一步可能同时符合好几条规则，系统不确定是哪种误解，所以要用算法挑出最可能的那条，才能给出有针对性的反馈。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 学生答对了一题，贝叶斯知识追踪为什么不直接认为"他会了"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">因为知识是隐变量，看不见；答对可能是猜对的（猜对概率 P(G)），答错也可能是会了但失误（P(S)）。所以它只是按贝叶斯公式把"已学会"的概率往上调一些，再加上"做题过程中学会"的概率 P(T)，连续答对几次后，估计值才会高到算"掌握"。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 什么是自适应排序？它和 Netflix 推荐电影有什么相似之处？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">根据学生模型里每项技能的掌握估计，挑出最需要练、又最可能帮他达到掌握的题目，而不是让所有人按同一顺序做同样的题。和 Netflix 一样，它都是根据"系统对你的了解"给你个性化地推荐下一项内容，只不过目标是学会，而不是看得开心。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="38.html"><small>← 上一集</small>38 计算机心理学</a>
+    <a class="next" href="40.html"><small>下一集 →</small>40 奇点、天网与计算机的未来</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 39 集 Educational Technology（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 产生式规则辅导 ---------- */
+(function () {
+  const RULES = [
+    { id: 'sub-const', good: true, txt: 'IF 变量同一边有常数 THEN 两边减去这个常数', zh: '两边减常数' },
+    { id: 'div-coef', good: true, txt: 'IF 变量前面有系数（且同一边没有常数）THEN 两边除以这个系数', zh: '两边除系数' },
+    { id: 'bug-sub-coef', good: false, txt: 'IF 变量同一边有常数 THEN 两边减去系数', zh: '错误规则：减的是系数' },
+    { id: 'bug-sign', good: false, txt: 'IF 变量同一边有常数 THEN 两边加上这个常数', zh: '错误规则：符号弄反' },
+    { id: 'bug-div-one', good: false, txt: 'IF 变量前面有系数 THEN 只有含变量的那一边除以系数', zh: '错误规则：只除了一边' }
+  ];
+  const STEPS = [
+    { eq: '3x + 7 = 22', q: '第 1 步：下一步该怎么做？', opts: [
+      ['两边 − 7', 'sub-const', '3x = 15', '对！这一步符合产生式规则"两边减常数"。'],
+      ['两边 − 3', 'bug-sub-coef', '3x + 4 = 19', '不对。你减的是 3——x 前面的<b>系数</b>，而不是常数 7。系统匹配到的是错误规则"减的是系数"，所以它能告诉你具体错在哪：<b>要消掉的是和 x 在同一边的常数 7</b>。'],
+      ['两边 + 7', 'bug-sign', '3x + 14 = 29', '不对。要让 +7 消失，得减 7 而不是加 7。系统匹配到错误规则"符号弄反"。'],
+      ['两边 ÷ 3', null, 'x + 7/3 = 22/3', '数学上没错，但出现了分数，后面更麻烦。这个辅导系统的领域模型里没有这条路径，所以它会说"可以，但先减 7 更简单"。真实的系统常常会为同一道题建模好几种正确解法。']
+    ] },
+    { eq: '3x = 15', q: '第 2 步：下一步该怎么做？', opts: [
+      ['两边 ÷ 3', 'div-coef', 'x = 5', '对！符合产生式规则"两边除系数"。解出 x = 5。'],
+      ['两边 − 3', 'bug-sub-coef', 'x = 12', '不对。3x 是"3 乘以 x"，去掉 3 要用除法。系统匹配到错误规则"减的是系数"——和上一步那个常见错误是同一种误解。'],
+      ['只有左边 ÷ 3', 'bug-div-one', 'x = 15', '不对。等式两边要做同样的操作。系统匹配到错误规则"只除了一边"。']
+    ] }
+  ];
+  let step = 0, fired = null;
+  function show() {
+    const S = STEPS[Math.min(step, STEPS.length - 1)];
+    $('#tu-eq').textContent = step >= STEPS.length ? 'x = 5' : S.eq;
+    $('#tu-q').textContent = step >= STEPS.length ? '解完了！' : S.q;
+    $('#tu-opts').innerHTML = step >= STEPS.length ? '' : S.opts.map((o, i) => `<button data-i="${i}">${o[0]}</button>`).join('');
+    $$('#tu-opts button').forEach(b => b.onclick = () => {
+      const [, rule, res, msg] = S.opts[+b.dataset.i];
+      fired = rule;
+      const good = rule && RULES.find(r => r.id === rule).good;
+      b.classList.add(good || !rule ? 'ok' : 'no');
+      $('#tu-cap').innerHTML = `结果会变成 <code>${res}</code>。${msg}`;
+      drawRules();
+      if (good) { step++; setTimeout(show, 900); }
+    });
+    drawRules();
+  }
+  function drawRules() {
+    $('#tu-rules').innerHTML = '<div style="border:0;padding:0;background:none;font-family:inherit;color:var(--muted)">领域模型里的规则（被触发的那条会高亮）：</div>' +
+      RULES.map(r => `<div class="${r.good ? 'good' : 'bug'} ${r.id === fired ? 'fire' : ''}">${r.txt}<small>${r.zh}</small></div>`).join('');
+  }
+  $('#tu-reset').onclick = () => { step = 0; fired = null; $('#tu-cap').textContent = ''; show(); };
+  show();
+})();
+
+/* ---------- 贝叶斯知识追踪 ---------- */
+const bktUpdate = (L, ok, G, S, T) => {
+  const post = ok ? L * (1 - S) / (L * (1 - S) + (1 - L) * G) : L * S / (L * S + (1 - L) * (1 - G));
+  return [post, post + (1 - post) * T];
+};
+(function () {
+  const ids = ['b-l0', 'b-g', 'b-s', 'b-t'];
+  let hist = [], obs = [];
+  const P = () => ids.map(id => +$('#' + id).value);
+  function recompute() {
+    const [L0, G, S, T] = P();
+    hist = [L0];
+    obs.forEach(ok => hist.push(bktUpdate(hist[hist.length - 1], ok, G, S, T)[1]));
+  }
+  function draw() {
+    ids.forEach(id => $('#' + id + 'v').textContent = (+$('#' + id).value).toFixed(2));
+    recompute();
+    const svg = $('#bkt'); svg.innerHTML = '';
+    const X0 = 50, X1 = 660, Y0 = 190, Y1 = 20, n = Math.max(10, hist.length - 1);
+    const sx = i => X0 + i / n * (X1 - X0), sy = p => Y0 - p * (Y0 - Y1);
+    [0, .25, .5, .75, 1].forEach(p => { el('line', { x1: X0, x2: X1, y1: sy(p), y2: sy(p), style: 'stroke:var(--line)' }, svg); txt(svg, X0 - 6, sy(p) + 4, p, 't-sub end'); });
+    el('line', { x1: X0, x2: X1, y1: sy(.95), y2: sy(.95), style: 'stroke:var(--ok);stroke-dasharray:6 4;stroke-width:1.5' }, svg);
+    txt(svg, X1, sy(.95) - 5, '掌握线 0.95', 't-sub end').style.fill = 'var(--ok)';
+    txt(svg, X0, Y0 + 22, '第几题 →', 't-sub');
+    el('path', { d: hist.map((p, i) => (i ? 'L' : 'M') + sx(i) + ',' + sy(p)).join(''), style: 'fill:none;stroke:var(--accent);stroke-width:2.5' }, svg);
+    hist.forEach((p, i) => {
+      const c = i === 0 ? 'var(--muted)' : obs[i - 1] ? 'var(--ok)' : 'var(--bad)';
+      el('circle', { cx: sx(i), cy: sy(p), r: 5, style: `fill:${c};stroke:var(--panel);stroke-width:1.5` }, svg);
+      if (i) txt(svg, sx(i), Y0 + 14, obs[i - 1] ? '✓' : '✗', 't-sub mid').style.fill = c;
+    });
+    const [, G, S, T] = P(), L = hist[hist.length - 1];
+    if (!obs.length) {
+      $('#b-math').innerHTML = `还没有答题记录。现在的估计：P(L) = <b>${L.toFixed(3)}</b>`;
+      $('#b-cap').innerHTML = '点"学生答对 / 答错"，看估计值怎么变。试试：连续答对几次需要多少题才能过 0.95？中间答错一次又会怎样？';
+      return;
+    }
+    const prev = hist[hist.length - 2], ok = obs[obs.length - 1], [post] = bktUpdate(prev, ok, G, S, T);
+    const f = v => v.toFixed(3);
+    $('#b-math').innerHTML = (ok ?
+      `答对：P(L|对) = P(L)(1−S) / [P(L)(1−S) + (1−P(L))G] = ${f(prev)}×${f(1 - S)} / (${f(prev)}×${f(1 - S)} + ${f(1 - prev)}×${f(G)}) = <b>${f(post)}</b>` :
+      `答错：P(L|错) = P(L)S / [P(L)S + (1−P(L))(1−G)] = ${f(prev)}×${f(S)} / (${f(prev)}×${f(S)} + ${f(1 - prev)}×${f(1 - G)}) = <b>${f(post)}</b>`) +
+      `<br>再加上做题中学会：P(L) = P(L|观察) + (1 − P(L|观察)) × T = ${f(post)} + ${f(1 - post)}×${f(T)} = <b>${f(L)}</b>`;
+    const k = hist.findIndex(p => p >= .95);
+    $('#b-cap').innerHTML = `做了 ${obs.length} 题，现在估计学会的概率是 <b>${(L * 100).toFixed(1)}%</b>。` + (k > 0 ? `在第 ${k} 题之后达到了掌握线。` : '还没到掌握线，系统会继续给这项技能出题。') +
+      (G > .35 ? '　猜对的概率调得很高时，答对一题能说明的就很少了——估计值涨得很慢。' : '') + (S > .35 ? '　失误的概率很高时，答错一题也不太会把估计值拉下来。' : '');
+  }
+  $('#b-ok').onclick = () => { obs.push(true); draw(); };
+  $('#b-no').onclick = () => { obs.push(false); draw(); };
+  $('#b-reset').onclick = () => { obs = []; draw(); };
+  ids.forEach(id => $('#' + id).oninput = draw);
+  draw();
+})();
+
+/* ---------- 自适应排序 ---------- */
+(function () {
+  const SK = ['两边减常数', '两边除系数', '去括号'];
+  const G = .2, S = .1, T = .15;
+  let est, truth, log, n;
+  const reset = () => {
+    est = [.3, .3, .3];
+    truth = [Math.random() < .8, Math.random() < .4, false]; // 虚拟学生真实会不会（系统看不到）
+    log = []; n = 0;
+  };
+  const pick = () => { let b = -1; est.forEach((p, i) => { if (p < .95 && (b < 0 || p < est[b])) b = i; }); return b; };
+  function one() {
+    const k = pick(); if (k < 0) return false;
+    const ok = truth[k] ? Math.random() > S : Math.random() < G;
+    est[k] = bktUpdate(est[k], ok, G, S, T)[1];
+    if (!truth[k] && Math.random() < T) truth[k] = true; // 做题过程中真的学会了
+    log.push([k, ok]); n++;
+    return true;
+  }
+  function draw() {
+    const next = pick();
+    $('#ad').innerHTML = SK.map((s, i) => `<div class="row ${i === next ? 'pick' : ''}"><span>${s}${i === next ? ' ← 下一题' : ''}</span><div class="bar"><i class="${est[i] >= .95 ? 'm' : ''}" style="width:${est[i] * 100}%"></i><u></u></div><output>${est[i].toFixed(2)}</output></div>`).join('');
+    const cnt = SK.map((_, i) => log.filter(l => l[0] === i).length);
+    const last = log.slice(-8).map(([k, ok]) => `${SK[k]}${ok ? '✓' : '✗'}`).join('　');
+    $('#ad-cap').innerHTML = next < 0 ? `三项技能都掌握了！一共做了 <b>${n}</b> 题，其中三项分别练了 ${cnt.join(' / ')} 题。会的技能只练几题就过关，不会的技能多练——这就是自适应排序。` :
+      `已做 <b>${n}</b> 题（三项分别 ${cnt.join(' / ')} 题）。${last ? '最近：' + last : '一开始系统对三项技能一无所知，都估计为 0.30。'}`;
+  }
+  $('#ad-one').onclick = () => { one(); draw(); };
+  $('#ad-ten').onclick = () => { for (let i = 0; i < 10; i++) if (!one()) break; draw(); };
+  $('#ad-reset').onclick = () => { reset(); draw(); };
+  reset(); draw();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>41 GPU 与并行计算 · 计算机科学速成课 · 续集</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.slider{display:flex;align-items:center;gap:10px;font-size:14px;margin:10px 0;flex-wrap:wrap}
+.slider input{flex:1;min-width:160px}
+.slider b{font-family:var(--mono);min-width:4.5em}
+pre.code{font:13px/1.65 var(--mono);background:var(--code);padding:12px 14px;border-radius:10px;overflow-x:auto;margin:14px 0}
+pre.code .c{color:var(--muted)}
+.readout .warn{color:var(--bad);font-weight:700}
+.readout .good{color:var(--ok);font-weight:700}
+</style>
+</head>
+<body data-ep="41">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="09.html">回顾原课程第 9 集 · 高级 CPU 设计</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 续集 · 第 41 集</div>
+  <h1>GPU 与并行计算</h1>
+  <p class="en">Parallel Computing &amp; GPUs</p>
+  <p class="lead">原课程里，CPU 靠更快的时钟、更聪明的流水线一年比一年快，显卡则是用来画三角形的。可早在 2005 年前后，CPU 的时钟就涨不动了。之后的性能提升，几乎全靠"同时做很多件事"。到了 2020 年代，世界上最抢手的芯片成了 GPU，抢着买它的大多是训练 AI 的公司，不是打游戏的人。这一集讲这条路是怎么走过来的。</p>
+  <div class="road">
+    <span>功耗墙</span><i>→</i><span>多核</span><i>→</i><span>从画三角形到通用计算</span><i>→</i><span>矩阵乘法</span><i>→</i><span>专用 AI 芯片</span><i>→</i><span>芯粒与先进封装</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：本站续写的原创内容（不是 Crash Course 官方作品）</span>
+    <span class="l-add">蓝色虚线框：延伸与补充</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从第 9、17、27 集说起</a></li>
+    <li><a href="#ch1">1 · 功耗墙</a></li>
+    <li><a href="#ch2">2 · 多核</a></li>
+    <li><a href="#ch3">3 · 从画三角形到通用计算</a></li>
+    <li><a href="#ch4">4 · 矩阵乘法</a></li>
+    <li><a href="#ch5">5 · 专用 AI 芯片</a></li>
+    <li><a href="#ch6">6 · 芯粒与先进封装</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从第 9、17、27 集说起</h2>
+  <p>原课程讲到第 40 集就结束了。这一集接着硬件这条线往下讲，先回忆三集：</p>
+  <ul>
+    <li><a href="09.html">第 9 集</a>讲 CPU 怎么在每个时钟周期里榨出更多计算：缓存、流水线、推测执行、超标量，最后是<b>多核</b>和由几万颗处理器组成的超级计算机。</li>
+    <li><a href="17.html">第 17 集</a>讲<b>摩尔定律</b>：集成电路上的晶体管数量大约每两年翻一番。课程结尾也说了它的极限：晶体管小到一定程度，光刻做不出来，电子还会"隧穿"漏过去。</li>
+    <li><a href="27.html">第 27 集</a>讲 3D 图形：对成千上万个三角形、几百万个像素重复同一套计算。为此有了 <b>GPU</b>，一块显卡上有几千个简单的核心。</li>
+  </ul>
+  <p>这三集各讲了一部分。把它们连起来看，就是 2017 年以后计算机硬件最大的变化：<b>单个核心快不了多少了，性能只能靠并行</b>。而最擅长并行的 GPU，赶上了一类几乎全是并行计算的任务：训练神经网络。<a href="43.html">第 43 集</a>讲的 Transformer 和大语言模型，就是在 GPU 上一路做大的。</p>
+  <p>故事得从一堵墙说起。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>功耗墙：时钟为什么不再变快</h2>
+  <p>1974 年，IBM 的罗伯特·丹纳德（Robert Dennard）等人发表了一篇论文，指出一个很好的性质：晶体管尺寸缩小时，工作电压和电流可以跟着按比例降低。结果是，<b>同样面积的芯片，晶体管多了、开关快了，耗电却基本不变</b>。这叫<b>丹纳德缩放</b>（Dennard scaling）。</p>
+  <p>它和摩尔定律配合了三十年：每一代工艺，晶体管更多、频率更高，功耗还不涨。1993 年的奔腾处理器是 60 MHz，2000 年的奔腾 4 已经到了 1.5 GHz，七年涨了二十多倍。程序员什么都不用改，换台新电脑，程序自己就变快了。</p>
+  <p>可到了 2000 年代中期，电压降不下去了。晶体管的开关靠一个"阈值电压"，工作电压再低就分不清开和关；阈值电压本身再往下压，关着的晶体管漏电就急剧增加。电压停在 1 伏左右，而芯片的动态功耗大致是：</p>
+  <div class="callout key"><span class="t">功耗 ∝ 电容 × 电压² × 频率</span>想提高频率，往往还得同时提高电压，晶体管才来得及在每个周期里稳定地开关。频率涨一点，电压也涨一点，电压还要平方，功耗就涨得比频率快得多。</div>
+
+  <div class="card">
+    <h3>动手：把频率往上拉</h3>
+    <div class="seg-btns" id="pw-mode"><button data-n="1" class="sel">单核</button><button data-n="2">双核</button></div>
+    <div class="slider"><span>每个核的频率</span><input type="range" id="pw-f" min="1" max="6" step="0.1" value="3" aria-label="频率"><b id="pw-fv">3.0 GHz</b></div>
+    <div class="scroll-x"><svg class="diagram" id="pw" viewBox="0 0 680 250" role="img" aria-label="频率与功耗的关系曲线"></svg></div>
+    <div class="readout" id="pw-out"></div>
+    <p class="hint">试试：单核拉到 3.8 GHz，记下功耗；再切到双核，把频率降到 2.6 GHz。曲线是按上面的公式算的示意值，不对应某一款具体芯片。</p>
+  </div>
+
+  <p>频率从 2 GHz 拉到 4 GHz，功耗不是翻倍，而是变成三倍多。这些热量全集中在指甲盖大小的一块硅上，风扇和散热片带不走，芯片就会过热。2004 年 11 月，英特尔推出了 3.8 GHz 的奔腾 4；同年 5 月，它取消了原计划冲击更高频率的下一代产品（代号 Tejas），转向双核。此后二十年，桌面 CPU 的最高频率只从 4 GHz 左右慢慢挪到 6 GHz 左右，再也没有出现过从前那种翻倍。</p>
+  <div class="extra">
+    <span class="t">"免费的午餐结束了"</span>
+    2005 年，程序员赫伯·萨特（Herb Sutter）写了一篇很出名的文章，标题就是《免费的午餐结束了》。他提醒同行：以后不能再指望硬件自动让程序变快，想快，就得自己把程序改成能同时在多个核心上跑。摩尔定律没有停，晶体管还在一代代增多（<a href="17.html">第 17 集</a>的补充框里有新数字），只是这些晶体管不再换来更高的频率，而是换来了更多的核心。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>多核，以及它的天花板</h2>
+  <p>上面的演示已经说明了多核的道理：<b>两个慢一点的核，比一个快的核更省电</b>。频率降两成，电压也能跟着降，每个核的功耗降得更多。于是 2005 年，英特尔和 AMD 都推出了双核桌面处理器。之后是四核、八核，今天的手机芯片常有六到八个核，服务器芯片则有上百个。</p>
+  <p>但多核有个前提：程序得<b>能拆开</b>。一个核做的事，没法自动分给另一个核。<a href="09.html">第 9 集</a>讲超级计算机时说过，它们的能耐来自把一个大问题切成很多小块同时算。可很多程序里总有一部分只能一步接一步地做：后一步要用前一步的结果，或者大家要排队读写同一份数据。</p>
+  <p>1967 年，IBM 的计算机设计师吉恩·阿姆达尔（Gene Amdahl）算过这笔账。假设一个程序有比例 s 的部分必须串行，其余部分可以完美地分给 N 个核，那么最多能快多少倍？</p>
+  <div class="callout key"><span class="t">阿姆达尔定律</span>加速倍数 = 1 ÷ ( s + (1 − s) ÷ N )。核再多，(1 − s) ÷ N 也只能趋近于 0，所以加速倍数<b>永远超不过 1 ÷ s</b>。</div>
+
+  <div class="card">
+    <h3>动手：给程序加核</h3>
+    <div class="slider"><span>必须串行的部分</span><input type="range" id="am-s" min="0" max="50" step="1" value="10" aria-label="串行比例"><b id="am-sv">10%</b></div>
+    <div class="slider"><span>核的数量</span><input type="range" id="am-n" min="0" max="10" step="1" value="4" aria-label="核数（2 的幂）"><b id="am-nv">16</b></div>
+    <div class="scroll-x"><svg class="diagram" id="am" viewBox="0 0 680 270" role="img" aria-label="阿姆达尔定律：核数与加速倍数"></svg></div>
+    <div class="readout" id="am-out"></div>
+    <p class="hint">两条轴都是对数刻度，每往右或往上一格是 2 倍。把串行比例拉到 1%，再拉回 25%，看看曲线在哪里变平。</p>
+  </div>
+
+  <p>只有 10% 的串行部分，就把上限卡在了 10 倍。给它 1024 个核，绝大多数核在大部分时间里都在等。所以多核 CPU 适合的是"一次跑很多个程序"，或者本身就容易拆开的工作，比如压缩一段视频、编译一个大项目。</p>
+  <div class="extra">
+    <span class="t">换个角度：问题可以变大</span>
+    1988 年，约翰·古斯塔夫森（John Gustafson）指出：人们有了更多核，往往不是用它把老问题算得更快，而是去算<b>更大的</b>问题，比如把天气预报的网格画得更密。问题越大，能并行的部分占比越高，串行部分就不那么碍事了。超级计算机走的就是这条路。2026 年 6 月的超级计算机 TOP500 榜单上，排第一的是中国深圳的"LineShine"。它没有用任何 GPU，靠一千三百多万个 CPU 核心，跑出了每秒 2.2 × 10¹⁸ 次的浮点运算。
+  </div>
+  <p>那如果有一类计算，<b>几乎没有串行部分</b>呢？第 27 集就讲过一个：画图。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>从画三角形到通用计算</h2>
+  <p>屏幕上几百万个像素，每个像素该是什么颜色，都可以分开算，互不影响。早期显卡把这些步骤做成固定的电路：投影、填像素、贴纹理，只能照规定的方式画。2001 年前后，显卡开始允许程序员自己写一小段程序，叫<b>着色器</b>（shader），决定每个顶点、每个像素怎么算。</p>
+  <p>研究者很快发现，着色器做的其实就是"对大量数据做同样的数学运算"。于是有人想了个歪招：把要算的数据<b>伪装成一张纹理图片</b>，让显卡去"画"它，再把画出来的像素颜色读回来，就是计算结果。用这种办法，物理模拟、矩阵运算都能在显卡上跑得比 CPU 快很多。这叫<b>通用 GPU 计算</b>（General-Purpose computing on GPU，GPGPU）。可它太别扭了：写一个数学程序，得先假装自己在画画。</p>
+  <p>2006 年底，英伟达（NVIDIA）发布了 GeForce 8800 显卡，同时推出 <b>CUDA</b>，2007 年开放下载。有了它，程序员可以用接近 C 语言的写法，直接给 GPU 写计算程序，不用再假装画图。下面是把两个数组相加的写法：</p>
+  <pre class="code"><span class="c">// CPU：一个核，用循环一个一个加</span>
+for (int i = 0; i &lt; n; i++) c[i] = a[i] + b[i];
+
+<span class="c">// GPU（CUDA）：只写"一个格子"该做什么，同时启动 n 个线程</span>
+__global__ void add(float *a, float *b, float *c) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;  <span class="c">// 我是第几号线程</span>
+  c[i] = a[i] + b[i];
+}</pre>
+  <p>GPU 版本里没有循环。程序员写的是"一个线程该做什么"，GPU 一次启动成千上万个线程，每个线程算一个格子。它会把 32 个线程编成一组，让一组线程<b>执行同一条指令，只是各自处理不同的数据</b>。这样，控制电路只需要一份，省下的晶体管全拿去做计算单元。</p>
+
+  <table class="tt" style="width:100%;margin:18px 0">
+    <thead><tr><th></th><th>CPU</th><th>GPU</th></tr></thead>
+    <tbody>
+      <tr><td>核心</td><td>几个到几十个，每个都很强</td><td>上万个，每个都很简单</td></tr>
+      <tr><td>晶体管花在哪</td><td>大缓存、分支预测、乱序执行（<a href="09.html">第 9 集</a>）</td><td>计算单元；32 个线程共用一套指令控制</td></tr>
+      <tr><td>追求</td><td>让<b>一件事</b>尽快做完（低延迟）</td><td>单位时间里做完<b>最多的事</b>（高吞吐）</td></tr>
+      <tr><td>怕什么</td><td>没什么能并行的活</td><td>到处是分支、每个线程想干不同的事</td></tr>
+    </tbody>
+  </table>
+  <p>打个比方：CPU 像几位教授，什么难题都能解，解得很快；GPU 像一个体育馆的小学生，每人只会做加减乘除，可一万道口算题发下去，一分钟就交卷了。2022 年英伟达的 H100 有 800 亿个晶体管、16896 个单精度计算核心，而同期的桌面 CPU 一般是 8 到 24 个核。</p>
+  <div class="extra">
+    <span class="t">AlexNet：显卡遇上神经网络</span>
+    2012 年，多伦多大学的亚历克斯·克里热夫斯基（Alex Krizhevsky）、伊利亚·苏茨克维（Ilya Sutskever）和他们的导师杰弗里·辛顿（Geoffrey Hinton），用两块普通的 GeForce GTX 580 游戏显卡，花五六天训练了一个八层的神经网络 AlexNet。它在 ImageNet 图像识别比赛里，把错误率从第二名的 26% 降到了 15%。这件事让整个领域意识到：<b>神经网络缺的不是想法，是算力，而算力就在显卡里</b>。<a href="34.html">第 34 集</a>说的"深度学习"热潮，就是从这里开始的。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>矩阵乘法：AI 的基本动作</h2>
+  <p>为什么神经网络和 GPU 这么合拍？回想<a href="34.html">第 34 集</a>：神经网络的每个神经元，把所有输入各乘一个权重，加起来，再过一个激活函数。一层有成百上千个神经元，同时处理一批输入，写成数学就是一次<b>矩阵乘法</b>。<a href="43.html">第 43 集</a>讲的 Transformer 也一样：查询、键、值是矩阵乘法，注意力打分是矩阵乘法，前馈网络还是矩阵乘法。训练和运行大模型的时间，绝大部分都花在这一个动作上。</p>
+  <p>矩阵乘法 C = A × B 的规则是：C 第 i 行第 j 列的格子，等于 A 的第 i 行和 B 的第 j 列对应位置相乘再加起来。关键在于，<b>C 的每个格子都可以独立计算</b>，谁也不用等谁。</p>
+
+  <div class="card">
+    <h3>动手：一个核算，还是十六个核一起算</h3>
+    <div class="seg-btns" id="mm-mode"><button data-m="ser" class="sel">一个核，挨个算</button><button data-m="par">16 个核，同时算</button></div>
+    <div class="scroll-x"><svg class="diagram" id="mm" viewBox="0 0 680 260" role="img" aria-label="4×4 矩阵乘法的串行与并行计算过程"></svg></div>
+    <div class="btns"><button class="btn primary" id="mm-step">走一步</button><button class="btn" id="mm-play">自动播放</button><button class="btn" id="mm-reset">重来</button></div>
+    <div class="step-text" id="mm-cap"></div>
+    <div class="readout" id="mm-out"></div>
+  </div>
+
+  <p>4 × 4 的矩阵，一个核要做 64 次乘加，16 个核只要 4 步。真实的情况大得多：两个 4096 × 4096 的矩阵相乘，要做 4096³，约 687 亿次乘加。规模是 n 的立方（<a href="13.html">第 13 集</a>讲过怎么数这种增长），但每一次乘加都可以拆开同时做。</p>
+  <div class="callout key">
+    <span class="t">GPU 为什么让 Transformer 成了</span>
+    第 43 集说过，Transformer 赢在"没有排队，全是大块的矩阵乘法"。这正是 GPU 最擅长的活。反过来，AI 的需求也改变了 GPU：从这时起，英伟达设计新芯片，首先考虑的是怎么把矩阵乘得更快。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>专用 AI 芯片</h2>
+  <p>既然大部分时间都在做矩阵乘法，干脆为它造专门的电路。<a href="09.html">第 9 集</a>开头就讲过这个思路：常用的操作，用专用电路做最快。AI 芯片沿着三个方向走：</p>
+  <h3>一、一次乘一整块</h3>
+  <p>普通的计算核心一次做一个乘加。2017 年英伟达的 V100 加入了<b>张量核心</b>（Tensor Core），一个时钟周期就能完成两个 4 × 4 小矩阵的相乘再累加，也就是 64 次乘加。Google 走得更远：2015 年起在自家数据中心使用的第一代<b>张量处理器</b>（Tensor Processing Unit，TPU），核心是一个 256 × 256 的乘法器阵列，65536 个乘加单元排成方阵。数据像心跳一样一拍一拍地流过方阵，每个单元把结果直接传给邻居，不用反复读写内存，这种结构叫<b>脉动阵列</b>（systolic array）。Google 在 2017 年发表的论文里说，它运行神经网络比同期的 CPU 和 GPU 快 15 到 30 倍，每瓦性能高 30 到 80 倍。</p>
+  <h3>二、用更少的位数</h3>
+  <p>科学计算常用 64 位浮点数，要求每一位都精确。神经网络却很"皮实"：权重有一点误差，结果几乎不变。于是 AI 芯片一路往下砍位数：32 位、16 位、8 位，2024 年英伟达发布的 Blackwell 架构已经支持 4 位浮点数。位数减半，同样的芯片面积能放下更多乘法器，内存里也能多装一倍的数，搬运的数据少一半。代价是精度，所以训练时常常混着用：要紧的地方用高精度，其余用低精度。</p>
+  <h3>三、喂得上数据</h3>
+  <p>算得再快，数据送不过来也白搭。乘法器的数量涨得比内存带宽快得多，这叫<b>内存墙</b>。于是 AI 芯片旁边放的是<b>高带宽内存</b>（High Bandwidth Memory，HBM）：把 8 到 12 层内存芯片叠起来，用几千根极细的导线和计算芯片相连。2025 年 4 月 Google 公布的第七代 TPU "Ironwood"，每颗芯片带 192 GB 的 HBM，每秒能读写 7.37 TB，相当于一秒钟读完一千多部高清电影。</p>
+  <div class="extra">
+    <span class="t">芯片之外：把几千颗连成一台</span>
+    训练一个大模型，一颗芯片远远不够。Ironwood 一组最多可以把 9216 颗芯片用专用网络连在一起，Google 给出的峰值是每秒 4.25 × 10¹⁹ 次 8 位浮点运算。注意这个数和 TOP500 的数不能直接比：TOP500 衡量的是 64 位精度。还有人干脆不切晶圆：2024 年 3 月，Cerebras 公司发布了 WSE-3，把一整片 30 厘米晶圆做成一颗芯片，面积 46225 平方毫米，有 4 万亿个晶体管、90 万个核心。这些机器都很耗电。AI 数据中心用了多少电，第 46 集会讲。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>芯粒与先进封装</h2>
+  <p>想要更多计算单元，最直接的办法是把芯片做大。可芯片大小有两个硬限制。</p>
+  <p>第一个是<b>光罩尺寸</b>。<a href="17.html">第 17 集</a>讲过，光刻是用光透过掩模把图案投到晶圆上。光刻机一次能曝光的最大面积，大约是 26 毫米 × 33 毫米，也就是 858 平方毫米左右。单颗芯片不能超过这个大小。H100 有 814 平方毫米，已经快顶到头了。</p>
+  <p>第二个是<b>良率</b>。晶圆上总会随机落一些微小的缺陷，一个缺陷落在芯片上，这颗芯片可能就废了。芯片越大，被缺陷砸中的概率越高。</p>
+
+  <div class="card">
+    <h3>动手：一片晶圆，切大块还是切小块</h3>
+    <div class="seg-btns" id="wf-mode"><button data-m="big" class="sel">切成大芯片</button><button data-m="small">切成芯粒（每块是大芯片的 1/4）</button></div>
+    <div class="slider"><span>缺陷数量</span><input type="range" id="wf-d" min="0" max="40" step="1" value="12" aria-label="缺陷数量"><b id="wf-dv">12</b></div>
+    <div class="scroll-x"><svg class="diagram" id="wf" viewBox="0 0 680 312" role="img" aria-label="晶圆上的缺陷与芯片良率"></svg></div>
+    <div class="btns"><button class="btn" id="wf-new">换一批缺陷</button></div>
+    <div class="readout" id="wf-out"></div>
+    <p class="hint">黑点是缺陷，红色的芯片被砸中了。缺陷的位置是随机生成的。把缺陷拉到 0：芯粒还是多出几颗，因为小块能把晶圆边缘塞得更满。</p>
+  </div>
+
+  <p>把一颗大芯片拆成几块小的，叫<b>芯粒</b>（chiplet），再用先进的封装技术把它们拼回一颗。好处不止良率：</p>
+  <ul>
+    <li><b>混搭工艺</b>：计算部分用最新、最贵的工艺；输入输出、内存控制这些不太吃工艺的部分，用老一点、便宜的工艺。</li>
+    <li><b>搭积木</b>：同一种计算芯粒，放一块是入门款，放两块、四块就是高端款。</li>
+    <li><b>突破光罩限制</b>：几块芯粒合起来的面积，可以远远超过 858 平方毫米。</li>
+  </ul>
+  <p>难点在于"拼回去"。芯粒之间的通信，必须快得像在同一块硅上一样。普通电路板上的导线太粗太慢，于是有了<b>先进封装</b>：在芯粒下面垫一块布满极细连线的硅片，叫<b>硅中介层</b>（2.5D 封装）；或者干脆把芯片一层层<b>叠起来</b>，用穿过硅片的竖直导线连通（3D 封装），HBM 就是这样叠成的。</p>
+
+  <figure class="card">
+    <div class="scroll-x"><svg class="diagram" id="pk" viewBox="0 0 680 240" role="img" aria-label="AI 芯片先进封装的剖面示意图"></svg></div>
+    <figcaption>一颗 AI 加速芯片的剖面示意（比例不准确）：两块计算芯粒和几摞 HBM 并排放在硅中介层上</figcaption>
+  </figure>
+
+  <ul class="timeline">
+    <li><span class="yr">2015</span>AMD 的 Fury X 显卡第一次把 HBM 和 GPU 放在同一块硅中介层上。</li>
+    <li><span class="yr">2019</span>AMD 的第三代锐龙（Zen 2）处理器，用一到两块 7 纳米的计算芯粒，加一块 12 纳米的输入输出芯粒，把芯粒带进了普通台式机。</li>
+    <li><span class="yr">2022</span>苹果的 M1 Ultra 把两块 M1 Max 芯片并排连成一颗，共 1140 亿个晶体管。同年，英特尔、AMD、台积电等公司联合发布了芯粒互连标准 UCIe，希望不同厂家的芯粒也能拼在一起。</li>
+    <li><span class="yr">2023</span>12 月，AMD 发布 MI300X：8 块计算芯粒<b>叠</b>在 4 块输入输出芯粒上，旁边是 8 摞 HBM，共 1530 亿个晶体管、192 GB 内存。</li>
+    <li><span class="yr">2024</span>3 月，英伟达发布 Blackwell 架构的 B200：两块都做到了光罩极限的芯片，各有 1040 亿个晶体管，通过每秒 10 TB 的连接合成一颗 2080 亿晶体管的 GPU，软件看来就是一整块。</li>
+    <li><span class="yr">2025</span>Google 的 Ironwood TPU 也由两块芯粒组成，每块各带 96 GB 的 HBM。</li>
+  </ul>
+  <div class="callout">
+    <span class="t">摩尔定律换了一种走法</span>
+    二十年前，性能靠"把晶体管做小、把时钟调快"。今天，晶体管还在缩小，但慢了，也贵了；性能更多来自三件事：<b>并行</b>（更多核心）、<b>专用</b>（为矩阵乘法造电路）、<b>封装</b>（把更多芯片装进一颗）。截至 2026 年，最快的 AI 芯片已经不是"一块硅"，而是一整套精密组装的小系统。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>功耗墙</td><td>丹纳德缩放在 2000 年代中期失效；功耗 ∝ 电压² × 频率，频率涨不动了，2005 年前后转向多核</td></tr>
+      <tr><td>阿姆达尔定律</td><td>串行比例为 s 时，核再多也快不过 1/s 倍；把问题做大，能并行的部分占比更高</td></tr>
+      <tr><td>GPU 通用计算</td><td>从着色器到 CUDA（2006–2007）；上万个简单核心，32 个线程执行同一条指令，追求高吞吐</td></tr>
+      <tr><td>矩阵乘法</td><td>神经网络和 Transformer 的主要计算；每个格子独立，最适合并行；2012 年 AlexNet 用两块游戏显卡证明了这一点</td></tr>
+      <tr><td>专用 AI 芯片</td><td>张量核心、TPU 的脉动阵列；用更少的位数；HBM 对付内存墙；几千颗芯片连成一台</td></tr>
+      <tr><td>芯粒与先进封装</td><td>光罩尺寸和良率限制了单颗芯片；拆成芯粒，用硅中介层或 3D 堆叠拼回去</td></tr>
+      <tr><td>连到哪几集</td><td><a href="09.html">9</a>（多核、超级计算机）· <a href="13.html">13</a>（复杂度）· <a href="17.html">17</a>（摩尔定律、光刻）· <a href="27.html">27</a>（GPU）· <a href="34.html">34</a>（神经网络）· <a href="43.html">43</a>（Transformer）</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 摩尔定律在 2005 年前后并没有停，为什么 CPU 的时钟频率却不再往上涨了？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">丹纳德缩放失效了：工作电压降到 1 伏左右就降不下去，再降晶体管漏电太严重。动态功耗大致和电压的平方乘频率成正比，提高频率还常常要提高电压，功耗涨得比频率快得多，热量散不出去。于是多出来的晶体管改用来做更多的核心。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 一个程序有 10% 必须串行，给它 1000 个核，最多能快多少倍？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">按阿姆达尔定律，1 ÷ (0.1 + 0.9 ÷ 1000) ≈ 9.9 倍，不到 10 倍。那 10% 的串行部分不管有多少核都一样慢，所以上限是 1 ÷ 0.1 = 10 倍。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. GPU 和 CPU 在设计上有什么不同？各自擅长什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">CPU 核心少而强，晶体管大量花在缓存、分支预测、乱序执行上，目标是让一件事尽快做完，适合逻辑复杂、分支多的程序。GPU 有上万个简单核心，一组线程共用一套指令控制，晶体管主要花在计算单元上，目标是单位时间做完最多的事，适合对大量数据做同样运算，比如画图和矩阵乘法。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 为什么说 GPU 是 Transformer 能做大的原因之一？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">Transformer 的计算几乎全是大块的矩阵乘法，而矩阵乘法的每个结果格子都可以独立计算，正好能分给 GPU 的成千上万个核心同时做。不像 RNN 那样要一个词一个词排队，所以多给 GPU 就能训练更大的模型。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 为什么要把一颗大芯片拆成几块芯粒？难点在哪？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">单颗芯片受光罩尺寸限制（约 858 平方毫米），而且越大越容易被缺陷砸中，良率低。拆成芯粒后，每块小的良率高；不同部分可以用不同工艺；还能像积木一样组合，总面积超过光罩限制。难点是芯粒之间的通信要足够快，所以需要硅中介层、3D 堆叠这样的先进封装。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="40.html"><small>← 上一集</small>40 奇点、天网与计算机的未来</a>
+    <a class="next" href="42.html"><small>下一集 →</small>42 云计算</a>
+  </div>
+
+  <div class="credit">
+    续集为本站原创内容，不是 Crash Course 官方作品，写法沿用原课程的思路。正文、示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。<br>
+    参考资料：
+    Dennard 等，<a href="https://doi.org/10.1109/JSSC.1974.1050511" target="_blank" rel="noopener">Design of Ion-Implanted MOSFET's with Very Small Physical Dimensions</a>（1974）；
+    Amdahl，<a href="https://doi.org/10.1145/1465482.1465560" target="_blank" rel="noopener">Validity of the Single Processor Approach to Achieving Large Scale Computing Capabilities</a>（1967）；
+    Sutter，<a href="http://www.gotw.ca/publications/concurrency-ddj.htm" target="_blank" rel="noopener">The Free Lunch Is Over</a>（2005）；
+    <a href="https://en.wikipedia.org/wiki/CUDA" target="_blank" rel="noopener">CUDA</a>；
+    Krizhevsky 等，<a href="https://papers.nips.cc/paper/2012/hash/c399862d3b9d6b76c8436e924a68c45b-Abstract.html" target="_blank" rel="noopener">ImageNet Classification with Deep Convolutional Neural Networks</a>（AlexNet，2012）；
+    Jouppi 等，<a href="https://arxiv.org/abs/1704.04760" target="_blank" rel="noopener">In-Datacenter Performance Analysis of a Tensor Processing Unit</a>（2017）；
+    <a href="https://en.wikipedia.org/wiki/Zen_2" target="_blank" rel="noopener">Zen 2</a>（2019）；
+    <a href="https://www.amd.com/en/newsroom/press-releases/2023-12-6-amd-delivers-leadership-portfolio-of-data-center-a.html" target="_blank" rel="noopener">AMD：Instinct MI300 系列发布</a>（2023-12-06）；
+    <a href="https://www.nvidia.com/en-us/data-center/technologies/blackwell-architecture/" target="_blank" rel="noopener">NVIDIA Blackwell 架构</a>（2024-03 发布）；
+    <a href="https://spectrum.ieee.org/cerebras-chip-cs3" target="_blank" rel="noopener">IEEE Spectrum：Cerebras WSE-3</a>（2024-03）；
+    <a href="https://blog.google/innovation-and-ai/infrastructure-and-cloud/google-cloud/ironwood-tpu-age-of-inference/" target="_blank" rel="noopener">Google：Ironwood TPU</a>（2025-04）；
+    <a href="https://top500.org/lists/top500/2026/06/" target="_blank" rel="noopener">TOP500 榜单</a>（2026-06）。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const seg = (id, fn) => $$(id + ' button').forEach(b => b.onclick = () => { $$(id + ' button').forEach(x => x.classList.toggle('sel', x === b)); fn(b.dataset); });
+
+/* ---------- 频率与功耗 ---------- */
+(function () {
+  const svg = $('#pw'), LIM = 130, X0 = 64, X1 = 640, Y0 = 215, Y1 = 20, PM = 320;
+  const V = f => 0.7 + 0.15 * f, P = (f, n) => n * 19 * V(f) ** 2 * f;
+  const sx = f => X0 + (f - 1) / 5 * (X1 - X0), sy = p => Y0 - Math.min(p, PM) / PM * (Y0 - Y1);
+  let cores = 1;
+  const curve = n => { let d = ''; for (let f = 1; f <= 6.001; f += 0.1) d += (d ? 'L' : 'M') + sx(f).toFixed(1) + ',' + sy(P(f, n)).toFixed(1); return d; };
+  function draw() {
+    const f = +$('#pw-f').value, p = P(f, cores), hot = p > LIM;
+    $('#pw-fv').textContent = f.toFixed(1) + ' GHz';
+    svg.innerHTML = '';
+    el('rect', { x: X0, y: Y1, width: X1 - X0, height: sy(LIM) - Y1, style: 'fill:var(--bad-soft)' }, svg);
+    el('line', { x1: X0, x2: X1, y1: sy(LIM), y2: sy(LIM), style: 'stroke:var(--bad);stroke-width:1.5;stroke-dasharray:6 4' }, svg);
+    txt(svg, X0 + 8, sy(LIM) + 16, '散热上限 ≈ 130 W', 't-sub').style.fill = 'var(--bad)';
+    el('path', { d: `M${X0},${Y1} V${Y0} H${X1}`, class: 's-thin' }, svg);
+    for (let g = 1; g <= 6; g++) txt(svg, sx(g), Y0 + 18, g + ' GHz', 't-sub mid');
+    [0, 100, 200, 300].forEach(w => txt(svg, X0 - 8, sy(w) + 4, w + ' W', 't-sub end'));
+    txt(svg, X1, Y0 + 34, '每个核的频率', 't-sub end');
+    el('path', { d: curve(1), class: 's-line', style: 'stroke:var(--accent)' + (cores === 1 ? '' : ';opacity:.3') }, svg);
+    el('path', { d: curve(2), class: 's-line', style: 'stroke:var(--on)' + (cores === 2 ? '' : ';opacity:.3') }, svg);
+    txt(svg, sx(5.5) + 6, sy(P(5.5, 1)) + 16, '单核', 't-acc');
+    txt(svg, sx(3.6) - 8, sy(P(3.6, 2)), '双核', 't-on end');
+    el('circle', { cx: sx(f), cy: sy(p), r: 7, style: `fill:${hot ? 'var(--bad)' : 'var(--ok)'};stroke:var(--panel);stroke-width:2` }, svg);
+    $('#pw-out').innerHTML = `${cores} 个核 × ${f.toFixed(1)} GHz，电压 ${V(f).toFixed(2)} V　功耗 <span class="big">${Math.round(p)} W</span>　算力 <b>${(cores * f).toFixed(1)}</b>（1 GHz 单核记为 1）<br>` +
+      (hot ? '<span class="warn">超过散热上限：芯片会过热，只能自动降频，否则就要烧坏。</span>' : '<span class="good">散热跟得上。</span>' + (cores === 2 ? '和单核 3.8 GHz（约 116 W，算力 3.8）比一比。' : ''));
+  }
+  seg('#pw-mode', d => { cores = +d.n; draw(); });
+  $('#pw-f').oninput = draw;
+  draw();
+})();
+
+/* ---------- 阿姆达尔定律 ---------- */
+(function () {
+  const svg = $('#am'), X0 = 70, X1 = 640, Y0 = 225, Y1 = 20;
+  const sx = n => X0 + Math.log2(n) / 10 * (X1 - X0), sy = v => Y0 - Math.log2(v) / 10 * (Y0 - Y1);
+  const S = (s, n) => 1 / (s + (1 - s) / n), fmt = v => v < 10 ? v.toFixed(1) : Math.round(v);
+  function draw() {
+    const s = +$('#am-s').value / 100, n = 2 ** +$('#am-n').value, sp = S(s, n);
+    $('#am-sv').textContent = Math.round(s * 100) + '%';
+    $('#am-nv').textContent = n;
+    svg.innerHTML = '';
+    for (let e = 0; e <= 10; e += 2) {
+      el('line', { x1: sx(2 ** e), x2: sx(2 ** e), y1: Y1, y2: Y0, class: 's-dash', style: 'opacity:.3' }, svg);
+      el('line', { x1: X0, x2: X1, y1: sy(2 ** e), y2: sy(2 ** e), class: 's-dash', style: 'opacity:.3' }, svg);
+      txt(svg, sx(2 ** e), Y0 + 18, 2 ** e, 't-sub mid');
+      txt(svg, X0 - 8, sy(2 ** e) + 4, 2 ** e + '×', 't-sub end');
+    }
+    el('path', { d: `M${X0},${Y1} V${Y0} H${X1}`, class: 's-thin' }, svg);
+    txt(svg, X1, Y0 + 36, '核的数量', 't-sub end');
+    txt(svg, X0 + 4, Y1 - 6, '加速倍数', 't-sub');
+    el('line', { x1: sx(1), y1: sy(1), x2: sx(1024), y2: sy(1024), class: 's-dash' }, svg);
+    txt(svg, sx(150), sy(300), '理想：核翻倍，速度翻倍', 't-sub end');
+    if (s > 0) {
+      el('line', { x1: X0, x2: X1, y1: sy(1 / s), y2: sy(1 / s), style: 'stroke:var(--bad);stroke-width:1.5;stroke-dasharray:6 4' }, svg);
+      txt(svg, X1, sy(1 / s) - 8, `上限 1 ÷ s = ${fmt(1 / s)} 倍`, 't-sub end').style.fill = 'var(--bad)';
+    }
+    let d = '';
+    for (let e = 0; e <= 10.001; e += 0.1) d += (d ? 'L' : 'M') + sx(2 ** e).toFixed(1) + ',' + sy(S(s, 2 ** e)).toFixed(1);
+    el('path', { d, class: 's-line', style: 'stroke:var(--accent);stroke-width:3' }, svg);
+    el('circle', { cx: sx(n), cy: sy(sp), r: 7, style: 'fill:var(--on);stroke:var(--panel);stroke-width:2' }, svg);
+    $('#am-out').innerHTML = `${n} 个核：快了 <span class="big">${fmt(sp)}</span> 倍（理想是 ${n} 倍），平均每个核只发挥了 ${Math.round(sp / n * 100)}%。<br>` +
+      (s > 0 ? `<span class="muted" style="font-size:14px">核再多也超不过 ${fmt(1 / s)} 倍：那 ${Math.round(s * 100)}% 的串行部分一点也没变快。</span>` : '<span class="muted" style="font-size:14px">串行比例为 0 才是理想的直线。真实的程序几乎做不到。</span>');
+  }
+  $('#am-s').oninput = draw;
+  $('#am-n').oninput = draw;
+  draw();
+})();
+
+/* ---------- 矩阵乘法：串行 vs 并行 ---------- */
+(function () {
+  const svg = $('#mm');
+  const A = [[1, 2, 0, 1], [0, 1, 3, 2], [2, 0, 1, 1], [1, 3, 0, 2]];
+  const B = [[2, 0, 1, 1], [1, 1, 0, 2], [0, 2, 1, 0], [1, 0, 3, 1]];
+  const CS = 40, POS = { A: 30, B: 255, C: 480 }, TOP = 50;
+  let mode = 'ser', t = 0, timer = null;
+  const total = () => mode === 'ser' ? 64 : 4;
+  const done = (i, j, k) => mode === 'ser' ? (i * 4 + j) * 4 + k < t : k < t;
+  function cur() {
+    if (!t) return null;
+    if (mode === 'par') return { k: t - 1 };
+    const x = t - 1;
+    return { i: x >> 4, j: (x >> 2) & 3, k: x & 3 };
+  }
+  function cell(x, y, v, cls, style) {
+    el('rect', { x, y, width: CS - 4, height: CS - 4, rx: 6, class: cls, style: style || '' }, svg);
+    if (v !== '') txt(svg, x + (CS - 4) / 2, y + CS / 2 + 3, v, 't-mono mid');
+  }
+  function draw() {
+    svg.innerHTML = '';
+    const c = cur();
+    txt(svg, POS.A + 78, TOP - 14, 'A', 't-main mid');
+    txt(svg, POS.B + 78, TOP - 14, 'B', 't-main mid');
+    txt(svg, POS.C + 78, TOP - 14, 'C = A × B', 't-main mid');
+    txt(svg, POS.A + 182, TOP + 86, '×', 't-main mid');
+    txt(svg, POS.B + 182, TOP + 86, '=', 't-main mid');
+    let macs = 0;
+    for (let r = 0; r < 4; r++) for (let q = 0; q < 4; q++) {
+      const hiA = c && (mode === 'par' ? q === c.k : r === c.i && q === c.k);
+      const rowA = c && mode === 'ser' && r === c.i;
+      cell(POS.A + q * CS, TOP + r * CS, A[r][q], hiA ? 's-on' : rowA ? 's-acc' : 's-soft');
+      const hiB = c && (mode === 'par' ? r === c.k : q === c.j && r === c.k);
+      const colB = c && mode === 'ser' && q === c.j;
+      cell(POS.B + q * CS, TOP + r * CS, B[r][q], hiB ? 's-on' : colB ? 's-acc' : 's-soft');
+      let sum = 0, n = 0;
+      for (let k = 0; k < 4; k++) if (done(r, q, k)) { sum += A[r][k] * B[k][q]; n++; }
+      macs += n;
+      const hiC = c && (mode === 'par' || (r === c.i && q === c.j));
+      cell(POS.C + q * CS, TOP + r * CS, n ? sum : '', hiC ? 's-on' : 's-soft', n === 4 && !hiC ? 'fill:var(--ok-soft);stroke:var(--ok)' : '');
+    }
+    txt(svg, 340, TOP + 4 * CS + 34, mode === 'ser' ? '一个核：每一步只做 1 次乘加' : '16 个核：每一步每个核各做 1 次乘加', 't-sub mid');
+    $('#mm-out').innerHTML = `已走 <span class="big">${t}</span> / ${total()} 步，共做了 ${macs} 次乘加。`;
+    let cap;
+    if (!t) cap = mode === 'ser' ? '点"走一步"：一个核从左上角开始，一格一格地算 C。' : '点"走一步"：16 个核各认领 C 的一个格子，同时开工。';
+    else if (mode === 'ser') cap = `第 ${t} 步：算 C 第 ${c.i + 1} 行第 ${c.j + 1} 列的第 ${c.k + 1} 项，${A[c.i][c.k]} × ${B[c.k][c.j]}，加到这一格里。`;
+    else cap = `第 ${t} 步：16 个核同时动手，各自把 A 的第 ${c.k + 1} 列和 B 的第 ${c.k + 1} 行里属于自己的那两个数相乘，加进自己的格子。`;
+    if (t === total()) cap += mode === 'ser' ? '　算完了，一共 64 步。切到"16 个核"试试。' : '　算完了，只用了 4 步，快了 16 倍。';
+    $('#mm-cap').textContent = cap;
+    $('#mm-step').disabled = t === total();
+  }
+  const stop = () => { clearInterval(timer); timer = null; $('#mm-play').textContent = '自动播放'; };
+  const step = () => { if (t < total()) { t++; draw(); } if (t === total()) stop(); };
+  $('#mm-step').onclick = () => { stop(); step(); };
+  $('#mm-play').onclick = () => {
+    if (timer) return stop();
+    if (t === total()) { t = 0; draw(); }
+    $('#mm-play').textContent = '暂停';
+    timer = setInterval(step, mode === 'ser' ? 140 : 700);
+  };
+  $('#mm-reset').onclick = () => { stop(); t = 0; draw(); };
+  seg('#mm-mode', d => { stop(); mode = d.m; t = 0; draw(); });
+  draw();
+})();
+
+/* ---------- 晶圆良率 ---------- */
+(function () {
+  const svg = $('#wf'), CX = 340, CY = 150, R = 135;
+  let mode = 'big', seed = 7;
+  const rng = a => () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  function defects(n) {
+    const r = rng(seed), out = [];
+    while (out.length < n) { const x = (r() * 2 - 1) * R, y = (r() * 2 - 1) * R; if (x * x + y * y < (R - 4) ** 2) out.push([CX + x, CY + y]); }
+    return out;
+  }
+  function dies(size, D) {
+    const out = [], k = Math.ceil(R / size);
+    for (let x = CX - k * size; x < CX + R; x += size) for (let y = CY - k * size; y < CY + R; y += size) {
+      if (![[x, y], [x + size, y], [x, y + size], [x + size, y + size]].every(([a, b]) => (a - CX) ** 2 + (b - CY) ** 2 <= (R - 3) ** 2)) continue;
+      out.push({ x, y, size, bad: D.some(([a, b]) => a >= x && a < x + size && b >= y && b < y + size) });
+    }
+    return out;
+  }
+  function draw() {
+    const n = +$('#wf-d').value, D = defects(n);
+    $('#wf-dv').textContent = n;
+    const big = dies(40, D), small = dies(20, D);
+    const gb = big.filter(d => !d.bad).length, gs = small.filter(d => !d.bad).length;
+    svg.innerHTML = '';
+    el('circle', { cx: CX, cy: CY, r: R, style: 'fill:var(--bg);stroke:var(--metal);stroke-width:2' }, svg);
+    (mode === 'big' ? big : small).forEach(d => el('rect', { x: d.x + 1.5, y: d.y + 1.5, width: d.size - 3, height: d.size - 3, rx: 3,
+      style: d.bad ? 'fill:var(--bad-soft);stroke:var(--bad);stroke-width:1.5' : 'fill:var(--ok-soft);stroke:var(--ok);stroke-width:1.5' }, svg));
+    D.forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 3, style: 'fill:var(--ink)' }, svg));
+    txt(svg, CX, CY + R + 18, mode === 'big' ? '每格一颗大芯片' : '每格一块芯粒，4 块拼成一颗', 't-sub mid');
+    const pct = (g, a) => a ? Math.round(g / a * 100) : 0;
+    $('#wf-out').innerHTML = `大芯片：${gb} / ${big.length} 颗能用（良率 ${pct(gb, big.length)}%）<br>` +
+      `芯粒：${gs} / ${small.length} 块能用（良率 ${pct(gs, small.length)}%），每 4 块拼一颗，能凑出 <span class="big">${Math.floor(gs / 4)}</span> 颗大芯片的算力` +
+      (Math.floor(gs / 4) > gb ? `，比直接切大芯片多 ${Math.floor(gs / 4) - gb} 颗。` : '。');
+  }
+  seg('#wf-mode', d => { mode = d.m; draw(); });
+  $('#wf-d').oninput = draw;
+  $('#wf-new').onclick = () => { seed++; draw(); };
+  draw();
+})();
+
+/* ---------- 封装剖面（静态示意） ---------- */
+(function () {
+  const svg = $('#pk');
+  el('rect', { x: 40, y: 190, width: 600, height: 26, rx: 4, style: 'fill:var(--wood);opacity:.55;stroke:var(--wood);stroke-width:1.5' }, svg);
+  txt(svg, 340, 208, '封装基板', 't-sub mid').style.fill = 'var(--ink)';
+  el('rect', { x: 80, y: 160, width: 520, height: 24, rx: 3, class: 's-acc' }, svg);
+  for (let x = 92; x < 600; x += 16) el('circle', { cx: x, cy: 187, r: 2.5, style: 'fill:var(--metal)' }, svg);
+  txt(svg, 340, 177, '硅中介层：布满极细的连线', 't-sub mid').style.fill = 'var(--accent)';
+  [[100, 'HBM'], [508, 'HBM']].forEach(([x]) => {
+    for (const dx of [0, 40]) {
+      for (let i = 0; i < 9; i++) el('rect', { x: x + dx, y: 148 - i * 11, width: 34, height: 9, rx: 1.5, style: i === 0 ? 'fill:var(--metal);opacity:.7' : 'fill:var(--panel);stroke:var(--ink);stroke-width:1.2' }, svg);
+      el('line', { x1: x + dx + 17, x2: x + dx + 17, y1: 60, y2: 157, style: 'stroke:var(--on);stroke-width:1.2;stroke-dasharray:2 3' }, svg);
+    }
+  });
+  txt(svg, 137, 42, 'HBM：8–12 层内存叠起来', 't-sub mid');
+  txt(svg, 545, 42, '竖直导线穿过每一层', 't-sub mid');
+  [[210, '计算芯粒'], [350, '计算芯粒']].forEach(([x, s]) => {
+    el('rect', { x, y: 88, width: 120, height: 64, rx: 4, class: 's-on' }, svg);
+    txt(svg, x + 60, 125, s, 't-main mid');
+    for (let bx = x + 8; bx < x + 120; bx += 10) el('circle', { cx: bx, cy: 156, r: 2.5, style: 'fill:var(--metal)' }, svg);
+  });
+  el('path', { d: 'M318,72 H362', class: 's-line', style: 'stroke:var(--on)', 'marker-end': 'url(#pk-a)', 'marker-start': 'url(#pk-a)' }, svg);
+  el('defs', {}, svg).innerHTML = '<marker id="pk-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="context-stroke"/></marker>';
+  txt(svg, 340, 62, '芯粒之间：每秒数 TB 的连接', 't-sub mid');
+})();
+</script>
+</body>
+</html>

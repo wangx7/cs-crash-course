@@ -1,0 +1,499 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>45 新的攻防 · 计算机科学速成课 · 续集</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.seg-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:8px 0;font-size:14px}
+.seg-row > span{color:var(--muted);min-width:5.5em}
+.slider{display:flex;align-items:center;gap:10px;font-size:14px;margin:10px 0;flex-wrap:wrap}
+.slider > span{min-width:9.5em}
+.slider input{flex:1;min-width:160px}
+.slider b{font-family:var(--mono);min-width:3.5em}
+.readout .warn{color:var(--bad);font-weight:700}
+.readout .good{color:var(--ok);font-weight:700}
+.dt-node{cursor:pointer}
+.dt-node rect{fill:var(--panel);stroke:var(--ink);stroke-width:1.6;transition:fill .2s,stroke .2s}
+.dt-node.app rect{stroke:var(--accent);stroke-width:2.4}
+.dt-node:hover rect{stroke-width:3}
+.dt-node.hit rect{fill:var(--bad-soft);stroke:var(--bad)}
+.dt-node.src rect{fill:var(--bad);stroke:var(--bad)}
+.dt-node.src text{fill:#fff}
+.dt-node text{font-size:13px;fill:var(--ink);font-weight:600;text-anchor:middle;pointer-events:none}
+.dt-edge{stroke:var(--wire);stroke-width:2;transition:stroke .2s}
+.dt-edge.hit{stroke:var(--bad);stroke-width:3}
+.pk-flow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0 0}
+.pk-flow div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:14px;background:var(--bg);line-height:1.6}
+.pk-flow div b{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.pk-flow div.bad{border-color:var(--bad);background:var(--bad-soft)}
+.pk-flow div.ok{border-color:var(--ok);background:var(--ok-soft)}
+@media (max-width:600px){.pk-flow{grid-template-columns:1fr}}
+</style>
+</head>
+<body data-ep="45">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="33.html">回顾原课程第 33 集 · 加密</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 续集 · 第 45 集</div>
+  <h1>新的攻防</h1>
+  <p class="en">New Attacks, New Defenses</p>
+  <p class="lead">原课程的安全三集讲的是一套经典的攻防：攻击者找代码里的漏洞、骗用户的密码，防守方靠隔离、认证和加密。2018 年 1 月，原课程结束才一个月，研究者公布了一类谁也没想到的漏洞：它不在哪个程序里，而在 CPU 让程序变快的那套设计里。之后几年，攻击又换了几个新地方：别人写的代码、密码本身、几十年后才会造出来的计算机。这一集一层层看下来，每一层的防守是怎么跟上的。</p>
+  <div class="road">
+    <span>幽灵与熔断</span><i>→</i><span>软件供应链攻击</span><i>→</i><span>内存安全语言</span><i>→</i><span>通行密钥</span><i>→</i><span>量子计算机</span><i>→</i><span>后量子密码</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：本站续写的原创内容（不是 Crash Course 官方作品）</span>
+    <span class="l-add">蓝色虚线框：延伸与补充</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从第 9、31–33 集说起</a></li>
+    <li><a href="#ch1">1 · 幽灵与熔断</a></li>
+    <li><a href="#ch2">2 · 软件供应链</a></li>
+    <li><a href="#ch3">3 · 内存安全语言</a></li>
+    <li><a href="#ch4">4 · 通行密钥</a></li>
+    <li><a href="#ch5">5 · 量子计算机</a></li>
+    <li><a href="#ch6">6 · 后量子密码</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从第 9、31–33 集说起</h2>
+  <p>原课程讲到第 40 集就结束了。这一集接着安全这条线往下讲，先回忆四集：</p>
+  <ul>
+    <li><a href="31.html">第 31 集</a>讲安全的目标：<b>保密性、完整性、可用性</b>。认证靠"你知道的、你拥有的、你本身"，防守靠访问控制和<b>隔离</b>：每个程序有自己的内存，操作系统内核的内存，普通程序碰不到。</li>
+    <li><a href="32.html">第 32 集</a>讲攻击：骗人上当的社会工程学，往数组外面写数据的<b>缓冲区溢出</b>，把输入当成代码执行的<b>代码注入</b>。</li>
+    <li><a href="33.html">第 33 集</a>讲加密：AES 这样的对称加密，用来商量密钥的 Diffie-Hellman 密钥交换，以及 RSA 这样的<b>公钥加密</b>和数字签名。它们的安全都建立在"某道数学题算起来太慢"上。</li>
+    <li>还有硬件那条线上的<a href="09.html">第 9 集</a>：CPU 用<b>缓存</b>把常用数据放在手边，用<b>推测执行</b>在结果出来前先猜着往下跑，猜错了就把结果扔掉，当作什么都没发生。</li>
+  </ul>
+  <p>这些防线都还在。2017 年以后的新攻击，大多是从它们没有想到的地方绕过去的：从 CPU 的设计里，从别人写的代码里，从人记不住的密码里，从未来的计算机里。我们从最底层的 CPU 开始。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>幽灵与熔断：推测执行的副作用</h2>
+  <p>第 9 集说，CPU 推测执行猜错了，就把结果全部撤销，"当作什么都没发生"。2017 年，几组研究者各自发现这句话<b>不完全对</b>：寄存器里的结果确实撤销了，可推测执行时读过的数据，<b>已经被搬进了缓存</b>，没有人把它搬出去。</p>
+  <p>这本身不泄露什么，缓存里放的是什么，程序看不到。但程序能看到<b>时间</b>：读一个在缓存里的数据，只要几十个时钟周期；不在缓存里，要去内存取，得花几百个周期。只要量一量读每个地址各花了多久，就能知道哪些地址刚刚被碰过。这种不走正门、而是从时间、功耗、声音这类"副作用"里推出秘密的办法，叫<b>侧信道</b>（side channel）。</p>
+
+  <div class="card">
+    <h3>动手：从时间里读出秘密</h3>
+    <div class="scroll-x"><svg class="diagram" id="sc" viewBox="0 0 680 300" role="img" aria-label="缓存计时侧信道的分步示意图"></svg></div>
+    <div class="step-text" id="sc-cap"></div>
+    <div class="btns"><button class="btn" id="sc-prev">上一步</button><button class="btn primary" id="sc-next">下一步</button><button class="btn" id="sc-new">换一个秘密</button></div>
+    <p class="hint">这是概念示意：秘密只有 8 种可能，计时数字也是示意值。真实攻击要对付噪声，一次读一个字节，要重复很多次。</p>
+  </div>
+
+  <p>这个发现在 2017 年 6 月就通知了芯片厂商，原定 2018 年 1 月 9 日公布；因为媒体已经开始报道，1 月 3 日提前公开。它分成两类：</p>
+  <ul>
+    <li><b>熔断</b>（Meltdown）：大多数英特尔 CPU 在推测执行时，会先读出数据，<b>再</b>检查这个程序有没有权限读。于是普通程序可以借推测执行，读出操作系统内核的内存。第 31 集说的那道最基本的隔离墙，被从下面挖穿了。它由三组人各自发现：谷歌 Project Zero 的雅恩·霍恩（Jann Horn）、奥地利格拉茨技术大学的团队，以及德国 Cyberus 公司的研究者。</li>
+    <li><b>幽灵</b>（Spectre）：更难修。它利用的是分支预测：先反复"训练"CPU，让它以为某个检查总会通过，然后在检查不该通过的那一次，CPU 照旧猜"通过"，推测着读出了越界的数据。英特尔、AMD 和 ARM 的芯片都受影响，因为几乎所有高性能 CPU 都做推测执行。它由霍恩和保罗·科赫（Paul Kocher）等人各自发现。</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">漏洞不在哪一行代码里</span>
+    以前的漏洞是"某个程序写错了"，补上那一行就好。幽灵和熔断利用的是 CPU 的设计本身，而这些设计正是第 9 集里让 CPU 变快的办法。去掉推测执行，CPU 会慢很多倍，所以没人能这么修。
+  </div>
+  <p>修补是一层层打补丁。操作系统把内核的内存从普通程序的地址空间里<b>完全拿走</b>（Linux 里叫 KPTI），熔断就读不到了，代价是每次进出内核都多一些开销，有的程序慢了好几个百分点。浏览器担心网页里的 JavaScript 也能用这招，于是降低了计时器的精度，Chrome 还开始让每个网站跑在<b>各自的进程</b>里，这样一个网页就算能读出自己进程的内存，里面也没有别的网站的数据。之后几代 CPU 才在硬件里改掉了熔断那类问题。幽灵这一类则没有一劳永逸的修法，之后几年又陆续发现了好些变种。</p>
+  <div class="extra">
+    <span class="t">性能和安全的老账</span>
+    缓存、推测执行、多个程序共用一颗 CPU，都是为了更快、更省。侧信道说明，凡是共享的东西，都可能漏出一点信息。这也是为什么云服务商（见<a href="42.html">第 42 集</a>）对"不同客户的程序能不能跑在同一个物理核心上"格外小心。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>软件供应链：你用的代码，大多不是你写的</h2>
+  <p>第 32 集的攻击者，要在<b>你的</b>程序里找漏洞。可今天的程序，自己写的部分往往只是一小块。剩下的是别人写好、拿来就用的<b>库</b>，也叫<b>依赖</b>（dependency）：解析网页的、压缩数据的、处理日期的、写日志的。这些库又依赖别的库，一层套一层。一个普通的网站项目，装上几百上千个包很常见，其中大多数开发者叫不出名字。</p>
+  <p>这一整条"谁的代码用到了谁的代码"的链条，叫<b>软件供应链</b>。攻击者发现，与其一个个去攻打用户，不如在链条上游某一个包里动手脚，它会被自动分发到所有用到它的程序里。</p>
+
+  <div class="card">
+    <h3>动手：在依赖树里投毒</h3>
+    <div class="scroll-x"><svg class="diagram" id="dt" viewBox="0 0 680 330" role="img" aria-label="依赖树：点一个包，看影响向上扩散"></svg></div>
+    <div class="readout" id="dt-out"></div>
+    <div class="btns"><button class="btn" id="dt-clr">重置</button></div>
+    <p class="hint">点任意一个包，假设它被投毒或者有漏洞。箭头从使用者指向被使用的包，影响则逆着箭头往上走。试试最底下那个"补齐空格"。</p>
+  </div>
+
+  <p>两起事件让所有人看清了这件事的分量：</p>
+  <ul class="timeline">
+    <li><span class="yr">2021</span><b>Log4Shell</b>。Log4j 是 Java 世界里最常用的日志库之一，几乎每个大型 Java 系统里都有它。它有个从 2013 年就埋下的功能：日志里的文字如果写成某种特殊格式，它会按文字里的地址去远程取东西。结果是，攻击者只要让服务器<b>记下一行特制的文字</b>，比如把它填进用户名或者浏览器标识里，就可能让服务器下载并运行攻击者的代码。这正是第 32 集讲的代码注入，只是它藏在一个没人会去看的日志库里。阿里云安全团队的陈兆军在 11 月 24 日报告给 Apache 基金会，12 月 9 日漏洞公开，严重程度评分是满分 10 分。最难的不是打补丁，而是许多公司根本不知道自己哪些系统里套着 Log4j。</li>
+    <li><span class="yr">2024</span><b>xz 后门</b>。xz 是 Linux 上常用的压缩工具，由一位志愿者长年独自维护。从 2021 年起，一个叫"Jia Tan"的账号开始热心地提交修改，同时有几个账号在邮件列表里催促原维护者交出权限。两年下来，Jia Tan 成了共同维护者。2024 年 2 月和 3 月发布的 5.6.0 和 5.6.1 版里，藏进了一段经过伪装的代码：在一些 Linux 发行版里，它能让持有特定密钥的人在 SSH 远程登录时执行命令。3 月 29 日，在微软工作、给 PostgreSQL 数据库做开发的安德烈斯·弗洛因德（Andres Freund）发现 SSH 登录莫名多占了 CPU、慢了大约半秒，一路追查下去，公开了这个后门。那时它刚进入几个测试版发行版，还没有进入大多数服务器用的稳定版。</li>
+  </ul>
+  <div class="callout">
+    <span class="t">信任也是攻击面</span>
+    Log4Shell 是一个无心的漏洞；xz 是一次耐心的<b>社会工程学</b>（第 32 集）：攻击者花两年时间，骗取的不是一个人的密码，而是一个开源项目的信任。许多全世界都在用的基础库，背后只有一两个没有报酬的志愿者。
+  </div>
+  <p>防守也是从链条的各个环节入手：用<b>锁文件</b>把每个依赖的确切版本固定下来，不让它悄悄自动升级；列出一份<b>软件物料清单</b>（SBOM），出事时一查就知道哪里用了什么；给发布的软件包<b>签名</b>，并且让同样的源代码能编译出完全相同的结果，方便别人核对；还有越来越多的公司和基金会开始出钱支持关键开源项目的维护者。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>内存安全语言：把一整类漏洞关在门外</h2>
+  <p>第 32 集的缓冲区溢出，四十年后还是头号问题。2019 年，微软安全响应中心统计：他们每年修复并登记编号的漏洞里，<b>大约 70%</b> 是内存安全问题，十几年来一直如此。谷歌对 Chrome 浏览器的统计也是：严重的安全漏洞里，约 70% 是内存安全问题。</p>
+  <p>内存安全问题主要有两类：读写了数组边界<b>外面</b>的内存（缓冲区溢出），或者一块内存已经释放、还给了系统，程序却<b>接着用</b>它（叫"释放后使用"）。它们都出在 C 和 C++ 这类语言里，这类语言让程序员自己管理内存，也相信程序员不会出错。</p>
+  <p>Java、Python、JavaScript 这类语言早就解决了这个问题：每次访问数组都检查边界，内存由<b>垃圾回收器</b>自动回收，程序员碰不到裸指针。代价是速度和不可预测的停顿。所以操作系统、浏览器引擎、数据库这些最讲究性能、也最常被攻击的软件，一直用 C 和 C++ 写。</p>
+  <p><b>Rust</b> 想两头都要。它最早是 Mozilla 的格雷登·霍尔（Graydon Hoare）的个人项目，2015 年 5 月发布 1.0 版。它的办法是在<b>编译时</b>就查清楚：每块内存同一时刻只有一个"主人"，别人只能"借用"，借用不能比主人活得长。违反规则的程序根本编译不过。这样不需要垃圾回收，速度和 C++ 差不多，而"释放后使用"这一类错误在编译时就被拦住了。</p>
+  <div class="callout key">
+    <span class="t">问题主要出在新代码里</span>
+    谷歌在 2024 年 9 月公布了安卓的数据：大约从 2019 年起，安卓的<b>新代码</b>优先用 Rust、Kotlin 这类内存安全语言写，老的 C/C++ 代码不去大规模重写。结果内存安全漏洞的占比从 2019 年的 <b>76%</b> 降到了 2024 年的约 <b>24%</b>。原因是漏洞大多出在新写的代码里，老代码被用得越久，漏洞被找到、修掉得越多。只要不再往里加新的 C/C++ 代码，整体就会越来越安全。
+  </div>
+  <p>2022 年 12 月发布的 Linux 6.1 内核，第一次接受了用 Rust 写的代码。美国网络安全和基础设施安全局（CISA）等机构也开始公开建议软件厂商，新项目优先选用内存安全语言。不过，换语言只能挡住内存安全这一类问题。上一节的 Log4Shell 就出在内存安全的 Java 里，xz 后门则是有人故意放进去的。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>通行密钥：不用再记密码</h2>
+  <p>第 31 集说，"你知道的"这种认证，也就是密码，最常用，也最弱：人会挑好记的密码，会在很多网站用同一个，还会被第 32 集的钓鱼网站骗着亲手输进去。网站一旦被攻破，存着的密码也可能跟着泄露。</p>
+  <p>解决办法其实早就在第 33 集里了：<b>公钥加密和数字签名</b>。FIDO 联盟和万维网联盟（W3C）定了一套标准，叫 WebAuthn，2019 年成为正式标准。它的做法是：</p>
+  <ol>
+    <li>注册时，你的手机或电脑为<b>这一个网站</b>生成一对新密钥。私钥留在设备里，公钥交给网站保存。</li>
+    <li>登录时，网站发来一个随机数，叫<b>挑战</b>（challenge）。设备用私钥给它签名，网站用公钥验证签名。</li>
+    <li>要动用私钥，你得先解锁设备：按指纹、刷脸或者输入设备的 PIN 码。</li>
+  </ol>
+  <p>网站存的只是公钥，泄露了也没用，因为公钥本来就是可以公开的。私钥从不离开你的设备，也就不会在网上被截走。一次登录同时用上了"你拥有的"（设备）和"你本身"或"你知道的"（指纹、PIN），这正是第 31 集说的双因素认证。</p>
+  <p>早期这套东西要用专门的 USB 安全钥匙，普通人很少用。2022 年 5 月 5 日，苹果、谷歌和微软联合宣布，要让这种凭证能在同一个人的多台设备之间<b>同步</b>，换了新手机也不用重新注册。这种能同步的凭证，后来被统一叫作<b>通行密钥</b>（passkey）。同年 9 月，苹果的 iOS 16 率先支持。</p>
+
+  <div class="card">
+    <h3>动手：钓鱼网站能骗走什么</h3>
+    <div class="seg-row"><span>你打开的是</span><div class="seg-btns" id="pk-site"><button data-s="real" class="sel">bank.com（真的）</button><button data-s="fake">bank-login-secure.com（钓鱼）</button></div></div>
+    <div class="seg-row"><span>登录方式</span><div class="seg-btns" id="pk-way"><button data-w="pw" class="sel">密码</button><button data-w="pk">通行密钥</button></div></div>
+    <div class="pk-flow" id="pk-flow"></div>
+    <div class="readout" id="pk-out"></div>
+    <p class="hint">切到"钓鱼"，分别用两种方式登录，看看攻击者手里最后有什么。</p>
+  </div>
+
+  <div class="callout key">
+    <span class="t">防钓鱼的关键：密钥绑定网址</span>
+    人分不清 bank.com 和 bank-login-secure.com，可浏览器分得清。每把通行密钥注册时就记住了它属于哪个网址，浏览器只会把它交给那个网址用。就算你被骗进钓鱼网站，你的设备也拿不出能登录真网站的签名。防钓鱼这件事，从靠人的眼力变成了由软件来检查。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>量子计算机：对密码学的远期威胁</h2>
+  <p>第 33 集结尾说，RSA 和 Diffie-Hellman 安全，是因为"把一个大数分解成两个质数"这类题，经典计算机要算到宇宙末日。这句话的前提是<b>经典</b>计算机。</p>
+  <p>普通的比特不是 0 就是 1。<b>量子比特</b>（qubit）可以处在 0 和 1 的<b>叠加</b>状态，几个量子比特之间还能<b>纠缠</b>在一起。常有人说量子计算机"同时试所有答案"，这不准确：测量时你只能得到一个结果，而且是随机的。量子算法的本事在于，安排好一连串操作，让错误答案的可能性互相抵消、正确答案的可能性互相加强，就像水波的干涉。只有少数特殊结构的问题能这样做，而大数分解恰好是其中之一。</p>
+  <ul class="timeline">
+    <li><span class="yr">1994</span>数学家彼得·肖尔（Peter Shor）提出<b>肖尔算法</b>：在足够大的量子计算机上，大数分解和离散对数都能很快算出来。RSA、Diffie-Hellman、椭圆曲线密码，也就是今天几乎所有的公钥加密和签名，都会被破解。</li>
+    <li><span class="yr">1996</span>洛夫·格罗弗（Lov Grover）提出<b>格罗弗算法</b>，能加速"大海捞针"式的搜索，但只是开平方的加速。对 AES 这类对称加密来说，把密钥从 128 位加长到 256 位就够了。所以量子计算机威胁的主要是<b>公钥密码</b>。</li>
+    <li><span class="yr">2019</span>谷歌在《自然》杂志上发表论文：53 个量子比特的"悬铃木"（Sycamore）芯片用 200 秒完成了一项随机采样任务，他们估计当时最强的超级计算机要算 1 万年，称之为"量子霸权"。IBM 随即反驳，说换个算法 2.5 天就能算完。不管怎么算，这项任务本身没有实际用处，破解密码更是差得很远。</li>
+    <li><span class="yr">2024</span>谷歌发布 105 个量子比特的"柳树"（Willow）芯片，在量子纠错上迈过了一道关键的门槛（见下文）。</li>
+    <li><span class="yr">2025</span>谷歌的克雷格·吉德尼（Craig Gidney）估算：用不到 100 万个有噪声的物理量子比特，不到一周就能分解 2048 位的 RSA 密钥。他 2019 年的估算还要 2000 万个。</li>
+  </ul>
+  <p>真正的难点是<b>噪声</b>。量子比特极其脆弱，一点热、一点电磁干扰都会让它出错，比第 19 集里任何一种存储介质都脆弱得多。办法是<b>量子纠错</b>：用许多个物理量子比特，共同编码出一个更可靠的"逻辑量子比特"。但多用比特也会多出错的机会，只有当每个物理比特的错误率低于某个<b>门槛</b>时，编码越大，逻辑比特才越可靠；高于门槛，越纠越错。</p>
+  <p>柳树芯片的实验，就是把同一个逻辑比特分别用 3×3、5×5、7×7 的比特阵列来编码，结果是<b>每放大一级，错误率大约减半</b>。这是第一次令人信服地做到"越大越可靠"。不过离破解 RSA 还差得很远：截至 2026 年，量子计算机的物理量子比特还在几百到几千个的量级，而吉德尼的估算需要的是近 100 万个，还要稳定地连续运行好几天。</p>
+  <div class="extra">
+    <span class="t">什么时候能造出来</span>
+    没人知道。乐观的说法是十年内，保守的说法是几十年，也有人怀疑能不能造出来。但下一节会讲，就算要等几十年，密码学家现在也已经急着换算法了。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>后量子密码：为什么现在就要换</h2>
+  <p>原因是一种很朴素的攻击：<b>先存下来，以后再解</b>（store now, decrypt later）。今天截获的加密流量，现在解不开，但可以存进硬盘。等哪天量子计算机造出来了，再拿出来用肖尔算法破解。对很多数据来说，十几年后被解开一样是灾难：病历、外交电报、商业机密、一个人的私信。</p>
+  <p>滑铁卢大学的米歇尔·莫斯卡（Michele Mosca）把这笔账写成了一个简单的不等式：</p>
+  <div class="callout key"><span class="t">莫斯卡不等式</span>如果"数据要保密的年数"加上"全面换掉旧算法要花的年数"，<b>大于</b>"能破解它的量子计算机出现前的年数"，那就已经来不及了。</div>
+
+  <div class="card">
+    <h3>动手：现在开始换，来得及吗</h3>
+    <div class="slider"><span>数据要保密几年</span><input type="range" id="mo-x" min="1" max="30" value="10" aria-label="数据要保密几年"><b id="mo-xv">10 年</b></div>
+    <div class="slider"><span>换掉旧算法要几年</span><input type="range" id="mo-y" min="1" max="15" value="6" aria-label="迁移要几年"><b id="mo-yv">6 年</b></div>
+    <div class="slider"><span>量子计算机还要几年</span><input type="range" id="mo-z" min="3" max="35" value="12" aria-label="量子计算机还要几年"><b id="mo-zv">12 年</b></div>
+    <div class="scroll-x"><svg class="diagram" id="mo" viewBox="0 0 680 210" role="img" aria-label="先存后解的时间线"></svg></div>
+    <div class="readout" id="mo-out"></div>
+    <p class="hint">三个数都是假设，没有人知道真实值。从 2026 年算起。试试把"量子计算机还要几年"拉到 20，再把"数据要保密几年"拉到 25。</p>
+  </div>
+
+  <p>所以需要一批新的公钥算法：它们依赖的数学难题，<b>连量子计算机也解不快</b>，而且在今天的普通电脑和手机上就能跑。这叫<b>后量子密码</b>（post-quantum cryptography）。它不需要量子计算机，只是换几道数学题。</p>
+  <p>2016 年，美国国家标准与技术研究院（NIST）发起了公开征集，和当年选出 AES 的做法一样：全世界的团队提交算法，再由所有人一起来攻。八年里几十个候选被淘汰，其中有的在最后一轮被一台普通笔记本电脑破解。2024 年 8 月 13 日，NIST 发布了前三个正式标准：</p>
+  <table class="tt" style="width:100%">
+    <thead><tr><th>标准</th><th>算法</th><th>用途</th><th>基于什么难题</th></tr></thead>
+    <tbody>
+      <tr><td>FIPS 203</td><td>ML-KEM（原名 Kyber）</td><td>商量密钥，替代 Diffie-Hellman</td><td>格</td></tr>
+      <tr><td>FIPS 204</td><td>ML-DSA（原名 Dilithium）</td><td>数字签名，替代 RSA 签名</td><td>格</td></tr>
+      <tr><td>FIPS 205</td><td>SLH-DSA（原名 SPHINCS+）</td><td>数字签名，备用</td><td>哈希函数</td></tr>
+    </tbody>
+  </table>
+  <p>"格"（lattice）的难题，大致可以理解成：给你一大堆线性方程，但每个方程都被<b>故意加了一点小误差</b>。没有误差时，高中学的消元法很快就能解出来；有了误差，消元会让误差越滚越大，目前不管经典还是量子算法，都只能慢慢试。2025 年 3 月，NIST 又选了一个基于纠错码的 HQC 算法作为 ML-KEM 的后备，万一格这类难题哪天被攻破，还有退路。</p>
+  <p>部署已经开始了，用的是<b>混合</b>方案：把老的椭圆曲线密钥交换和新的 ML-KEM 同时用上，两个都破解了才算破解。这样就算新算法有没发现的弱点，也不会比原来更差。2024 年 11 月，Chrome 131 和 Firefox 132 都默认在 HTTPS 连接里用上了这种混合密钥交换。你现在看这一页时，浏览器可能就在用它。</p>
+  <div class="callout">
+    <span class="t">签名可以晚一点，密钥交换不能等</span>
+    签名只在"此刻"有用：等量子计算机造出来再伪造十年前的签名，意义不大。可加密的数据会被存下来，所以先换的是密钥交换。NIST 在 2024 年 11 月的草案里提出：2030 年后弃用强度较低的 RSA 和椭圆曲线算法，2035 年后全部停用。
+  </div>
+  <div class="extra">
+    <span class="t">这次学到的：能换算法</span>
+    从 DES 换到 AES，从 SHA-1 换到 SHA-256，每次都花了十几年，因为算法被写死在无数软件和硬件里。这次密码学界反复强调<b>密码敏捷性</b>（crypto agility）：设计系统时就预留好"换算法"的位置，下次再出问题，换得快一些。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>幽灵与熔断</td><td>2018 年 1 月公开；推测执行的结果会撤销，但碰过的缓存留了下来；量读取时间就能推出秘密（侧信道）</td></tr>
+      <tr><td>软件供应链</td><td>程序大多由依赖拼成；上游一个包出事，影响沿依赖树往上扩散；Log4Shell（2021）、xz 后门（2024）</td></tr>
+      <tr><td>内存安全语言</td><td>约 70% 的严重漏洞是内存安全问题；Rust 在编译时检查内存的归属；安卓新代码换语言后，占比从 76% 降到 24%</td></tr>
+      <tr><td>通行密钥</td><td>每个网站一对密钥，私钥不离开设备；签名验证代替密码；密钥绑定网址，钓鱼网站拿不到可用的签名</td></tr>
+      <tr><td>量子计算机</td><td>肖尔算法能破 RSA、椭圆曲线；格罗弗只让 AES 弱一半；难点是噪声，2024 年纠错首次做到"越大越可靠"</td></tr>
+      <tr><td>后量子密码</td><td>"先存后解"让迁移必须现在开始；2024 年 NIST 发布 FIPS 203/204/205；浏览器已默认用混合密钥交换</td></tr>
+      <tr><td>连到哪几集</td><td><a href="09.html">9</a>（缓存、推测执行）· <a href="31.html">31</a>（隔离、认证）· <a href="32.html">32</a>（缓冲区溢出、注入、社会工程学）· <a href="33.html">33</a>（公钥加密、签名）· <a href="41.html">41</a>（CPU 设计）· <a href="42.html">42</a>（云上共享硬件）</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 推测执行猜错时，CPU 明明撤销了结果，为什么秘密还是漏了出去？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">撤销的只是寄存器里的计算结果。推测执行期间按秘密的值访问过的内存，已经被搬进了缓存，没有被撤销。攻击者再逐个计时读取一组地址，读得特别快的那个就是刚被碰过的，从它的位置就能反推出秘密。秘密不是被"读出来"的，是从时间里"推出来"的，这叫侧信道。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 为什么一个日志库或压缩库出问题，会影响成千上万个看起来毫不相干的系统？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">因为软件是层层依赖拼起来的。一个底层的库被许多库使用，这些库又被更多程序使用，影响会沿着依赖树一路往上扩散。很多系统甚至不知道自己间接用了它。锁定版本、软件物料清单、签名和可复现构建，都是为了让这条链条更透明、更难被悄悄改动。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 安卓没有重写老代码，内存安全漏洞的占比为什么还能大幅下降？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">漏洞大多出在新写的代码里。老代码用得越久，漏洞被发现和修掉的越多，会越来越稳定。安卓把新代码换成 Rust、Kotlin 这类内存安全语言后，新增的内存安全漏洞大大减少，而老代码本身也在变安全，所以整体占比从 2019 年的 76% 降到了 2024 年的约 24%。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 你在钓鱼网站上用通行密钥"登录"，为什么攻击者还是进不了你的银行账户？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">通行密钥注册时就绑定了真网站的网址，浏览器只会为那个网址动用这把私钥。钓鱼网站的网址不同，设备找不到对应的密钥，或者签出来的东西里带着钓鱼网站的网址，真网站不会认。而且私钥从不离开设备，没有可以被骗走、被转交的秘密。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 能破解 RSA 的量子计算机可能还要很多年，为什么 2024 年就开始换算法了？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">因为"先存后解"：今天截获的加密数据可以存起来，等量子计算机造出来再破解。如果数据要保密的年数加上迁移要花的年数，超过了量子计算机出现前的年数（莫斯卡不等式），现在就已经晚了。所以先换的是保护数据的密钥交换，签名可以晚一点；部署时用老算法和新算法的混合方案，防止新算法有没发现的弱点。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="44.html"><small>← 上一集</small>44 生成式 AI 与智能体</a>
+    <a class="next" href="46.html"><small>下一集 →</small>46 2026，回看第 40 集</a>
+  </div>
+
+  <div class="credit">
+    续集为本站原创内容，不是 Crash Course 官方作品，写法沿用原课程的思路。正文、示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。<br>
+    参考资料：
+    Google Project Zero，<a href="https://googleprojectzero.blogspot.com/2018/01/reading-privileged-memory-with-side.html" target="_blank" rel="noopener">Reading privileged memory with a side-channel</a>（2018-01）；
+    Kocher 等，<a href="https://arxiv.org/abs/1801.01203" target="_blank" rel="noopener">Spectre Attacks: Exploiting Speculative Execution</a>（2018）；
+    Lipp 等，<a href="https://arxiv.org/abs/1801.01207" target="_blank" rel="noopener">Meltdown</a>（2018）；
+    <a href="https://en.wikipedia.org/wiki/Log4Shell" target="_blank" rel="noopener">Log4Shell</a>（维基百科）；
+    <a href="https://en.wikipedia.org/wiki/XZ_Utils_backdoor" target="_blank" rel="noopener">XZ Utils backdoor</a>（维基百科）；
+    Andres Freund，<a href="https://www.openwall.com/lists/oss-security/2024/03/29/4" target="_blank" rel="noopener">backdoor in upstream xz/liblzma</a>（oss-security，2024-03-29）；
+    Microsoft MSRC，<a href="https://www.microsoft.com/en-us/msrc/blog/2019/07/we-need-a-safer-systems-programming-language" target="_blank" rel="noopener">We need a safer systems programming language</a>（2019）；
+    Google Security Blog，<a href="https://security.googleblog.com/2024/09/eliminating-memory-safety-vulnerabilities-Android.html" target="_blank" rel="noopener">Eliminating Memory Safety Vulnerabilities at the Source</a>（2024-09）；
+    FIDO Alliance，<a href="https://fidoalliance.org/apple-google-and-microsoft-commit-to-expanded-support-for-fido-standard-to-accelerate-availability-of-passwordless-sign-ins/" target="_blank" rel="noopener">Apple, Google and Microsoft Commit to Expanded Support for FIDO Standard</a>（2022-05-05）；
+    Arute 等，<a href="https://www.nature.com/articles/s41586-019-1666-5" target="_blank" rel="noopener">Quantum supremacy using a programmable superconducting processor</a>（Nature，2019）；
+    Quanta Magazine，<a href="https://www.quantamagazine.org/google-and-ibm-clash-over-quantum-supremacy-claim-20191023/" target="_blank" rel="noopener">Google and IBM Clash Over Milestone Quantum Computing Experiment</a>（2019）；
+    Google Quantum AI，<a href="https://www.nature.com/articles/s41586-024-08449-y" target="_blank" rel="noopener">Quantum error correction below the surface code threshold</a>（Nature，2024）；
+    Gidney，<a href="https://arxiv.org/abs/2505.15917" target="_blank" rel="noopener">How to factor 2048 bit RSA integers with less than a million noisy qubits</a>（2025）；
+    NIST，<a href="https://www.nist.gov/news-events/news/2024/08/nist-releases-first-3-finalized-post-quantum-encryption-standards" target="_blank" rel="noopener">NIST Releases First 3 Finalized Post-Quantum Encryption Standards</a>（2024-08-13）；
+    <a href="https://en.wikipedia.org/wiki/NIST_Post-Quantum_Cryptography_Standardization" target="_blank" rel="noopener">NIST Post-Quantum Cryptography Standardization</a>（维基百科，含 HQC）；
+    NIST，<a href="https://csrc.nist.gov/pubs/ir/8547/ipd" target="_blank" rel="noopener">IR 8547 (Draft): Transition to Post-Quantum Cryptography Standards</a>（2024-11）。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 缓存计时侧信道 ---------- */
+(function () {
+  const svg = $('#sc'), L = 'ABCDEFGH';
+  let step = 0, sec = 5;
+  const CAP = [
+    () => '<b>准备。</b>攻击者准备了一个有 8 格的数组 A–H，并且确保这 8 格<b>都不在缓存里</b>（灰色）。右上角是一个它没有权限读的秘密。',
+    () => '<b>推测执行。</b>程序里有一句"如果没越界，就去读"。检查结果还要等一会儿，CPU 不等，按分支预测猜"没越界"，先往下跑。',
+    () => `<b>按秘密去碰缓存。</b>推测执行时，CPU 读到了秘密（是 ${sec}），并且按这个值去读了数组的第 ${sec} 格，也就是 <b>${L[sec]}</b>。${L[sec]} 被搬进了缓存（橙色）。`,
+    () => `<b>猜错了，撤销。</b>检查结果出来：越界了。CPU 把寄存器里的结果全部扔掉，程序"什么也没读到"。可是 <b>${L[sec]} 还留在缓存里</b>，没有人把它搬走。`,
+    () => '<b>计时。</b>攻击者挨个读 A–H，并记下每次花了多久。不在缓存里的要去内存取，约 300 个周期；在缓存里的只要约 40 个周期。',
+    () => `<b>读出秘密。</b>只有 <b>${L[sec]}</b> 读得特别快，所以秘密是 <span class="big">${sec}</span>。秘密从来没被直接交给攻击者，它是从时间里推出来的。`,
+  ];
+  function draw() {
+    svg.innerHTML = '';
+    const X0 = 96, DX = 66, BW = 52, BY = 128;
+    // CPU
+    el('rect', { x: 20, y: 20, width: 150, height: 62, rx: 10, class: step === 1 || step === 2 ? 's-acc' : 's-panel' }, svg);
+    txt(svg, 95, 46, 'CPU', 't-main mid');
+    txt(svg, 95, 66, ['空闲', '推测着往下跑…', '推测着往下跑…', '撤销结果', '计时读取', '计时读取'][step], 't-sub mid');
+    // 秘密
+    const known = step >= 2 && step <= 3;
+    el('rect', { x: 500, y: 20, width: 160, height: 62, rx: 10, class: known ? 's-on' : 's-soft' }, svg);
+    txt(svg, 580, 44, '没有权限读的秘密', 't-sub mid');
+    txt(svg, 580, 70, step >= 5 ? String(sec) : known ? String(sec) : '?', 't-main mid' + (known || step >= 5 ? ' t-on' : ''));
+    if (known) el('path', { d: 'M170,50 H498', class: 's-dash', style: 'stroke:var(--on)' }, svg);
+    if (step === 2) el('path', { d: `M95,82 Q${X0 + sec * DX - 20},100 ${X0 + sec * DX + BW / 2},${BY - 4}`, class: 's-line', style: 'stroke:var(--on);stroke-dasharray:5 4' }, svg);
+    txt(svg, 20, BY + 26, '数组', 't-sub');
+    txt(svg, 20, BY + 42, '缓存？', 't-sub');
+    for (let i = 0; i < 8; i++) {
+      const x = X0 + i * DX, hot = step >= 2 && i === sec;
+      el('rect', { x, y: BY, width: BW, height: 40, rx: 7, class: hot ? 's-on' : 's-soft' }, svg);
+      txt(svg, x + BW / 2, BY + 26, L[i], 't-main mid' + (hot ? ' t-on' : ''));
+      txt(svg, x + BW / 2, BY + 56, String(i), 't-sub mid');
+      if (step >= 4) {
+        const t = i === sec ? 40 : 290 + ((i * 37) % 30), h = t / 330 * 80;
+        el('rect', { x: x + 12, y: 280 - h, width: BW - 24, height: h, rx: 3, style: `fill:${i === sec ? 'var(--on)' : 'var(--metal)'}` }, svg);
+        txt(svg, x + BW / 2, 294, String(t), 't-sub mid');
+      }
+    }
+    if (step >= 4) txt(svg, 20, 262, '读取用时', 't-sub'), txt(svg, 20, 294, '（周期）', 't-sub');
+    $('#sc-cap').innerHTML = `第 ${step + 1} / ${CAP.length} 步　` + CAP[step]();
+    $('#sc-prev').disabled = step === 0;
+    $('#sc-next').disabled = step === CAP.length - 1;
+  }
+  $('#sc-prev').onclick = () => { if (step > 0) { step--; draw(); } };
+  $('#sc-next').onclick = () => { if (step < CAP.length - 1) { step++; draw(); } };
+  $('#sc-new').onclick = () => { let s; do s = Math.floor(Math.random() * 8); while (s === sec); sec = s; step = 0; draw(); };
+  draw();
+})();
+
+/* ---------- 依赖树投毒 ---------- */
+(function () {
+  const svg = $('#dt');
+  const N = {
+    bank: ['网上银行', 200, 24, 1], map: ['地图 App', 480, 24, 1],
+    web: ['Web 框架', 110, 112], log: ['日志库', 290, 112], img: ['图片处理', 470, 112], net: ['网络库', 610, 112],
+    prs: ['解析器', 80, 200], str: ['字符串工具', 230, 200], zip: ['压缩库', 390, 200], cry: ['加密库', 560, 200],
+    pad: ['补齐空格', 160, 288], buf: ['字节缓冲', 470, 288],
+  };
+  const E = [['bank', 'web'], ['bank', 'log'], ['bank', 'net'], ['map', 'img'], ['map', 'log'], ['map', 'net'],
+    ['web', 'prs'], ['web', 'str'], ['log', 'str'], ['log', 'zip'], ['img', 'zip'], ['img', 'buf'], ['net', 'cry'], ['net', 'zip'],
+    ['cry', 'buf'], ['prs', 'pad'], ['str', 'pad']];
+  const W = 100, H = 32, edges = {}, nodes = {};
+  E.forEach(([p, c]) => {
+    const a = N[p], b = N[c];
+    edges[p + '>' + c] = el('line', { x1: a[1], y1: a[2] + H, x2: b[1], y2: b[2], class: 'dt-edge' }, svg);
+  });
+  for (const k in N) {
+    const [name, x, y, app] = N[k];
+    const g = el('g', { class: 'dt-node' + (app ? ' app' : ''), tabindex: '0', role: 'button', 'aria-label': name, 'data-k': k }, svg);
+    el('rect', { x: x - W / 2, y, width: W, height: H, rx: 8 }, g);
+    txt(g, x, y + 21, name, '');
+    const go = () => poison(k);
+    g.addEventListener('click', go);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    nodes[k] = g;
+  }
+  function reset() {
+    for (const k in nodes) nodes[k].classList.remove('hit', 'src');
+    for (const k in edges) edges[k].classList.remove('hit');
+    $('#dt-out').innerHTML = '点一个包试试。';
+  }
+  function poison(src) {
+    reset();
+    const hit = new Set([src]), q = [src];
+    while (q.length) {
+      const c = q.shift();
+      E.forEach(([p, ch]) => { if (ch === c) { edges[p + '>' + ch].classList.add('hit'); if (!hit.has(p)) { hit.add(p); q.push(p); } } });
+    }
+    hit.forEach(k => nodes[k].classList.add(k === src ? 'src' : 'hit'));
+    const apps = [...hit].filter(k => N[k][3]), libs = hit.size - 1 - (N[src][3] ? 0 : apps.length);
+    let s = `投毒：<span class="warn">${N[src][0]}</span>　→　`;
+    if (N[src][3]) s += '这本身就是一个应用，只影响它自己。';
+    else s += `波及 ${libs ? `<span class="big">${libs}</span> 个包、` : ''}<span class="big">${apps.length}</span> 个应用${apps.length ? `（${apps.map(k => N[k][0]).join('、')}）` : ''}。`;
+    if (src === 'pad') s += '<br><span class="muted" style="font-size:14px">最底下、最不起眼的小包，往往被用得最广。用这两个应用的人，可能谁也没听说过"补齐空格"。</span>';
+    if (src === 'zip') s += '<br><span class="muted" style="font-size:14px">xz 就处在这样的位置：一个压缩库，被许多看起来和压缩无关的程序间接用到。</span>';
+    if (src === 'log') s += '<br><span class="muted" style="font-size:14px">Log4j 就处在这样的位置：几乎每个大型 Java 系统都直接用它。</span>';
+    $('#dt-out').innerHTML = s;
+  }
+  $('#dt-clr').onclick = reset;
+  reset();
+})();
+
+/* ---------- 通行密钥与钓鱼 ---------- */
+(function () {
+  let site = 'real', way = 'pw';
+  const F = {
+    'real-pw': [['你', '输入密码', ''], ['bank.com', '核对密码，登录成功', 'ok'], ['攻击者', '什么也没拿到', '']],
+    'fake-pw': [['你', '没看出网址不对，输入了密码', ''], ['bank-login-secure.com', '把密码记了下来', 'bad'], ['攻击者', '拿着你的密码去登录真的 bank.com', 'bad']],
+    'real-pk': [['你', '按一下指纹', ''], ['设备', '找到 bank.com 的私钥，签名', 'ok'], ['bank.com', '用公钥验证签名，登录成功', 'ok']],
+    'fake-pk': [['你', '没看出网址不对，想按指纹', ''], ['设备', '这个网址没有注册过的密钥，拒绝签名', 'ok'], ['攻击者', '没有密码可偷，私钥也拿不走', 'ok']],
+  };
+  const O = {
+    'real-pw': '密码登录成功。但这个密码如果在别的网站也用过，那边泄露时这里也危险。',
+    'fake-pw': '<span class="warn">密码被偷走。</span>钓鱼网站长得和真的一模一样，靠人的眼睛很难分辨。',
+    'real-pk': '<span class="good">登录成功。</span>网站只存了公钥，就算被攻破，泄露的也只是本来就能公开的东西。',
+    'fake-pk': '<span class="good">钓鱼失败。</span>浏览器按网址取密钥，bank-login-secure.com 不是 bank.com。你看走了眼，软件替你看住了。',
+  };
+  function draw() {
+    const k = site + '-' + way;
+    $('#pk-flow').innerHTML = F[k].map(([w, t, c]) => `<div class="${c}"><b>${w}</b>${t}</div>`).join('');
+    $('#pk-out').innerHTML = O[k];
+  }
+  $$('#pk-site button').forEach(b => b.onclick = () => { $$('#pk-site button').forEach(x => x.classList.toggle('sel', x === b)); site = b.dataset.s; draw(); });
+  $$('#pk-way button').forEach(b => b.onclick = () => { $$('#pk-way button').forEach(x => x.classList.toggle('sel', x === b)); way = b.dataset.w; draw(); });
+  draw();
+})();
+
+/* ---------- 莫斯卡不等式：先存后解 ---------- */
+(function () {
+  const svg = $('#mo'), Y0 = 2026, SPAN = 46, X0 = 120, X1 = 660;
+  const sx = yr => X0 + (yr - Y0) / SPAN * (X1 - X0);
+  function draw() {
+    const x = +$('#mo-x').value, y = +$('#mo-y').value, z = +$('#mo-z').value;
+    $('#mo-xv').textContent = x + ' 年'; $('#mo-yv').textContent = y + ' 年'; $('#mo-zv').textContent = z + ' 年';
+    svg.innerHTML = '';
+    for (let yr = Y0; yr <= Y0 + SPAN; yr += 5) {
+      const px = sx(yr);
+      el('line', { x1: px, x2: px, y1: 20, y2: 168, class: 's-dash', style: 'opacity:.35' }, svg);
+      txt(svg, px, 188, String(yr), 't-sub mid');
+    }
+    txt(svg, X0 - 10, 52, '迁移期', 't-main end');
+    txt(svg, X0 - 10, 68, '还在用旧算法', 't-sub end');
+    el('rect', { x: sx(Y0), y: 36, width: sx(Y0 + y) - sx(Y0), height: 30, rx: 5, class: 's-acc' }, svg);
+    txt(svg, X0 - 10, 116, '最后一批旧加密', 't-main end');
+    txt(svg, X0 - 10, 132, '的数据还要保密', 't-sub end');
+    const end = Math.min(Y0 + y + x, Y0 + SPAN);
+    el('rect', { x: sx(Y0 + y), y: 100, width: sx(end) - sx(Y0 + y), height: 30, rx: 5, class: 's-soft' }, svg);
+    const bad = x + y > z;
+    if (bad) {
+      const a = Math.max(Y0 + z, Y0 + y);
+      el('rect', { x: sx(a), y: 100, width: sx(end) - sx(a), height: 30, rx: 5, style: 'fill:var(--bad-soft);stroke:var(--bad);stroke-width:2' }, svg);
+      if (sx(end) - sx(a) > 60) txt(svg, (sx(a) + sx(end)) / 2, 120, '会被破解', 't-sub mid');
+    }
+    const qx = sx(Y0 + z);
+    el('line', { x1: qx, x2: qx, y1: 14, y2: 168, style: 'stroke:var(--on);stroke-width:3' }, svg);
+    txt(svg, Math.min(qx + 6, X1 - 112), 160, '量子计算机出现', 't-sub t-on');
+    const gap = x + y - z;
+    $('#mo-out').innerHTML = bad ?
+      `${x} + ${y} = ${x + y} &gt; ${z}　<span class="warn">来不及了：</span>迁移结束前最后加密的数据，有 <span class="big">${Math.min(gap, x)}</span> 年的保密期落在量子计算机出现之后。今天被截获存下来的流量，到时候就能解开。` :
+      `${x} + ${y} = ${x + y} ≤ ${z}　<span class="good">来得及，</span>还有 <span class="big">${-gap}</span> 年的余量。但"量子计算机还要几年"谁也说不准，余量越小越危险。`;
+  }
+  ['#mo-x', '#mo-y', '#mo-z'].forEach(s => $(s).oninput = draw);
+  draw();
+})();
+</script>
+</body>
+</html>

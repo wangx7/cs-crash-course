@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>26 图形用户界面 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.desk{position:relative;height:330px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--accent-soft);touch-action:none;user-select:none;-webkit-user-select:none}
+.desk .bar{position:absolute;left:0;right:0;top:0;height:26px;background:var(--panel);border-bottom:1px solid var(--line);display:flex;gap:14px;align-items:center;padding:0 10px;font-size:13px}
+.desk .bar span{cursor:pointer;padding:2px 6px;border-radius:5px}
+.desk .bar span.open{background:var(--on-soft)}
+.desk .menu{position:absolute;top:26px;background:var(--panel);border:1px solid var(--line);border-radius:0 0 8px 8px;box-shadow:0 4px 12px rgba(0,0,0,.12);font-size:13px;z-index:999;display:none}
+.desk .menu div{padding:5px 14px;cursor:pointer}
+.desk .menu div:hover{background:var(--on-soft)}
+.desk .icon{position:absolute;width:64px;text-align:center;font-size:12px;cursor:pointer}
+.desk .icon i{display:block;margin:0 auto 3px;width:36px;height:30px;border-radius:5px;border:2px solid var(--ink);background:var(--panel)}
+.desk .icon.folder i{border-radius:3px 9px 5px 5px;background:var(--paper)}
+.desk .icon.trash i{width:28px;height:34px;border-radius:2px 2px 7px 7px}
+.desk .icon.sel span{background:var(--accent);color:#fff;border-radius:3px;padding:0 3px}
+.desk .win{position:absolute;background:var(--panel);border:1.5px solid var(--ink);border-radius:8px;box-shadow:0 6px 16px rgba(0,0,0,.14);overflow:hidden}
+.desk .win .tb{height:24px;background:var(--code);border-bottom:1px solid var(--line);font-size:12px;display:flex;align-items:center;padding:0 8px;cursor:grab}
+.desk .win .tb b{margin-left:auto;cursor:pointer;font-weight:400;padding:0 4px}
+.desk .win.front .tb{background:var(--on-soft)}
+.desk .win .bd{padding:8px 10px;font-size:13px}
+.desk .cursor{position:absolute;pointer-events:none;width:0;height:0;z-index:1000}
+.wimp{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;font-size:14px}
+.wimp span{border:1px solid var(--line);border-radius:8px;padding:4px 10px;background:var(--panel)}
+.wimp b{color:var(--on)}
+.d20{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:760px){.d20{grid-template-columns:1fr}}
+.d20 pre{margin:0;font:13px/1.75 var(--mono);background:var(--code);border-radius:10px;padding:10px 12px;overflow-x:auto}
+.d20 pre span{display:block;border-radius:4px;padding:0 4px;transition:background .2s}
+.d20 pre span.hl{background:var(--on-soft)}
+.d20 pre em{font-style:normal;color:var(--muted)}
+.app{border:1.5px solid var(--ink);border-radius:10px;overflow:hidden;background:var(--panel);transition:background .3s}
+.app.red{background:#b3121b}
+.app .tb{height:26px;background:var(--code);border-bottom:1px solid var(--line);font-size:13px;display:flex;align-items:center;padding:0 10px}
+.app .bd{display:flex;gap:10px;padding:16px;align-items:center}
+.app .box{flex:1;height:40px;border:1.5px solid var(--ink);border-radius:6px;background:var(--panel);display:flex;align-items:center;justify-content:center;font:600 22px var(--mono)}
+.app button{height:40px;padding:0 18px;font:inherit;font-weight:600;border-radius:6px;border:1.5px solid var(--ink);background:var(--panel);color:var(--ink);cursor:pointer}
+.evlog{margin-top:10px;font:12.5px/1.7 var(--mono);background:var(--bg);border-radius:8px;padding:6px 10px;height:132px;overflow-y:auto}
+.evlog .ig{color:var(--muted)}
+.evlog .hd{color:var(--on)}
+</style>
+</head>
+<body data-ep="26">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=27" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 26 集</div>
+  <h1>图形用户界面</h1>
+  <p class="en">Graphical User Interfaces</p>
+  <p class="lead">不用再背命令，屏幕上直接摆出你能做什么，"指一指、点一下"就行。这套界面不是 Macintosh 一夜发明的，而是从恩格尔巴特的鼠标、施乐的"桌面"一路演化来的；它背后的编程方式也变了——事件驱动。</p>
+  <div class="road">
+    <span>恩格尔巴特与鼠标</span><i>→</i><span>演示之母</span><i>→</i><span>施乐奥托：桌面隐喻、WIMP</span><i>→</i><span>事件驱动编程</span><i>→</i><span>施乐之星</span><i>→</i><span>Lisa、Mac</span><i>→</i><span>Windows</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从命令行到点一点</a></li>
+    <li><a href="#ch1">1 · 恩格尔巴特</a></li>
+    <li><a href="#ch2">2 · 施乐奥托</a></li>
+    <li><a href="#ch3">3 · 事件驱动编程</a></li>
+    <li><a href="#ch4">4 · 施乐之星</a></li>
+    <li><a href="#ch5">5 · 苹果：Lisa 与 Mac</a></li>
+    <li><a href="#ch6">6 · Windows 与自然选择</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从命令行到"指一指、点一下"</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！上集最后谈到了苹果在 1984 年发布的 Macintosh。这是普通人能买到的第一台带<b>图形用户界面</b>的计算机，还配了一个鼠标来操作。那个年代其他个人计算机用的全是命令行，图形界面是一次革命性的进化。</p>
+  <p>你不必记住或者猜出该输入的正确命令，图形界面直接把能做的事显示给你看，只要在屏幕上找到想做的那一项就行。这是一种<b>"指一指、点一下"</b>（point and click）的界面。突然间，计算机直观多了：不只是爱好者或计算机科学家，任何人都能自己摸索着用起来。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="cli-gui" viewBox="0 0 680 210" role="img" aria-label="命令行与图形界面对比"></svg></div>
+      <figcaption>图 1　命令行要你"想起来"该打什么；图形界面让你"看出来"能做什么。</figcaption>
+    </figure>
+  </div>
+
+  <p>人们认为是 Macintosh 让图形用户界面（GUI）成了主流，但实际上图形界面是几十年研究的成果。前几集讲过一些早期的交互式图形程序，比如 1962 年的 Sketchpad 和《太空大战》（Spacewar!），但它们都是一次性的程序，不是一整套融为一体的使用体验。现代图形界面真正的先驱，可以说是<b>道格拉斯·恩格尔巴特</b>（Douglas Engelbart）。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>恩格尔巴特：增强人类智力</h2>
+  <h3>思想泡泡</h3>
+  <p>二战期间，恩格尔巴特驻扎在菲律宾当雷达操作员，读到了万尼瓦尔·布什关于 Memex 的文章（第 24 集讲过）。这些想法启发了他。海军服役结束后他回到学校，1955 年在加州大学伯克利分校拿到博士学位。他投身于新兴的计算机领域，在 1962 年一份开创性的报告里汇集了自己的想法，报告名叫<b>《增强人类智力》</b>（Augmenting Human Intellect）。</p>
+  <p>恩格尔巴特认为，人类面临的问题变复杂的速度，比我们解决问题能力增长的速度更快。因此，找到增强智力的方法，似乎既必要又值得追求。他看到计算机的用处不只是自动化，还可以成为未来知识工作者应对复杂问题必不可少的<b>交互式工具</b>。</p>
+  <p>伊凡·苏泽兰不久前演示的 Sketchpad 进一步启发了他。恩格尔巴特决定动手把愿景变成现实，招募团队来做 <b>oN-Line System</b>（NLS）。他意识到，对他想实现的那类程序来说，只有键盘是不够的。用他的话说：</p>
+  <blockquote class="quote">"我们设想解决问题的人用计算机辅助工作站来增强他们的工作。<b>他们需要和屏幕上显示的信息互动，用某种设备在屏幕上移动[光标]。</b>"</blockquote>
+  <p>1964 年，他和同事比尔·英格利希（Bill English）一起，造出了<b>第一个计算机鼠标</b>。线从设备的尾部伸出来，看起来很像一只老鼠，于是"鼠标"这个外号就沿用了下来。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="mouse" viewBox="0 0 680 220" role="img" aria-label="第一个鼠标"></svg></div>
+      <figcaption>图 2　第一个鼠标的示意：木头外壳，底下两个互相垂直的轮子分别测左右和前后的移动（结构为补充说明）。</figcaption>
+    </figure>
+  </div>
+
+  <h3>演示之母</h3>
+  <p>1968 年，恩格尔巴特在"秋季联合计算机会议"上展示了他的整个系统，这次演示常被称为<b>"演示之母"</b>（the mother of all demos）。演示长 90 分钟，展示了现代计算的很多功能：位图图形、视频会议、文字处理，以及多人实时协作编辑文档。还有现代图形界面的雏形，比如鼠标和多窗口——不过窗口还不能互相重叠。</p>
+  <p>它远远领先于那个时代，而且和很多贴着这个标签的产品一样，最终失败了，至少在商业上是这样。但它对当时的计算机研究者影响巨大。恩格尔巴特因为这个计算史上的分水岭时刻，获得了 1997 年的图灵奖。</p>
+  <div class="extra">
+    <span class="t">你每天都在用它的后代</span>
+    "多人实时协作编辑文档"——这就是今天的在线文档、Figma 一类工具。1968 年的演示里已经有了，只是又过了四十多年，网络和浏览器才让它普及。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>施乐奥托：桌面隐喻与 WIMP</h2>
+  <p>1970 年代初，政府资金开始减少，这在两集前（第 24 集）讲过。那时恩格尔巴特团队里的很多人，包括比尔·英格利希，去了施乐公司新成立的帕洛阿尔托研究中心，更常被叫作 <b>Xerox PARC</b>。第一台真正带图形界面的计算机就是在这里开发的：<b>施乐奥托</b>（Xerox Alto），1973 年完成。</p>
+  <p>要让计算机好用，光有花哨的图形还不够。它需要围绕一个人们已经熟悉的概念来设计，让人几乎不用培训，一眼就明白怎么用。施乐的答案是：把二维屏幕当成一张<b>桌面</b>（desktop）。</p>
+  <p>就像桌上可以摊开很多张纸一样，用户可以同时打开好几个程序。每个程序都待在自己的框里，这个框提供了看向程序的视野，叫作<b>窗口</b>（window）。也像桌上的纸一样，窗口可以<b>互相重叠</b>，挡住后面的东西。还有桌面小配件，比如计算器和时钟，用户可以把它们放在屏幕上，随意挪动。</p>
+  <p>不过它并不是照搬真实的桌面，而是用桌面做一个<b>隐喻</b>。所以——毫不意外——它叫<b>"桌面隐喻"</b>（Desktop Metaphor）。</p>
+
+  <div class="card">
+    <h3>动手：一张 1970 年代风格的"桌面"</h3>
+    <p class="hint" style="margin-top:0">拖动窗口的标题栏，点一下窗口把它放到最前面；点顶部菜单；双击图标打开窗口；点 × 关掉。</p>
+    <div class="desk" id="desk">
+      <div class="bar" id="bar"><span data-m="file">文件</span><span data-m="edit">编辑</span><span data-m="view">查看</span></div>
+      <div class="menu" id="menu"></div>
+    </div>
+    <div class="wimp">
+      <span><b>W</b>indow 窗口</span><span><b>I</b>con 图标</span><span><b>M</b>enu 菜单</span><span><b>P</b>ointer 指针</span>
+    </div>
+    <div class="step-text" id="desk-cap">（试着操作一下）</div>
+  </div>
+
+  <p>设计这样的界面有很多种方法，但 Alto 团队用的是<b>窗口、图标、菜单和指针</b>，所以叫 <b>WIMP</b> 界面（Windows、Icons、Menus、Pointer）。今天大部分桌面图形界面用的都是它。</p>
+  <p>它还提供了一套基本的<b>部件</b>（widget）：可复用的图形积木，比如按钮、复选框、滑动条和标签页。这些也都取材于现实世界的物品，让人觉得熟悉。图形界面程序就是由这些部件搭起来的。下面就用这种新的编程范式，写一个简单的例子试试。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>事件驱动编程：掷一个二十面骰子</h2>
+  <p>首先，得告诉操作系统，为我们的程序新建一个窗口。这要通过 <b>GUI API</b> 来做，需要指定窗口的名字和大小，比如 500×500 像素。</p>
+  <p>然后加几个部件：一个文本框和一个按钮。创建它们需要几个参数。首先要指定它们出现在哪个窗口里，因为一个程序可以有多个窗口；还要指定默认文字、在窗口里的 X、Y 位置，以及宽度和高度。</p>
+  <p>好，现在我们有了一个看起来像图形界面程序的东西，但它还没有任何功能。点 "Roll" 按钮，什么也不会发生。</p>
+  <p>之前讨论的例子里，代码基本是从上到下执行的。而图形界面用的是所谓的<b>事件驱动编程</b>（event-driven programming）：代码可以在任何时候、以不同的顺序执行，来响应<b>事件</b>。这里是用户触发的事件，比如点按钮、选菜单项、滚动窗口。要是一只猫踩过你的键盘，那就是一下子来了一大堆事件！</p>
+  <p>假设用户点 "Roll" 按钮时，我们想随机生成一个 1 到 20 之间的数，然后显示在文本框里。可以写一个函数专门做这件事。还可以玩得花一点：如果掷出 20，就把窗口背景变成血红色！</p>
+  <p>最后要做的，是把这段代码"挂"上去，让每次点按钮时都触发它。为此，要在初始化函数里加一行，声明我们的函数负责"处理"这个按钮的这个事件。这里事件的类型是<b>点击事件</b>，我们的函数就是这个事件的<b>事件处理函数</b>（event handler）。</p>
+
+  <div class="card">
+    <h3>动手：Roll D20</h3>
+    <div class="d20">
+      <pre id="d20-code"></pre>
+      <div>
+        <div class="app" id="app"><div class="tb">Roll D20 · 500×500</div><div class="bd"><div class="box" id="box"></div><button id="roll">Roll</button></div></div>
+        <div class="btns"><button class="btn" id="hook">先不挂处理函数</button><button class="btn" id="cat">让猫踩过键盘 🐈</button></div>
+        <div class="evlog" id="evlog"></div>
+      </div>
+    </div>
+  </div>
+  <p>现在完成了。按钮可以点上一整天，每次点击，我们的 rollD20 函数都会被<b>派发</b>（dispatch）并执行。你在文本编辑器里点那个小小的"加粗"按钮，或者在下拉菜单里选"关机"时，背后发生的正是这件事：一个和那个事件关联的函数被触发了。</p>
+  <p>希望我别掷出 20……啊！！！</p>
+  <div class="extra">
+    <span class="t">这就是你写的前端代码</span>
+    浏览器里的 <code>button.addEventListener('click', rollD20)</code>、Vue 里的 <code>&lt;button @click="rollD20"&gt;</code>，就是课程里"在初始化函数里加一行"的那一行。浏览器内部有一个<b>事件循环</b>：不停地从队列里取出事件（点击、按键、定时器到点……），看有没有挂着处理函数，有就调用。没挂处理函数的事件——比如上面猫踩出来的按键——就被直接忽略。而"按钮、复选框、滑动条"这些部件，就是今天"组件库"的祖先。
+  </div>
+  <p>好，回到施乐奥托！</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>施乐之星：剪切、复制、粘贴与所见即所得</h2>
+  <p>奥托大约造了 2000 台，在施乐内部使用，也送给大学实验室，但从来没有商业出售过。PARC 团队不断改进硬件和软件，最终在 1981 年发布了<b>施乐之星</b>（Xerox Star）系统。</p>
+  <p>施乐之星扩展了桌面隐喻。现在文件看起来就像一张张纸，可以放进小文件夹里，这些都能摆在桌面上，或者收进数字文件柜。这是盖在底层文件系统之上的一层隐喻。从用户的角度看，这是<b>一层新的抽象</b>！</p>
+  <p>施乐是做复印机生意的，在文字和图形制作工具上也有很多进展。比如，是他们提出了<b>"剪切""复制""粘贴"</b>这些术语。这个比喻来自人们修改打字机文档的方式：真的是用剪刀把文字剪下来，再用胶水贴到另一份文档里你想要的位置。然后把这一页复印一遍，压回单独一层，修改的痕迹就看不出来了。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="cutpaste" viewBox="0 0 680 200" role="img" aria-label="打字机时代的剪切粘贴"></svg></div>
+      <figcaption>图 3　打字机时代的"剪切—粘贴—复印"。计算机上的这三个词就是从这里借来的。</figcaption>
+    </figure>
+  </div>
+
+  <p>谢天谢地有了计算机！文字处理软件出现后，这种手工做法就没有意义了，Apple II 和 Commodore PET 这样的平台上都有文字处理软件。但施乐比竞争对手走得远得多，他们的理念是：你在计算机上做出来的任何东西，打印出来都应该和屏幕上一模一样。他们把这叫作<b>"所见即所得"</b>（What You See Is What You Get，WYSIWYG）。</p>
+  <p>不幸的是，就像恩格尔巴特的 oN-Line System 一样，施乐之星也领先于时代。销量很差，因为在办公室配一套，价格相当于今天的将近 20 万美元。而且同一年 IBM PC 发布了，紧接着便宜的"IBM 兼容"克隆机像海啸一样涌来，这也没帮上忙。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>苹果：Lisa 与 Macintosh</h2>
+  <p>但 PARC 研究人员培育了将近十年的好点子并没有白费。1979 年 12 月，施乐之星出货前一年半，一个你可能听说过的人来参观了：<b>史蒂夫·乔布斯</b>。</p>
+  <p>关于这次参观有很多传说，很多人说乔布斯和苹果偷了施乐的创意。但这根本不是事实。实际上，是施乐主动找苹果，希望合作。最终施乐在苹果备受期待的首次公开募股（IPO）之前，买下了价值一百万美元的苹果股份——但附带一个额外条款："公开施乐 PARC 正在做的一切酷东西"。</p>
+  <p>史蒂夫知道 PARC 有计算机领域最聪明的一批人，但他还是没想到会看到那些东西。其中有一个演示：在清晰的位图显示器上运行着施乐的图形界面，全靠直观的鼠标操作。史蒂夫后来说：</p>
+  <blockquote class="quote">"就像蒙在眼前的一层纱被揭开了。<b>我看到了计算机注定要走向的未来。</b>"</blockquote>
+  <p>史蒂夫带着随行的工程师回到苹果，开始发明新功能，比如<b>菜单栏</b>，以及存放待删除文件的<b>垃圾桶</b>——满了还会鼓起来，又是隐喻。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="prices" viewBox="0 0 680 210" role="img" aria-label="三款图形界面计算机的价格"></svg></div>
+      <figcaption>图 4　三款图形界面计算机的价格，都按"相当于今天的美元"计（数字来自课程）。</figcaption>
+    </figure>
+  </div>
+
+  <p>苹果第一款带图形界面和鼠标的产品，是 1983 年发布的 <b>Apple Lisa</b>。一台超级先进的机器，配了一个超级先进的价格——差不多相当于今天的 2.5 万美元。这比施乐之星便宜多了，但在市场上同样失败。</p>
+  <p>幸运的是，苹果手里还有另一个项目：一年后、1984 年发布的 <b>Macintosh</b>。价格大约相当于今天的 6000 美元，是 Lisa 的四分之一。它打中了，开售头 100 天就卖了 7 万台。</p>
+  <p>但最初的狂热过去后，销量开始下滑，苹果卖出的 Apple II 比 Mac 还多。一个大问题是：没人给这台界面激进的新机器写软件。情况还在变糟——竞争对手很快追了上来。不久，价格只有 Mac 几分之一的其他个人计算机，也有了简陋但能用的图形界面。消费者买账，PC 软件开发者也买账。随着苹果的财务状况越来越糟，加上和苹果新任 CEO 约翰·斯卡利的矛盾越来越深，史蒂夫·乔布斯被赶出了苹果。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>Windows 与界面的"自然选择"</h2>
+  <p>几个月后，微软发布了 <b>Windows 1.0</b>。它也许不如 Mac OS 漂亮，但这是一场激烈竞争的第一枪，微软后来几乎统治了这个行业：十年内，将近 95% 的个人计算机上运行着微软 Windows。</p>
+  <p>起初，Mac OS 的粉丝可以理直气壮地说 Mac 的图形和易用性更好。Windows 早期版本都建立在 DOS 之上，而 DOS 设计时从没想过要跑图形界面。但在 Windows 3.1 之后，微软开始开发一个新的、面向消费者的操作系统，带升级版图形界面，叫 <b>Windows 95</b>。这是一次重大的重写，提供的不只是更精致的图形，还有 Mac OS 当时没有的高级功能，比如<b>程序多任务</b>和<b>受保护内存</b>（第 18 集讲过）。Windows 95 引入了很多今天的 Windows 里还能看到的界面元素，比如<b>开始菜单</b>、<b>任务栏</b>和 <b>Windows 资源管理器</b>。</p>
+  <p>不过微软也不是没失过手。为了让桌面隐喻更简单友好，微软做了一个叫 <b>Microsoft Bob</b> 的产品，把隐喻用到了极致：屏幕上是一整个虚拟房间，程序变成了物品，可以放在桌子上、书架上。甚至还有噼啪作响的壁炉，和一只提供帮助的虚拟小狗。看到两边的门了吗？对，它们通向计算机里的其他房间，那里有别的程序。你可能猜到了，它没有成功。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="evo" viewBox="0 0 680 240" role="img" aria-label="界面的演化树"></svg></div>
+      <figcaption>图 5　界面的"自然选择"：WIMP 一路传下来，太超前或太过头的分支被淘汰了。</figcaption>
+    </figure>
+  </div>
+
+  <p>这个好例子说明，我们今天用着顺手的用户界面，本质上是<b>自然选择</b>的产物。不管你用的是 Windows、Mac、Linux 还是别的桌面图形界面，它几乎一定是施乐奥托首创的 WIMP 范式的进化版。这一路上，人们试过很多糟糕的点子，失败了。一切都必须被发明、测试、改进，然后被采纳或者被抛弃。</p>
+  <p>今天图形界面无处不在。它们不错，但并不总是很好。你肯定也遇到过和设计有关的糟心时刻：下载了某个 App、用别人的手机，或者打开某个网站。正因如此，计算机科学家和界面设计师还在努力，想做出既更容易用、又更强大的计算体验——最终，朝着恩格尔巴特"增强人类智力"的愿景前进。我们下周见！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <ul class="timeline">
+    <li><span class="yr">1962</span>恩格尔巴特发表《增强人类智力》</li>
+    <li><span class="yr">1964</span>恩格尔巴特和比尔·英格利希造出第一个鼠标</li>
+    <li><span class="yr">1968</span>"演示之母"：位图、视频会议、文字处理、实时协作、多窗口（不能重叠）</li>
+    <li><span class="yr">1973</span>施乐奥托：桌面隐喻、可重叠窗口、WIMP、部件</li>
+    <li><span class="yr">1979</span>乔布斯参观 Xerox PARC</li>
+    <li><span class="yr">1981</span>施乐之星：文件和文件夹、剪切复制粘贴、所见即所得；约 20 万美元（今天），失败</li>
+    <li><span class="yr">1983</span>Apple Lisa：约 2.5 万美元（今天），失败</li>
+    <li><span class="yr">1984</span>Macintosh：约 6000 美元（今天），100 天卖 7 万台</li>
+    <li><span class="yr">1985</span>乔布斯离开苹果；Windows 1.0 发布</li>
+    <li><span class="yr">1995</span>Windows 95：多任务、受保护内存、开始菜单、任务栏</li>
+    <li><span class="yr">1997</span>恩格尔巴特获图灵奖</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    图形界面把"记住命令"变成"看见选项"，核心是借用熟悉事物的隐喻（桌面、窗口、文件夹、垃圾桶、剪切粘贴）和 WIMP 范式；写图形界面程序要换一种思路——事件驱动：不按从上到下的顺序跑，而是事件来了，就调用挂在它上面的处理函数。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. WIMP 指什么？"桌面隐喻"为什么能让人不经培训就会用？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">窗口（Windows）、图标（Icons）、菜单（Menus）、指针（Pointer）。桌面隐喻借用人们熟悉的办公桌：窗口像摊开的纸、可以互相重叠，文件像纸、可以放进文件夹，还有计算器时钟等小配件，人们一看就能联想到怎么用。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 事件驱动编程和之前"从上到下执行"有什么不同？Roll D20 的例子里，哪一行把代码和按钮连起来？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">事件驱动的代码可以在任何时间、以任何顺序执行，取决于发生了什么事件（点击、选菜单、滚动）。在初始化函数里加的那一行——声明 rollD20 是这个按钮"点击事件"的处理函数——把两者连了起来，此后每次点击都会派发执行 rollD20。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. "剪切""复制""粘贴"这几个词从哪来？什么是"所见即所得"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">来自修改打字机文档的做法：用剪刀剪下文字，用胶水贴到另一份文档，再复印一遍抹平痕迹。施乐把这些词用到了计算机上。所见即所得（WYSIWYG）指屏幕上做出来的东西，打印出来和屏幕上一模一样。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 施乐奥托和施乐之星技术领先，为什么商业上没成功？Macintosh 初期又遇到了什么问题？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">奥托从没商业出售；施乐之星太贵（一套相当于今天近 20 万美元），又赶上同年 IBM PC 和大量便宜的兼容机。Mac 价格降到 Lisa 的四分之一，开局很好，但没人为它写软件，而价格低得多的 PC 很快也有了能用的图形界面。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="25.html"><small>← 上一集</small>25 个人计算机革命</a>
+    <a class="next" href="27.html"><small>下一集 →</small>27 3D 图形</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 26 集 Graphical User Interfaces（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 命令行 vs 图形界面 ---------- */
+(function () {
+  const svg = $('#cli-gui');
+  // 命令行
+  el('rect', { x: 20, y: 20, width: 300, height: 160, rx: 10, style: 'fill:#1d2127;stroke:var(--ink)' }, svg);
+  [['A> DIR', '#e9e7e2'], ['A> COPY REPORT.TXT B:', '#e9e7e2'], ['A> DEL OLD*.*', '#e9e7e2'], ['A> ▌', '#ffb03a']].forEach(([t, c], i) => {
+    const n = txt(svg, 36, 50 + i * 26, t, 't-mono'); n.style.fill = c;
+  });
+  txt(svg, 170, 200, '命令行：得记住命令怎么拼', 't-sub mid');
+  // 图形界面
+  el('rect', { x: 360, y: 20, width: 300, height: 160, rx: 10, class: 's-panel' }, svg);
+  el('rect', { x: 360, y: 20, width: 300, height: 22, rx: 0, style: 'fill:var(--code);stroke:none' }, svg);
+  txt(svg, 372, 36, '文件　编辑　查看', 't-sub');
+  [['报告', 390], ['旧文件', 470], ['B 盘', 550]].forEach(([n, x]) => {
+    el('rect', { x, y: 66, width: 44, height: 36, rx: 5, class: 's-acc' }, svg);
+    txt(svg, x + 22, 120, n, 't-sub mid');
+  });
+  el('rect', { x: 460, y: 132, width: 180, height: 36, rx: 6, class: 's-soft' }, svg);
+  txt(svg, 550, 155, '把"报告"拖到 B 盘', 't-sub mid');
+  el('path', { d: 'M418,84 l0,22 l6,-6 l5,10 l4,-2 l-5,-10 l8,0 z', style: 'fill:var(--panel);stroke:var(--ink);stroke-width:1.3' }, svg);
+  txt(svg, 510, 200, '图形界面：能做什么都摆在眼前', 't-sub mid');
+})();
+
+/* ---------- 鼠标 ---------- */
+(function () {
+  const svg = $('#mouse');
+  // 俯视图
+  el('rect', { x: 70, y: 50, width: 120, height: 130, rx: 14, style: 'fill:var(--wood);stroke:var(--ink);stroke-width:1.5' }, svg);
+  el('rect', { x: 150, y: 62, width: 26, height: 14, rx: 3, style: 'fill:#d64545;stroke:var(--ink)' }, svg);
+  el('path', { d: 'M130,50 C130,25 220,30 260,20', class: 's-line' }, svg);
+  txt(svg, 130, 200, '俯视：木壳 + 一个按钮', 't-sub mid');
+  txt(svg, 270, 24, '线从"尾巴"伸出来 → 像老鼠', 't-sub');
+  // 仰视图
+  el('rect', { x: 400, y: 50, width: 120, height: 130, rx: 14, class: 's-panel' }, svg);
+  el('rect', { x: 448, y: 70, width: 24, height: 50, rx: 3, class: 's-on' }, svg);
+  el('rect', { x: 418, y: 135, width: 50, height: 22, rx: 3, class: 's-acc' }, svg);
+  txt(svg, 460, 200, '仰视：两个互相垂直的轮子', 't-sub mid');
+  txt(svg, 540, 98, '前后移动', 't-sub t-on');
+  txt(svg, 540, 150, '左右移动', 't-sub t-acc');
+  txt(svg, 340, 112, '翻过来', 't-sub mid'); txt(svg, 340, 132, '→', 't-main mid');
+})();
+
+/* ---------- 桌面 ---------- */
+(function () {
+  const desk = $('#desk'), menu = $('#menu'), cap = $('#desk-cap');
+  let z = 10;
+  const MENUS = { file: ['新建文件夹', '打开', '关闭窗口'], edit: ['剪切', '复制', '粘贴'], view: ['按图标', '按列表'] };
+  function front(w) { $$('.win', desk).forEach(x => x.classList.remove('front')); w.classList.add('front'); w.style.zIndex = ++z; }
+  function makeWin(title, x, y, w, h, body) {
+    const win = document.createElement('div');
+    win.className = 'win'; Object.assign(win.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: h + 'px' });
+    win.innerHTML = `<div class="tb">${title}<b title="关闭">×</b></div><div class="bd">${body}</div>`;
+    desk.appendChild(win); front(win);
+    win.addEventListener('pointerdown', () => front(win));
+    win.querySelector('.tb b').onclick = e => { e.stopPropagation(); win.remove(); cap.textContent = `关掉了"${title}"窗口。`; };
+    const tb = win.querySelector('.tb');
+    tb.addEventListener('pointerdown', e => {
+      if (e.target.tagName === 'B') return;
+      tb.setPointerCapture(e.pointerId);
+      const sx = e.clientX - win.offsetLeft, sy = e.clientY - win.offsetTop;
+      const mv = ev => {
+        const maxX = desk.clientWidth - 40, maxY = desk.clientHeight - 24;
+        win.style.left = Math.max(-w + 40, Math.min(maxX, ev.clientX - sx)) + 'px';
+        win.style.top = Math.max(26, Math.min(maxY, ev.clientY - sy)) + 'px';
+      };
+      const up = () => { tb.removeEventListener('pointermove', mv); tb.removeEventListener('pointerup', up); cap.textContent = '窗口像桌上的纸一样，可以挪动、互相重叠，挡住后面的东西。'; };
+      tb.addEventListener('pointermove', mv); tb.addEventListener('pointerup', up);
+    });
+    return win;
+  }
+  const ICONS = [['报告', 'doc', 14, 40], ['信件', 'folder', 14, 110], ['计算器', 'doc', 14, 180], ['垃圾桶', 'trash', 14, 256]];
+  const BODY = {
+    '报告': ['报告.txt', '第一季度销售额……<br>（所见即所得：打印出来就是这样）', 220, 120],
+    '信件': ['信件', '📄 给客户.txt<br>📄 给老板.txt', 180, 110],
+    '计算器': ['计算器', '<span style="font:600 20px var(--mono)">12 + 30 = 42</span>', 190, 80],
+    '垃圾桶': ['垃圾桶', '（空的）<br>Mac 的垃圾桶满了还会鼓起来', 200, 90]
+  };
+  ICONS.forEach(([n, cls, x, y]) => {
+    const ic = document.createElement('div');
+    ic.className = 'icon ' + cls; Object.assign(ic.style, { left: x + 'px', top: y + 'px' });
+    ic.innerHTML = `<i></i><span>${n}</span>`;
+    desk.appendChild(ic);
+    ic.onclick = () => { $$('.icon', desk).forEach(i => i.classList.remove('sel')); ic.classList.add('sel'); cap.textContent = `选中了图标"${n}"。双击打开。`; };
+    ic.ondblclick = () => { const [t, b, w, h] = BODY[n]; makeWin(t, 80 + Math.random() * Math.max(10, desk.clientWidth - w - 90), 40 + Math.random() * 100, w, h, b); cap.textContent = `双击图标，打开了"${t}"窗口。`; };
+  });
+  const W = desk.clientWidth, narrow = W < 520;
+  makeWin('报告.txt', narrow ? 78 : 96, narrow ? 36 : 44, narrow ? 200 : 230, 130, '第一季度销售额……<br>窗口可以互相重叠');
+  makeWin('时钟', narrow ? W - 135 : 340, narrow ? 120 : 48, 130, 70, '<span style="font:600 20px var(--mono)" id="clock"></span>');
+  makeWin('计算器', narrow ? 96 : 250, narrow ? 190 : 110, 190, 80, '<span style="font:600 20px var(--mono)">12 + 30 = 42</span>');
+  const tick = () => { const c = $('#clock'); if (c) c.textContent = new Date().toTimeString().slice(0, 8); };
+  tick(); setInterval(tick, 1000);
+  let openM = null;
+  $$('#bar span').forEach(s => s.onclick = e => {
+    e.stopPropagation();
+    if (openM === s) { closeMenu(); return; }
+    closeMenu(); openM = s; s.classList.add('open');
+    menu.innerHTML = MENUS[s.dataset.m].map(t => `<div>${t}</div>`).join('');
+    menu.style.left = s.offsetLeft + 'px'; menu.style.display = 'block';
+    $$('div', menu).forEach(d => d.onclick = ev => { ev.stopPropagation(); cap.textContent = `选了菜单"${s.textContent} → ${d.textContent}"。在真正的程序里，这会触发一个处理函数（见下一节）。`; closeMenu(); });
+  });
+  function closeMenu() { menu.style.display = 'none'; if (openM) openM.classList.remove('open'); openM = null; }
+  desk.addEventListener('pointerdown', e => { if (!menu.contains(e.target) && !e.target.closest('.bar')) closeMenu(); });
+})();
+
+/* ---------- Roll D20 ---------- */
+(function () {
+  const L = [
+    ['initialize() {', 'i'],
+    ['  win = makeWindow("Roll D20", 500, 500)', 'i'],
+    ['  box = makeTextBox(win, "", x, y, 宽, 高)', 'i'],
+    ['  btn = makeButton(win, "Roll", x, y, 宽, 高)', 'i'],
+    ['  btn.handle("click", rollD20)', 'hook'],
+    ['}', 'i'],
+    ['', ''],
+    ['rollD20() {', 'r'],
+    ['  n = random(1, 20)', 'r'],
+    ['  box.text = n', 'r'],
+    ['  if (n == 20) win.background = 血红色', 'r20'],
+    ['}', 'r']
+  ];
+  const code = $('#d20-code');
+  let hooked = true;
+  function paint(hl) {
+    code.innerHTML = L.map(([t, k]) => {
+      let s = t || ' ';
+      if (k === 'hook' && !hooked) s = '  <em>// btn.handle("click", rollD20)  ← 还没挂上</em>';
+      else if (k === 'hook') s = t + '  <em>// 挂到点击事件上</em>';
+      return `<span class="${hl && hl.includes(k) ? 'hl' : ''}">${s}</span>`;
+    }).join('');
+  }
+  const log = $('#evlog');
+  function add(t, cls) { const d = document.createElement('div'); d.className = cls || ''; d.textContent = t; log.appendChild(d); log.scrollTop = log.scrollHeight; }
+  let n0 = 0, timer;
+  $('#roll').onclick = () => {
+    n0++;
+    if (!hooked) { add(`事件 #${n0}：click（Roll 按钮）→ 没有处理函数，忽略`, 'ig'); paint([]); return; }
+    const n = 1 + Math.floor(Math.random() * 20);
+    $('#box').textContent = n;
+    $('#app').classList.toggle('red', n === 20);
+    add(`事件 #${n0}：click（Roll 按钮）→ 派发给 rollD20 → n = ${n}${n === 20 ? '　啊！！！' : ''}`, 'hd');
+    paint(n === 20 ? ['r', 'r20'] : ['r']);
+    clearTimeout(timer); timer = setTimeout(() => paint([]), 900);
+  };
+  $('#hook').onclick = () => {
+    hooked = !hooked;
+    $('#hook').textContent = hooked ? '先不挂处理函数' : '把处理函数挂上';
+    add(hooked ? '（初始化时加上了 btn.handle("click", rollD20)）' : '（去掉了那一行：按钮还在，但点了没反应）', 'ig');
+    paint(['hook']);
+  };
+  $('#cat').onclick = () => {
+    const keys = 'asdfghjk;l'.split('').sort(() => Math.random() - .5).slice(0, 6);
+    keys.forEach((k, i) => setTimeout(() => { n0++; add(`事件 #${n0}：keydown "${k}" → 没有处理函数，忽略`, 'ig'); }, i * 90));
+  };
+  paint([]);
+  $('#box').textContent = '–';
+  add('程序启动：执行 initialize()，建窗口、文本框、按钮，然后等待事件……', 'ig');
+  paint(['i', 'hook']); setTimeout(() => paint([]), 1200);
+})();
+
+/* ---------- 剪切粘贴 ---------- */
+(function () {
+  const svg = $('#cutpaste');
+  const paper = (x, lines, extra) => {
+    el('rect', { x, y: 30, width: 130, height: 140, rx: 4, style: 'fill:var(--paper);stroke:var(--ink)' }, svg);
+    for (let i = 0; i < lines; i++) el('line', { x1: x + 14, x2: x + 116, y1: 52 + i * 18, y2: 52 + i * 18, style: 'stroke:var(--muted);stroke-width:2' }, svg);
+    if (extra) extra(x);
+  };
+  paper(20, 6, x => { el('rect', { x: x + 8, y: 80, width: 114, height: 26, class: 's-dash' }, svg); txt(svg, x + 65, 186, '① 用剪刀"剪切"', 't-sub mid'); });
+  txt(svg, 180, 104, '✂', 't-main mid');
+  paper(220, 6, x => { el('rect', { x: x + 10, y: 76, width: 112, height: 26, rx: 2, style: 'fill:var(--panel);stroke:var(--on);stroke-width:2;transform:rotate(-3deg);transform-box:fill-box;transform-origin:center' }, svg); el('line', { x1: x + 22, x2: x + 110, y1: 89, y2: 89, style: 'stroke:var(--ink);stroke-width:2' }, svg); txt(svg, x + 65, 186, '② 用胶水"粘贴"到别处', 't-sub mid'); });
+  txt(svg, 385, 104, '→', 't-main mid');
+  txt(svg, 385, 124, '复印', 't-sub mid');
+  paper(420, 6, x => { txt(svg, x + 65, 186, '③ 复印成一层，看不出痕迹', 't-sub mid'); });
+  el('rect', { x: 580, y: 60, width: 90, height: 80, rx: 10, class: 's-acc' }, svg);
+  txt(svg, 625, 92, '计算机：', 't-sub mid'); txt(svg, 625, 114, 'Ctrl+X / V', 't-mono mid');
+})();
+
+/* ---------- 价格 ---------- */
+(function () {
+  const svg = $('#prices');
+  const D = [['施乐之星（1981，一套）', 200000, '失败'], ['Apple Lisa（1983）', 25000, '失败'], ['Macintosh（1984）', 6000, '100 天卖 7 万台']];
+  D.forEach(([n, v, r], i) => {
+    const y = 22 + i * 56;
+    txt(svg, 200, y + 20, n, 't-main end');
+    const w = Math.max(4, v / 200000 * 330);
+    el('rect', { x: 210, y, width: w, height: 30, rx: 5, class: i === 2 ? 's-on' : 's-acc' }, svg);
+    txt(svg, 210 + w + 8, y + 20, '≈ $' + v.toLocaleString(), 't-mono');
+    txt(svg, 210 + w + 8, y + 38, r, 't-sub');
+  });
+})();
+
+/* ---------- 演化树 ---------- */
+(function () {
+  const svg = $('#evo');
+  const node = (x, y, t, s, cls) => { el('rect', { x: x - 70, y: y - 22, width: 140, height: 44, rx: 10, class: cls }, svg); txt(svg, x, y - 3, t, 't-main mid'); txt(svg, x, y + 14, s, 't-sub mid'); };
+  const link = (d, dead) => el('path', { d, class: dead ? 's-dash' : 's-thin', style: dead ? '' : 'stroke:var(--on);stroke-width:2.5' }, svg);
+  link('M150,120 H170'); link('M310,120 H350'); link('M490,120 H520');
+  link('M240,98 C240,60 250,40 260,40', true); link('M420,98 C420,60 430,40 440,40', true); link('M420,142 C420,180 440,205 460,205', true);
+  node(80, 120, 'NLS', '1968 · 鼠标、多窗口', 's-acc');
+  node(240, 120, '施乐奥托', '1973 · WIMP', 's-on');
+  node(420, 120, 'Mac / Windows', '1984 / 1985', 's-on');
+  node(590, 120, '今天的桌面', 'Win、Mac、Linux', 's-on');
+  node(330, 40, '施乐之星', '1981 · 太贵 ✕', 's-soft');
+  node(510, 40, 'Apple Lisa', '1983 · 太贵 ✕', 's-soft');
+  node(530, 205, 'Microsoft Bob', '隐喻过头 ✕', 's-soft');
+})();
+</script>
+</body>
+</html>

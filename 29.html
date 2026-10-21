@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>29 互联网 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.nest{font:13px var(--mono);border-radius:10px;padding:8px;border:2px solid var(--accent);background:var(--accent-soft);margin:10px 0}
+.nest .lab{font:600 12px system-ui,sans-serif;color:var(--accent);margin-bottom:4px}
+.nest .row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+.nest .hdr{padding:6px 10px;border-radius:7px;background:var(--panel);border:1px solid var(--line)}
+.nest .inner{flex:1;min-width:220px;border:2px solid var(--on);background:var(--on-soft);border-radius:8px;padding:6px}
+.nest .inner .lab{color:var(--on)}
+.nest .data{padding:6px 10px;border-radius:7px;background:var(--panel);border:1px dashed var(--line);flex:1}
+.cs{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font:15px var(--mono);margin:6px 0}
+.cs input{width:54px;font:inherit;padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);text-align:center}
+.cs input.bad{border-color:var(--bad);background:var(--bad-soft)}
+.cs .sum{font-weight:700}
+.dns-in{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.dns-in input{flex:1;min-width:180px;font:15px var(--mono);padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.osi td:first-child{font-family:var(--mono);width:36px}
+.osi tr.done td{background:var(--on-soft)}
+</style>
+</head>
+<body data-ep="29">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=30" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 29 集</div>
+  <h1>互联网</h1>
+  <p class="en">The Internet</p>
+  <p class="lead">你的电脑怎么一路连到 YouTube 的服务器？数据包到了对方电脑，该交给哪个程序？丢了怎么办？输入一个网址，浏览器又怎么知道服务器在哪？——IP、UDP、TCP、DNS，以及把它们分门别类的 OSI 模型。</p>
+  <div class="road">
+    <span>LAN → WAN → 主干</span><i>→</i><span>IP</span><i>→</i><span>UDP：端口与校验和</span><i>→</i><span>TCP：序号与确认</span><i>→</i><span>DNS</span><i>→</i><span>OSI 模型</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 从你家到 YouTube</a></li>
+    <li><a href="#ch1">1 · IP 与 UDP</a></li>
+    <li><a href="#ch2">2 · 校验和</a></li>
+    <li><a href="#ch3">3 · TCP</a></li>
+    <li><a href="#ch4">4 · DNS</a></li>
+    <li><a href="#ch5">5 · OSI 模型</a></li>
+    <li><a href="#ch6">6 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>从你家到 YouTube 的服务器</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！上集讲到，你的计算机连在一个巨大的分布式网络上，这个网络叫<b>互联网</b>。我知道这一点，因为你正在看一个 YouTube 视频，它正是通过互联网传过来的。互联网是一张不断扩大的、由互相连接的设备组成的网。</p>
+  <p>你的计算机要拿到这个视频，第一个连接是你的局域网（LAN），可能就是你家里所有连着 WiFi 路由器的设备。局域网再连到<b>广域网</b>（Wide Area Network，WAN），通常是你的<b>互联网服务提供商</b>（Internet Service Provider，ISP）运营的路由器，比如 Comcast、AT&amp;T 或 Verizon 这样的公司。一开始是一个区域路由器，比如覆盖你所在街区的；然后这个路由器连到一个更大的 WAN，可能覆盖整个城市或城镇。中间可能还要再跳几次，但最终你会连到<b>互联网主干</b>（backbone）——由一群巨型路由器组成，它们之间有带宽超高的连接。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="path" viewBox="0 0 680 252" role="img" aria-label="从家里到服务器的路径"></svg></div>
+      <figcaption>图 1　请求视频的数据包：往上跳 4 次到主干，沿主干跳 2 次，再往下跳 4 次到服务器，一共 10 跳。</figcaption>
+    </figure>
+  </div>
+
+  <p>为了向 YouTube 请求这个视频文件，一个数据包要先一路往上到达主干，在主干上走一段，然后再一路往下，到达一台存着这个文件的 YouTube 服务器。可能是往上 4 跳、沿主干 2 跳、往下 4 跳，一共 10 跳。如果你用的是 Windows、Mac OS 或 Linux，可以用电脑上的 <b>traceroute</b> 程序，看看数据去往互联网上不同地方所走的路线。</p>
+  <p>对我们这些在印第安纳波利斯 Chad &amp; Stacey Emigholz 工作室的人来说，到加州 DFTBA 服务器的路线要经过 11 站。从 192.168.0.1 出发——这是我的电脑在我们局域网里的 IP 地址；然后是工作室的 WiFi 路由器，接着是一串区域路由器，然后进入主干，再一路往下，到达托管 DFTBA.com 的计算机，它的 IP 地址是 104.24.109.186。</p>
+  <div class="extra">
+    <span class="t">192.168 开头的地址是怎么回事</span>
+    192.168.x.x、10.x.x.x 这类是"私有地址"，只在局域网内部有效，全世界无数个家庭都在用同样的 192.168.0.1。出门上网时，家里的路由器会把它换成 ISP 分配给你的公网地址（这叫 NAT）。你本机开发时常用的 <code>localhost</code> 则是 127.0.0.1，代表"这台电脑自己"。
+  </div>
+  <p>但数据包<b>到底</b>是怎么过去的？如果它在路上丢了怎么办？我在浏览器里输入 "DFTBA.com"，浏览器怎么知道服务器的地址？这些就是今天的话题！</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>IP 与 UDP：送到哪台电脑、哪个程序</h2>
+  <p>上集说过，互联网是一个巨大的分布式网络，它把数据切成一个个小数据包来传送。如果你的数据够大，比如一个邮件附件，就可能被切成很多个包。比如，你现在看的视频流，就是以一连串数据包的形式到达你的电脑的，而不是一个巨大的文件。</p>
+  <p>互联网上的数据包必须遵守一个标准，叫<b>互联网协议</b>（Internet Protocol，IP）。这很像通过邮政系统寄实体信件：每封信都要写一个唯一的、清楚的地址，包裹的尺寸和重量也有限制。违反了这些规定，信就寄不到。IP 数据包也很类似。但是，IP 是一个非常底层的协议——数据包的<b>头部</b>里除了目的地址之外，几乎没有别的东西。头部就是存放在数据<b>载荷</b>（payload）前面的<b>元数据</b>（metadata，"关于数据的数据"）。这意味着一个数据包到了某台计算机，这台计算机可能不知道该把数据交给哪个程序：Skype，还是《使命召唤》？</p>
+  <p>因此人们开发了一些更高级的协议，位于 IP 之上。其中最简单也最常见的之一，是<b>用户数据报协议</b>（User Datagram Protocol，UDP）。UDP 有它自己的头部，这个头部位于（IP 包的）数据载荷里面。UDP 头部里有一些有用的额外信息，其中之一是<b>端口号</b>（port number）。每个想访问互联网的程序，都会向所在计算机的操作系统申请一个唯一的端口，比如 Skype 可能申请 3478 号端口。数据包到达计算机时，操作系统会查看 UDP 头部，读出端口号，比如看到 3478，就把数据包交给 Skype。</p>
+
+  <div class="card">
+    <h3>动手：数据包到了，交给谁？</h3>
+    <div class="btns" id="port-btns" style="margin-top:0">
+      <button class="btn" data-p="3478">端口 3478 的包</button>
+      <button class="btn" data-p="3074">端口 3074 的包</button>
+      <button class="btn" data-p="80">端口 80 的包</button>
+      <button class="btn" data-p="9999">端口 9999 的包</button>
+    </div>
+    <div class="nest" id="port-pkt"></div>
+    <div class="scroll-x"><svg class="diagram" id="ports" viewBox="0 0 680 200" role="img" aria-label="操作系统按端口号分发数据包"></svg></div>
+    <div class="step-text" id="port-cap"></div>
+  </div>
+
+  <p>总结一下：<b>IP 负责把数据包送到正确的计算机，UDP 负责把数据包送到这台计算机上正确的程序。</b></p>
+  <div class="extra">
+    <span class="t">你天天在用的端口</span>
+    网址 <code>http://</code> 默认用 80 号端口，<code>https://</code> 默认用 443。跑 <code>npm run dev</code> 时终端提示的 <code>localhost:5173</code>，就是 Vite 开发服务器向操作系统申请了 5173 号端口；如果提示"端口被占用"，意思就是已经有别的程序拿着这个号了。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>校验和</h2>
+  <p>UDP 头部里还有一个东西叫<b>校验和</b>（checksum），用来验证数据是否正确。顾名思义，它是靠检查数据的"和"来做到的。下面是简化版的原理。假设我们的 UDP 包里，原始数据是 89、111、33、32、58 和 41。发送之前，发送方计算机把所有数据加在一起来算校验和：89 加 111 加 33，以此类推。在这个例子里，加起来得到校验和 364。</p>
+  <p>UDP 中，校验和用 16 位来存。如果和超过了能表示的最大值，最高的几位就会溢出，只用低位。接收方计算机收到这个包后，重复同样的过程，把所有数据加起来。如果这个和与头部里发来的校验和一样，就一切正常；如果对不上，你就知道数据在传输途中某个地方损坏了，也许是因为电压波动或者电缆有毛病。</p>
+
+  <div class="card">
+    <h3>动手：在路上弄坏一个数字</h3>
+    <p class="hint" style="margin-top:0">上面一行是发送方的数据，下面一行是接收方收到的。改一改接收方的某个数字，模拟传输中出错。</p>
+    <div class="cs"><span style="width:84px">发送方</span><span id="cs-send"></span><span>→ 校验和 <span class="sum" id="cs-ssum"></span></span></div>
+    <div class="cs"><span style="width:84px">接收方</span><span id="cs-recv"></span><span>→ 重新算 <span class="sum" id="cs-rsum"></span></span></div>
+    <div class="btns"><button class="btn" id="cs-flip">随机弄坏一个</button><button class="btn" id="cs-swap">交换两个数的位置</button><button class="btn" id="cs-reset">恢复</button></div>
+    <div class="step-text" id="cs-cap"></div>
+  </div>
+  <div class="extra">
+    <span class="t">简单求和的盲点</span>
+    试试"交换两个数的位置"：数据顺序乱了，但和没变，校验和就发现不了。所以真实的校验和（以及 TCP 用的、各种文件下载用的哈希）会用更讲究的算法，让这类错误也能被查出来。课程里讲的是最简化的版本。
+  </div>
+
+  <p>不幸的是，UDP 不提供任何修复数据或者请求重新发一份的机制：接收程序会被告知数据损坏了，但通常只是把这个包扔掉。而且，UDP 没有任何机制能知道数据包有没有送到：发送方把 UDP 包发出去，但永远得不到它成功抵达的确认。</p>
+  <p>这两个特性听起来都很要命，但有些应用不在乎，因为 UDP 也非常简单、非常快。比如 Skype 用 UDP 来做视频聊天，它能应付损坏或缺失的包。这就是为什么网络不好时，Skype 会变得卡卡的——只有一部分 UDP 包到了你的电脑。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>TCP：一个都不能少</h2>
+  <p>但很多其他类型的数据传输不能这样。比如你发一封邮件，它到达时中间缺了一段，这可不行。整封邮件必须完整无误地送到！当数据"绝对、必须送到"时，程序会用<b>传输控制协议</b>（Transmission Control Protocol，TCP）。和 UDP 一样，它也装在 IP 包的数据载荷里。因此，人们把这个协议组合称作 <b>TCP/IP</b>。</p>
+  <p>和 UDP 一样，TCP 头部里也有目的端口和校验和。但它还有一些更高级的功能，我们重点讲几个关键的。</p>
+  <p>第一，TCP 数据包有<b>连续的序号</b>。15 号包后面是 16 号包，再后面是 17 号……一次会话里可能发出几百万个包。这些序号让接收方计算机能把包排成正确的顺序，即使它们经过网络、在不同的时间到达。所以就算一封邮件到达时顺序全乱了，你电脑操作系统里的 TCP 实现也会把它正确地拼起来。</p>
+  <p>第二，TCP 要求一台计算机正确收到一个包——并且数据通过了校验和检查——之后，给发送方回一个<b>确认</b>（acknowledgement），酷小孩们管它叫 <b>"ACK"</b>。知道这个包成功送到了，发送方就可以发下一个包。但假设这一次，发送方等着等着，没收到确认包。一定是哪里出了问题。如果等了足够长的时间，发送方就会直接<b>重发</b>同一个包。</p>
+  <p>值得一提的是，原来那个包可能其实已经到了，只是确认被延误得很厉害；或者丢的是确认包本身。不管哪种情况都没关系，因为接收方有序号，如果来了一个重复的包，扔掉就行。</p>
+
+  <div class="card">
+    <h3>动手：同一段旅程，TCP 和 UDP 各会怎样</h3>
+    <span class="seg-btns" id="tcp-mode"><button data-m="tcp">TCP</button><button data-m="udp">UDP</button></span>
+    <div class="scroll-x" style="margin-top:8px"><svg class="diagram" id="tcp" viewBox="0 0 680 420" role="img" aria-label="TCP 序号与确认"></svg></div>
+    <div class="btns"><button class="btn primary" id="tcp-next">下一步</button><button class="btn" id="tcp-all">全部播完</button><button class="btn" id="tcp-reset">重来</button></div>
+    <div class="step-text" id="tcp-cap"></div>
+  </div>
+
+  <p>另外，TCP 不限于一来一回地对话——它可以连发很多个包，同时有很多个 ACK 还没回来。这大大提高了带宽，因为不用把时间浪费在等确认包回来上。有趣的是，ACK 的成功率，以及从发送到收到确认的<b>往返时间</b>，可以用来推断网络拥塞的程度。TCP 用这些信息来调整发包的激进程度——这是一种<b>拥塞控制</b>机制。</p>
+  <p>所以，TCP 基本上能处理数据包乱序到达、丢包（包括重发），甚至能根据可用带宽调节自己的发送速率。相当厉害！</p>
+  <p>你可能会问，既然 TCP 有这么多好功能，为什么还有人用 UDP？最大的缺点就是那些确认包——它们让网络上的消息数量翻了一倍，却没有多传任何数据。这些开销，以及随之而来的延迟，有时候不值得换来的那点可靠性，特别是对时间要求很高的应用，比如多人第一人称射击游戏。如果你就是那个因为卡顿被打爆的人，你肯定同意！</p>
+  <div class="extra">
+    <span class="t">浏览器里的 TCP 和 UDP</span>
+    你平时打开网页、调接口（HTTP/1.1、HTTP/2）走的是 TCP。较新的 HTTP/3 则改用基于 UDP 的 QUIC 协议，在 UDP 之上自己实现了序号、确认、重传，好处是能更快建立连接、一个包丢了不会拖住其他请求。视频会议用的 WebRTC 也主要走 UDP——和 Skype 一个道理。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>DNS：互联网的电话簿</h2>
+  <p>你的计算机想连接一个网站时，需要两样东西：一个 IP 地址和一个端口。比如 172.217.7.238 的 80 号端口，这是谷歌网页服务器的 IP 地址和端口。事实上，你可以把它输进浏览器的地址栏，就会来到谷歌首页。这样能到达正确的目的地，但要记住那一长串数字实在太烦了。google.com 好记多了。</p>
+  <p>所以互联网有一个专门的服务，负责把这些<b>域名</b>对应到地址上。它就像互联网的电话簿，叫<b>域名系统</b>（Domain Name System），简称 <b>DNS</b>。它的工作方式你大概能猜到：你在浏览器里输入 "youtube.com" 这样的名字，浏览器就去问一台 DNS 服务器——通常是你的 ISP 提供的——请它查一下地址。DNS 查它那本巨大的登记簿，回复对应的地址……如果有的话。</p>
+  <p>事实上，如果你在键盘上乱敲一通，加上 ".com"，然后在浏览器里按回车，很可能会看到一条错误，说 DNS 失败了。这是因为那个网站不存在，DNS 没法给你的浏览器一个地址。但如果 DNS 返回了一个有效的地址——"YouTube.com" 应该会——你的浏览器就会通过 TCP 发出请求，获取网站的数据。</p>
+
+  <div class="card">
+    <h3>动手：查一个域名</h3>
+    <div class="dns-in"><input id="dns-q" value="images.google.com" aria-label="域名"><button class="btn primary" id="dns-go">查询</button></div>
+    <div class="btns" id="dns-ex" style="margin-top:0"></div>
+    <div class="scroll-x"><svg class="diagram" id="dns" viewBox="0 0 680 250" role="img" aria-label="DNS 树"></svg></div>
+    <div class="step-text" id="dns-cap"></div>
+  </div>
+
+  <p>注册的域名有超过 3 亿个<span class="muted" style="font-size:13px">（字幕误作"三千万"，英文原文是 300 million）</span>，所以为了让 DNS 查询更好管理，它不是存成一个超长的列表，而是存成一种<b>树</b>形数据结构。最顶层叫<b>顶级域名</b>（Top Level Domains，TLD），是 .com、.gov 这样的大类。下面是更低一级的域名，叫<b>二级域名</b>，比如 .com 下面的 google.com 和 dftba.com。再往下还有更低级的域名，叫<b>子域名</b>，比如 images.google.com、store.dftba.com。这棵树绝对是超级巨大！刚才说了，超过 3 亿个域名，这还只是二级域名，不包括所有子域名。因此，这些数据分布在很多台 DNS 服务器上，不同的服务器负责（是权威）树的不同部分。</p>
+  <div class="extra">
+    <span class="t">在 DevTools 里看看</span>
+    打开浏览器开发者工具的 Network 面板，点任意一个请求，Headers 里的 "Remote Address" 就是 DNS 查出来的 IP 加端口（通常是 :443）；Timing 里的 "DNS Lookup" 是查询花的时间。浏览器和操作系统会把查过的结果缓存一段时间，所以第二次访问往往是 0 毫秒。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>OSI 模型：又一层新抽象</h2>
+  <p>好了，我知道你一直在等这句话……<b>我们到了一层新的抽象！</b></p>
+  <p>过去两集，我们从电线里的电信号——在无线网络里则是空气中传播的无线电信号——一路讲上来。这叫<b>物理层</b>。MAC 地址、冲突检测、指数退避，以及类似这些协调对物理层访问的底层协议，属于<b>数据链路层</b>。再往上是<b>网络层</b>，我们讨论过的各种交换和路由技术都在这一层工作。今天我们主要讲的是<b>传输层</b>，比如 UDP 和 TCP 这样的协议，负责计算机之间点对点的数据传输，以及尽可能地检测和修复错误。我们还稍微碰到了<b>会话层</b>：在这一层，TCP 和 UDP 这样的协议被用来打开一个连接、来回传递信息、结束后关闭连接——这叫一次<b>会话</b>（session）。你做 DNS 查询或者请求一个网页时，发生的正是这件事。</p>
+
+  <div class="card">
+    <table class="tt static osi" style="width:100%" id="osi">
+      <thead><tr><th>层</th><th>名字</th><th>管什么</th><th>本系列在哪讲</th></tr></thead>
+      <tbody>
+        <tr><td>7</td><td>应用层</td><td>浏览器、Skype</td><td>下一集</td></tr>
+        <tr><td>6</td><td>表示层</td><td>HTML 解码、视频流</td><td>下一集</td></tr>
+        <tr class="done"><td>5</td><td>会话层</td><td>打开连接、来回传信息、关闭连接</td><td>本集（稍微碰到）</td></tr>
+        <tr class="done"><td>4</td><td>传输层</td><td>UDP、TCP：端口、校验和、序号、确认</td><td>本集</td></tr>
+        <tr class="done"><td>3</td><td>网络层</td><td>交换与路由、IP</td><td>第 28 集</td></tr>
+        <tr class="done"><td>2</td><td>数据链路层</td><td>MAC 地址、冲突检测、指数退避</td><td>第 28 集</td></tr>
+        <tr class="done"><td>1</td><td>物理层</td><td>电线里的电信号、空气中的无线电</td><td>第 28 集</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>这些是<b>开放式系统互联</b>（Open System Interconnection，OSI）模型的下面五层。OSI 是一个概念框架，用来把这些不同的网络过程分门别类。每一层关心和解决的问题都不一样；要是想一口气造出一个巨大的、不分层的网络实现，是不可能的。正如整个系列一直在说的，抽象让计算机科学家和工程师能同时改进技术栈的各个层次，而不被全部的复杂度压垮。</p>
+  <p>而且神奇的是，我们还没讲完！OSI 模型还有两层：<b>表示层</b>和<b>应用层</b>，包括网页浏览器、Skype、HTML 解码、在线看电影等等。我们下周讲。到时见！</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>协议 / 服务</th><th>解决什么</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>IP</td><td>送到哪台电脑</td><td>头部基本只有目的地址；很底层</td></tr>
+      <tr><td>UDP</td><td>送到哪个程序</td><td>端口号 + 校验和；不修复、不确认；简单快速（Skype 视频）</td></tr>
+      <tr><td>TCP</td><td>一个都不能少</td><td>序号（排序、去重）、ACK、超时重发、多包并发、拥塞控制；代价是确认包让消息翻倍</td></tr>
+      <tr><td>DNS</td><td>名字 → 地址</td><td>互联网的电话簿；树形结构：顶级域名 → 二级域名 → 子域名，分布在很多服务器上</td></tr>
+      <tr><td>OSI</td><td>把网络分层</td><td>物理、数据链路、网络、传输、会话、表示、应用</td></tr>
+    </tbody>
+  </table>
+  <div class="callout key">
+    <span class="t">一句话</span>
+    数据包像套娃：最外层 IP 头部把它送到对的电脑，里面一层 UDP / TCP 头部的端口号把它交给对的程序；TCP 再靠序号和确认保证不丢、不乱、不重。DNS 先把好记的域名翻译成 IP 地址。每一层只管自己的事，这就是 OSI 分层的意义。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 既然 IP 包已经能送到正确的电脑，为什么还需要 UDP 的端口号？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">IP 头部基本只有目的地址，包到了电脑，操作系统不知道该交给哪个程序。每个联网程序都向操作系统申请一个唯一端口，操作系统读 UDP 头部里的端口号，就知道交给谁（比如 3478 交给 Skype）。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 数据 89、111、33、32、58、41 的校验和是多少？接收方怎么用它？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">364。接收方把收到的数据重新加一遍，和头部里的校验和比较：一样就正常，不一样说明数据在途中损坏了。UDP 只会把坏包扔掉，不会请求重发。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. TCP 发出一个包后没等到 ACK，会怎么做？如果其实包已经到了、只是 ACK 丢了，会不会出问题？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">等够一定时间后重发同一个包。不会出问题：接收方靠序号认出这是重复的包，直接丢掉。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 输入 youtube.com 回车后，浏览器先做什么？DNS 为什么存成树而不是一张大表？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">先问 DNS 服务器（通常是 ISP 提供的）这个域名对应的 IP 地址，拿到后再通过 TCP 向这个地址请求网页数据；查不到就报 DNS 错误。域名有 3 亿多个（还不算子域名），按顶级域名、二级域名、子域名组织成树，就能把不同部分分给不同的 DNS 服务器负责。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="28.html"><small>← 上一集</small>28 计算机网络</a>
+    <a class="next" href="30.html"><small>下一集 →</small>30 万维网</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 29 集 The Internet（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 路径 ---------- */
+(function () {
+  const svg = $('#path');
+  const defs = el('defs', {}, svg); const m = el('marker', { id: 'hopA', viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto' }, defs); el('path', { d: 'M0,0 L10,5 L0,10 z', style: 'fill:var(--on)' }, m);
+  const P = [[40, 214, '你的电脑'], [100, 176, 'WiFi 路由器'], [160, 138, '街区路由器'], [220, 100, '城市 WAN'], [290, 52, ''], [390, 52, ''], [460, 100, '城市 WAN'], [520, 138, '区域路由器'], [580, 176, '机房路由器'], [636, 214, 'YouTube 服务器']];
+  el('rect', { x: 262, y: 30, width: 156, height: 44, rx: 22, style: 'fill:var(--on-soft);stroke:none' }, svg);
+  txt(svg, 340, 20, '互联网主干：巨型路由器 + 超高带宽', 't-sub mid');
+  for (let i = 1; i < P.length; i++) {
+    const [x1, y1] = P[i - 1], [x2, y2] = P[i];
+    el('line', { x1, y1, x2: x1 + (x2 - x1) * .78, y2: y1 + (y2 - y1) * .78, style: 'stroke:var(--on);stroke-width:2', 'marker-end': 'url(#hopA)' }, svg);
+    const dx = i < 5 ? 12 : i > 5 ? -12 : 0, dy = i === 5 ? 22 : 14;
+    txt(svg, (x1 + x2) / 2 + dx, (y1 + y2) / 2 + dy, i, 't-mono mid').style.fill = 'var(--on)';
+  }
+  P.forEach(([x, y, n], i) => {
+    el('circle', { cx: x, cy: y, r: i === 0 || i === 9 ? 12 : 9, class: i === 4 || i === 5 ? 's-on' : i === 0 || i === 9 ? 's-panel' : 's-acc' }, svg);
+    if (i === 0) txt(svg, x, y + 30, n, 't-sub mid');
+    else if (i === 9) txt(svg, 676, y + 30, n, 't-sub end');
+    else if (i < 4) txt(svg, x - 14, y + 4, n, 't-sub end');
+    else if (i > 5) txt(svg, x + 14, y + 4, n, 't-sub');
+  });
+  txt(svg, 240, 196, '↑ 往上 4 跳', 't-sub mid');
+  txt(svg, 340, 120, '主干上 2 跳', 't-sub mid');
+  txt(svg, 440, 196, '往下 4 跳 ↓', 't-sub mid');
+})();
+
+/* ---------- 端口分发 ---------- */
+(function () {
+  const svg = $('#ports');
+  const APPS = [['3478', 'Skype'], ['3074', '游戏'], ['80', '浏览器']];
+  el('rect', { x: 20, y: 60, width: 150, height: 80, rx: 10, class: 's-acc' }, svg);
+  txt(svg, 95, 96, '操作系统', 't-main mid'); txt(svg, 95, 116, '读 UDP 头部的端口号', 't-sub mid');
+  const boxes = {}, links = {};
+  APPS.forEach(([p, n], i) => {
+    const y = 20 + i * 60;
+    links[p] = el('path', { d: `M170,100 C260,100 300,${y + 20} 400,${y + 20}`, style: 'fill:none;stroke:var(--wire);stroke-width:3' }, svg);
+    boxes[p] = el('rect', { x: 400, y, width: 200, height: 40, rx: 8, class: 's-panel' }, svg);
+    txt(svg, 500, y + 25, `${n}（端口 ${p}）`, 't-main mid');
+  });
+  const trash = txt(svg, 95, 170, '', 't-sub mid');
+  function show(p) {
+    Object.entries(links).forEach(([k, l]) => { l.style.stroke = k === p ? 'var(--on)' : 'var(--wire)'; boxes[k].setAttribute('class', k === p ? 's-on' : 's-panel'); });
+    trash.textContent = links[p] ? '' : '没有程序用这个端口 → 丢弃';
+    $('#port-pkt').innerHTML = `<div class="lab">IP 包</div><div class="row"><div class="hdr">IP 头部<br>目的地址 104.24.109.186</div><div class="inner"><div class="lab">载荷：UDP 包</div><div class="row"><div class="hdr">UDP 头部<br>端口 ${p}｜校验和</div><div class="data">数据……</div></div></div></div>`;
+    const app = APPS.find(a => a[0] === p);
+    $('#port-cap').innerHTML = app ? `IP 已经把包送到了这台电脑；操作系统打开载荷，看到 UDP 头部写着端口 <b>${p}</b>，就交给 <b>${app[1]}</b>。` : `端口 ${p} 没有任何程序申请过，操作系统不知道交给谁，只好丢掉。`;
+    $$('#port-btns .btn').forEach(b => b.classList.toggle('primary', b.dataset.p === p));
+  }
+  $$('#port-btns .btn').forEach(b => b.onclick = () => show(b.dataset.p));
+  show('3478');
+})();
+
+/* ---------- 校验和 ---------- */
+(function () {
+  const D = [89, 111, 33, 32, 58, 41];
+  $('#cs-send').innerHTML = D.map(v => `<input value="${v}" disabled>`).join(' + ');
+  $('#cs-recv').innerHTML = D.map((v, i) => `<input value="${v}" data-i="${i}" inputmode="numeric" aria-label="接收到的第 ${i + 1} 个数">`).join(' + ');
+  const ins = $$('#cs-recv input');
+  const sum = a => a.reduce((s, v) => s + v, 0) & 0xffff;
+  $('#cs-ssum').textContent = sum(D);
+  function check() {
+    const R = ins.map(i => parseInt(i.value, 10) || 0);
+    ins.forEach((inp, i) => inp.classList.toggle('bad', R[i] !== D[i]));
+    const rs = sum(R); $('#cs-rsum').textContent = rs;
+    const changed = R.some((v, i) => v !== D[i]);
+    $('#cs-rsum').style.color = rs === sum(D) ? 'var(--ok)' : 'var(--bad)';
+    $('#cs-cap').innerHTML = rs !== sum(D) ? `重新算出 ${rs}，和头部里的 ${sum(D)} 对不上 → <b>数据坏了</b>。UDP 只会通知程序、把包扔掉，不会请求重发。`
+      : changed ? `数据其实被改过了，可加起来还是 ${rs}，校验和<b>没发现</b>！（见下面的补充框）`
+      : `重新算出 ${rs}，和头部里的校验和一致 → 一切正常。`;
+  }
+  ins.forEach(i => i.addEventListener('input', check));
+  $('#cs-flip').onclick = () => { $('#cs-reset').onclick(); const k = Math.floor(Math.random() * 6); ins[k].value = D[k] ^ (1 << Math.floor(Math.random() * 6)); check(); };
+  $('#cs-swap').onclick = () => { $('#cs-reset').onclick(); ins[0].value = D[1]; ins[1].value = D[0]; check(); };
+  $('#cs-reset').onclick = () => { ins.forEach((i, k) => i.value = D[k]); check(); };
+  check();
+})();
+
+/* ---------- TCP / UDP 时序 ---------- */
+(function () {
+  const svg = $('#tcp');
+  const SX = 130, RX = 550, Y0 = 50, DY = 30;
+  // 每一步：[发送方动作, 从哪到哪, 标签, 状态]  kind: pkt / ack / lost / lostack
+  const TCP = [
+    { k: 'pkt', l: '#15', t: 0, cap: '发送方发出 15 号包。' },
+    { k: 'ack', l: 'ACK 15', t: 1, cap: '接收方收到 15 号、校验和无误，回 ACK。' },
+    { k: 'pkt', l: '#16', t: 2, cap: '发 16 号。TCP 也可以不等 ACK 连发好几个，这里为了看清楚，一个一个来。' },
+    { k: 'lost', l: '#16', t: 2.2, cap: '16 号包在路上丢了！接收方什么都没收到，也就不会回 ACK。' },
+    { k: 'wait', t: 3.4, cap: '发送方等啊等，一直没等到 ACK 16……超时了。' },
+    { k: 'pkt', l: '#16（重发）', t: 4, cap: '超时后，发送方重发 16 号包。' },
+    { k: 'lostack', l: 'ACK 16', t: 5, cap: '这次 16 号到了，接收方回了 ACK——可这个 ACK 在半路丢了。' },
+    { k: 'pkt', l: '#16（再重发）', t: 6.4, cap: '发送方还是没等到 ACK，再发一次 16 号。' },
+    { k: 'dup', l: 'ACK 16', t: 7.4, cap: '接收方看序号：16 号已经有了，这是<b>重复</b>的，扔掉；但还是回 ACK 让发送方放心。' },
+    { k: 'pkt2', l: '#18 先到', l2: '#17 后到', t: 8.4, cap: '接下来 17、18 号走了不同的路线，18 号先到、17 号后到。' },
+    { k: 'order', t: 10.8, cap: '接收方按序号重新排好：15、16、17、18。数据<b>完整、有序、不重复</b>。' }
+  ];
+  const UDP = [
+    { k: 'pkt', l: '#15', t: 0, cap: 'UDP 也发 15 号（UDP 本身没有序号，这里的编号只是为了对照）。' },
+    { k: 'pkt', l: '#16', t: 1.4, cap: '发 16 号。UDP 不等任何确认，发出去就不管了。' },
+    { k: 'lost', l: '#16', t: 1.6, cap: '16 号丢了。接收方不知道，发送方也不知道。' },
+    { k: 'pkt2', l: '#18 先到', l2: '#17 后到', t: 3, cap: '18 号先到、17 号后到，接收方按到达顺序交给程序。' },
+    { k: 'order', t: 5.4, cap: '程序拿到的是：15、18、17——缺了 16，顺序也乱了。视频通话里就是画面卡一下、花一下，然后继续。' }
+  ];
+  let mode = 'tcp', k = -1;
+  function y(t) { return Y0 + t * DY; }
+  function draw() {
+    svg.innerHTML = '';
+    const steps = mode === 'tcp' ? TCP : UDP;
+    const H = y((steps[steps.length - 1].t) + 2.5);
+    svg.setAttribute('viewBox', `0 0 680 ${Math.max(H, 260)}`);
+    const defs = el('defs', {}, svg);
+    [['tA', 'var(--accent)'], ['tB', 'var(--ok)'], ['tC', 'var(--bad)']].forEach(([id, c]) => { const m = el('marker', { id, viewBox: '0 0 10 10', refX: 8, refY: 5, markerWidth: 6, markerHeight: 6, orient: 'auto' }, defs); el('path', { d: 'M0,0 L10,5 L0,10 z', style: 'fill:' + c }, m); });
+    txt(svg, SX, 24, '发送方', 't-main mid'); txt(svg, RX, 24, '接收方', 't-main mid');
+    el('line', { x1: SX, x2: SX, y1: 34, y2: H - 10, style: 'stroke:var(--ink);stroke-width:2' }, svg);
+    el('line', { x1: RX, x2: RX, y1: 34, y2: H - 10, style: 'stroke:var(--ink);stroke-width:2' }, svg);
+    for (let i = 0; i <= k; i++) {
+      const s = steps[i], y1 = y(s.t), y2 = y(s.t + 1);
+      if (s.k === 'pkt') { el('line', { x1: SX, y1, x2: RX - 4, y2, style: 'stroke:var(--accent);stroke-width:2', 'marker-end': 'url(#tA)' }, svg); txt(svg, (SX + RX) / 2, (y1 + y2) / 2 - 6, s.l, 't-mono mid'); }
+      if (s.k === 'lost' || s.k === 'lostack') {
+        const fromS = s.k === 'lost';
+        const x1 = fromS ? SX : RX, x2 = (SX + RX) / 2, yy1 = y1, yy2 = y1 + DY * .5;
+        if (s.k === 'lostack') { el('line', { x1: RX, y1: y1 - DY * .0, x2, y2: yy2, style: 'stroke:var(--ok);stroke-width:2;stroke-dasharray:5 4' }, svg); }
+        txt(svg, x2, yy2 + 6, '✕', 't-main mid').style.fill = 'var(--bad)';
+        txt(svg, x2 + 16, yy2 + (s.k === 'lost' ? 6 : 22), s.k === 'lost' ? '丢了' : 'ACK 丢了', 't-sub').style.fill = 'var(--bad)';
+        if (s.k === 'lostack') txt(svg, RX + 10, y1 + 4, '收到 16 ✓', 't-sub');
+      }
+      if (s.k === 'ack' || s.k === 'dup') { el('line', { x1: RX, y1, x2: SX + 4, y2, style: 'stroke:var(--ok);stroke-width:2', 'marker-end': 'url(#tB)' }, svg); txt(svg, (SX + RX) / 2, (y1 + y2) / 2 - 6, s.l, 't-mono mid'); if (s.k === 'dup') txt(svg, RX + 10, y1 + 4, '重复，扔掉', 't-sub').style.fill = 'var(--bad)'; else txt(svg, RX + 10, y1 + 4, '收到 15 ✓', 't-sub'); }
+      if (s.k === 'wait') { el('rect', { x: SX - 46, y: y(s.t - 1.2), width: 30, height: DY * 1.2, rx: 4, style: 'fill:var(--on-soft);stroke:var(--on)' }, svg); txt(svg, SX - 52, y(s.t - .5), '超时', 't-sub end'); }
+      if (s.k === 'pkt2') {
+        el('line', { x1: SX, y1, x2: RX - 4, y2: y(s.t + 1.6), style: 'stroke:var(--accent);stroke-width:2', 'marker-end': 'url(#tA)' }, svg);
+        el('line', { x1: SX, y1: y(s.t + .2), x2: RX - 4, y2: y(s.t + .9), style: 'stroke:var(--accent);stroke-width:2', 'marker-end': 'url(#tA)' }, svg);
+        const at = (ya, yb) => [SX + (RX - SX) * .7, ya + (yb - ya) * .7];
+        const p18 = at(y(s.t + .2), y(s.t + .9)), p17 = at(y1, y(s.t + 1.6));
+        txt(svg, p18[0], p18[1] - 8, '#18', 't-mono mid'); txt(svg, p17[0], p17[1] + 18, '#17', 't-mono mid');
+        txt(svg, RX + 10, y(s.t + .9) + 4, '18 先到', 't-sub'); txt(svg, RX + 10, y(s.t + 1.6) + 4, '17 后到', 't-sub');
+      }
+      if (s.k === 'order') {
+        const ok = mode === 'tcp';
+        const seq = ok ? ['15', '16', '17', '18'] : ['15', '18', '17'];
+        seq.forEach((n, j) => { el('rect', { x: RX - 150 + j * 34, y: y(s.t) + 8, width: 30, height: 26, rx: 4, class: ok ? 's-on' : 's-soft' }, svg); txt(svg, RX - 135 + j * 34, y(s.t) + 26, n, 't-mono mid'); });
+        txt(svg, RX - 158, y(s.t) + 26, '交给程序：', 't-sub end');
+        if (!ok) txt(svg, RX - 100, y(s.t) + 54, '缺 16、顺序乱', 't-sub mid').style.fill = 'var(--bad)';
+      }
+    }
+    $('#tcp-cap').innerHTML = k < 0 ? (mode === 'tcp' ? 'TCP：每个包有序号，收到要回 ACK。点"下一步"。' : 'UDP：同样的路况，丢包、乱序都照常发生。点"下一步"。') : steps[k].cap;
+    $('#tcp-next').disabled = k >= steps.length - 1;
+  }
+  $$('#tcp-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; k = -1; $$('#tcp-mode button').forEach(x => x.classList.toggle('sel', x === b)); draw(); });
+  $('#tcp-next').onclick = () => { k++; draw(); };
+  $('#tcp-all').onclick = () => { k = (mode === 'tcp' ? TCP : UDP).length - 1; draw(); };
+  $('#tcp-reset').onclick = () => { k = -1; draw(); };
+  $$('#tcp-mode button')[0].classList.add('sel');
+  draw();
+})();
+
+/* ---------- DNS ---------- */
+(function () {
+  const svg = $('#dns');
+  // 课程给出的地址：google 172.217.7.238，dftba 104.24.109.186；其余为示例地址（203.0.113.x 是专门留给文档示例的地址段）
+  const T = {
+    '.': { x: 340, y: 26, label: '根' },
+    'com': { x: 200, y: 86, p: '.', label: '.com' }, 'gov': { x: 500, y: 86, p: '.', label: '.gov' },
+    'google.com': { x: 80, y: 150, p: 'com', ip: '172.217.7.238' }, 'youtube.com': { x: 220, y: 150, p: 'com', ip: '203.0.113.10（示例）' }, 'dftba.com': { x: 360, y: 150, p: 'com', ip: '104.24.109.186' },
+    'whitehouse.gov': { x: 520, y: 150, p: 'gov', ip: '203.0.113.20（示例）' },
+    'images.google.com': { x: 80, y: 214, p: 'google.com', ip: '203.0.113.30（示例）' }, 'store.dftba.com': { x: 360, y: 214, p: 'dftba.com', ip: '203.0.113.40（示例）' }
+  };
+  const lines = {}, nodes = {};
+  Object.entries(T).forEach(([k, n]) => { if (n.p) lines[k] = el('line', { x1: T[n.p].x, y1: T[n.p].y + 12, x2: n.x, y2: n.y - 12, style: 'stroke:var(--wire);stroke-width:2' }, svg); });
+  Object.entries(T).forEach(([k, n]) => {
+    const w = Math.max(54, (n.label || k).length * 7.6 + 16);
+    nodes[k] = el('rect', { x: n.x - w / 2, y: n.y - 12, width: w, height: 24, rx: 12, class: 's-panel' }, svg);
+    txt(svg, n.x, n.y + 4, n.label || k, 't-mono mid').style.fontSize = '12px';
+  });
+  txt(svg, 668, 90, '顶级域名', 't-sub end');
+  txt(svg, 668, 154, '二级域名', 't-sub end'); txt(svg, 668, 218, '子域名', 't-sub end');
+  const EX = ['images.google.com', 'dftba.com', 'youtube.com', 'store.dftba.com', 'asdkjfh.com'];
+  $('#dns-ex').innerHTML = EX.map(e => `<button class="btn" data-q="${e}">${e}</button>`).join('');
+  $$('#dns-ex .btn').forEach(b => b.onclick = () => { $('#dns-q').value = b.dataset.q; go(); });
+  function go() {
+    const q = $('#dns-q').value.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/.*$/, '').replace(/^www\./, '');
+    Object.values(nodes).forEach(n => n.setAttribute('class', 's-panel'));
+    Object.values(lines).forEach(l => l.style.stroke = 'var(--wire)');
+    const parts = q.split('.').filter(Boolean);
+    const chain = ['.']; let hit = true;
+    for (let i = parts.length - 1; i >= 0; i--) { const key = parts.slice(i).join('.'); if (T[key]) chain.push(key); else { hit = false; break; } }
+    chain.forEach((c, i) => { nodes[c].setAttribute('class', i === chain.length - 1 && hit ? 's-on' : 's-acc'); if (lines[c]) lines[c].style.stroke = 'var(--on)'; });
+    const last = chain[chain.length - 1];
+    if (hit && T[q] && T[q].ip) $('#dns-cap').innerHTML = `从树根往下：${chain.slice(1).map(c => T[c].label || c).join(' → ')}。负责这一块的 DNS 服务器回复：<b>${q}</b> 的地址是 <b>${T[q].ip}</b>。浏览器接着就向这个地址发 TCP 请求。`;
+    else if (!parts.length) $('#dns-cap').textContent = '输入一个域名试试。';
+    else $('#dns-cap').innerHTML = `查到 ${T[last].label || last} 就找不到下一级了——没有 <b>${q}</b> 这个域名。浏览器显示 <b>DNS 查询失败</b>。<span class="muted">（这只是个小小的示意登记簿，真实的 DNS 里有 3 亿多个二级域名。）</span>`;
+  }
+  $('#dns-go').onclick = go;
+  $('#dns-q').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  go();
+})();
+</script>
+</body>
+</html>

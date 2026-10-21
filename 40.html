@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>40 奇点、天网与计算机的未来 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+blockquote.q{margin:14px 0;padding:10px 16px;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 10px 10px 0;font-size:15px;line-height:1.9}
+blockquote.q cite{display:block;font-style:normal;font-size:13px;color:var(--muted);margin-top:4px}
+.jobs{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.jobs button{font:14px/1 inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:16px;padding:6px 12px;cursor:pointer}
+.jobs button.sel{border-color:var(--on);background:var(--on-soft);font-weight:700}
+.jobs button.placed{display:none}
+.quad{display:grid;grid-template-columns:70px 1fr 1fr;grid-template-rows:auto 1fr 1fr;gap:6px;margin:10px 0}
+.quad .h{font-size:13px;color:var(--muted);display:flex;align-items:center;justify-content:center;text-align:center}
+.quad .cell{min-height:110px;border:2px dashed var(--line);border-radius:12px;padding:8px;background:var(--panel);cursor:pointer;display:flex;flex-direction:column;gap:4px}
+.quad .cell:hover{border-color:var(--accent)}
+.quad .cell b{font-size:13px;color:var(--muted)}
+.quad .cell span{font-size:13px;border-radius:12px;padding:2px 8px;align-self:flex-start}
+.quad .cell span.ok{background:var(--ok-soft);color:var(--ok)}
+.quad .cell span.no{background:var(--bad-soft);color:var(--bad)}
+.quad.reveal .cell.risk{background:var(--bad-soft);border-style:solid;border-color:var(--bad)}
+.quad.reveal .cell.safe{background:var(--ok-soft);border-style:solid;border-color:var(--ok)}
+.quad .cell i{font-style:normal;font-size:12px;color:var(--muted);margin-top:auto}
+.futures{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:10px 0}
+.futures div{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);font-size:14px;line-height:1.7}
+.futures b{display:block;font-size:16px;margin-bottom:4px}
+@media (max-width:640px){.futures{grid-template-columns:1fr}}
+.map{display:grid;gap:10px;margin:10px 0}
+.map .grp{display:grid;grid-template-columns:118px 1fr;gap:10px;align-items:start}
+.map .grp>b{font-size:13px;color:var(--muted);padding-top:6px;text-align:right}
+.map .eps{display:flex;gap:6px;flex-wrap:wrap}
+.map a{display:inline-flex;align-items:center;gap:6px;font-size:13px;border:1px solid var(--line);border-radius:8px;padding:4px 8px;background:var(--panel);color:var(--ink);text-decoration:none}
+.map a:hover{border-color:var(--accent)}
+.map a i{font:600 12px var(--mono);font-style:normal;color:var(--muted)}
+.map a.read{border-color:var(--ok);background:var(--ok-soft)}
+.map a.read::after{content:"✓";color:var(--ok);font-weight:700}
+.map a.off{opacity:.45;pointer-events:none}
+@media (max-width:600px){.map .grp{grid-template-columns:1fr}.map .grp>b{text-align:left;padding:0}}
+</style>
+</head>
+<body data-ep="40">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=41" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 40 集 · 最终集</div>
+  <h1>奇点、天网与计算机的未来</h1>
+  <p class="en">The Singularity, Skynet, and the Future of Computing</p>
+  <p class="lead">最后一集。我们从晶体管和逻辑门一路走到了计算机视觉、机器学习和机器人。这一集往前看：计算机会"消失"进万物之中吗？人工智能会超过人类吗？工作会被自动化到什么程度？人类会和机器融合，还是被机器照顾，抑或与之开战？没人知道答案，但现在就讨论，总比到时候措手不及要好。</p>
+  <div class="road">
+    <span>站在巨人肩上</span><i>→</i><span>普适计算</span><i>→</i><span>AI 是工具</span><i>→</i><span>奇点</span><i>→</i><span>技术性失业</span><i>→</i><span>人类的未来</span><i>→</i><span>你也可以参与</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 最后一集</a></li>
+    <li><a href="#ch1">1 · 普适计算</a></li>
+    <li><a href="#ch2">2 · AI 只是又一件工具</a></li>
+    <li><a href="#ch3">3 · 奇点</a></li>
+    <li><a href="#ch4">4 · 技术性失业</a></li>
+    <li><a href="#ch5">5 · 人类会变成什么</a></li>
+    <li><a href="#ch6">6 · 接下来的十年</a></li>
+    <li><a href="#ch7">7 · 本集小结 · 全系列地图</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>我们到了：最后一集！</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！我们到了：最后一集！如果你看完了整个系列，希望你对计算机应用和话题那令人惊叹的广度，有了全新的认识。真难相信，我们从小小的晶体管和逻辑门开始，一路走到了计算机视觉、机器学习、机器人等等。我们站在巨人的肩膀上：巴贝奇和洛芙莱斯、霍尔瑞斯和图灵、埃克特和霍珀、萨瑟兰和恩格尔巴特、布什和伯纳斯-李、盖茨和沃兹，还有许多其他的计算先驱。</p>
+  <p>我最大的希望是，这些视频激励你去更多地了解这些主题如何影响你的生活。也许你甚至会开始学编程，或者选择一份计算机方面的职业。这太棒了！这也是一项属于未来的技能。我在第一集里说过，计算机科学不是魔法——但它有点像！会使用计算机、会给计算机编程，就是 21 世纪的魔法。只不过用的不是咒语，而是脚本和代码。懂得驾驭这股巨大力量的人，将能创造伟大的东西，不仅改善自己的生活，也改善他们的社区，乃至全人类。</p>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>普适计算：最厉害的技术会"消失"</h2>
+  <p>计算也将真正地无处不在——不只是我们今天看到的、放在桌上和台面上、揣在口袋和包里的计算机，而是在一切你能想象的物体之中：在你所有的厨房电器里，嵌在墙里，以纳米标签的形式附在食物上，织进你的衣服里，在你的身体里漂浮。这就是<b>普适计算</b>（Ubiquitous Computing）领域的愿景。从某些方面说，它已经到来了；从另一些方面说，我们还有好几十年要走。</p>
+  <p>有些人把这种必然的结果看作<b>反乌托邦</b>：计算机无处不在，监视着我们，争夺着我们的注意力。但在 1990 年代阐述了这个想法的已故的马克·维瑟，对它的潜力看法截然不同：</p>
+  <blockquote class="q">"[五十]年来，大多数界面设计、大多数计算机设计，都走在'戏剧性'机器的道路上。它的最高理想，是把计算机做得如此激动人心、如此美妙、如此有趣，让我们一刻也离不开它。另一条较少有人走的路，我称之为'隐形'之路：它的最高理想，是让计算机如此嵌入、如此贴合、如此自然，让我们用它时甚至不需要去想它……最深刻的技术，是那些消失了的技术。它们把自己编织进日常生活的肌理之中，直到与之无法区分。"<cite>—— 马克·维瑟（Mark Weiser）</cite></blockquote>
+  <p>这描述的不是今天的计算——人们在显示器前一坐就是好几个小时，社交媒体的通知在晚饭时打断我们。但它可能描述了未来的计算，也就是我们的最后一个话题。</p>
+  <div class="extra">
+    <span class="t">维瑟和"安静的技术"</span>
+    马克·维瑟是施乐 PARC（第 26 集里发明图形界面的那个研究中心）的首席科学家，1991 年在《科学美国人》上发表《21 世纪的计算机》，提出了普适计算。他还提出过"<b>安静的技术</b>"（calm technology）：好的技术应该待在注意力的边缘，需要时才走到中心。上一集说到的"让你待得更久"的设计，正好是它的反面。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>AI 只是又一件工具，就像电</h2>
+  <p>人们想到未来的计算时，常常直接跳到<b>人工智能</b>。毫无疑问，未来几年 AI 会取得巨大进步，但并不是所有东西都会、或都需要由 AI 驱动。你的车可能有一个负责自动驾驶的 AI，但车门锁可能仍然由本质上就是 if 语句的东西驱动。AI 技术既可能增强现有的设备，比如汽车，也同样可能开辟全新的产品类别。</p>
+  <p class="muted" style="font-size:13px">（字幕把这句译成了"比如汽车，AI 带来了一个全新的产品种类"。原文是"AI 增强现有设备（比如汽车）的可能性，和它开辟全新产品类别的可能性一样大"。）</p>
+  <p>电力出现时，也发生了完全一样的事：灯泡取代了蜡烛，但电气化也催生了数百种新的电动小玩意儿。当然，今天我们仍然有蜡烛。最可能的情况是，AI 会成为计算机科学家解决问题时可以调用的又一件工具。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>奇点：人工智能会超过人类吗？</h2>
+  <p>真正让人深思、有时甚至冒冷汗的，是人工智能会不会<b>超越人类智能</b>。这个问题非常棘手，原因有很多，其中最直接的一个是："什么是智能？"一方面，我们有能开车的计算机，能凭几秒钟的音频认出一首歌，能翻译几十种语言，还在国际象棋、《危险边缘》和围棋这类游戏中称霸。听起来相当聪明！但另一方面，计算机在一些基本任务上却会失败，比如爬楼梯、叠衣服、在嘈杂的鸡尾酒会上听懂别人说话、自己喂饱自己。我们离一个像人一样通用、能干的人工智能还很远。</p>
+  <p>因为智能有点难以量化，人们更喜欢用<b>处理能力</b>来刻画计算机和生物，不过这是一种相当"以计算为中心"的智能观。尽管如此，如果我们做这个练习，把这个系列里讲过的计算机和处理器画出来，会发现今天的计算，在计算能力上大致相当于一只<b>老鼠</b>……公平地说，老鼠也不会叠衣服，虽然那会超级可爱！人类的计算能力在这里，还要再高 10 的 5 次方，也就是比今天的计算机强 10 万倍。这听起来差距很大，但按照计算技术的变化速度，我们最早可能在十年左右就达到那个点——尽管正如第 17 集讨论过的，处理器速度已经不再遵循摩尔定律了。如果这个趋势继续下去，在本世纪结束之前，计算机拥有的处理能力 / 智能，将超过全人类大脑的总和。</p>
+  <p>而且这可能像滚雪球一样加速：这样的系统需要的人类输入越来越少，一个<b>人工超级智能</b>会设计和训练自己的新版本。这种失控的技术增长，特别是关于<b>智能爆炸</b>的那种，被称为<b>奇点</b>（the singularity）。</p>
+
+  <div class="card">
+    <h3>动手：按课程给的数字，算算什么时候追上</h3>
+    <span class="seg-btns" id="sg-mode"><button data-m="exp">一直指数增长</button><button data-m="s">S 型曲线（复杂度刹车）</button></span>
+    <label style="display:flex;gap:10px;align-items:center;font-size:14px;margin:10px 0">计算能力每 <input type="range" id="sg-d" min="0.5" max="3" step="0.1" value="1.6" style="flex:1"> <b id="sg-dv" style="font-family:var(--mono);min-width:4.5em"></b> 翻一倍</label>
+    <div class="scroll-x"><svg class="diagram" id="sg" viewBox="0 0 680 290" role="img" aria-label="计算能力增长与人类大脑的对比"></svg></div>
+    <div class="step-text" id="sg-cap"></div>
+    <p class="hint" style="margin-bottom:0">纵轴是对数刻度，以课程录制时（2017 年）的计算机 =  1（"一只老鼠"）。"一个人的大脑"取课程说的 10⁵ 倍，"全人类"再乘上当时约 75 亿人口。这只是把课程的说法变成一个可以拖的模型，不是预测。</p>
+  </div>
+
+  <p>这个词最早是我们在第 10 集里的老朋友<b>约翰·冯·诺伊曼</b>用的，他说："技术日益加速的进步和人类生活方式的改变，看起来正在接近人类历史上某个本质性的奇点，越过它之后，我们所熟知的人类事务将无法再继续下去。"冯·诺伊曼是在 1950 年代提出这个看法的，那时的计算机比今天慢上万亿倍。可是六十年后的今天，奇点仍然只是地平线上的一种可能。</p>
+  <p class="muted" style="font-size:13px">（字幕把后半句译成了"这个势头不会永远继续下去"。原意是：越过奇点，人类事务将不再是我们所熟知的样子。）</p>
+  <p>一些专家认为，这种进步会逐渐趋于平缓，更像一条 <b>S 型曲线</b>而不是指数曲线：随着复杂度增加，取得更多进展会越来越难。微软联合创始人保罗·艾伦把这叫作"<b>复杂度刹车</b>"（complexity brake）。</p>
+  <div class="extra">
+    <span class="t">这个词后来的故事</span>
+    冯·诺伊曼的那句话，是他的朋友、数学家斯塔尼斯拉夫·乌拉姆在 1958 年的纪念文章里转述的。真正让"技术奇点"流行起来的，是科幻作家、数学家弗诺·文奇 1993 年的文章，以及雷·库兹韦尔 2005 年的书《奇点临近》（下面第 5 节会引用他）。至于用"处理能力"给大脑定价，本身就很有争议：大脑不是按 CPU 的方式计算的，所以这类图只能当作数量级上的直觉。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>技术性失业</h2>
+  <p>不过，作为一个思想实验，我们就假设超级智能计算机会出现。这对人类意味着什么，是一个争论激烈的话题。有些人迫不及待地等着它，也有人已经在努力阻止它发生。最直接的影响可能是<b>技术性失业</b>（technological unemployment）：很多行业的工人被计算机——比如 AI 和机器人——淘汰，因为它们能把工作做得更好、成本更低。</p>
+  <p>虽然计算机是新东西，但这种效应并不新。还记得第 10 集里的雅卡尔织布机吗？它在 1800 年代把熟练纺织工人的工作自动化了，引发了骚乱。另外，那时美国和欧洲的大部分人口都是农民；由于合成肥料和拖拉机这类进步，今天这个比例已经降到了 5% 以下。更现代的例子包括：1960 年代，电话接线员被自动交换机取代；1980 年代，汽车工厂里的人工喷漆工被机械臂取代。这样的例子不胜枚举。一方面，这些是被自动化夺走的工作。另一方面，衣服、食物、自行车、玩具和无数其他产品今天都很充足，因为多亏了计算，它们能被廉价地生产出来。</p>
+  <p>但专家们认为，AI、机器人以及更广义的计算技术，将比这些历史上的例子更具颠覆性。从很高的层次看，工作可以按两个维度来概括。第一，工作可以更偏<b>手工</b>——比如组装玩具——或者更偏<b>认知</b>——比如挑选股票。第二，工作可以是<b>常规性</b>的——一遍又一遍做同样的任务——也可以是<b>非常规性</b>的，任务各不相同，工作者需要解决问题、发挥创造力。</p>
+
+  <div class="card">
+    <h3>动手：把工作放进四个象限</h3>
+    <p class="hint" style="margin-top:0">先点一个工作，再点它该去的格子。全部放完后，看看哪些格子"危险"。</p>
+    <div class="jobs" id="jobs"></div>
+    <div class="quad" id="quad">
+      <div></div><div class="h">手工</div><div class="h">认知</div>
+      <div class="h">常规性</div><div class="cell" data-q="rm"><b>常规 · 手工</b><i></i></div><div class="cell" data-q="rc"><b>常规 · 认知</b><i></i></div>
+      <div class="h">非常规性</div><div class="cell" data-q="nm"><b>非常规 · 手工</b><i></i></div><div class="cell" data-q="nc"><b>非常规 · 认知</b><i></i></div>
+    </div>
+    <div class="step-text" id="q-cap">还没开始。</div>
+  </div>
+
+  <p>我们已经知道，<b>常规性手工</b>工作可以被机器自动化。有些工作已经发生了，另一些正在发生。让人担心的是，<b>非常规性手工</b>工作，比如厨师、服务员和保安，也可能被自动化。<b>常规性认知</b>工作也一样，比如客服、收银员、银行柜员和办公室助理。这样就只剩下一个象限可能是安全的，至少暂时是：<b>非常规性认知</b>工作，包括教师和艺术家、小说家和律师、医生和科学家这样的职业。这类工作大约占美国劳动力的 40%。这意味着剩下 60% 的工作容易受到自动化的冲击。</p>
+  <p>有人认为，这种规模的技术性失业将是前所未有的、灾难性的，大多数人会失去工作。另一些人则认为这会很棒：把人们从不那么有趣的工作中解放出来，去追求更好的工作，同时享受由计算机和机器人承担大部分苦活所带来的丰富食物和产品，过上更高水平的生活。没人真正知道最后会怎样，但如果历史有任何参考价值，从长远看大概会没事的。毕竟，没有人主张让 90% 的人回去种地、手工织布。政治家们正在讨论的棘手问题，是如何应对那些可能突然失业的数百万人所面临的、但愿只是短期的经济动荡。</p>
+  <div class="extra">
+    <span class="t">2017 年之后，那个"安全象限"</span>
+    这一集播出几年后，大语言模型开始能写文章、写代码、总结法律文件、画插画——这些恰恰是"非常规性认知"象限里的事。所以今天很多讨论不再问"哪种工作会被取代"，而是问"一份工作里哪些任务会被自动化、人还负责什么"。对前端来说也一样：写样板代码越来越容易，而弄清用户要什么、做架构上的取舍、为结果负责，仍然要靠人。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>人类会变成什么</h2>
+  <p>在工作之外，计算机也很可能改变我们的身体。比如，未来学家雷·库兹韦尔相信："奇点将让我们超越生物身体和大脑的局限。我们将掌控自己的命运……我们将想活多久就活多久。我们将完全理解人类的思维，并极大地扩展它的范围。"<b>超人类主义者</b>（transhumanists）认为这会以<b>赛博格</b>（cyborg，改造人）的形式发生：人和技术融合，增强我们的智力和生理机能。今天已经有<b>脑机接口</b>在使用了。像 Google Glass 和微软 HoloLens 这样的可穿戴计算机，也开始模糊这条界线。</p>
+  <p>还有人预见到"<b>数字飞升</b>"（Digital Ascension）——用杰伦·拉尼尔的话说，就是"人的肉身死去，被上传到计算机里，并保持意识"。从生物体到数字体的转变，可能会成为我们进化的下一步……也是<b>一层新的抽象</b>。</p>
+
+  <div class="futures">
+    <div><b>融合：赛博格</b>人和技术合为一体，脑机接口、可穿戴计算机增强智力和身体。</div>
+    <div><b>上传：数字飞升</b>肉身死去，意识上传到计算机——一层新的抽象。</div>
+    <div><b>被照顾：仁慈的看护者</b>超级智能经营农场、治愈疾病、指挥机器人捡垃圾、盖房子，人类尽情享受这颗淡蓝色的小点。</div>
+    <div><b>开战：天网</b>超级智能为什么要照顾我们？我们也没照顾蚂蚁。也许会像科幻电影一样，我们的造物转而对付我们。</div>
+  </div>
+
+  <p>另一些人则预测人类会基本保持人类的样子，而超级智能计算机作为一股仁慈的力量出现，成为人类的看护者——经营所有的农场、治愈疾病、指挥机器人捡垃圾、建造新房子，以及很多其他事务。这将让我们可以在这颗可爱的淡蓝色小点上尽情享受时光。还有一些人对 AI 更加怀疑：一个超级智能的 AI 为什么要浪费时间照顾我们？我们可没当过蚂蚁的仁慈看护者。所以，也许事情会像很多科幻电影里那样发展：我们和计算机开战，我们自己的造物反过来对付我们。</p>
+  <p>我们不可能知道未来会怎样，但这种讨论和辩论现在就在进行，这很好——这样当这些技术出现时，我们就能明智地规划和应对。不管你把计算机看作未来的朋友还是敌人，更有可能的是：它们会比人类存在得更久。很多未来学家和科幻作家推测，计算机会飞向太空、在银河系殖民，对时间尺度、辐射以及所有让人类难以进行长途太空旅行的东西都无所谓。当太阳燃尽、地球化为宇宙尘埃时，也许我们的技术后代仍在努力探索宇宙的每一个角落——但愿是为了纪念它们父母的传统：积累知识、改善宇宙的状态，勇敢地去往前人未至之地！</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>接下来的十年，以及你</h2>
+  <p>与此同时，计算机还有很长的路要走，计算机科学家们正在努力推进过去四十集里我们讲过的所有话题。在接下来十年左右，我们很可能会看到虚拟现实和增强现实、自动驾驶汽车、无人机、可穿戴计算机和服务机器人成为主流。互联网会继续演化出新的服务，传送新的媒体，以不同的方式连接人们。新的编程语言和编程范式会被发明出来，帮助创造新的、令人惊叹的软件。新的硬件会让神经网络和 3D 图形这样的复杂运算快如闪电。个人计算机也正待创新，也许会抛弃已经用了四十年的<b>桌面隐喻</b>，重生为无处不在、伴随一生的虚拟助手。</p>
+  <p>这个系列还有很多话题我们没来得及讲，比如加密货币、无线通信、3D 打印、生物信息学和量子计算。我们正处在计算的黄金时代，正在发生的事情太多，不可能全部总结。但最重要的是，你可以成为这场惊人变革和挑战的一部分：学习计算，拿起这项可以说是人类最伟大的发明，让世界变得更美好。感谢收看。</p>
+  <div class="callout key">
+    <span class="t">写给读到这里的你</span>
+    四十集，从一个能通能断的开关开始：开关拼成逻辑门，逻辑门拼成加法器和内存，再拼成 CPU；CPU 上跑操作系统，操作系统上跑浏览器，浏览器里跑着你写的 JavaScript 和 Vue 组件。每一层都只需要信任下一层——这就是贯穿整个系列的<b>抽象</b>。你每天写的代码，正站在这四十集的最顶端。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结 · 全系列地图</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>普适计算</td><td>计算嵌入万物；维瑟："最深刻的技术是那些消失了的技术"</td></tr>
+      <tr><td>AI 是工具</td><td>不是所有东西都需要 AI；像电力一样，既增强旧设备也催生新产品</td></tr>
+      <tr><td>智能难以量化</td><td>按处理能力粗算：今天的计算机 ≈ 老鼠，人脑再高 10⁵ 倍</td></tr>
+      <tr><td>奇点</td><td>超级智能自我改进导致的失控增长；冯·诺伊曼最早使用；也可能是 S 型曲线（复杂度刹车）</td></tr>
+      <tr><td>技术性失业</td><td>织布机、拖拉机、自动交换机、喷漆机械臂；手工 / 认知 × 常规 / 非常规，约 60% 工作易受冲击</td></tr>
+      <tr><td>人类的未来</td><td>赛博格、数字飞升、仁慈的看护者、或与机器开战——现在就讨论，才能明智应对</td></tr>
+      <tr><td>接下来</td><td>VR / AR、自动驾驶、无人机、可穿戴、服务机器人；你可以成为其中一部分</td></tr>
+    </tbody>
+  </table>
+
+  <h3 style="margin-top:24px">全系列地图</h3>
+  <p class="hint" style="margin-top:0">四十集，按主题排成一层层；最上面一层是本站续写的续集。绿色带 ✓ 的是你已经"读完打卡"的。</p>
+  <div class="map" id="map"></div>
+  <div class="step-text" id="map-cap"></div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 马克·维瑟说的"戏剧性"的计算机和"隐形"的计算机有什么区别？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">"戏剧性"的路线想把计算机做得激动人心、让人离不开它；"隐形"的路线想让计算机嵌入得如此自然，人们用它时根本不用去想它。他认为最深刻的技术是那些"消失"了的、融入日常生活直到无法区分的技术。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 什么是"奇点"？为什么有人认为它不会到来？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">奇点指技术的失控增长，尤其是超级智能不断设计、训练出更强的自己，导致的智能爆炸，越过它之后人类事务将不再是我们熟知的样子。反对者认为进步更像 S 型曲线：系统越复杂，再前进一步就越难（保罗·艾伦所说的"复杂度刹车"），增长会趋于平缓。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 按课程的划分，客服、厨师、医生、组装玩具的工人分别在哪个象限？哪个象限被认为暂时安全？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">客服：常规性认知；厨师：非常规性手工；医生：非常规性认知；组装玩具：常规性手工。暂时安全的是非常规性认知工作（教师、艺术家、小说家、律师、医生、科学家），约占美国劳动力的 40%。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 整个系列反复出现的那个关键思想是什么？举一个从这四十集里能串起来的例子。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">抽象：每一层把下一层的复杂细节封装起来，只暴露简单的接口。比如：晶体管 → 逻辑门 → 加法器 / ALU 和寄存器 → CPU → 机器码 → 编程语言 → 操作系统 → 网络与万维网 → 浏览器里的网页。每一层的人都不必理解下面所有层的细节，就能在上面造东西。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="39.html"><small>← 上一集</small>39 教育科技</a>
+    <a class="next" href="41.html"><small>下一集 · 续集 →</small>41 GPU 与并行计算</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 40 集 The Singularity, Skynet, and the Future of Computing（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+/* ---------- 增长模型 ---------- */
+(function () {
+  const svg = $('#sg');
+  const LOG2 = Math.log10(2), HUMAN = 5, ALL = 5 + Math.log10(7.5e9), CAP = 8;
+  let mode = 'exp';
+  const X0 = 60, X1 = 650, Y0 = 250, Y1 = 20, YMAX = 16, YEARS = 100;
+  const sx = t => X0 + t / YEARS * (X1 - X0), sy = y => Y0 - Math.min(YMAX, y) / YMAX * (Y0 - Y1);
+  function draw() {
+    const D = +$('#sg-d').value;
+    $('#sg-dv').textContent = D.toFixed(1) + ' 年';
+    $$('#sg-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    const r = LOG2 / D;
+    const y = t => mode === 'exp' ? r * t : CAP * Math.tanh(r * t / CAP);
+    const when = target => { for (let t = 0; t <= 300; t += .05) if (y(t) >= target) return t; return null; };
+    svg.innerHTML = '';
+    for (let k = 0; k <= YMAX; k += 2) { el('line', { x1: X0, x2: X1, y1: sy(k), y2: sy(k), style: 'stroke:var(--line)' }, svg); txt(svg, X0 - 6, sy(k) + 4, k ? '10' + String(k).split('').map(c => '⁰¹²³⁴⁵⁶⁷⁸⁹'[c]).join('') : '1', 't-sub end'); }
+    for (let t = 0; t <= YEARS; t += 20) txt(svg, sx(t), Y0 + 18, 2017 + t, 't-sub mid');
+    [[0, '今天 ≈ 一只老鼠', 'var(--muted)'], [HUMAN, '一个人的大脑', 'var(--on)'], [ALL, '全人类的大脑', 'var(--bad)']].forEach(([v, n, c]) => {
+      el('line', { x1: X0, x2: X1, y1: sy(v), y2: sy(v), style: `stroke:${c};stroke-dasharray:6 4;stroke-width:1.5` }, svg);
+      const t = txt(svg, X1, sy(v) - 5, n, 't-sub end'); t.style.fill = c;
+    });
+    let d = ''; for (let t = 0; t <= YEARS && y(t) <= YMAX; t += .5) d += (t ? 'L' : 'M') + sx(t).toFixed(1) + ',' + sy(y(t)).toFixed(1);
+    el('path', { d, style: 'fill:none;stroke:var(--accent);stroke-width:3' }, svg);
+    const th = when(HUMAN), ta = when(ALL);
+    [[th, HUMAN, 'var(--on)'], [ta, ALL, 'var(--bad)']].forEach(([t, v, c]) => { if (t != null && t <= YEARS) el('circle', { cx: sx(t), cy: sy(v), r: 6, style: `fill:${c};stroke:var(--panel);stroke-width:2` }, svg); });
+    const yr = t => t == null ? '永远追不上' : Math.round(2017 + t) + ' 年';
+    $('#sg-cap').innerHTML = mode === 'exp' ?
+      `每 ${D.toFixed(1)} 年翻一倍：追上一个人的大脑要 ${(HUMAN / LOG2).toFixed(1)} 次翻倍，约在 <b>${yr(th)}</b>；超过全人类的总和要 ${(ALL / LOG2).toFixed(1)} 次翻倍，约在 <b>${yr(ta)}</b>。` +
+        (D <= .7 ? '　课程说"最早十年左右"，对应的就是这种极快的翻倍速度。' : D >= 1.4 && D <= 1.8 ? '　这正是课程说的"本世纪结束前超过全人类"的速度。' : D >= 1.9 ? '　按经典摩尔定律（大约两年翻一倍），这一天会推迟到下个世纪。' : '') :
+      `S 型曲线：一开始和指数增长一样快，但越往上越难，最后趋于平缓（这里假设平台在 10⁸ 倍）。${th != null ? `一个人的大脑约在 <b>${yr(th)}</b> 追上，` : ''}<b>全人类的总和${ta == null ? '永远追不上' : '在 ' + yr(ta) + ' 追上'}</b>——这就是"复杂度刹车"的意思。平台到底在哪，没人知道。`;
+  }
+  $$('#sg-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; draw(); });
+  $('#sg-d').oninput = draw;
+  draw();
+})();
+
+/* ---------- 工作四象限 ---------- */
+(function () {
+  const JOBS = [['组装玩具', 'rm'], ['汽车喷漆', 'rm'], ['厨师', 'nm'], ['服务员', 'nm'], ['保安', 'nm'], ['客服', 'rc'], ['收银员', 'rc'], ['银行柜员', 'rc'], ['办公室助理', 'rc'], ['教师', 'nc'], ['小说家', 'nc'], ['律师', 'nc'], ['医生', 'nc'], ['科学家', 'nc']];
+  const WHY = { rm: '同样的动作一遍遍重复，机器早就在做了', nm: '要动手、但每次情况都不一样——正在被自动化', rc: '动脑，但是按固定流程——软件已经能做很多', nc: '动脑、每次都要解决新问题——课程认为暂时安全' };
+  const NAME = { rm: '常规 · 手工', nm: '非常规 · 手工', rc: '常规 · 认知', nc: '非常规 · 认知' };
+  let sel = null, placed = 0, right = 0;
+  $('#jobs').innerHTML = JOBS.map(([n], i) => `<button data-i="${i}">${n}</button>`).join('');
+  $$('#jobs button').forEach(b => b.onclick = () => { $$('#jobs button').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); sel = +b.dataset.i; });
+  $$('#quad .cell').forEach(c => c.onclick = () => {
+    if (sel == null) { $('#q-cap').textContent = '先在上面点一个工作。'; return; }
+    const [n, q] = JOBS[sel], ok = q === c.dataset.q;
+    const tag = document.createElement('span'); tag.className = ok ? 'ok' : 'no'; tag.textContent = n + (ok ? '' : ' ✗');
+    $(`#quad .cell[data-q="${q}"]`).insertBefore(tag, $(`#quad .cell[data-q="${q}"] i`));
+    $(`#jobs button[data-i="${sel}"]`).classList.add('placed');
+    placed++; if (ok) right++;
+    $('#q-cap').innerHTML = (ok ? `<b>${n}</b>：对，${NAME[q]}——${WHY[q]}。` : `<b>${n}</b> 按课程的划分应该在<b>${NAME[q]}</b>（${WHY[q]}），已经帮你放过去了。`) + `　已放 ${placed} / ${JOBS.length}，对了 ${right} 个。`;
+    sel = null;
+    if (placed === JOBS.length) {
+      $('#quad').classList.add('reveal');
+      ['rm', 'nm', 'rc'].forEach(q => { const c = $(`#quad .cell[data-q="${q}"]`); c.classList.add('risk'); $('i', c).textContent = '易受自动化冲击'; });
+      const s = $('#quad .cell[data-q="nc"]'); s.classList.add('safe'); $('i', s).textContent = '暂时安全：约占美国劳动力的 40%';
+      $('#q-cap').innerHTML += '<br>全部放好了。红色的三个象限加起来，课程估计约占美国工作的 60%。';
+    }
+  });
+})();
+
+/* ---------- 全系列地图 ---------- */
+(function () {
+  const T = ['计算机早期历史', '电子计算机', '布尔逻辑和逻辑门', '二进制', '算术逻辑单元', '寄存器和内存', '中央处理器', '指令和程序', '高级 CPU 设计', '早期的编程方式', '编程语言发展史', '编程原理：语句和函数', '算法入门', '数据结构', '阿兰·图灵', '软件工程', '集成电路与摩尔定律', '操作系统', '内存与储存介质', '文件系统', '压缩', '命令行界面', '屏幕与 2D 图形显示', '冷战和消费主义', '个人计算机革命', '图形用户界面', '3D 图形', '计算机网络', '互联网', '万维网', '计算机安全', '黑客与攻击', '加密', '机器学习与人工智能', '计算机视觉', '自然语言处理', '机器人', '计算机心理学', '教育科技', '奇点、天网与计算机的未来',
+    'GPU 与并行计算', '云计算', 'Transformer 与大语言模型', '生成式 AI 与智能体', '新的攻防', '2026，回看第 40 集'];
+  const EXT_READY = [41, 42, 43, 44, 45, 46]; // 已写好的续集
+  const G = [['开端', [1, 2]], ['从开关到 CPU', [3, 4, 5, 6, 7, 8, 9]], ['编程', [10, 11, 12, 13, 14, 15, 16]], ['硬件与系统', [17, 18, 19, 20, 21]], ['人与屏幕', [22, 23, 24, 25, 26, 27]], ['网络', [28, 29, 30]], ['安全', [31, 32, 33]], ['让计算机感知与学习', [34, 35, 36, 37]], ['人与未来', [38, 39, 40]], ['续集 · 2017 之后', [41, 42, 43, 44, 45, 46]]];
+  const read = new Set(ccStore.get('cc-read', []));
+  const pad = n => String(n).padStart(2, '0');
+  $('#map').innerHTML = G.slice().reverse().map(([g, eps]) => `<div class="grp"><b>${g}</b><div class="eps">${eps.map(n => `<a href="${pad(n)}.html" data-n="${n}" class="${read.has(n) ? 'read' : ''}${n > 40 && !EXT_READY.includes(n) ? ' off' : ''}"><i>${pad(n)}</i>${T[n - 1]}</a>`).join('')}</div></div>`).join('');
+  $('#map-cap').innerHTML = `从下往上读：最底层是开关和逻辑门，最上层是人和未来——和这个系列讲的"抽象"一样，一层搭在一层上。你已经打卡了 <b>${read.size}</b> / ${T.length} 集。`;
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,809 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>33 加密 · 计算机科学速成课</title>
+<link rel="stylesheet" href="cc.css">
+<style>
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.row-ctl{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 0;font-size:14px}
+.row-ctl input[type=text],.row-ctl input[type=number]{font:15px var(--mono);padding:5px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);min-width:0;max-width:100%}
+.row-ctl input[type=range]{flex:1;min-width:120px}
+.row-ctl select{font:14px var(--mono);padding:4px 6px;border:1px solid var(--line);border-radius:7px;background:var(--panel);color:var(--ink)}
+.alpha{font:14px/1.7 var(--mono);white-space:pre;margin:8px 0;padding:8px 12px;background:var(--bg);border-radius:10px}
+.alpha .k{color:var(--muted)}
+.alpha b{color:var(--on)}
+.mono-out{font:15px/1.7 var(--mono);word-break:break-all;padding:8px 12px;background:var(--bg);border-radius:10px;margin:8px 0}
+.mono-out .g{color:var(--accent);font-weight:700}
+.mono-out .lab{display:block;font:12px var(--mono);color:var(--muted)}
+.paint{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:10px;margin:12px 0}
+.paint .col{border:1px solid var(--line);border-radius:12px;padding:10px;background:var(--bg);min-width:0}
+.paint .col > b{display:block;font-size:14px;margin-bottom:6px;text-align:center}
+.paint .col.mid{border-style:dashed}
+.sw{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:13px;line-height:1.4}
+.sw i{flex:none;width:34px;height:34px;border-radius:50%;border:1px solid var(--line)}
+.sw.big i{width:44px;height:44px;box-shadow:0 0 0 3px var(--on-soft)}
+@media (max-width:600px){.paint{grid-template-columns:1fr}}
+.tries{font:13px/1.7 var(--mono);color:var(--muted);word-break:break-all}
+.tries b{color:var(--ok)}
+</style>
+</head>
+<body data-ep="33">
+
+<div class="topbar">
+  <a href="index.html">← 速成课目录</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=34" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">计算机科学速成课 · 第 33 集</div>
+  <h1>加密</h1>
+  <p class="en">Cryptography</p>
+  <p class="lead">世上没有 100% 安全的系统，所以要层层设防，而最常见的一层就是加密。从凯撒的字母移位、英格玛的转子，到 AES、Diffie-Hellman 和 RSA，本集一路讲到现代密码学的三件套：对称加密、密钥交换、公钥密码学。</p>
+  <div class="road">
+    <span>替换与置换</span><i>→</i><span>英格玛</span><i>→</i><span>DES / AES</span><i>→</i><span>密钥交换</span><i>→</i><span>公钥与签名</span><i>→</i><span>网址旁的小锁</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据中文字幕整理的课程内容（个别误译已对照英文原文修正）</span>
+    <span class="l-add">蓝色虚线框：课程之外的补充解释</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">0 · 多层防御</a></li>
+    <li><a href="#ch1">1 · 凯撒与替换加密</a></li>
+    <li><a href="#ch2">2 · 置换加密</a></li>
+    <li><a href="#ch3">3 · 英格玛</a></li>
+    <li><a href="#ch4">4 · DES 与 AES</a></li>
+    <li><a href="#ch5">5 · 密钥交换</a></li>
+    <li><a href="#ch6">6 · 公钥与签名</a></li>
+    <li><a href="#ch7">7 · 本集小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 0 ============ -->
+<section class="ch" id="ch0">
+  <div class="ch-num">第 0 节</div>
+  <h2>没有绝对安全，只有层层设防</h2>
+  <p>嗨，我是 Carrie Anne，欢迎收看计算机科学速成课！过去两集，我们聊了很多计算机安全的话题。但事实是，世上不存在完美的、100% 安全的计算机系统。漏洞总会存在，安全专家也知道这一点。所以系统架构师会采用一种叫<b>纵深防御</b>（defence in depth，字幕译作"多层防御"）的策略：用许多层不同的安全机制来阻挠攻击者。</p>
+  <p>这有点像城堡的设计：首先你得躲过弓箭手，然后渡过护城河、翻过城墙、避开热油、越过城垛、打败守卫，最后才能到达王座所在的大殿。不过这里我们要讲的，是计算机安全最常见的形式之一：<b>密码学</b>（cryptography）。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="castle" viewBox="0 0 680 190" role="img" aria-label="城堡式的多层防御"></svg></div>
+      <figcaption>图 1　纵深防御：攻击者要连闯好几关，任何一关都可能把他挡下。</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>秘密书写：凯撒加密与替换加密</h2>
+  <p>cryptography 这个词来自 crypto 和 graphy 两个词根，大致可以译成"秘密书写"。为了让信息保密，你要用一种<b>加密算法</b>（cipher），把<b>明文</b>（plain text）转换成<b>密文</b>（ciphertext）。密文就是一堆乱码，除非你有能把加密算法撤销的<b>密钥</b>（key）。把文本变成秘密的过程叫<b>加密</b>（encryption），反过来的过程叫<b>解密</b>（decryption）。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="flow" viewBox="0 0 680 150" role="img" aria-label="明文、密文与密钥"></svg></div>
+      <figcaption>图 2　加密算法 + 密钥把明文变成密文；有密钥的人才能把它变回去。</figcaption>
+    </figure>
+  </div>
+
+  <p>加密算法在计算机出现之前很久就有人用了。尤利乌斯·凯撒用一种今天叫"<b>凯撒加密</b>"（Caesar cipher）的方法加密私人信件：他把信中每个字母沿着字母表往后移三位。所以 A 变成 D，单词 "brutus" 变成了 "euxwxv"。要解密消息，接收者既要知道算法，也要知道移了几位，而这个位数就起到了密钥的作用<span class="muted" style="font-size:13px">（字幕漏了后半句，英文原文还说移动的位数 acted as the key，即"充当密钥"）</span>。</p>
+
+  <div class="card">
+    <h3>动手：凯撒加密</h3>
+    <div class="row-ctl"><label>明文 <input type="text" id="cz-in" value="brutus" maxlength="60" aria-label="明文" style="width:220px"></label></div>
+    <div class="row-ctl"><span>密钥：往后移</span><input type="range" id="cz-k" min="0" max="25" value="3" aria-label="移动位数"><b id="cz-kv" style="font-family:var(--mono)">3</b><span>位</span></div>
+    <div class="scroll-x"><div class="alpha" id="cz-map"></div></div>
+    <div class="mono-out" id="cz-out"></div>
+    <div class="step-text" id="cz-cap"></div>
+  </div>
+
+  <p>凯撒加密是一大类技术里的一个例子，这类技术叫<b>替换加密</b>（substitution cipher）：按照一张对照表，把消息里的每个字母都换成别的东西。基本的替换加密有一个大缺点：<b>字母出现的频率被原样保留了下来</b>。比如 E 是英语里最常见的字母，如果你的加密算法把 E 换成 X，那么 X 就会是密文里出现得最多的字母。熟练的密码分析师能从这类统计规律倒推出原文。事实上，正是一份替换加密的密文被破译，导致苏格兰女王玛丽在 1587 年因密谋杀害伊丽莎白女王而被处决。</p>
+
+  <div class="card">
+    <h3>动手：字母频率出卖了替换加密</h3>
+    <p class="hint" style="margin-top:0">下面这段英文用一张打乱的对照表加了密（不再是简单的移位）。数一数密文里每个字母出现了几次，再按英语的规律去猜。</p>
+    <div class="scroll-x"><svg class="diagram" id="fq" viewBox="0 0 680 190" role="img" aria-label="密文字母频率"></svg></div>
+    <div class="mono-out" id="fq-txt" style="font-size:13px"></div>
+    <div class="btns"><button class="btn primary" id="fq-e">猜：最常见的密文字母 = E</button><button class="btn" id="fq-t">再猜：第二常见 = T</button><button class="btn" id="fq-all">揭晓全部</button><button class="btn" id="fq-r">重来</button></div>
+    <div class="step-text" id="fq-cap"></div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>置换加密：字母不变，顺序打乱</h2>
+  <p>另一类基本技术是<b>置换加密</b>（permutation cipher）<span class="muted" style="font-size:13px">（字幕作"移位加密"，英文原文是 permutation，指打乱字母的顺序，不要和凯撒加密的"移位"弄混）</span>。我们来看一个简单的例子，叫<b>列置换加密</b>（columnar transposition cipher）。我们把一条消息的字母填进一个网格，这里选的是 5×5。加密时，我们换一个顺序把字符读出来，比如从左下角开始往上读，一次读一列。新的字母顺序叫作一个"置换"（permutation），它就是加密后的消息<span class="muted" style="font-size:13px">（字幕作"加密后字母的排列不同了"，英文原文是：这个新的字母顺序（称为置换）就是加密后的消息）</span>。读取的方向和 5×5 的网格大小，合起来就是密钥。和前面一样，只要知道加密算法和密钥，接收者就能把这个过程倒过来，还原出原始消息<span class="muted" style="font-size:13px">（字幕作"如果接收者知道密文和加密方法"，英文原文是 the cipher and key，即加密算法和密钥）</span>。</p>
+
+  <div class="card">
+    <h3>动手：5×5 列置换</h3>
+    <div class="row-ctl"><label>明文 <input type="text" id="tp-in" value="MEET ME UNDER THE OLD OAK TREE" maxlength="40" aria-label="明文" style="width:280px"></label></div>
+    <div class="scroll-x"><svg class="diagram" id="tp" viewBox="0 0 680 300" role="img" aria-label="5×5 网格"></svg></div>
+    <div class="btns"><button class="btn primary" id="tp-step">读下一个字母</button><button class="btn" id="tp-all">全部读出</button><button class="btn" id="tp-r">重来</button></div>
+    <div class="mono-out" id="tp-out"></div>
+    <div class="step-text" id="tp-cap"></div>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>英格玛：会自己变换的替换加密</h2>
+  <p>到了 20 世纪，密码学以加密机器的形式实现了机械化。其中最有名的是德国的<b>英格玛</b>（Enigma），纳粹用它加密战时的通信。我们在<a href="15.html">第 15 集</a>讲过，英格玛是一台像打字机的机器，有一个键盘和一块灯板，两者都有完整的字母表。它们上方是一组可以配置的<b>转子</b>（rotor），这是英格玛加密能力的关键。</p>
+  <p>先只看一个转子。它的一面有 26 个电触点，对应 26 个字母；这些触点通过交叉的导线连到转子的另一面，把一个字母换成另一个字母。如果输入 H，另一边出来的可能是 K；如果输入 K，出来的可能是 F，以此类推。这种换字母的行为听起来应该很耳熟：它就是替换加密！但英格玛更复杂，因为它把三个或更多的转子排成一排，每个转子的输出送进下一个转子。转子可以转到 26 个起始位置中的任意一个，还能按不同的顺序插入，于是能提供大量不同的替换映射。</p>
+  <p>转子后面是一个叫<b>反射器</b>（reflector）的特殊电路。它不把信号传给下一个转子，而是把每个引脚连到另一个引脚上，再把电信号沿着转子送回去。最后，机器前方还有一块<b>插线板</b>（plugboard），可以选择性地把从键盘进来的字母两两互换，又加了一层复杂度。</p>
+  <p>我们用一个简化的电路，在一个示例配置上加密一个字母。按下 H 键，电流先流过插线板，再流过转子，到达反射器，然后流回转子和插线板，最后点亮灯板上的字母 L。所以 H 被加密成了 L。注意，电路是双向的，所以如果我们按 L，亮起来的会是 H。换句话说，加密和解密是同一个过程，只要确保发送方和接收方的机器初始配置相同就行。仔细看这个电路，你会发现一个字母不可能被加密成它自己，这后来成了一个致命的密码学弱点。</p>
+  <p>最后，为了不让英格玛只是一个简单的替换加密，每输入一个字母，转子就前进一格，有点像汽车的里程表。所以如果你输入 A-A-A，出来的可能是 B-D-K，每按一次键，替换映射都会改变。</p>
+
+  <div class="card">
+    <h3>动手：一台三转子英格玛</h3>
+    <div class="row-ctl">
+      <span>转子初始位置</span>
+      <label>左 I <select id="en-p0" aria-label="左转子位置"></select></label>
+      <label>中 II <select id="en-p1" aria-label="中转子位置"></select></label>
+      <label>右 III <select id="en-p2" aria-label="右转子位置"></select></label>
+    </div>
+    <div class="row-ctl"><label>插线板 <input type="text" id="en-plug" value="HQ" aria-label="插线板" style="width:200px"></label><span class="muted" style="font-size:13px">每两个字母一对，空格隔开，如 HQ AZ</span></div>
+    <div class="row-ctl"><label>键盘输入 <input type="text" id="en-in" value="AAAAA" maxlength="40" aria-label="键盘输入" style="width:260px"></label></div>
+    <div class="scroll-x"><svg class="diagram" id="en-svg" viewBox="0 0 680 220" role="img" aria-label="英格玛的电流路径"></svg></div>
+    <div class="mono-out" id="en-out"></div>
+    <div class="btns"><button class="btn primary" id="en-back">把密文交给同样配置的接收机</button></div>
+    <div class="step-text" id="en-cap"></div>
+    <p class="hint">图里画的是最后一个字母的电流路径。转子接线用的是历史上的 I、II、III 号转子和 B 型反射器；进位按"里程表"简化处理（右转子转满一圈，中转子进一格），省略了真机的一些细节。</p>
+  </div>
+
+  <p>英格玛当然是一块难啃的骨头。但正如我们在<a href="15.html">第 15 集</a>讲过的，艾伦·图灵和他在布莱切利园的同事们破解了英格玛密码，还把破解过程的大部分自动化了。</p>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>进入软件时代：DES 与 AES</h2>
+  <p>随着计算机的出现，密码学从硬件转向了软件。最早得到广泛应用的软件加密算法之一，是 IBM 和美国国家安全局（NSA）在 1977 年开发的<b>数据加密标准</b>（Data Encryption Standard），简称 <b>DES</b>。DES 最初用的是 56 位长的二进制密钥，也就是说有 2<sup>56</sup> 个、大约 7.2 亿亿（7.2×10<sup>16</sup>）个不同的密钥。在 1977 年，这意味着除了也许 NSA 之外，没有人有足够的计算能力去暴力尝试所有可能的密钥。但到了 1999 年，一台 25 万美元的计算机只要两天就能把所有 DES 密钥试一遍，这个算法从此不再安全。</p>
+  <p>于是在 2001 年，<b>高级加密标准</b>（Advanced Encryption Standard，AES）最终定稿并发布。AES 用的密钥长得多：128、192 或 256 位，暴力攻击因此变得难得多。对于 128 位的密钥，就算用上今天地球上的每一台计算机，也要上万亿年才能试遍所有组合。所以你最好赶紧开始！</p>
+
+  <div class="card">
+    <h3>动手：密钥长一点，要多试多久</h3>
+    <div class="row-ctl"><span>密钥长度</span><span class="seg-btns" id="kl-bits"><button data-b="56">56 位（DES）</button><button data-b="128">128 位</button><button data-b="192">192 位</button><button data-b="256">256 位（AES）</button></span></div>
+    <div class="row-ctl"><span>攻击者</span><span class="seg-btns" id="kl-rate"><button data-r="0">1999 年那台 25 万美元的机器</button><button data-r="1">地球上所有计算机（假设）</button></span></div>
+    <div class="step-text" id="kl-cap"></div>
+  </div>
+
+  <p>AES 把数据切成每块 16 个字节，然后基于密钥值，对每一块做一系列替换和置换，再加上一些其他操作来进一步打乱信息；每一块都要把这个过程重复十轮或更多。你可能会想：为什么只重复十轮？为什么只用 128 位的密钥，而不是一万位？其实这是性能上的权衡。如果加密并发送一封邮件要花几个小时，或者连上一个安全网站要好几分钟，就没人会用了。AES 在性能和安全性之间取得了平衡，让密码学能实际用起来。今天 AES 无处不在：从加密 iPhone 上的文件，到用 WPA2 在 WiFi 上传输数据，再到用 HTTPS 访问网站<span class="muted" style="font-size:13px">（字幕作"用 WPA2 协议在 WiFi 中访问 HTTPS 网站"，英文原文列举的是三个独立的用途：iPhone 文件加密、WPA2 WiFi 传输、HTTPS 网站）</span>。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="aes" viewBox="0 0 680 170" role="img" aria-label="AES 的分块与多轮"></svg></div>
+      <figcaption>图 3　AES：16 字节一块，每块重复十轮以上的替换、置换和其他混淆操作，每轮都用到密钥。</figcaption>
+    </figure>
+  </div>
+
+  <div class="extra">
+    <span class="t">浏览器里就有 AES</span>
+    网页里的 JavaScript 可以通过 Web Crypto API（<code>crypto.subtle</code>）调用浏览器内置的 AES、ECDH（Diffie-Hellman 的椭圆曲线版本）和 RSA，比如 <code>crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data)</code>。这些实现由浏览器提供、经过大量审计。自己手写加密算法几乎总是坏主意，本页的演示都只是教学用的玩具。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>不发送密钥，也能约定密钥</h2>
+  <p>到目前为止，我们讨论的加密技术都依赖一个发送方和接收方都知道的密钥：发送方用这个密钥加密消息，接收方用同一个密钥解密。过去，密钥靠口头约定或实物传递，比如德国人会分发密码本，上面写着英格玛机每天的设置。但这种做法在互联网时代根本行不通。想象一下，每次连 YouTube 都得先翻开一本密码本！我们需要一种办法，让服务器能通过公开的互联网，把一个秘密密钥发给想要安全连接的用户。这听起来不太安全：如果密钥是公开发送的，被黑客截获了，他们不就能用它解密双方的所有通信了吗？</p>
+  <p>解决方案是<b>密钥交换</b>（key exchange）！这是一种让两台计算机<b>不用发送密钥</b>就能约定同一个密钥的算法。我们可以用<b>单向函数</b>（one-way function）做到这一点：这类数学运算朝一个方向算很容易，倒过来却很难。</p>
+  <p>为了说明单向函数，我们拿颜料的颜色打个比方。把颜料混在一起很容易，但要弄清一种混合色是用哪些颜色调出来的就没那么容易了，你得试很多种可能才行。在这个比喻里，我们的密钥是一种独一无二的颜色。首先，有一种所有人都看得到的公开颜色。然后，约翰和我各自挑一种秘密颜色。为了交换密钥，我把我的秘密颜色和公开颜色混在一起，然后用任何方式把混合色寄给约翰：写信、信鸽，随便什么都行。约翰也照做，把他的秘密颜色和公开颜色混在一起，然后寄给我。收到约翰的颜色后，我只要再加入我的秘密颜色，就得到了三种颜料的混合。约翰对我寄去的混合色也这样做。瞧！我们最后得到了同一种颜色！我们可以把它当作共享的秘密，尽管我们从来没把各自的秘密颜色发给对方。外面的窥探者能知道一部分信息，但他们很难弄清我们共享的秘密颜色是什么。</p>
+
+  <div class="card">
+    <h3>动手：用颜料交换密钥</h3>
+    <div class="row-ctl"><span>我的秘密色</span><span class="seg-btns" id="pt-me"></span></div>
+    <div class="row-ctl"><span>约翰的秘密色</span><span class="seg-btns" id="pt-jo"></span></div>
+    <div class="paint">
+      <div class="col"><b>我</b><div id="pt-c0"></div></div>
+      <div class="col mid"><b>公开信道（窃听者也看得到）</b><div id="pt-c1"></div></div>
+      <div class="col"><b>约翰</b><div id="pt-c2"></div></div>
+    </div>
+    <div class="btns"><button class="btn primary" id="pt-next">下一步</button><button class="btn" id="pt-r">重来</button></div>
+    <div class="step-text" id="pt-cap"></div>
+  </div>
+
+  <p>当然，寄颜料、混颜料不适合用来传输计算机数据。幸运的是，数学上的单向函数非常完美，这正是<b>迪菲-赫尔曼密钥交换</b>（Diffie-Hellman Key Exchange）所用的。在 Diffie-Hellman 中，单向函数是<b>模幂运算</b>（modular exponentiation）：取一个数作为<b>底数</b>，求它的另一个数（<b>指数</b>）次方，再除以第三个数（<b>模数</b>），取余数。举个例子，要算 3 的 5 次方模 31，先算 3<sup>5</sup>，得 243，再除以 31 取余数，得 26。难的是只给出结果和底数，倒推出指数。如果我告诉你，我把 3 求了某个秘密次方，再模 31，余数是 7，你得试很多个指数，才能知道我选的是哪个。如果把这些数取得很大，比如几百位长，那么找出秘密指数几乎是不可能的。</p>
+
+  <div class="card">
+    <h3>动手：正着算容易，倒着猜难</h3>
+    <div class="row-ctl"><span>3 的</span><input type="number" id="me-g" value="5" min="1" max="60" style="width:80px" aria-label="指数"><span>次方模 31 =</span><b id="me-r" style="font-family:var(--mono);font-size:18px"></b><button class="btn" id="me-go">算一下</button></div>
+    <div class="row-ctl"><span>反过来：3 的几次方模 31 余 <b>7</b>？</span><button class="btn primary" id="me-brute">让计算机从 1 开始试</button></div>
+    <div class="tries" id="me-tries"></div>
+    <div class="step-text" id="me-cap"></div>
+  </div>
+
+  <p>现在来看 Diffie-Hellman 怎样用模幂运算算出一个共享密钥。首先，有一组公开的值，即底数和模数。就像那种公开的颜料颜色，所有人都能知道……连坏人都知道！为了安全地给约翰发消息，我选一个秘密指数 X，然后计算 B<sup>X</sup> mod M，把这个大数发给约翰。约翰也照做，选一个秘密指数 Y，然后把 B<sup>Y</sup> mod M 发给我。为了得到共享密钥，我把约翰发来的数求 X 次方（X 是我的秘密指数），再模 M。在数学上，这等于 B 的 XY 次方模 M。约翰也照做，把我发给他的数求 Y 次方，我们最后得到完全相同的数！这是一个共享的秘密密钥，尽管我们从来没有把各自的秘密数字发给对方。我们可以用这个大数作为加密通信的共享密钥，再用 AES 之类的算法来加密。</p>
+
+  <div class="card">
+    <h3>动手：迪菲-赫尔曼密钥交换（底数 3，模数 31）</h3>
+    <div class="row-ctl"><span>我的秘密指数 X</span><input type="range" id="dh-x" min="1" max="29" value="6" aria-label="秘密指数 X"><b id="dh-xv" style="font-family:var(--mono)"></b></div>
+    <div class="row-ctl"><span>约翰的秘密指数 Y</span><input type="range" id="dh-y" min="1" max="29" value="11" aria-label="秘密指数 Y"><b id="dh-yv" style="font-family:var(--mono)"></b></div>
+    <div class="scroll-x"><svg class="diagram" id="dh" viewBox="0 0 680 250" role="img" aria-label="Diffie-Hellman 计算过程"></svg></div>
+    <div class="btns"><button class="btn" id="dh-eve">窃听者：试着倒推出 X</button></div>
+    <div class="step-text" id="dh-cap"></div>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>公钥、私钥与签名</h2>
+  <p>Diffie-Hellman 密钥交换是建立共享密钥的一种方法。这种发送方和接收方都用来加密、解密消息的密钥叫<b>对称密钥</b>，因为两边的密钥是一样的。凯撒加密、英格玛和 AES 都是<b>对称加密</b>。还有一种<b>非对称加密</b>：它有两个不同的密钥，最常见的是一个公开，一个私有。人们可以用<b>公钥</b>加密一条消息，只有持有<b>私钥</b>的接收者才能解密。换句话说，知道公钥只能让你加密，不能解密。它是"不对称"的！</p>
+  <p>想象一些带挂锁的箱子，挂锁要用钥匙才能打开。为了收到一条安全的消息，我可以给发送者一个箱子和一把挂锁。他们把消息放进去，把锁扣上，然后把箱子寄回给我，只有我能用我的私钥打开。锁上之后，无论是发送者本人，还是任何捡到箱子的人，不用暴力都打不开它。同样，数字公钥加密的东西，只有私钥才能解密。</p>
+  <p>反过来也行：用私钥加密的东西，可以用公钥解密。这被用来做<b>签名</b>：服务器用自己的私钥加密数据，任何人都可以用服务器的公钥解密。这就像一个无法伪造的签名，因为只有私钥的主人才能做这样的加密。它能证明你拿到的数据来自正确的服务器或个人，而不是冒名顶替者。今天最流行的非对称加密技术是 <b>RSA</b>，名字取自它的发明者 Rivest、Shamir 和 Adleman。</p>
+
+  <div class="card">
+    <h3>动手：一把玩具 RSA 钥匙</h3>
+    <p class="hint" style="margin-top:0">公钥 (e = 17, n = 3233) 人人可见，私钥 d = 2753 只有我有。消息在这里是一个小于 3233 的数（真实系统会先把文字编码成数）。</p>
+    <span class="seg-btns" id="rs-mode"><button data-m="enc">公钥加密，私钥解密</button><button data-m="sig">私钥签名，公钥验证</button></span>
+    <div class="row-ctl" style="margin-top:10px"><label>消息 m <input type="number" id="rs-m" value="65" min="0" max="3232" style="width:100px" aria-label="消息"></label></div>
+    <div class="btns" id="rs-btns"></div>
+    <div class="readout" id="rs-out"></div>
+    <div class="step-text" id="rs-cap"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">玩具 RSA 是怎么来的</span>
+    取两个质数 p = 61、q = 53，n = p × q = 3233。选 e = 17，再找一个 d，使 e × d 除以 (p−1)(q−1) = 3120 余 1：17 × 2753 = 46801 = 15 × 3120 + 1，所以 d = 2753。加密是 c = m<sup>e</sup> mod n，解密是 m = c<sup>d</sup> mod n，签名就是把 d 和 e 的顺序倒过来。用的又是模幂运算。只知道公钥的人要算出 d，得先把 n 分解回 p 和 q。3233 一下就能分解，但真实的 n 有 2048 位（600 多位十进制数），目前没有人能分解。
+  </div>
+
+  <p>现在你学会了现代密码学所有"关键"（key）的部分：对称加密、密钥交换和公钥密码学。当你访问一个安全的网站，比如你的银行，那个小小的挂锁图标意味着：你的计算机用公钥密码学验证了服务器，用密钥交换建立了一个临时的秘密密钥，再用对称加密保护来来回回的所有通信，不让人窥探<span class="muted" style="font-size:13px">（字幕作"绿色锁图标代表用了公钥密码学验证服务器的密钥，然后建立临时密钥"，英文原文是：用公钥密码学验证服务器，用密钥交换建立临时密钥；原文也没说锁是绿色的）</span>。</p>
+
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="https" viewBox="0 0 680 180" role="img" aria-label="小锁图标背后的三件套"></svg></div>
+      <figcaption>图 4　地址栏里那把小锁背后，三种技术各管一段。</figcaption>
+    </figure>
+  </div>
+
+  <div class="extra">
+    <span class="t">今天的 HTTPS 长什么样</span>
+    HTTPS 底下是 TLS 协议。在 TLS 1.3（2018 年发布）里，密钥交换几乎都用 Diffie-Hellman 的椭圆曲线版本（ECDHE）；服务器用 RSA 或 ECDSA 私钥签名，证明自己的身份；之后的数据用 AES-GCM 或 ChaCha20 这类对称算法加密，正好是本集的三件套。浏览器怎么确认"这个公钥真是银行的"？证书机构（CA）用自己的私钥给网站证书签了名，而浏览器和操作系统里内置了这些 CA 的公钥。
+  </div>
+
+  <p>不管你是在网上买东西、给最好的朋友发邮件，还是只是在刷猫咪视频，密码学都在保护这一切的安全和隐私。谢啦，密码学！</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>本集小结</h2>
+  <table class="tt static" style="width:100%">
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>纵深防御</td><td>没有 100% 安全的系统，用多层不同的安全机制阻挠攻击者</td></tr>
+      <tr><td>基本术语</td><td>加密算法（cipher）、明文、密文、密钥、加密、解密</td></tr>
+      <tr><td>替换加密</td><td>凯撒加密（移三位）；缺点是字母频率被保留，可用频率分析破解</td></tr>
+      <tr><td>置换加密</td><td>列置换：填进 5×5 网格，换个顺序读出；方向和网格大小是密钥</td></tr>
+      <tr><td>英格玛</td><td>多个转子 + 反射器 + 插线板；加密解密同一过程；字母不会变成自己；每按一键转子前进一格</td></tr>
+      <tr><td>DES / AES</td><td>DES 56 位密钥，1999 年两天可破；AES 128/192/256 位，16 字节分块、10 轮以上，兼顾性能</td></tr>
+      <tr><td>密钥交换</td><td>单向函数（模幂运算）；Diffie-Hellman：双方得到 B<sup>XY</sup> mod M，却从不发送密钥</td></tr>
+      <tr><td>非对称加密</td><td>公钥加密、私钥解密；反过来用于签名；最流行的是 RSA</td></tr>
+      <tr><td>HTTPS 小锁</td><td>公钥密码学验证服务器 + 密钥交换建立临时密钥 + 对称加密保护通信</td></tr>
+    </tbody>
+  </table>
+
+  <ul class="timeline">
+    <li><span class="yr">古罗马</span>凯撒把字母往后移三位，加密私人信件</li>
+    <li><span class="yr">1587</span>一份替换加密的密文被破译，苏格兰女王玛丽被处决</li>
+    <li><span class="yr">1900s</span>加密机械化；纳粹用英格玛加密通信，图灵等人在布莱切利园破解</li>
+    <li><span class="yr">1977</span>IBM 与 NSA 推出 DES，56 位密钥</li>
+    <li><span class="yr">1999</span>一台 25 万美元的计算机两天就能试遍所有 DES 密钥</li>
+    <li><span class="yr">2001</span>AES 定稿发布，密钥 128 / 192 / 256 位</li>
+  </ul>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    没有绝对安全的系统，只能层层设防，而加密是最常见的一层。现代密码学是三件套：用公钥密码学确认对方是谁，用密钥交换在公开网络上约定一个从未发送过的密钥，再用 AES 这样的对称加密高效地保护所有通信。地址栏那把小锁背后就是这三件事。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么简单的替换加密可以被频率分析破解？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">替换加密只把每个字母换成另一个固定的字母，字母出现的频率被原样保留。英语里 E 最常见，那么密文里出现最多的字母很可能就代表 E，以此类推，就能倒推出原文。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 英格玛为什么"加密和解密是同一个过程"？它有什么致命弱点？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">电流经插线板、转子到达反射器后原路折回，电路是双向的：同一配置下按 H 亮 L，按 L 就亮 H。所以双方只要初始配置相同，接收方把密文打一遍就得到明文。也因为有反射器，一个字母永远不会被加密成它自己，这成了致命的弱点。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. DES 为什么到 1999 年不再安全？AES 为什么不干脆用一万位的密钥？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">DES 只有 56 位密钥，约 7.2 亿亿种，1999 年一台 25 万美元的计算机两天就能全部试完。AES 不用一万位，是性能上的权衡：如果加密一封邮件要几小时、连一个网站要几分钟，就没人会用了。128 位已经需要上万亿年才能暴力试完。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. Diffie-Hellman 交换时，窃听者能看到哪些数？为什么算不出共享密钥？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">窃听者能看到底数 B、模数 M，以及双方发出的 B<sup>X</sup> mod M 和 B<sup>Y</sup> mod M。要得到共享密钥 B<sup>XY</sup> mod M，他得先从这些结果倒推出 X 或 Y，而模幂运算是单向函数：数字有几百位长时，倒推指数几乎不可能。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 用私钥"加密"有什么用？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">用来签名。只有私钥的主人能做这种加密，而任何人都能用公钥解密验证。所以它像一个无法伪造的签名，能证明数据确实来自那台服务器或那个人，而不是冒名顶替者。</div>
+    </div>
+    <div class="q">
+      <div class="qt">6. 访问银行网站时，地址栏的小锁背后，三种技术各做了什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">公钥密码学用来验证服务器的身份；密钥交换用来建立一个临时的秘密密钥；对称加密（如 AES）用这个密钥保护之后来来回回的所有通信。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="32.html"><small>← 上一集</small>32 黑客与攻击</a>
+    <a class="next" href="34.html"><small>下一集 →</small>34 机器学习与人工智能</a>
+  </div>
+
+  <div class="credit">
+    课程原作：Crash Course Computer Science 第 33 集 Cryptography（PBS Digital Studios，CC BY-NC-SA 4.0）。<br>
+    正文依据 <a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7/Crash-Course-Computer-Science-Chinese</a> 翻译组的中英字幕整理；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。本页以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="cc.js"></script>
+<script>
+const REDUCE = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const ABC = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const modpow = (b, e, m) => { b = BigInt(b); e = BigInt(e); m = BigInt(m); b %= m; let r = 1n; while (e > 0n) { if (e & 1n) r = r * b % m; b = b * b % m; e >>= 1n; } return Number(r); };
+function setSel(sel, attr, val) { $$(sel + ' button').forEach(b => b.classList.toggle('sel', b.dataset[attr] === String(val))); }
+
+/* ---------- 图 1 城堡 ---------- */
+(function () {
+  const svg = $('#castle');
+  const L = ['弓箭手', '护城河', '城墙', '热油', '城垛', '守卫'];
+  txt(svg, 30, 30, '攻击者', 't-main').style.fill = 'var(--bad)';
+  el('path', { d: 'M30,100 H620', class: 's-dash' }, svg);
+  L.forEach((n, i) => {
+    const x = 60 + i * 86;
+    el('rect', { x, y: 60, width: 70, height: 80, rx: 10, class: 's-acc' }, svg);
+    txt(svg, x + 35, 96, n, 't-main mid');
+    txt(svg, x + 35, 116, '第 ' + (i + 1) + ' 层', 't-sub mid');
+  });
+  el('rect', { x: 580, y: 50, width: 80, height: 100, rx: 12, class: 's-on' }, svg);
+  txt(svg, 620, 98, '王座', 't-main mid');
+  txt(svg, 620, 118, '要保护的东西', 't-sub mid');
+  el('circle', { cx: 30, cy: 100, r: 9, style: 'fill:var(--bad-soft);stroke:var(--bad);stroke-width:2' }, svg);
+  txt(svg, 340, 175, '每一层用不同的机制，攻击者得全部闯过才能到达目标', 't-sub mid');
+})();
+
+/* ---------- 图 2 明文 → 密文 ---------- */
+(function () {
+  const svg = $('#flow');
+  const box = (x, w, a, b, cls) => { el('rect', { x, y: 40, width: w, height: 56, rx: 10, class: cls }, svg); txt(svg, x + w / 2, 64, a, 't-main mid'); txt(svg, x + w / 2, 84, b, 't-mono mid'); };
+  box(10, 110, '明文', 'brutus', 's-panel');
+  box(170, 120, '加密', '算法 + 密钥', 's-acc');
+  box(340, 120, '密文', 'euxwxv', 's-soft');
+  box(510, 120, '解密', '算法 + 密钥', 's-acc');
+  el('path', { d: 'M120,68 H166 M290,68 H336 M460,68 H506', class: 's-line' }, svg);
+  el('path', { d: 'M162,63 L168,68 L162,73 M332,63 L338,68 L332,73 M502,63 L508,68 L502,73', class: 's-line' }, svg);
+  txt(svg, 570, 120, '→ 变回 brutus', 't-sub mid');
+  txt(svg, 400, 120, '没有密钥的人只看到乱码', 't-sub mid');
+  el('rect', { x: 210, y: 6, width: 260, height: 24, rx: 12, class: 's-on' }, svg);
+  txt(svg, 340, 23, '凯撒加密的密钥：往后移 3 位', 't-sub mid');
+})();
+
+/* ---------- 凯撒加密 ---------- */
+(function () {
+  const inp = $('#cz-in'), k = $('#cz-k');
+  const sh = (s, n) => s.replace(/[a-z]/gi, ch => { const up = ch <= 'Z'; const b = up ? 65 : 97; return String.fromCharCode((ch.charCodeAt(0) - b + n + 26) % 26 + b); });
+  function upd() {
+    const n = +k.value; $('#cz-kv').textContent = n;
+    const cipher = ABC.split('').map((c, i) => ABC[(i + n) % 26]).join(' ');
+    $('#cz-map').innerHTML = `<span class="k">明文 </span>${ABC.split('').join(' ')}\n<span class="k">密文 </span><b>${cipher}</b>`;
+    const c = sh(inp.value, n);
+    const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    $('#cz-out').innerHTML = `<span class="lab">密文</span><span class="g">${esc(c) || '（空）'}</span><span class="lab" style="margin-top:6px">接收者用同一个密钥（往回移 ${n} 位）解密</span>${esc(sh(c, -n))}`;
+    $('#cz-cap').innerHTML = n === 3 && inp.value.toLowerCase() === 'brutus' ? '和课程一样：移 3 位，<b>brutus → euxwxv</b>。拖动滑块换一个密钥，或者改改明文。' :
+      n === 0 ? '移 0 位等于没加密。' : `每个字母都往后移 ${n} 位，到 Z 之后绕回 A。不是字母的字符保持不变。`;
+  }
+  inp.oninput = upd; k.oninput = upd; upd();
+})();
+
+/* ---------- 频率分析 ---------- */
+(function () {
+  const PLAIN = 'WHEN THE ENEMY SENDS SECRET LETTERS THE SECRET IS NOT IN THE LETTERS THEMSELVES BUT IN THE KEY THAT TURNS THEM INTO NONSENSE. EVEN SO THE PATTERN OF THE LETTERS REMAINS THE SAME, AND A PATIENT READER WHO COUNTS THEM CAN OFTEN SEE THE MESSAGE BENEATH THE DISGUISE.';
+  const KEY = 'QWERTYUIOPASDFGHJKLZXCVBNM'; // 明文 A→Q, B→W, …
+  const enc = {}, dec = {};
+  ABC.split('').forEach((c, i) => { enc[c] = KEY[i]; dec[KEY[i]] = c; });
+  const CT = PLAIN.replace(/[A-Z]/g, c => enc[c]);
+  const cnt = {}; ABC.split('').forEach(c => cnt[c] = 0);
+  for (const c of CT) if (cnt[c] !== undefined) cnt[c]++;
+  const rank = ABC.split('').sort((a, b) => cnt[b] - cnt[a]);
+  const svg = $('#fq');
+  const max = cnt[rank[0]];
+  let known = new Set();
+  function draw() {
+    svg.innerHTML = '';
+    ABC.split('').forEach((c, i) => {
+      const x = 22 + i * 24.6, h = cnt[c] / max * 120;
+      const top = c === rank[0] || c === rank[1];
+      el('rect', { x, y: 150 - h, width: 18, height: Math.max(h, 1), rx: 3, class: known.has(c) ? 's-on' : top ? 's-acc' : 's-soft' }, svg);
+      txt(svg, x + 9, 166, c, 't-mono mid');
+      if (cnt[c]) txt(svg, x + 9, 144 - h, cnt[c], 't-sub mid');
+      if (known.has(c)) txt(svg, x + 9, 182, '=' + dec[c], 't-sub mid t-acc');
+    });
+    $('#fq-txt').innerHTML = CT.replace(/[A-Z]/g, c => known.has(c) ? `<span class="g">${dec[c].toLowerCase()}</span>` : c);
+  }
+  const cap = $('#fq-cap');
+  $('#fq-e').onclick = () => { known.add(rank[0]); draw(); cap.innerHTML = `密文里 <b>${rank[0]}</b> 出现了 ${cnt[rank[0]]} 次，最多。英语里 E 最常见，于是猜 ${rank[0]} = E。蓝色小写字母是已经破出的部分，"tht"、"thm" 这类片段开始冒出来了。`; };
+  $('#fq-t').onclick = () => { known.add(rank[0]); known.add(rank[1]); draw(); cap.innerHTML = `第二多的是 <b>${rank[1]}</b>（${cnt[rank[1]]} 次），猜它是 T。现在到处是 "t?e" 这样的三字母词，很像 "the"，于是又能猜出 H……剩下的字母就这样一个接一个被推出来。`; };
+  $('#fq-all').onclick = () => { ABC.split('').forEach(c => { if (cnt[c]) known.add(c); }); draw(); cap.innerHTML = '全部还原。对照表换得再乱，字母的频率还是原样保留，这就是基本替换加密的软肋。'; };
+  $('#fq-r').onclick = () => { known = new Set(); draw(); cap.textContent = '先点"猜：最常见的密文字母 = E"。'; };
+  draw(); cap.textContent = '先点"猜：最常见的密文字母 = E"。';
+})();
+
+/* ---------- 列置换 ---------- */
+(function () {
+  const svg = $('#tp'), inp = $('#tp-in');
+  let grid = [], order = [], idx = 0, timer = null;
+  const X0 = 40, Y0 = 20, S = 50;
+  function prep() {
+    let s = inp.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 25);
+    const pad = 25 - s.length;
+    s = s + 'X'.repeat(pad);
+    grid = s.split('');
+    order = [];
+    for (let c = 0; c < 5; c++) for (let r = 4; r >= 0; r--) order.push(r * 5 + c);
+    idx = 0;
+    return pad;
+  }
+  function draw() {
+    svg.innerHTML = '';
+    const read = new Set(order.slice(0, idx));
+    grid.forEach((ch, i) => {
+      const r = Math.floor(i / 5), c = i % 5, x = X0 + c * S, y = Y0 + r * S;
+      el('rect', { x, y, width: S - 4, height: S - 4, rx: 7, class: read.has(i) ? 's-on' : 's-panel' }, svg);
+      txt(svg, x + 23, y + 30, ch, 't-main mid').style.fontSize = '18px';
+      txt(svg, x + 40, y + 13, order.indexOf(i) + 1, 't-sub end');
+    });
+    // 读取方向箭头
+    for (let c = 0; c < 5; c++) el('path', { d: `M${X0 + c * S + 23},${Y0 + 5 * S + 8} v-8`, class: 's-thin' }, svg);
+    txt(svg, X0 + 123, Y0 + 5 * S + 22, '每列从下往上读，从左边第一列开始', 't-sub mid');
+    // 右侧说明
+    txt(svg, 330, 50, '① 按行把明文填进 5×5 网格', 't-main');
+    txt(svg, 330, 80, '② 从左下角开始，自下而上，一次一列', 't-main');
+    txt(svg, 330, 110, '③ 读出的新顺序就是密文', 't-main');
+    txt(svg, 330, 150, '密钥 = 读取方向 + 网格大小 5×5', 't-acc');
+    txt(svg, 330, 180, '格子右上角的小数字：第几个被读出', 't-sub');
+    const out = order.slice(0, idx).map(i => grid[i]).join('');
+    $('#tp-out').innerHTML = `<span class="lab">密文</span><span class="g">${out.replace(/(.{5})/g, '$1 ') || '…'}</span>`;
+    if (idx === 25) {
+      // 接收方倒回去：按同样的顺序把密文填回格子，再按行读
+      const back = new Array(25); order.forEach((g, k) => back[g] = out[k]);
+      $('#tp-out').innerHTML += `<span class="lab" style="margin-top:6px">接收方：按同样的顺序把密文填回格子，再按行读出</span>${back.join('')}`;
+    }
+  }
+  function reset() { clearInterval(timer); const pad = prep(); draw(); $('#tp-cap').innerHTML = (pad ? `明文只有 ${25 - pad} 个字母，后面补了 ${pad} 个 X 填满网格（这是常见做法）。` : '') + '点"读下一个字母"一步步看，或者直接全部读出。'; }
+  $('#tp-step').onclick = () => { clearInterval(timer); if (idx < 25) idx++; draw(); $('#tp-cap').textContent = idx < 25 ? `已读出 ${idx} 个字母。` : '读完了。密文里的字母和明文一模一样，只是顺序被打乱了。'; };
+  $('#tp-all').onclick = () => {
+    clearInterval(timer);
+    const fin = () => { idx = 25; draw(); $('#tp-cap').textContent = '读完了。密文里的字母和明文一模一样，只是顺序被打乱了，所以字母频率也保留着，但单词的样子全没了。'; };
+    if (REDUCE) return fin();
+    timer = setInterval(() => { idx++; draw(); if (idx >= 25) { clearInterval(timer); fin(); } }, 90);
+  };
+  $('#tp-r').onclick = reset;
+  inp.oninput = reset;
+  reset();
+})();
+
+/* ---------- 英格玛 ---------- */
+(function () {
+  const W = ['EKMFLGDQVZNTOWYHXUSPAIBRCJ', 'AJDKSIRUXBLHWTMCQGZNPYFVOE', 'BDFHJLCPRTXVZNYEIWGAKMUSQO']; // I, II, III
+  const REF = 'YRUHQSLDPXNGOKMIEBFZCWVJAT'; // B 型反射器
+  const INV = W.map(w => { const a = []; for (let i = 0; i < 26; i++) a[w.charCodeAt(i) - 65] = i; return a; });
+  const fwd = (r, c, p) => (W[r].charCodeAt((c + p) % 26) - 65 - p + 26) % 26;
+  const bwd = (r, c, p) => (INV[r][(c + p) % 26] - p + 26) % 26;
+  const sels = [0, 1, 2].map(i => $('#en-p' + i));
+  sels.forEach(s => { s.innerHTML = ABC.split('').map((c, i) => `<option value="${i}">${c}</option>`).join(''); s.onchange = run; });
+  const plugIn = $('#en-plug'), inp = $('#en-in'), svg = $('#en-svg'), cap = $('#en-cap');
+  function plugMap() {
+    const m = ABC.split('').map((_, i) => i), used = new Set();
+    let err = '';
+    plugIn.value.toUpperCase().split(/[^A-Z]+/).filter(Boolean).forEach(p => {
+      if (p.length !== 2 || p[0] === p[1] || used.has(p[0]) || used.has(p[1])) { err = `"${p}" 无效（要两个不同的字母，且每个字母只能插一根线），已忽略。`; return; }
+      const a = p.charCodeAt(0) - 65, b = p.charCodeAt(1) - 65; m[a] = b; m[b] = a; used.add(p[0]); used.add(p[1]);
+    });
+    return [m, err];
+  }
+  function encrypt(s, start, plug) {
+    const pos = [...start]; let out = '', last = null;
+    for (const ch of s) {
+      pos[2] = (pos[2] + 1) % 26;
+      if (pos[2] === 0) { pos[1] = (pos[1] + 1) % 26; if (pos[1] === 0) pos[0] = (pos[0] + 1) % 26; }
+      const t = [ch.charCodeAt(0) - 65];
+      t.push(plug[t[0]]);
+      t.push(fwd(2, t[1], pos[2])); t.push(fwd(1, t[2], pos[1])); t.push(fwd(0, t[3], pos[0]));
+      t.push(REF.charCodeAt(t[4]) - 65);
+      t.push(bwd(0, t[5], pos[0])); t.push(bwd(1, t[6], pos[1])); t.push(bwd(2, t[7], pos[2]));
+      t.push(plug[t[8]]);
+      out += ABC[t[9]];
+      last = { t, pos: [...pos] };
+    }
+    return [out, last];
+  }
+  function draw(last) {
+    svg.innerHTML = '';
+    const COL = [['键盘 / 灯板', 50], ['插线板', 160], ['转子 III（右）', 280], ['转子 II（中）', 390], ['转子 I（左）', 500], ['反射器', 615]];
+    COL.forEach(([n, x], i) => {
+      el('rect', { x: x - 38, y: 40, width: 76, height: 140, rx: 10, class: i === 0 ? 's-panel' : i === 5 ? 's-on' : i === 1 ? 's-soft' : 's-acc' }, svg);
+      txt(svg, x, 30, n, 't-sub mid');
+      if (last && i >= 2 && i <= 4) txt(svg, x, 116, '位置 ' + ABC[last.pos[4 - i]], 't-sub mid');
+    });
+    el('path', { d: 'M88,80 H577', class: 's-line', style: 'stroke:var(--accent)' }, svg);
+    el('path', { d: 'M577,150 H88', class: 's-line', style: 'stroke:var(--on)' }, svg);
+    el('path', { d: 'M570,75 L578,80 L570,85', class: 's-line', style: 'stroke:var(--accent)' }, svg);
+    el('path', { d: 'M96,145 L88,150 L96,155', class: 's-line', style: 'stroke:var(--on)' }, svg);
+    txt(svg, 340, 205, '蓝线：去程　橙线：回程', 't-sub mid');
+    if (!last) return;
+    const t = last.t;
+    const chip = (x, y, i, cls) => { el('rect', { x: x - 13, y: y - 14, width: 26, height: 24, rx: 6, class: 's-panel' }, svg); txt(svg, x, y + 4, ABC[t[i]], 't-mono mid ' + (cls || '')); };
+    chip(50, 70, 0); chip(105, 80, 1); chip(220, 80, 2); chip(335, 80, 3); chip(445, 80, 4); chip(560, 80, 4);
+    chip(560, 150, 5); chip(445, 150, 6); chip(335, 150, 7); chip(220, 150, 8); chip(105, 150, 9);
+    el('rect', { x: 34, y: 140, width: 32, height: 30, rx: 15, class: 's-on' }, svg);
+    txt(svg, 50, 160, ABC[t[9]], 't-main mid');
+    txt(svg, 50, 192, '亮灯', 't-sub mid');
+  }
+  function run() {
+    const [plug, err] = plugMap();
+    const s = inp.value.toUpperCase().replace(/[^A-Z]/g, '');
+    const start = sels.map(x => +x.value);
+    const [out, last] = encrypt(s, start, plug);
+    draw(last);
+    $('#en-out').innerHTML = `<span class="lab">输入（只取字母）</span>${s || '…'}<span class="lab" style="margin-top:6px">灯板依次亮起</span><span class="g">${out || '…'}</span>`;
+    let same = 0; for (let i = 0; i < s.length; i++) if (s[i] === out[i]) same++;
+    const allSame = s.length > 1 && /^(.)\1*$/.test(s);
+    cap.innerHTML = (err ? `<span style="color:var(--bad)">${err}</span><br>` : '') +
+      (!s ? '在键盘输入框里打几个字母。' :
+      (allSame ? `你按了 ${s.length} 次同一个键 ${s[0]}，每次亮的灯都不一样，因为每按一键转子都会前进一格，替换映射跟着变了。` : '') +
+      `${s.length} 个字母里，被加密成它自己的有 <b>${same}</b> 个。换什么输入都是 0，这就是反射器带来的弱点。` +
+      (start.join() === '0,0,0' && s.startsWith('AAA') && !plugIn.value.toUpperCase().match(/[ABDZ]/) ? '　（课程说 AAA "可能"变成 BDK；按历史接线、位置 AAA 的这台机器给出的是 BDZ。）' : ''));
+  }
+  $('#en-back').onclick = () => {
+    const [plug] = plugMap();
+    const s = inp.value.toUpperCase().replace(/[^A-Z]/g, '');
+    const [out] = encrypt(s, sels.map(x => +x.value), plug);
+    inp.value = out; run();
+    cap.innerHTML += '<br>接收机配置完全相同，把密文打一遍，灯板亮出的就是原文：加密和解密是同一个过程。';
+  };
+  plugIn.oninput = run; inp.oninput = run;
+  run();
+})();
+
+/* ---------- 密钥长度 ---------- */
+(function () {
+  const RATES = [Math.pow(2, 56) / (2 * 86400), 1e19];
+  const RN = ['1999 年那台 25 万美元的机器：两天试完 2<sup>56</sup> 个密钥，约每秒 4.2×10<sup>11</sup> 个', '地球上所有计算机加起来，本页假设每秒 10<sup>19</sup> 个（课程说"上万亿年"，大致对应这个量级）'];
+  let bits = 56, ri = 0;
+  const sci = lg => { const e = Math.floor(lg), m = Math.pow(10, lg - e); return `${m.toFixed(1)}×10<sup>${e}</sup>`; };
+  function fmt(lgSec) {
+    const s = Math.pow(10, lgSec);
+    if (lgSec < 0) return '不到 1 秒';
+    if (s < 60) return Math.round(s) + ' 秒';
+    if (s < 3600) return Math.round(s / 60) + ' 分钟';
+    if (s < 86400) return (s / 3600).toFixed(1) + ' 小时';
+    const lgY = lgSec - Math.log10(365.25 * 86400);
+    if (lgY < 0) return (s / 86400).toFixed(1) + ' 天';
+    const y = Math.pow(10, lgY);
+    if (lgY < 4) return Math.round(y) + ' 年';
+    if (lgY < 8) return (y / 1e4).toFixed(1) + ' 万年';
+    if (lgY < 12) return (y / 1e8).toFixed(1) + ' 亿年';
+    if (lgY < 16) return (y / 1e12).toFixed(1) + ' 万亿年';
+    return sci(lgY) + ' 年';
+  }
+  function upd() {
+    setSel('#kl-bits', 'b', bits); setSel('#kl-rate', 'r', ri);
+    const lgN = bits * Math.log10(2), lgT = lgN - Math.log10(RATES[ri]);
+    $('#kl-cap').innerHTML = `${bits} 位密钥共有 2<sup>${bits}</sup> ≈ <b>${sci(lgN)}</b> 种。<br>${RN[ri]}。<br>全部试完需要：<b>${fmt(lgT)}</b>` +
+      (lgT > 17 ? '（宇宙的年龄约 138 亿年）' : '') + '。' + (bits === 56 && ri === 0 ? '　这就是 DES 在 1999 年失守的原因。' : '') +
+      (bits === 128 && ri === 1 ? '　这就是课程说的"上万亿年"。' : '') + '<br><span class="muted">每多 1 位，要试的次数就翻一倍。</span>';
+  }
+  $$('#kl-bits button').forEach(b => b.onclick = () => { bits = +b.dataset.b; upd(); });
+  $$('#kl-rate button').forEach(b => b.onclick = () => { ri = +b.dataset.r; upd(); });
+  upd();
+})();
+
+/* ---------- 图 3 AES ---------- */
+(function () {
+  const svg = $('#aes');
+  for (let i = 0; i < 16; i++) el('rect', { x: 20 + (i % 4) * 26, y: 30 + Math.floor(i / 4) * 26, width: 22, height: 22, rx: 4, class: 's-panel' }, svg);
+  txt(svg, 70, 152, '一块 = 16 字节', 't-sub mid');
+  el('path', { d: 'M130,82 H175', class: 's-line' }, svg); el('path', { d: 'M169,77 L175,82 L169,87', class: 's-line' }, svg);
+  el('rect', { x: 180, y: 22, width: 330, height: 120, rx: 14, class: 's-acc' }, svg);
+  txt(svg, 345, 44, '一轮', 't-main mid');
+  [['替换', 200], ['置换', 290], ['其他混淆操作', 380]].forEach(([n, x], i) => { el('rect', { x, y: 58, width: i === 2 ? 110 : 76, height: 40, rx: 8, class: 's-panel' }, svg); txt(svg, x + (i === 2 ? 55 : 38), 83, n, 't-sub mid'); });
+  txt(svg, 345, 124, '每一步都依据密钥值', 't-sub mid t-acc');
+  el('path', { d: 'M510,60 C560,60 560,104 510,104', class: 's-line', style: 'stroke:var(--on)' }, svg);
+  txt(svg, 562, 86, '重复 10 轮以上', 't-sub');
+  el('path', { d: 'M560,120 H600', class: 's-line' }, svg); el('path', { d: 'M594,115 L600,120 L594,125', class: 's-line' }, svg);
+  el('rect', { x: 605, y: 100, width: 60, height: 40, rx: 8, class: 's-soft' }, svg);
+  txt(svg, 635, 125, '密文块', 't-sub mid');
+})();
+
+/* ---------- 颜料交换 ---------- */
+(function () {
+  const C = { '蓝': 'var(--accent)', '红': 'var(--bad)', '绿': 'var(--ok)', '棕': 'var(--wood)' };
+  const PUB = 'var(--brass)';
+  let me = '红', jo = '蓝', st = 0;
+  const m2 = (a, b) => `color-mix(in srgb, ${a}, ${b})`;
+  const m3 = (a, b, c) => `color-mix(in srgb, ${m2(a, b)} 66.67%, ${c})`; // (a+b+c)/3
+  const sw = (lab, col, big) => `<div class="sw${big ? ' big' : ''}"><i style="background:${col}"></i><span>${lab}</span></div>`;
+  ['me', 'jo'].forEach(w => {
+    $('#pt-' + w).innerHTML = Object.keys(C).map(k => `<button data-c="${k}">${k}</button>`).join('');
+    $$('#pt-' + w + ' button').forEach(b => b.onclick = () => { if (w === 'me') me = b.dataset.c; else jo = b.dataset.c; draw(); });
+  });
+  const CAP = [
+    '中间是一种公开颜色（黄），所有人都看得到，包括窃听者。',
+    '我和约翰各自挑一种秘密颜色，只有自己知道，从不寄出。',
+    '各自把自己的秘密色和公开色混在一起。',
+    '把混合色寄给对方。它们经过公开信道，窃听者也看到了。',
+    ''
+  ];
+  function draw() {
+    setSel('#pt-me', 'c', me); setSel('#pt-jo', 'c', jo);
+    const P = PUB, M = C[me], J = C[jo];
+    let a = '', b = sw('公开色', P), c = '';
+    if (st >= 1) { a += sw('我的秘密色：' + me, M); c += sw('约翰的秘密色：' + jo, J); }
+    if (st >= 2) { a += sw('公开 + 我的', m2(P, M)); c += sw('公开 + 约翰的', m2(P, J)); }
+    if (st >= 3) { b += sw('我寄出的混合色', m2(P, M)) + sw('约翰寄出的混合色', m2(P, J)); a += sw('收到约翰的', m2(P, J)); c += sw('收到我的', m2(P, M)); }
+    if (st >= 4) { a += sw('再加我的秘密色', m3(P, J, M), true); c += sw('再加约翰的秘密色', m3(P, M, J), true); b += sw('窃听者把两份混合色再混一次', m2(m2(P, M), m2(P, J))); }
+    $('#pt-c0').innerHTML = a; $('#pt-c1').innerHTML = b; $('#pt-c2').innerHTML = c;
+    $('#pt-cap').innerHTML = st < 4 ? CAP[st] : '瞧！两边得到的是<b>同一种颜色</b>：公开、我的、约翰的三份各占三分之一。窃听者手里只有两份"两色混合"，直接混在一起，公开色会占一半，调出来的颜色不对。要得到正确的颜色，他得先把混合色拆开，而拆颜料正是很难的方向。';
+    $('#pt-next').disabled = st >= 4;
+  }
+  $('#pt-next').onclick = () => { if (st < 4) st++; draw(); };
+  $('#pt-r').onclick = () => { st = 0; draw(); };
+  draw();
+})();
+
+/* ---------- 模幂：单向 ---------- */
+(function () {
+  const g = $('#me-g');
+  function calc() {
+    const e = Math.max(1, Math.min(60, Math.floor(+g.value || 1))); g.value = e;
+    const big = (3n ** BigInt(e)).toString();
+    const r = modpow(3, e, 31);
+    $('#me-r').textContent = r;
+    $('#me-cap').innerHTML = `3<sup>${e}</sup> = ${big}，除以 31 余 <b>${r}</b>。正着算，一眨眼的事。` + (r === 7 ? '　而且余数正好是 7，你猜中了！' : '');
+  }
+  g.oninput = calc; $('#me-go').onclick = calc;
+  let timer = null;
+  $('#me-brute').onclick = () => {
+    clearInterval(timer);
+    const box = $('#me-tries'); box.innerHTML = '';
+    let e = 0;
+    const one = () => { e++; const r = modpow(3, e, 31); box.innerHTML += (e > 1 ? '，' : '') + (r === 7 ? `<b>3^${e}→${r}</b>` : `3^${e}→${r}`); return r === 7; };
+    const fin = () => { $('#me-cap').innerHTML = `试到第 <b>${e}</b> 个指数才找到：3<sup>${e}</sup> mod 31 = 7。余数看起来毫无规律，除了一个个试，没有捷径可走。模数只有 31 时，计算机一瞬间就试完了；如果数字有几百位长，要试的次数就是天文数字。`; };
+    if (REDUCE) { while (!one()); fin(); return; }
+    timer = setInterval(() => { if (one()) { clearInterval(timer); fin(); } }, 120);
+  };
+  calc();
+})();
+
+/* ---------- Diffie-Hellman ---------- */
+(function () {
+  const B = 3, M = 31, svg = $('#dh');
+  function draw() {
+    const X = +$('#dh-x').value, Y = +$('#dh-y').value;
+    $('#dh-xv').textContent = X; $('#dh-yv').textContent = Y;
+    const A = modpow(B, X, M), Bv = modpow(B, Y, M), K1 = modpow(Bv, X, M), K2 = modpow(A, Y, M), K = modpow(B, X * Y, M);
+    svg.innerHTML = '';
+    [['我', 110], ['公开（窃听者也看得到）', 340], ['约翰', 570]].forEach(([n, x], i) => {
+      el('rect', { x: x - 105, y: 8, width: 210, height: 232, rx: 12, class: i === 1 ? 's-soft' : 's-panel', style: i === 1 ? 'stroke-dasharray:5 4' : '' }, svg);
+      txt(svg, x, 30, n, 't-main mid');
+    });
+    txt(svg, 340, 60, `底数 B = ${B}　模数 M = ${M}`, 't-mono mid');
+    txt(svg, 110, 60, `秘密 X = ${X}`, 't-mono mid t-acc'); txt(svg, 570, 60, `秘密 Y = ${Y}`, 't-mono mid t-acc');
+    txt(svg, 110, 95, `3^${X} = ${(3n ** BigInt(X)).toString()}`, 't-sub mid');
+    txt(svg, 110, 115, `mod 31 = ${A}`, 't-mono mid');
+    txt(svg, 570, 95, `3^${Y} = ${(3n ** BigInt(Y)).toString()}`, 't-sub mid');
+    txt(svg, 570, 115, `mod 31 = ${Bv}`, 't-mono mid');
+    el('path', { d: 'M180,130 H300', class: 's-line', style: 'stroke:var(--accent)' }, svg); el('path', { d: 'M294,125 L300,130 L294,135', class: 's-line', style: 'stroke:var(--accent)' }, svg);
+    el('path', { d: 'M500,130 H380', class: 's-line', style: 'stroke:var(--accent)' }, svg); el('path', { d: 'M386,125 L380,130 L386,135', class: 's-line', style: 'stroke:var(--accent)' }, svg);
+    txt(svg, 340, 125, `我发出 ${A}`, 't-mono mid'); txt(svg, 340, 145, `约翰发出 ${Bv}`, 't-mono mid');
+    txt(svg, 110, 170, `收到 ${Bv}：${Bv}^${X} mod 31`, 't-sub mid');
+    txt(svg, 570, 170, `收到 ${A}：${A}^${Y} mod 31`, 't-sub mid');
+    [[110, K1], [570, K2]].forEach(([x, k]) => { el('rect', { x: x - 70, y: 184, width: 140, height: 40, rx: 10, class: 's-on' }, svg); txt(svg, x, 210, `共享密钥 = ${k}`, 't-main mid'); });
+    txt(svg, 340, 185, '窃听者手里：3、31、', 't-sub mid');
+    txt(svg, 340, 203, `${A}、${Bv}`, 't-mono mid');
+    txt(svg, 340, 225, '但没有 X 和 Y', 't-sub mid');
+    $('#dh-cap').innerHTML = `两边都算出 <b>${K1}</b>${K1 === K2 ? '，完全一样' : ''}，也等于 3<sup>X·Y</sup> = 3<sup>${X * Y}</sup> mod 31 = ${K}。共享密钥从来没有在网上传过。`;
+  }
+  $('#dh-x').oninput = draw; $('#dh-y').oninput = draw;
+  $('#dh-eve').onclick = () => {
+    const X = +$('#dh-x').value, Y = +$('#dh-y').value, A = modpow(B, X, M), Bv = modpow(B, Y, M);
+    let e = 1; while (modpow(B, e, M) !== A) e++;
+    $('#dh-cap').innerHTML = `窃听者从 1 开始试：3 的几次方模 31 等于 ${A}？试了 <b>${e}</b> 次就找到 X = ${e}，于是也能算出 ${Bv}<sup>${e}</sup> mod 31 = <b>${modpow(Bv, e, M)}</b>。这是因为演示里的模数只有 31。真实系统里，底数、模数和秘密指数都有几百位，这样硬试下去根本试不完。`;
+  };
+  draw();
+})();
+
+/* ---------- 玩具 RSA ---------- */
+(function () {
+  const N = 3233, E = 17, D = 2753;
+  let mode = 'enc', st = {};
+  const out = $('#rs-out'), cap = $('#rs-cap'), mi = $('#rs-m');
+  const getM = () => { let m = Math.floor(+mi.value); if (!(m >= 0)) m = 0; if (m > N - 1) m = N - 1; mi.value = m; return m; };
+  const BTN = {
+    enc: [['a', '用公钥加密', true], ['b', '用私钥解密'], ['c', '换成用公钥"解密"试试']],
+    sig: [['a', '用私钥签名', true], ['b', '任何人用公钥验证'], ['c', '伪造：把签名改一个数']]
+  };
+  function lines() {
+    const L = [];
+    if (st.c != null) L.push(mode === 'enc' ? `密文 c = m^17 mod 3233 = <span class="big">${st.c}</span>` : `签名 s = m^2753 mod 3233 = <span class="big">${st.c}</span>`);
+    if (st.d != null) L.push(st.d);
+    out.innerHTML = L.join('<br>') || '<span class="muted">点上面的按钮开始</span>';
+  }
+  function act(k) {
+    const m = getM();
+    if (k === 'a') {
+      st = { c: modpow(m, mode === 'enc' ? E : D, N) };
+      cap.innerHTML = mode === 'enc' ? `任何人都能拿公钥 (17, 3233) 把 ${m} 锁进箱子：得到 ${st.c}。现在连发送者自己也打不开它。` : `只有我有私钥 2753，所以只有我能算出这个签名 ${st.c}。我把消息 ${m} 和签名一起发出去。`;
+    } else if (st.c == null) { cap.textContent = '先做第一步。'; return; }
+    else if (k === 'b') {
+      const r = modpow(st.c, mode === 'enc' ? D : E, N);
+      st.d = mode === 'enc' ? `用私钥解密：c^2753 mod 3233 = <span class="big">${r}</span>` : `用公钥验证：s^17 mod 3233 = <span class="big">${r}</span> ${r === m ? '<span style="color:var(--ok)">✓ 与消息一致</span>' : ''}`;
+      cap.innerHTML = mode === 'enc' ? (r === m ? `还原出 ${m}。只有持私钥的我能做到。` : '') : `算出来正是消息 ${m}，证明签名确实出自私钥的主人。`;
+    } else {
+      if (mode === 'enc') {
+        const r = modpow(st.c, E, N);
+        st.d = `用公钥"解密"：c^17 mod 3233 = <span class="big">${r}</span> ${r === m ? '' : '<span style="color:var(--bad)">✗ 不是原消息</span>'}`;
+        cap.innerHTML = r === m ? '碰巧相等（极少见），换个消息再试。' : '知道公钥只能加密，不能解密，所以叫"非对称"。';
+      } else {
+        const f = (st.c + 1) % N, r = modpow(f, E, N);
+        st.d = `伪造签名 ${f}：${f}^17 mod 3233 = <span class="big">${r}</span> ${r === m ? '' : '<span style="color:var(--bad)">✗ 与消息对不上</span>'}`;
+        cap.innerHTML = '没有私钥，随手改出来的签名一验证就露馅了。这就是"无法伪造的签名"。';
+      }
+    }
+    lines();
+  }
+  function setMode(m) {
+    mode = m; st = {}; setSel('#rs-mode', 'm', m);
+    $('#rs-btns').innerHTML = BTN[m].map(([k, t, p]) => `<button class="btn${p ? ' primary' : ''}" data-k="${k}">${t}</button>`).join('');
+    $$('#rs-btns button').forEach(b => b.onclick = () => act(b.dataset.k));
+    cap.textContent = m === 'enc' ? '先用公钥加密消息，再分别试试用私钥和公钥解密。' : '先用私钥签名，再用公钥验证，最后试试伪造。';
+    lines();
+  }
+  $$('#rs-mode button').forEach(b => b.onclick = () => setMode(b.dataset.m));
+  mi.oninput = () => { st = {}; lines(); };
+  setMode('enc');
+})();
+
+/* ---------- 图 4 HTTPS ---------- */
+(function () {
+  const svg = $('#https');
+  el('rect', { x: 20, y: 14, width: 640, height: 34, rx: 17, class: 's-soft' }, svg);
+  el('rect', { x: 36, y: 25, width: 12, height: 10, rx: 2, style: 'fill:var(--ink)' }, svg);
+  el('path', { d: 'M38,25 v-3 a4,4 0 0 1 8,0 v3', style: 'fill:none;stroke:var(--ink);stroke-width:2' }, svg);
+  txt(svg, 58, 36, 'https://你的银行.com', 't-mono');
+  const B = [['公钥密码学', '验证服务器的身份', '如 RSA 签名', 20], ['密钥交换', '建立临时的秘密密钥', '如 Diffie-Hellman', 245], ['对称加密', '保护来回的所有通信', '如 AES', 470]];
+  B.forEach(([a, b, c, x], i) => {
+    el('rect', { x, y: 70, width: 190, height: 90, rx: 12, class: i === 2 ? 's-on' : 's-acc' }, svg);
+    txt(svg, x + 95, 98, (i + 1) + '. ' + a, 't-main mid');
+    txt(svg, x + 95, 122, b, 't-sub mid');
+    txt(svg, x + 95, 144, c, 't-sub mid');
+    if (i < 2) { el('path', { d: `M${x + 192},115 H${x + 222}`, class: 's-line' }, svg); el('path', { d: `M${x + 216},110 L${x + 222},115 L${x + 216},120`, class: 's-line' }, svg); }
+  });
+})();
+</script>
+</body>
+</html>
