@@ -38,7 +38,7 @@
 <header class="hero" style="max-width:900px">
   <div class="eyebrow">CRASH COURSE COMPUTER SCIENCE · 图文版</div>
   <h1>计算机科学速成课</h1>
-  <p class="lead">40 集，每集一篇：正文据中文字幕忠实整理，配手绘示意图，关键处可以动手点。不方便看视频的时候，读这个。原课程 2017 年 12 月完结，后面另有 6 集续集，讲 2017 年之后的新变化。</p>
+  <p class="lead">40 集，每集一篇：正文据中文字幕忠实整理，配手绘示意图，关键处可以动手点。不方便看视频的时候，读这个。原课程 2017 年 12 月完结，后面另有 7 集续集，讲 2017 年之后的新变化，最后一集往前看到 2036 年。</p>
 </header>
 <div class="wrap">
   <div class="bar">
@@ -78,9 +78,10 @@ const EPS = [
 const EXT = [
   ['GPU 与并行计算', 'Parallel Computing & GPUs'], ['云计算', 'Cloud Computing'], ['Transformer 与大语言模型', 'Transformers & Large Language Models'],
   ['生成式 AI 与智能体', 'Generative AI & Agents'], ['新的攻防', 'New Attacks, New Defenses'], ['2026，回看第 40 集', 'Looking Back from 2026'],
+  ['展望未来', 'Looking Ahead'],
 ];
 // 已写好的续集（写完一集，往这里加一个编号）
-const EXT_READY = [41, 42, 43, 44, 45, 46];
+const EXT_READY = [41, 42, 43, 44, 45, 46, 47];
 const TOTAL = EPS.length + EXT.length;
 const pad = n => String(n).padStart(2, '0');
 const read = new Set(ccStore.get('cc-read', []));
