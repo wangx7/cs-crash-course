@@ -157,7 +157,7 @@
     <h3>动手：归并排序：先拆，再一层层合</h3>
     <div id="ms"></div>
     <div class="step-text" id="ms-cap"></div>
-    <div class="btns"><button class="btn primary" id="ms-next">下一步</button><button class="btn" id="ms-reset">重来</button></div>
+    <div class="btns"><button class="btn" id="ms-prev">上一步</button><button class="btn primary" id="ms-next">下一步</button><button class="btn" id="ms-reset">重来</button></div>
   </div>
 
   <p>总之，归并排序的"大 O"计算复杂度是 <b>N × log N</b>。N 来自需要比较和归并元素的次数，和数组里元素的个数成正比。log N 来自归并的层数：在我们的例子里，把 8 个元素的数组拆成 4 个、再拆成 2 个、最后拆成 1 个，一共拆了 3 次。像这样反复对半拆分，拆分次数和元素个数之间是<b>对数关系</b>——相信我！以 2 为底 8 的对数等于 3。如果把数组翻倍到 16——要排的东西多了一倍——拆分次数只增加 1，因为以 2 为底 16 的对数是 4。即使把数组扩大一千多倍，从 8 个到 8000 个，拆分次数也仍然很少：以 2 为底 8000 的对数大约是 13。比 3 多，但多得不多——大约 4 倍——而要排的数却多得多。所以归并排序比选择排序高效得多。这下我可以快得多地给我收藏的陶瓷猫按名字排序了！</p>
@@ -186,7 +186,7 @@
     <h3>动手：从高庭到临冬城</h3>
     <div class="scroll-x"><svg class="diagram" id="map" viewBox="0 0 660 420" role="img" aria-label="Dijkstra 算法地图"></svg></div>
     <div class="step-text" id="dj-cap"></div>
-    <div class="btns"><button class="btn primary" id="dj-next">下一步</button><button class="btn" id="dj-reset">重来</button></div>
+    <div class="btns"><button class="btn" id="dj-prev">上一步</button><button class="btn primary" id="dj-next">下一步</button><button class="btn" id="dj-reset">重来</button></div>
     <p class="hint">圆圈里的数字 = 目前已知从高庭到这里的最低成本（周）；橙色 = 正在处理的城市；绿色 = 已经处理完的</p>
   </div>
 
@@ -217,7 +217,7 @@
       </div>
     </div>
     <div class="step-text" id="vs-cap"></div>
-    <div class="btns"><button class="btn primary" id="vs-next">下一步</button><button class="btn" id="vs-reset">重来</button></div>
+    <div class="btns"><button class="btn" id="vs-prev">上一步</button><button class="btn primary" id="vs-next">下一步</button><button class="btn" id="vs-reset">重来</button></div>
     <p class="hint">地图：绿线 = 每个城市目前最好的来路，顺着绿线倒推回高庭就是它的路线；蓝线 = 本轮正在检查的路；最后亮出的橙色粗线 = 到临冬城的最快路线。"暂定"的路线还可能被更近的替换，"确定"之后就不会再变。左边：虚线框 = 这一轮被看了一眼；橙色 = 找到的最小。右边的堆：每个城市都比它下面的城市成本低，所以最顶上永远是最小的。</p>
   </div>
 
@@ -400,8 +400,10 @@ const PRICES = [307, 239, 214, 250, 384, 299, 223, 312];
   function paint() {
     host.innerHTML = stages.slice(0, k + 1).map((s, i) => `<div class="ms-row ${i === k ? 'cur' : ''}"><div class="lab">${s.lab}</div>${s.groups.map(g => `<div class="ms-grp">${g.map(v => `<span>${v}</span>`).join('')}</div>`).join('')}</div>`).join('');
     $('#ms-cap').innerHTML = stages[k].note + (k === stages.length - 1 ? '<br>拆了 3 层（log₂8 = 3），又合了 3 层，排好了。' : '');
+    $('#ms-prev').disabled = k === 0;
     $('#ms-next').disabled = k === stages.length - 1;
   }
+  $('#ms-prev').onclick = () => { k--; paint(); };
   $('#ms-next').onclick = () => { k++; paint(); };
   $('#ms-reset').onclick = () => { k = 0; paint(); };
   k = 0; paint();
@@ -475,8 +477,10 @@ const CITIES = {
     s.tries.forEach(t => ek(t.slice(0, 2), t.slice(2)).setAttribute('class', 'edge try'));
     (s.path || []).forEach(t => ek(t.slice(0, 2), t.slice(2)).setAttribute('class', 'edge path'));
     $('#dj-cap').innerHTML = s.text;
+    $('#dj-prev').disabled = k === 0;
     $('#dj-next').disabled = k === steps.length - 1;
   }
+  $('#dj-prev').onclick = () => { k--; paint(); };
   $('#dj-next').onclick = () => { k++; paint(); };
   $('#dj-reset').onclick = () => { k = 0; paint(); };
   steps = build(); k = 0; paint();
@@ -590,8 +594,10 @@ const CITIES = {
     $('#vs-c1').innerHTML = `找最小 <b>${s.cnt.scan}</b> 步 ＋ 走路 ${s.cnt.edge} 步`;
     $('#vs-c2').innerHTML = `找最小 <b>${s.cnt.pop}</b> 步 ＋ 走路 ${s.cnt.edge} 步 ＋ 堆里上浮 ${s.cnt.fix} 步`;
     $('#vs-cap').innerHTML = s.text;
+    $('#vs-prev').disabled = k === 0;
     $('#vs-next').disabled = k === S.length - 1;
   }
+  $('#vs-prev').onclick = () => { k--; paint(); };
   $('#vs-next').onclick = () => { k++; paint(); };
   $('#vs-reset').onclick = () => { k = 0; paint(); };
   k = 0; paint();
