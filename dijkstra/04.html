@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dijkstra 今生</title>
+<link rel="stylesheet" href="dj.css">
+<style>
+.circ{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.circ2{fill:var(--on-soft);stroke:var(--on);stroke-width:2}
+.pt{fill:var(--ink)}
+.rt-wrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){ .rt-wrap{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="index.html">← Dijkstra 专题目录</a><a href="../13.html#ch5">回到第 13 集</a></div>
+
+<header class="hero">
+  <div class="eyebrow">DIJKSTRA 专题 · 第 4 篇 / 共 4 篇</div>
+  <h1>今生：它的软肋、它的后代，和它今天在哪里干活</h1>
+  <p>一个 1956 年在咖啡馆里想出来的算法，今天还在你手机的导航里、在每个大型网络的路由器里运行。这一篇先看它在什么情况下会错，再看人们怎样在它的基础上造出 A*、导航系统和路由协议，最后回到理论前沿和 Dijkstra 本人。</p>
+  <div class="road">
+    <span class="done">✓ 问题与直觉</span><i>→</i><span class="done">✓ 算法本身</span><i>→</i><span class="done">✓ 代码</span><i>→</i><span class="now">负数边</span><i>→</i><span class="now">A*</span><i>→</i><span class="now">导航</span><i>→</i><span class="now">路由</span><i>→</i><span class="now">前沿</span><i>→</i><span class="now">这个人</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 软肋：负数边</a></li>
+    <li><a href="#ch2">2 · A*：有方向感的 Dijkstra</a></li>
+    <li><a href="#ch3">3 · 导航软件怎么做到一瞬间</a></li>
+    <li><a href="#ch4">4 · 互联网路由器里的 Dijkstra</a></li>
+    <li><a href="#ch5">5 · 七十年的时间线</a></li>
+    <li><a href="#ch6">6 · Dijkstra 这个人</a></li>
+    <li><a href="#ch7">7 · 总复习</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ================= 1 ================= -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 章</div>
+  <h2>软肋：遇到负数边就会算错</h2>
+  <p>第 2 篇的证明里有一句"后面的路长都 ≥ 0，只会更多"。如果有一条路是<b>负数</b>，这句话就不成立了：绕远一点，反而可能更便宜。来看一个最小的反例（箭头表示单行道）：</p>
+  <div class="card">
+    <div class="scroll-x"><svg class="diagram" id="ng" role="img" aria-label="负数边反例"></svg></div>
+    <div class="step-text" id="ng-cap"></div>
+    <div class="btns"><button class="btn" id="ng-prev">上一步</button><button class="btn primary" id="ng-next">下一步</button><button class="btn" id="ng-reset">重来</button></div>
+  </div>
+  <p>问题出在第 2 轮：A 被挑中时成本 2 是候选里最小的，算法就宣布它"确定"了。但还有一条先去 B（5）、再走 −4 的路，到 A 只要 1。<b>"先到的就是最近的"这个直觉，在时间可以倒流时失效了</b>。更糟的是，错误还会传染：T 是从 A 算出来的，也跟着错了。而且 Dijkstra <b>不会报错</b>，它会安安静静地给你一个错答案。</p>
+  <p>负数边在现实里真的会出现吗？会。比如：</p>
+  <ul>
+    <li><b>货币兑换</b>：把汇率取对数再取负，"兑换一圈能不能赚钱"就变成了"有没有总和为负的环"。</li>
+    <li>游戏里经过某个地点能<b>回血</b>或拿到奖励；物流里某段路有<b>补贴</b>。</li>
+  </ul>
+  <h3>解药：Bellman-Ford 算法</h3>
+  <p>Bellman-Ford（Ford 1956、Bellman 1958）用的是同一个"松弛"动作，但它不挑最小、也不"确定"任何人，而是笨办法：<b>把所有边都松弛一遍，重复 N − 1 轮</b>。</p>
+  <div class="card">
+    <h3>Bellman-Ford 跑同一张图</h3>
+    <p class="muted" style="font-size:14px">每轮按 A→T、B→A、S→A、S→B 的顺序松弛全部 4 条边。表里是每轮结束时的成本：</p>
+    <div class="tbl-wrap"><table class="tt" id="bf"></table></div>
+    <p style="font-size:15px">为什么最多 N − 1 轮就够？任何最短路线最多经过 N − 1 条边；第 k 轮结束时，所有"最多 k 条边"的最短路线都已经被算对了。代价是复杂度 <b>O(N × L)</b>，比 Dijkstra 慢得多。</p>
+  </div>
+  <div class="callout">
+    <span class="t">负数环：最短路径不存在</span>
+    如果有一个环，绕一圈的总和是负的，那么每多绕一圈就更便宜一点，"最短"根本不存在。Bellman-Ford 能发现这种情况：跑完 N − 1 轮后<b>再跑一轮</b>，如果还有成本能变小，就说明图里有负数环。货币套利检测用的正是这个。
+  </div>
+  <details class="deep">
+    <summary>🔍 第 3 篇的堆版本代码，在这个例子里其实能算对</summary>
+    <p>堆版本没有"确定名单"，它判断过期记录用的是 <code>d &gt; dist[u]</code>。B → A 把 A 改成 1 时，会把 [1, A] 放进堆；之后 A 被再次取出、再次松弛，T 也被改成 2。所以这个例子里它碰巧能得到正确答案。</p>
+    <p>但这<b>不是 Dijkstra 的保证</b>：有负数边时，同一个节点可能被反复取出很多次，精心构造的图能让它的运行时间变成指数级。有负数边就老老实实用 Bellman-Ford，或者用 Johnson 算法（1977）：先用 Bellman-Ford 算出一组"势能"把所有边权调成非负，再放心地用 Dijkstra。</p>
+  </details>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 章</div>
+  <h2>A*：给 Dijkstra 一个方向感</h2>
+  <p>回想第 1 篇的火：它是向<b>四面八方</b>均匀烧的。如果你要从北京去上海，Dijkstra 会老老实实把往西、往北的路也探索到差不多的距离。明明知道上海在东南方，这很浪费。</p>
+  <p>1968 年，斯坦福研究所的 Hart、Nilsson 和 Raphael 为了让机器人 Shakey 在房间里规划路线，提出了 <b>A*</b>（读作 A-star）。改动只有一处：</p>
+  <div class="card tbl-wrap">
+    <table class="tt wide">
+      <thead><tr><th></th><th>每轮挑哪个候选</th></tr></thead>
+      <tbody>
+        <tr><td class="l"><b>Dijkstra</b></td><td class="l">g(x) 最小的。g = 从起点到 x 已知的成本</td></tr>
+        <tr><td class="l"><b>A*</b></td><td class="l">g(x) + h(x) 最小的。h = 从 x 到终点<b>大概还要多少</b>的估计（比如直线距离）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>朝着终点方向的格子 h 小，会被优先展开；背着终点的格子 h 大，被推迟甚至永远不展开。下面左右两边是同一张地图，同时开跑：</p>
+  <div class="card">
+    <div class="duo">
+      <div><div class="h">Dijkstra（只看 g）</div><div class="grid" id="gd"></div><div class="cnt" id="gd-c"></div></div>
+      <div><div class="h">A*（看 g + h）</div><div class="grid" id="ga"></div><div class="cnt" id="ga-c"></div></div>
+    </div>
+    <div class="btns">
+      <button class="btn primary" id="as-run">▶ 开跑</button>
+      <button class="btn" id="as-wall">预设：一堵墙</button><button class="btn" id="as-rand">预设：随机障碍</button><button class="btn" id="as-clear">清空</button>
+    </div>
+    <div class="step-text" id="as-cap">在格子上按住拖动可以画墙/擦墙（两边同步）。蓝色 = 起点，红色 = 终点。</div>
+    <p class="hint">浅蓝 = 已发现的候选；深蓝 = 已展开（确定）的格子；橙色 = 最终路线。每走一格成本 1，只能上下左右走，h 用曼哈顿距离（横向格数 + 纵向格数）</p>
+  </div>
+  <p>两边找到的路线<b>一样短</b>，但 A* 展开的格子少得多。A* 能保证找到最短路的条件是：h 永远<b>不高估</b>真实的剩余成本（叫"可采纳的"启发函数）。直线距离、曼哈顿距离都满足，因为真实的路只会比它们更长。</p>
+  <div class="callout key">
+    <span class="t">A* 和 Dijkstra 的关系</span>
+    如果 h 永远取 0（"我对终点在哪一无所知"），A* 就<b>完全变回 Dijkstra</b>。所以 Dijkstra 是 A* 的特例，A* 是"带着地图知识的 Dijkstra"。今天几乎所有游戏里的角色寻路，用的都是 A* 或它的变种。
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 章</div>
+  <h2>导航软件：几千万个路口，怎么做到一瞬间</h2>
+  <p>一个国家的路网有几千万个路口。就算用堆版本的 Dijkstra，每次查询也要好几秒，而导航软件每秒要回答成千上万个请求。工程师们在 Dijkstra 的基础上叠了好几层技巧。</p>
+  <h3>技巧 1：两头一起烧（双向搜索）</h3>
+  <div class="card">
+    <svg class="diagram" id="bi" viewBox="0 0 620 245" role="img" aria-label="双向搜索示意" style="max-width:620px"></svg>
+  </div>
+  <p>从起点和终点<b>同时</b>各烧一把火，两股火相遇就停。在平面上，一把半径 r 的火覆盖的面积是 πr²；两把半径 r/2 的火加起来是 2 × π(r/2)² = πr²/2，<b>只有一半</b>。</p>
+  <h3>技巧 2：提前算好"高速公路"（预处理）</h3>
+  <p>长途驾驶有个规律：不管从哪出发，开出几公里之后都会上主干道、高速公路，快到目的地时才下来。2008 年前后，德国卡尔斯鲁厄理工学院的研究者提出了<b>收缩层次</b>（Contraction Hierarchies）：</p>
+  <ul>
+    <li><b>离线</b>（每隔一段时间做一次）：按"重要程度"给路口排序，从最不重要的小巷开始，一个个"收缩"掉。收缩一个路口时，如果它是别人之间最短路线的必经之地，就加一条<b>捷径边</b>把那两个人直接连起来。</li>
+    <li><b>在线</b>（每次查询）：从起点和终点做双向 Dijkstra，但<b>只允许往更重要的路口走</b>。搜索范围一下子缩小到几百个节点。</li>
+  </ul>
+  <p>结果：欧洲大陆规模的路网，一次查询从几秒降到<b>不到 1 毫秒</b>。开源导航引擎（比如 OSRM、GraphHopper）就提供这种算法。商业导航软件具体用什么一般不公开，但公开论文里的主流做法（收缩层次、可定制路线规划 CRP 等）全都建立在 Dijkstra 之上。</p>
+  <h3>技巧 3：权重是活的</h3>
+  <p>真实导航里，边的权重不是固定的"公里数"，而是根据实时路况估算的<b>通行时间</b>，还要加上红绿灯、转弯惩罚、过路费偏好等等。堵车了，权重就变大。"可定制"的预处理方法让权重变化后几秒钟内就能重新算好捷径，而不用从头预处理。</p>
+  <div class="callout">
+    <span class="t">所以第 13 集那句话准确的意思是</span>
+    "每次你用导航查路线时，服务器上都在运行一个很像 Dijkstra 的算法"——核心的松弛和"按成本从小到大扩展"一直没变，变的是外面包了几层：A* 式的方向感、双向搜索、预处理出的捷径、实时更新的权重。
+  </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 章</div>
+  <h2>互联网路由器里的 Dijkstra</h2>
+  <p>你现在打开的这个页面，它的数据包很可能经过了运行 Dijkstra 的路由器。大型网络内部常用的路由协议 <b>OSPF</b>（开放最短路径优先，1989 年起）和 <b>IS-IS</b>，名字里的"最短路径优先"（Shortest Path First，SPF）指的就是 Dijkstra 算法。</p>
+  <p>它们的做法叫<b>链路状态路由</b>：</p>
+  <ol class="steps-list">
+    <li>每台路由器把"我和谁相连、这条线的成本是多少"广播给网络里所有路由器。</li>
+    <li>于是每台路由器都拼出了<b>一模一样的完整地图</b>。</li>
+    <li>每台路由器以<b>自己为起点</b>跑一遍 Dijkstra，得到到每个目的地的最短路线。</li>
+    <li>它不需要记住整条路线，只要记住<b>第一步该交给哪个邻居</b>（下一跳）。数据包到了邻居那里，邻居会用自己的计算结果接着转发。</li>
+  </ol>
+  <div class="card">
+    <div class="rt-wrap">
+      <div class="scroll-x" style="margin:0"><svg class="diagram" id="rt" role="img" aria-label="路由器网络"></svg></div>
+      <div class="tbl-wrap"><table class="tt wide" id="rt-tbl"></table></div>
+    </div>
+    <div class="step-text" id="rt-cap"></div>
+    <p class="hint">点任意一台路由器，它会以自己为起点跑 Dijkstra，生成自己的路由表</p>
+  </div>
+  <p>"下一跳"就是顺着 prev 倒推到<b>离起点最近的那一步</b>。线路成本通常由网络管理员根据带宽设置（带宽越大成本越低）。某条线路断了，相关路由器会广播新的链路状态，所有路由器重新跑一遍 Dijkstra，几秒内全网就绕开了故障点。</p>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 章</div>
+  <h2>七十年的时间线</h2>
+  <ul class="tl">
+    <li><span class="y">1956</span> · <span class="w">咖啡馆里的二十分钟</span><br>Dijkstra 为 ARMAC 演示设计出最短路径算法。同年 Ford 在兰德公司研究了允许更一般情况的松弛方法。</li>
+    <li><span class="y">1957–58</span> · <span class="w">好几个人同时在想</span><br>Moore 的迷宫最短路（BFS）、Bellman 的动态规划方法（后称 Bellman-Ford），以及 Leyzorek 等人的报告里也出现了和 Dijkstra 类似的方法。</li>
+    <li><span class="y">1959</span> · <span class="w">三页纸的论文</span><br>《A note on two problems in connexion with graphs》发表，复杂度 O(N²)。</li>
+    <li><span class="y">1964</span> · <span class="w">二叉堆</span><br>Williams 为堆排序发明了二叉堆。后来人们把它用在 Dijkstra 上，稀疏图上快了几个数量级。</li>
+    <li><span class="y">1968</span> · <span class="w">A*</span><br>Hart、Nilsson、Raphael 为机器人 Shakey 提出 A*，给搜索加上方向感。</li>
+    <li><span class="y">1977</span> · <span class="w">Johnson 算法</span><br>用"势能"把负数边调成非负，让 Dijkstra 也能处理有负数边（但无负数环）的图。</li>
+    <li><span class="y">1984</span> · <span class="w">斐波那契堆</span><br>Fredman 和 Tarjan 发明斐波那契堆，Dijkstra 达到 O(N log N + L)。第 13 集说的"改进版"就是这个复杂度。</li>
+    <li><span class="y">1989</span> · <span class="w">OSPF</span><br>以 Dijkstra 为核心的路由协议成为互联网标准，沿用至今。</li>
+    <li><span class="y">1999</span> · <span class="w">Thorup：线性时间</span><br>对于<b>无向图、正整数权重</b>这一特殊情况，Thorup 给出了 O(L) 的线性时间算法，不必按顺序逐个确定节点。</li>
+    <li><span class="y">2008</span> · <span class="w">收缩层次</span><br>Geisberger 等人提出收缩层次，大陆级路网查询进入毫秒级，成为现代导航引擎的基础之一。</li>
+    <li><span class="y">2024</span> · <span class="w">Dijkstra 被证明"普遍最优"</span><br>Haeupler、Hladík、Rozhoň、Tarjan、Tětek 证明：配上一种特殊设计的堆，Dijkstra 在"把节点按距离排好序"这个任务上，对<b>每一张</b>图都达到了最优（不只是最坏情况最优）。论文获 FOCS 2024 最佳论文。</li>
+    <li><span class="y">2025</span> · <span class="w">打破"排序壁垒"</span><br>段然等人（清华大学等）给出了有向图、实数权重下 O(L log<sup>2/3</sup> N) 的确定性算法，第一次在这个一般情况下比 Dijkstra 的 N log N + L 更快。论文获 STOC 2025 最佳论文。</li>
+  </ul>
+  <details class="deep">
+    <summary>🔍 什么是"排序壁垒"，为什么 2025 年的结果很重要</summary>
+    <p>Dijkstra 是按成本从小到大一个个确定节点的。换句话说，它跑完时，顺便把所有节点<b>按距离排好了序</b>。而用比较的方法给 N 个数排序，至少要约 N log N 步。所以只要算法的思路是"逐个按顺序确定"，就逃不出 N log N 这道墙。</p>
+    <p>几十年来人们一直怀疑，最短路径问题本身也许并不需要排序：我们只要每个节点的距离，不需要知道它们的先后顺序。2025 年的算法正是绕开了"完全排序"：它把 Dijkstra 和 Bellman-Ford 的思路结合起来，每次只把一部分候选大致分组，而不是严格挑出唯一的最小值。</p>
+    <p>不过这是理论上的突破，常数很大。对普通规模的图，实际工程里 Dijkstra 加二叉堆依然是首选。而 2024 年的结果从另一个方向说明：如果你确实需要"按距离排好序"的输出，Dijkstra 已经好到不能再好了。</p>
+  </details>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 章</div>
+  <h2>Dijkstra 这个人</h2>
+  <p>最短路径算法只是 Dijkstra 一生工作中很小的一部分。他后来几乎参与塑造了"编程"这件事本身：</p>
+  <ul>
+    <li><b>1960</b>：和同事一起写出了最早的 ALGOL 60 编译器之一。为了支持递归，他推广了用<b>栈</b>来管理函数调用——就是今天每个程序都在用的"调用栈"。</li>
+    <li><b>1965 前后</b>：研究多个程序同时运行时如何不互相打架，提出了<b>信号量</b>（semaphore），还出了著名的"哲学家就餐问题"。今天操作系统课里讲的锁和并发，很多都从这里开始。</li>
+    <li><b>1968</b>：发表短文《Go To 语句有害论》（标题是编辑 Niklaus Wirth 起的），推动了<b>结构化编程</b>：用 if、while、函数来组织代码，而不是到处跳转。你今天写的每一个 for 循环都受此影响。</li>
+    <li><b>1972</b>：获得<b>图灵奖</b>，计算机科学的最高荣誉。</li>
+    <li><b>1974</b>：提出"自稳定"系统的概念。2002 年这篇论文获得了分布式计算领域的 PODC 最具影响力论文奖；他去世后，这个奖改名为 <b>Dijkstra 奖</b>。</li>
+    <li><b>1984 年起</b>：在美国得克萨斯大学奥斯汀分校任教，直到 1999 年退休。</li>
+  </ul>
+  <p>他有一个独特的习惯：用钢笔手写技术笔记，编号 EWD（他名字的缩写），复印后寄给同行传阅。一生写了一千三百多篇，现在都扫描公开在得克萨斯大学的网站上。他说话以尖锐著称，比如：</p>
+  <blockquote>
+    "机器能不能思考"这个问题，就和"潜水艇能不能游泳"一样无关紧要。
+    <cite>—— EWD 898（1984）</cite>
+  </blockquote>
+  <p>2002 年 8 月，Dijkstra 在荷兰纽南的家中去世，享年 72 岁。</p>
+  <details class="deep">
+    <summary>🔍 他的名字怎么念、怎么拼</summary>
+    <p>荷兰语里 "ij" 是一个字母（读音接近英语的 "eye" 或 "ay"），所以 Dijkstra 的 "Dijk" 是一个音节，大致读作"戴克-斯特拉"。英语里常见的错误拼法是 "Djikstra"，把 i 和 j 写反了。记法：<b>D-i-j</b>，"ij" 是一个整体。</p>
+  </details>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 章</div>
+  <h2>总复习：整个专题串起来</h2>
+  <div class="chain">
+    <div><b>问题</b>最短路径</div><i>→</i>
+    <div><b>蛮力</b>路线爆炸</div><i>→</i>
+    <div><b>BFS</b>由近到远</div><i>→</i>
+    <div><b>水波</b>切成小段</div><i>→</i>
+    <div><b>Dijkstra</b>跳到下一个点着的</div><i>→</i>
+    <div><b>堆</b>N² → N log N</div><i>→</i>
+    <div><b>A* / 导航 / 路由</b>今天的后代</div>
+  </div>
+  <div class="card" id="quiz"></div>
+  <div class="boxcard">
+    <div class="bc-h">📦 最后一张卡：Dijkstra 的一生</div>
+    <dl>
+      <dt>前世</dt><dd>1956 年为了一场计算机演示，在咖啡馆里二十分钟想出；1959 年三页纸发表</dd>
+      <dt>本体</dt><dd>三本账（dist、prev、确定名单）+ 一个动作（松弛）+ 一个循环（挑最小 → 确定 → 松弛邻居）</dd>
+      <dt>前提</dt><dd>边权 ≥ 0；有负数边用 Bellman-Ford</dd>
+      <dt>速度</dt><dd>原版 N²（稠密图首选）；堆版 (N + L) log N（稀疏图首选）</dd>
+      <dt>今生</dt><dd>A* 寻路、导航软件的收缩层次、OSPF 路由；理论上 2024 年被证明普遍最优，2025 年在一般情况下首次被超越</dd>
+    </dl>
+  </div>
+  <div class="callout">
+    <span class="t">接下来学什么</span>
+    如果还想继续：① 用第 3 篇的代码，自己在纸上画一张 8 个点的图，跑一遍对答案；② 去 LeetCode 做"网络延迟时间"（第 743 题），它就是一道标准的 Dijkstra；③ 学动态规划时，留意 Bellman-Ford 和第 2 篇讲的"最优子结构"。
+  </div>
+  <div class="pager">
+    <a href="03.html"><small>← 上一篇</small>3 · 写成代码</a>
+    <a class="next" href="index.html"><small>回到 →</small>专题目录</a>
+  </div>
+  <div class="credit">
+    Dijkstra 专题是第 13 集《算法入门》的补充讲义，不属于 Crash Course 原课程内容；示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。<br>
+    参考资料：E. W. Dijkstra, "A note on two problems in connexion with graphs", <i>Numerische Mathematik</i> 1 (1959)；P. L. Frana, T. J. Misa, "An Interview with Edsger W. Dijkstra", <i>Communications of the ACM</i> 53(8), 2010；P. Hart, N. Nilsson, B. Raphael, "A Formal Basis for the Heuristic Determination of Minimum Cost Paths", 1968；M. Fredman, R. Tarjan, "Fibonacci heaps and their uses in improved network optimization algorithms", 1984/1987；R. Geisberger 等, "Contraction Hierarchies", 2008；B. Haeupler 等, "Universal Optimality of Dijkstra via Beyond-Worst-Case Heaps", FOCS 2024；R. Duan 等, "Breaking the Sorting Barrier for Directed Single-Source Shortest Paths", STOC 2025；E. W. Dijkstra Archive（cs.utexas.edu/~EWD）。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="dj.js"></script>
+<script>
+const show = v => v === Infinity ? '∞' : v;
+
+/* ---------- 1 负数边 ---------- */
+const NEG = {
+  nodes: { S: ['S 起点', 80, 210], A: ['A', 300, 90], B: ['B', 300, 330], T: ['T', 520, 90] },
+  edges: [['S', 'A', 2], ['S', 'B', 5], ['B', 'A', -4], ['A', 'T', 1]],
+  directed: true, view: '0 0 600 400',
+};
+(function () {
+  const api = drawGraph($('#ng'), NEG, { inf: true, labelAbove: ['A', 'T'] });
+  const I = Infinity;
+  const steps = [
+    { d: { S: 0, A: I, B: I, T: I }, cls: {}, ecls: {}, t: '起点 S 成本 0。注意 B → A 这条路是 <b>−4</b>。' },
+    { d: { S: 0, A: 2, B: 5, T: I }, cls: { S: 'cur', A: 'cand', B: 'cand' }, ecls: { 'S|A': 'try', 'S|B': 'try' }, t: '第 1 轮：挑 S（0），确定。松弛：A = 0 + 2 = 2，B = 0 + 5 = 5。' },
+    { d: { S: 0, A: 2, B: 5, T: 3 }, cls: { S: 'done', A: 'cur', B: 'cand', T: 'cand' }, ecls: { 'S|A': 'tree', 'S|B': 'tree', 'A|T': 'try' }, t: '第 2 轮：候选 A 2、B 5，挑 A，<b>宣布 A 的 2 是最终答案</b>。松弛：T = 2 + 1 = 3。' },
+    { d: { S: 0, A: 2, B: 5, T: 3 }, cls: { S: 'done', A: 'done', B: 'cand', T: 'cur' }, ecls: { 'S|A': 'tree', 'S|B': 'tree', 'A|T': 'tree' }, t: '第 3 轮：候选 B 5、T 3，挑 T，<b>宣布 T 的 3 是最终答案</b>。T 没有出去的路。' },
+    { d: { S: 0, A: 2, B: 5, T: 3 }, cls: { S: 'done', A: 'wrong', B: 'cur', T: 'done' }, ecls: { 'S|A': 'tree', 'S|B': 'tree', 'A|T': 'tree', 'B|A': 'bad' }, t: '第 4 轮：挑 B（5）。B → A：5 + (−4) = <b>1</b>，比 A 的 2 还小！可 A 早就被"确定"了，Dijkstra 不会回头改它。' },
+    { d: { S: 0, A: 2, B: 5, T: 3 }, cls: { S: 'done', A: 'wrong', B: 'done', T: 'wrong' }, ecls: { 'S|A': 'tree', 'S|B': 'tree', 'A|T': 'tree' }, t: 'Dijkstra 的答案：A = 2，T = 3。<b>都是错的</b>。点下一步看正确答案。' },
+    { d: { S: 0, A: 1, B: 5, T: 2 }, cls: { S: 'done', A: 'done', B: 'done', T: 'done' }, ecls: { 'S|B': 'path', 'B|A': 'path', 'A|T': 'path' }, t: '正确答案：S → B → A 只要 5 − 4 = <b>1</b>，T 是 1 + 1 = <b>2</b>。绕远去 B 反而更便宜——这在全是非负边的图里不可能发生。' },
+  ];
+  stepper('ng', steps, s => { api.paint({ cost: s.d, cls: s.cls, ecls: s.ecls }); $('#ng-cap').innerHTML = s.t; });
+})();
+(function () {
+  const order = [['A', 'T', 1], ['B', 'A', -4], ['S', 'A', 2], ['S', 'B', 5]];
+  const ids = ['S', 'A', 'B', 'T'];
+  const d = { S: 0, A: Infinity, B: Infinity, T: Infinity };
+  const rows = [['开始', { ...d }, []]];
+  for (let r = 1; r <= 3; r++) {
+    const ch = [];
+    order.forEach(([u, v, w]) => { if (d[u] + w < d[v]) { d[v] = d[u] + w; ch.push(v); } });
+    rows.push([`第 ${r} 轮`, { ...d }, ch]);
+  }
+  $('#bf').innerHTML = '<thead><tr><th></th>' + ids.map(k => `<th>${k}</th>`).join('') + '<th>说明</th></tr></thead><tbody>' +
+    rows.map(([lab, dd, ch], i) => `<tr><td class="l">${lab}</td>` + ids.map(k => `<td class="${ch.includes(k) ? 'chg' : ''}">${show(dd[k])}</td>`).join('') +
+      `<td class="l">${i === 0 ? '' : ch.length ? '改了 ' + ch.join('、') : '没有任何变化，可以提前停'}</td></tr>`).join('') + '</tbody>';
+})();
+
+/* ---------- 2 A* 网格 ---------- */
+(function () {
+  const W = 28, H = 14, S = 3 + 7 * W, T = 24 + 7 * W;
+  let wall = new Uint8Array(W * H), timer = null;
+  const mk = box => {
+    box.style.gridTemplateColumns = `repeat(${W}, 1fr)`;
+    const cells = [];
+    for (let i = 0; i < W * H; i++) { const c = document.createElement('i'); c.dataset.i = i; box.appendChild(c); cells.push(c); }
+    return cells;
+  };
+  const CD = mk($('#gd')), CA = mk($('#ga'));
+  const h = i => Math.abs(i % W - T % W) + Math.abs(Math.floor(i / W) - Math.floor(T / W));
+  function search(useH) {
+    const g = new Float64Array(W * H).fill(Infinity), par = new Int32Array(W * H).fill(-1), closed = new Uint8Array(W * H);
+    const open = [S]; g[S] = 0;
+    const ev = [];
+    while (open.length) {
+      let bi = 0;
+      for (let k = 1; k < open.length; k++) {
+        const a = open[k], b = open[bi];
+        const fa = g[a] + (useH ? h(a) : 0), fb = g[b] + (useH ? h(b) : 0);
+        if (fa < fb || (fa === fb && useH && h(a) < h(b))) bi = k;
+      }
+      const u = open.splice(bi, 1)[0];
+      if (closed[u]) continue;
+      closed[u] = 1;
+      const add = [];
+      if (u === T) { ev.push({ u, add }); break; }
+      const x = u % W, y = Math.floor(u / W);
+      [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => {
+        const nx = x + dx, ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= W || ny >= H) return;
+        const v = nx + ny * W;
+        if (wall[v] || closed[v]) return;
+        if (g[u] + 1 < g[v]) { if (g[v] === Infinity) add.push(v); g[v] = g[u] + 1; par[v] = u; open.push(v); }
+      });
+      ev.push({ u, add });
+    }
+    const path = [];
+    if (closed[T]) for (let v = T; v !== -1; v = par[v]) path.push(v);
+    return { ev, path, len: path.length ? g[T] : Infinity };
+  }
+  function base(cells) {
+    cells.forEach((c, i) => { c.className = wall[i] ? 'w' : i === S ? 's' : i === T ? 't' : ''; });
+  }
+  function resetView() {
+    clearInterval(timer); timer = null;
+    base(CD); base(CA);
+    $('#gd-c').textContent = ''; $('#ga-c').textContent = '';
+    $('#as-run').textContent = '▶ 开跑';
+  }
+  function run() {
+    resetView();
+    const rd = search(false), ra = search(true);
+    let k = 0;
+    const N = Math.max(rd.ev.length, ra.ev.length);
+    const apply = (cells, r, k) => {
+      if (k >= r.ev.length) return;
+      const e = r.ev[k];
+      if (e.u !== S && e.u !== T) cells[e.u].className = 'closed';
+      e.add.forEach(v => { if (v !== T) cells[v].className = 'seen'; });
+    };
+    const fin = (cells, r, box, name) => {
+      r.path.forEach(v => { if (v !== S && v !== T) cells[v].className = 'p'; });
+      $(box).textContent = `${name}：展开了 ${r.ev.length} 格` + (r.path.length ? `，路线长 ${r.len}` : '，到不了终点');
+    };
+    $('#as-run').textContent = '⏸ 跑着…';
+    timer = setInterval(() => {
+      for (let j = 0; j < 4 && k < N; j++, k++) { apply(CD, rd, k); apply(CA, ra, k); }
+      $('#gd-c').textContent = `已展开 ${Math.min(k, rd.ev.length)} 格`;
+      $('#ga-c').textContent = `已展开 ${Math.min(k, ra.ev.length)} 格`;
+      if (k >= rd.ev.length && !CD.done) { fin(CD, rd, '#gd-c', 'Dijkstra'); CD.done = 1; }
+      if (k >= ra.ev.length && !CA.done) { fin(CA, ra, '#ga-c', 'A*'); CA.done = 1; }
+      if (k >= N) {
+        clearInterval(timer); timer = null; $('#as-run').textContent = '▶ 再跑一次';
+        $('#as-cap').innerHTML = !rd.path.length ? '终点被墙完全挡住了，两种算法都找不到路（这时它们都会把能到的格子全展开一遍）。'
+          : `两边路线一样长（${rd.len} 步），但 A* 只展开了 <b>${ra.ev.length}</b> 格，Dijkstra 展开了 <b>${rd.ev.length}</b> 格，约是 A* 的 ${(rd.ev.length / ra.ev.length).toFixed(1)} 倍。Dijkstra 的火是一个向四周扩的菱形，A* 的火是一条朝终点伸过去的舌头。`;
+      }
+    }, 30);
+    CD.done = CA.done = 0;
+  }
+  // 画墙
+  let painting = null;
+  const cellAt = e => { const t = document.elementFromPoint(e.clientX, e.clientY); return t && t.parentNode && (t.parentNode.id === 'gd' || t.parentNode.id === 'ga') ? +t.dataset.i : null; };
+  const paintCell = i => { if (i === null || i === S || i === T) return; wall[i] = painting; };
+  [$('#gd'), $('#ga')].forEach(box => {
+    box.addEventListener('pointerdown', e => {
+      const i = cellAt(e); if (i === null) return;
+      e.preventDefault();
+      painting = wall[i] ? 0 : 1; paintCell(i); resetView();
+    });
+  });
+  window.addEventListener('pointermove', e => { if (painting === null) return; const i = cellAt(e); if (i !== null && wall[i] !== painting) { paintCell(i); base(CD); base(CA); } });
+  window.addEventListener('pointerup', () => { painting = null; });
+  $('#as-run').onclick = () => { if (!timer) run(); };
+  $('#as-clear').onclick = () => { wall = new Uint8Array(W * H); resetView(); };
+  $('#as-wall').onclick = () => { wall = new Uint8Array(W * H); for (let y = 2; y < 12; y++) wall[14 + y * W] = 1; for (let x = 10; x <= 14; x++) wall[x + 2 * W] = 1; resetView(); };
+  $('#as-rand').onclick = () => { wall = new Uint8Array(W * H); for (let i = 0; i < W * H; i++) if (i !== S && i !== T && Math.random() < 0.25) wall[i] = 1; resetView(); };
+  resetView();
+})();
+
+/* ---------- 3 双向示意 ---------- */
+(function () {
+  const svg = $('#bi');
+  el('circle', { cx: 150, cy: 110, r: 100, class: 'circ' }, svg);
+  el('circle', { cx: 50, cy: 110, r: 5, class: 'pt' }, svg); txt(svg, 50, 132, '起点', 'node-label');
+  el('circle', { cx: 250, cy: 110, r: 5, class: 'pt' }, svg); txt(svg, 250, 132, '终点', 'node-label');
+  txt(svg, 150, 238, '单向：一把大火，面积 πr²', 'svg-text');
+  el('circle', { cx: 420, cy: 110, r: 50, class: 'circ2' }, svg);
+  el('circle', { cx: 520, cy: 110, r: 50, class: 'circ2' }, svg);
+  el('circle', { cx: 370, cy: 110, r: 5, class: 'pt' }, svg); txt(svg, 370, 132, '起点', 'node-label');
+  el('circle', { cx: 570, cy: 110, r: 5, class: 'pt' }, svg); txt(svg, 570, 132, '终点', 'node-label');
+  txt(svg, 470, 238, '双向：两把小火在中间相遇，面积 πr²/2', 'svg-text');
+})();
+
+/* ---------- 4 路由表 ---------- */
+(function () {
+  const G = {
+    nodes: { R1: ['R1', 70, 200], R2: ['R2', 210, 80], R3: ['R3', 210, 320], R4: ['R4', 380, 80], R5: ['R5', 380, 320], R6: ['R6', 520, 200] },
+    edges: [['R1', 'R2', 1], ['R1', 'R3', 2], ['R2', 'R3', 2], ['R2', 'R4', 7], ['R3', 'R5', 3], ['R4', 'R5', 1], ['R4', 'R6', 1], ['R5', 'R6', 6]],
+    view: '0 0 600 400',
+  };
+  const api = drawGraph($('#rt'), G, { inf: true, clickable: true, labelAbove: ['R2', 'R4'] });
+  function pick(src) {
+    const tr = dijkstraTrace(G, { src, dst: null, stopAtDst: false });
+    const fin = tr[tr.length - 1];
+    const hop = v => { if (v === src) return '—'; while (fin.prev[v] !== src) v = fin.prev[v]; return v; };
+    const cls = {}, ecls = {};
+    api.ids.forEach(k => { cls[k] = 'done'; });
+    cls[src] = 'cur';
+    Object.entries(fin.prev).forEach(([v, u]) => { ecls[u + '|' + v] = 'tree'; });
+    api.paint({ cost: fin.dist, cls, ecls });
+    $('#rt-tbl').innerHTML = `<thead><tr><th>目的地</th><th>总成本</th><th>下一跳</th></tr></thead><tbody>` +
+      api.ids.filter(k => k !== src).map(k => `<tr><td>${k}</td><td>${fin.dist[k]}</td><td><b>${hop(k)}</b></td></tr>`).join('') + '</tbody>';
+    const far = api.ids.filter(k => k !== src).sort((a, b) => fin.dist[b] - fin.dist[a])[0];
+    $('#rt-cap').innerHTML = `${src} 的路由表。绿线是它算出的最短路径树。比如发往 ${far} 的数据包，完整路线是 ${routeOf(fin.prev, far)}，但 ${src} 只关心第一步：交给 <b>${hop(far)}</b>。`;
+  }
+  api.onClick(pick);
+  pick('R1');
+})();
+
+/* ---------- 小测验 ---------- */
+quiz('#quiz', [
+  { q: 'Dijkstra 的核心直觉是？', o: ['每步走最便宜的边', '从起点往外烧一把火，按距离从小到大的顺序确定每个节点', '把所有路线列出来比较', '从终点往回找'], a: 1,
+    e: '第 1 篇的水波/火：先点着的就是最近的。' },
+  { q: '松弛 relax(u, v, w) 做的是？', o: ['把 dist[v] 设成 ∞', '如果 dist[u] + w < dist[v]，就更新 dist[v] 和 prev[v]', '把 u 标记为已确定', '删除这条边'], a: 1,
+    e: '这是算法里唯一修改账本的动作。' },
+  { q: '为什么一座城市被挑中时就能确定？', o: ['因为它是候选里最小的，别的路都要先经过一个不比它便宜的候选，之后的边权 ≥ 0', '因为它的邻居都确定了', '因为它离终点最近', '因为算法规定如此'], a: 0,
+    e: '第 2 篇第 4 章的证明。' },
+  { q: '图里有一条负数边时，Dijkstra 会？', o: ['报错', '可能静悄悄地给出错误答案', '自动改用 Bellman-Ford', '运行得更快'], a: 1,
+    e: '它会把一个节点过早"确定"，之后不再回头。应该改用 Bellman-Ford。' },
+  { q: '道路网这种稀疏图，用哪种实现更好？', o: ['原版 O(N²)', '二叉堆 O((N + L) log N)', '蛮力法', '都一样'], a: 1,
+    e: 'L 只是 N 的几倍，堆版本几乎是线性的。稠密图才用原版。' },
+  { q: 'A* 和 Dijkstra 的区别是？', o: ['A* 能处理负数边', 'A* 挑 g + h 最小的，h 是到终点的估计；h = 0 时就是 Dijkstra', 'A* 不保证最短', 'A* 不需要松弛'], a: 1,
+    e: '只要 h 不高估，A* 也保证最短，而且展开的节点少得多。' },
+  { q: 'OSPF 路由器跑完 Dijkstra 后，路由表里存什么？', o: ['到每个目的地的完整路线', '到每个目的地的下一跳', '所有路由器的 IP', '只存最近的邻居'], a: 1,
+    e: '只要知道第一步交给谁，后面的路由器会接着用自己的结果转发。' },
+  { q: 'Dijkstra 最初为什么要想这个算法？', o: ['导航软件的需求', '给 ARMAC 计算机做公开演示', '互联网路由', '游戏寻路'], a: 1,
+    e: '导航、路由、游戏都是几十年后的事了。1956 年它只是一场演示的题目。' },
+], ['🎉 全对！恭喜你，Dijkstra 的前世今生全部打通了。', '👍 很不错，回头看看错的那一篇。', '建议从第 2 篇的"你来当 Dijkstra"重新练一遍。']);
+</script>
+</body>
+</html>

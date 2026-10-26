@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dijkstra 前世：问题从哪来</title>
+<link rel="stylesheet" href="dj.css">
+<style>
+.paths{font:13px/1.7 var(--mono);max-height:260px;overflow:auto;background:var(--bg);border-radius:10px;padding:8px 12px;margin:10px 0}
+.paths div{padding:1px 6px;border-radius:5px}
+.paths div.cur{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.paths div.best{background:var(--on-soft);color:var(--on);font-weight:700}
+.lit-log{font:13px/1.7 var(--mono);color:var(--muted);min-height:24px}
+.lit-log b{color:var(--ok)}
+.clock{font:700 22px var(--mono);color:var(--on)}
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="index.html">← Dijkstra 专题目录</a><a href="../13.html#ch5">回到第 13 集</a></div>
+
+<header class="hero">
+  <div class="eyebrow">DIJKSTRA 专题 · 第 1 篇 / 共 4 篇</div>
+  <h1>前世：这个算法是被什么问题逼出来的</h1>
+  <p>先别急着看算法。这一篇只做三件事：弄清"最短路径"到底在问什么，亲眼看看笨办法为什么不行，然后用一圈一圈扩散的水波，自己"发现"Dijkstra 的核心想法。最后回到 1956 年阿姆斯特丹的那个咖啡馆。</p>
+  <div class="road">
+    <span class="now">问题是什么</span><i>→</i><span class="now">蛮力为什么不行</span><i>→</i><span class="now">水波直觉</span><i>→</i><span class="now">1956 咖啡馆</span><i>→</i><span>算法本身</span><i>→</i><span>写成代码</span><i>→</i><span>今生</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 问题是什么</a></li>
+    <li><a href="#ch2">2 · 蛮力法</a></li>
+    <li><a href="#ch3">3 · 路都一样长时</a></li>
+    <li><a href="#ch4">4 · 水波：核心直觉</a></li>
+    <li><a href="#ch5">5 · 1956 年的咖啡馆</a></li>
+    <li><a href="#ch6">6 · 小测验</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ================= 1 ================= -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 章</div>
+  <h2>问题是什么：从一个地方到另一个地方，怎么走最省</h2>
+  <p>还是第 13 集那张地图：军队驻扎在<b>高庭</b>，要去<b>临冬城</b>。城市之间有路，每条路上的数字是要走几周。问：<b>怎么走，总共花的周数最少？</b></p>
+  <div class="card">
+    <div class="scroll-x"><svg class="diagram" id="g1" role="img" aria-label="示例地图"></svg></div>
+    <p class="hint">点任意两座城市之间的路试试：先点起点，再沿着路一座一座点下去，看看你自己找的路线要几周</p>
+    <div class="step-text" id="g1-cap"></div>
+    <div class="btns"><button class="btn" id="g1-reset">重新选</button></div>
+  </div>
+  <p>这类问题有个统一的名字：<b>最短路径问题</b>（shortest path problem）。为了不被"城市""周数"这些具体的词绑住，计算机科学家用一套通用词汇来描述它：</p>
+  <div class="boxcard">
+    <div class="bc-h">📦 词汇卡：图</div>
+    <dl>
+      <dt>节点</dt><dd>一个"地方"。这里是城市；换个场景可以是路口、路由器、网页、游戏地图上的格子。</dd>
+      <dt>边</dt><dd>两个节点之间的直接连接。这里是路。</dd>
+      <dt>权重</dt><dd>边上的数字，也叫成本。这里是周数；也可以是公里、分钟、过路费、网络延迟。</dd>
+      <dt>路径</dt><dd>从起点出发、沿着边一步步走到终点的一串节点。</dd>
+      <dt>路径成本</dt><dd>路径上所有边的权重<b>加起来</b>。</dd>
+    </dl>
+    <div class="bc-f">"最短路径" = 所有路径里，路径成本最小的那条。注意"短"指的是<b>权重之和</b>小，不是经过的城市少。</div>
+  </div>
+  <p>最后一句很重要。高庭 → 派克城 → 临冬城 只经过 2 条路，却要 14 + 18 = 32 周；高庭 → 奔流城 → 三叉戟河 → 临冬城 经过 3 条路，只要 10 + 2 + 10 = 22 周。<b>边少不等于成本低</b>，这正是这个问题难的地方。</p>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 章</div>
+  <h2>最笨的办法：把所有路线都试一遍</h2>
+  <p>既然要找"所有路径里最小的"，最直接的办法就是把<b>所有路径列出来</b>，每条算一下总成本，挑最小的。这叫<b>蛮力法</b>。在这张小地图上，它完全行得通：</p>
+  <div class="card">
+    <h3>动手：列出高庭到临冬城的每一条路线</h3>
+    <div class="scroll-x"><svg class="diagram" id="g2" role="img" aria-label="蛮力法地图"></svg></div>
+    <div class="paths" id="g2-list"></div>
+    <div class="step-text" id="g2-cap"></div>
+    <div class="btns"><button class="btn" id="g2-prev">上一条</button><button class="btn primary" id="g2-next">下一条</button><button class="btn" id="g2-reset">重来</button></div>
+    <p class="hint">这里只算不走回头路（不重复经过同一座城市）的路线</p>
+  </div>
+  <p>6 座城市、9 条路，一共只有 10 条路线，挨个算一遍不费事。问题在于：<b>城市一多，路线数量会爆炸</b>。</p>
+  <div class="card">
+    <h3>动手：城市排成棋盘时有多少条路线</h3>
+    <p>假设城市像棋盘一样排成 k × k 的方格，路只在横竖相邻的城市之间。<b>就算只允许往右、往上走</b>（不许绕路），从左下角到右上角的路线数也是：</p>
+    <div class="ctl"><label>每边 k = <b id="gx-k"></b></label><input type="range" id="gx" min="2" max="30" value="3" aria-label="棋盘边长"></div>
+    <div class="step-text" id="gx-read"></div>
+    <p class="hint">拖动滑块。假设电脑每秒能算 1 亿条路线</p>
+  </div>
+  <details class="deep">
+    <summary>🔍 这个数是怎么算出来的</summary>
+    <p>每边 k 格的棋盘，从左下到右上要往右走 k 步、往上走 k 步，一共 2k 步。一条路线就是在这 2k 步里挑出哪 k 步往右，剩下的往上。所以路线数是组合数 C(2k, k)。</p>
+    <p>k = 3 时是 C(6,3) = 20；k = 10 时是 184,756；k = 20 时已经超过 1378 亿；k = 30 时约 1.18 × 10¹⁷。而这还是<b>不许绕路</b>的情况——允许绕路的话会多得多。</p>
+    <p>一张真实的城市道路图有几十万个路口。蛮力法在那里不是"慢"，而是"宇宙毁灭了也算不完"。</p>
+  </details>
+  <div class="callout key">
+    <span class="t">所以真正的问题是</span>
+    能不能<b>不把路线一条条列出来</b>，也能知道最短的是哪条？
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 章</div>
+  <h2>先简化：如果每条路都一样长</h2>
+  <p>难题解不开的时候，常用的办法是先解一个简单版本。假设<b>每条路都一样长</b>，都是 1。这时"最短"就等于"经过的边最少"。</p>
+  <p>这个版本有一个很自然的解法：从起点开始，<b>一圈一圈往外扩</b>。</p>
+  <ul>
+    <li>第 0 圈：起点自己，距离 0。</li>
+    <li>第 1 圈：起点的所有邻居，距离 1。</li>
+    <li>第 2 圈：第 1 圈的邻居里，还没到过的那些，距离 2。</li>
+    <li>……一直扩到所有能到的节点。</li>
+  </ul>
+  <div class="card">
+    <h3>动手：一圈一圈扩散</h3>
+    <div class="scroll-x"><svg class="diagram" id="g3" role="img" aria-label="广度优先搜索"></svg></div>
+    <div class="step-text" id="g3-cap"></div>
+    <div class="btns"><button class="btn" id="g3-prev">上一步</button><button class="btn primary" id="g3-next">下一圈</button><button class="btn" id="g3-reset">重来</button></div>
+    <p class="hint">圆圈里的数字 = 第几圈到达的 = 最少要走几条路</p>
+  </div>
+  <p>这个方法叫<b>广度优先搜索</b>（BFS，Breadth-First Search）。它为什么是对的？关键就一句话：</p>
+  <p class="big">一个节点第一次被碰到时，碰到它的那一圈，就是它的最短距离</p>
+  <p>因为圈是从小到大一圈圈扩的。如果有更短的路，它早在更内层的圈里就被碰到了。<b>先到的，就是最近的。</b></p>
+  <p>而且它很快：每个节点只进一次圈，每条边最多看两次，步数大约是 节点数 + 边数，没有任何爆炸。</p>
+  <div class="boxcard">
+    <div class="bc-h">📦 封装：BFS（所有边一样长时的最短路径）</div>
+    <dl>
+      <dt>输入</dt><dd>一张图、一个起点</dd>
+      <dt>输出</dt><dd>起点到每个节点最少要走几条边</dd>
+      <dt>承诺</dt><dd>按"由近到远"的顺序依次到达每个节点，第一次到达时的距离就是最终答案</dd>
+    </dl>
+    <div class="bc-f">记住这句"由近到远依次到达"——Dijkstra 就是把它推广到边长不一样的情况。</div>
+  </div>
+  <p>可惜，真实的路长短不一。直接拿 BFS 套在我们的地图上会出错：高庭的邻居里，派克城是"第 1 圈"，三叉戟河是"第 2 圈"，可派克城（14 周）其实比三叉戟河（12 周）还远。<b>圈数不再等于距离</b>。怎么办？</p>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 章 · 本篇最重要的一章</div>
+  <h2>水波：把长路切成一段一段</h2>
+  <p>一个巧妙的办法：<b>把每条路切成长度为 1 的小段</b>。一条 8 周的路，就在中间插 7 个"假城市"，变成 8 段长度为 1 的小路。这样所有边又一样长了，BFS 又能用了。</p>
+  <p>换一个更形象的说法：想象在高庭放一把火（或者往池塘里扔一颗石子），火沿着每条路以<b>每周 1 格</b>的速度往外烧。火什么时候烧到一座城市，那个时间就是到它的最短周数。</p>
+  <div class="card">
+    <h3>动手：在高庭点一把火</h3>
+    <div class="scroll-x"><svg class="diagram" id="g4" role="img" aria-label="水波扩散"></svg></div>
+    <div class="ctl">
+      <span class="clock" id="g4-t">第 0 周</span>
+      <input type="range" id="g4-s" min="0" max="320" value="0" aria-label="时间">
+      <button class="btn primary" id="g4-play">▶ 播放</button>
+    </div>
+    <div class="lit-log" id="g4-log"></div>
+    <div class="step-text" id="g4-cap"></div>
+    <p class="hint">拖动时间轴或点播放。蓝色 = 火已经烧到的路段；绿色城市 = 已经被点着</p>
+  </div>
+  <p>仔细看播放过程，你会注意到三件事：</p>
+  <ol class="steps-list">
+    <li><b>城市被点着的顺序，正好是按距离从小到大</b>：君临 8 → 奔流城 10 → 三叉戟河 12 → 派克城 13 → 临冬城 22。</li>
+    <li>火同时沿好几条路烧。三叉戟河那边，从君临来的火（第 13 周到）比从奔流城来的火（第 12 周到）<b>晚了一步</b>，所以三叉戟河在第 12 周就被点着了，较慢的那股火到达时，城市早就烧着了，没有意义。</li>
+    <li><b>一座城市一旦被点着，它的时间就不会再变</b>。后来的火只会更晚。</li>
+  </ol>
+  <h3>从水波到算法：不必一周一周地模拟</h3>
+  <p>水波模拟能算出正确答案，但很浪费：大部分时间什么也没发生，只是火在路上慢慢爬。君临到奔流城那条 25 周的路，要模拟 25 周。</p>
+  <p>真正重要的只有<b>"某座城市被点着"</b>这些时刻。所以聪明的做法是：</p>
+  <ul>
+    <li>对每座还没被点着的城市，记一个<b>"火最早什么时候能到这里"</b>的预计时间。</li>
+    <li>直接<b>跳到预计时间最早的那座城市</b>，它就是下一座被点着的。</li>
+    <li>它被点着后，火会从它出发沿各条路继续烧，更新它邻居们的预计时间（如果更早的话）。</li>
+    <li>重复。</li>
+  </ul>
+  <div class="callout key">
+    <span class="t">这就是 Dijkstra 算法，全部。</span>
+    Dijkstra 算法 = 不逐周模拟的水波。它按"被点着"的顺序，也就是<b>距离从小到大的顺序</b>，一座一座地确定每座城市的最短距离。每一轮"挑预计时间最早的城市"，就是在问"下一个被火点着的是谁"。
+  </div>
+  <p>下一篇会把这四句话变成严格的步骤，一个细节一个细节地过。但请先把这个画面记在脑子里：<b>一把从起点往外烧的火</b>。以后哪一步看不懂了，就回来问自己"火在这一刻会怎么烧"。</p>
+  <details class="deep">
+    <summary>🔍 为什么火的比喻必须要求"路长不能是负数"</summary>
+    <p>火烧过一条路要花时间，时间只会往前走。如果有一条路长 −4 周，就意味着火走过这条路会<b>回到过去</b>。那"先被点着的就是最近的"就不成立了：一座城市明明已经点着了，后来却可能冒出一股"从未来回来"的、更早到达的火。</p>
+    <p>这个限制非常关键，第 4 篇会专门演示 Dijkstra 遇到负数边时怎样出错。</p>
+  </details>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 章</div>
+  <h2>1956 年，阿姆斯特丹的一个咖啡馆</h2>
+  <p><b>艾兹赫尔·戴克斯特拉</b>（Edsger W. Dijkstra，1930–2002）出生在荷兰鹿特丹，在莱顿大学学的是理论物理。1952 年起，他在阿姆斯特丹的<b>数学中心</b>（Mathematisch Centrum）兼职编程，后来成了荷兰最早一批以"程序员"为职业的人之一。</p>
+  <h3>一个演示用的题目</h3>
+  <p>1956 年，数学中心造好了一台叫 <b>ARMAC</b> 的计算机，需要在公开场合演示它能干什么。Dijkstra 的考虑是：给不懂计算机的观众看，题目必须<b>人人都能听懂</b>，答案也得一眼就能看出对不对。他选了这个问题：</p>
+  <p class="big">从荷兰的一座城市到另一座城市，最短的路怎么走？</p>
+  <p>为了让演示程序在 ARMAC 上跑得动，他准备了一张简化的荷兰地图，只有 64 座城市（64 = 2⁶，城市编号刚好能用 6 个二进制位存下）。</p>
+  <h3>二十分钟，没有纸和笔</h3>
+  <p>很多年后（2001 年的一次访谈里），Dijkstra 回忆了这个算法的来历。大意是：</p>
+  <blockquote>
+    一天早上，我和年轻的未婚妻在阿姆斯特丹逛街，累了，就在一家咖啡馆的露台上坐下来喝咖啡。我在想能不能解决这个问题，然后就设计出了最短路径算法，大约用了二十分钟……它之所以这么漂亮，原因之一是我设计它的时候没有用纸和笔，这迫使你避开一切可以避免的复杂。
+    <cite>—— 据 Edsger Dijkstra 2001 年访谈（P. L. Frana 整理，2010 年刊于 Communications of the ACM）意译</cite>
+  </blockquote>
+  <p>"没有纸笔"这一点，正好解释了这个算法为什么这么简洁：在脑子里能装得下的算法，一定只有很少几个概念。我们在第 4 章看到的也确实就这么几样：一个预计时间表、"挑最小的"、"更新邻居"。</p>
+  <h3>三年后才发表，只有三页</h3>
+  <p>算法 1956 年就想出来了，但直到 <b>1959 年</b>才发表，论文题目叫《关于与图有关的两个问题的一则注记》（<i>A note on two problems in connexion with graphs</i>），登在《数值数学》（Numerische Mathematik）上，正文<b>不到三页</b>。那个年代还没有"计算机科学"这门学科，也几乎没有地方发表这类"算法"文章。</p>
+  <p>论文里的"两个问题"，另一个是<b>最小生成树</b>：用最少总长度的线把所有点连起来。这个问题也有个实际来源：数学中心的工程师在造下一台计算机 X1 时，想让机器背板上的铜线用得最少。</p>
+  <h3>他不是唯一在想这个问题的人</h3>
+  <p>1950 年代中期，最短路径在好几个地方同时被研究：美国兰德公司的 Ford、Bellman 研究了可以处理更一般情况的方法（后来叫 Bellman-Ford 算法，第 4 篇会讲）；贝尔实验室的 Moore 研究了迷宫里的最短路（基本就是第 3 章的 BFS）；还有人独立提出过和 Dijkstra 很像的方法。Dijkstra 的版本之所以流传最广，是因为它<b>又快又简单</b>，三页纸就能讲清楚。</p>
+  <p>Dijkstra 自己后来说，这个二十分钟想出来的算法，最后竟成了他名气的基石之一，这让他非常意外。毕竟他一生做过很多更"难"的工作（第 4 篇最后会讲到）。</p>
+  <div class="callout">
+    <span class="t">这段历史告诉我们什么</span>
+    Dijkstra 算法不是凭空出现的数学魔术。它从一个<b>具体的需求</b>（给观众演示计算机）出发，针对一个<b>具体的瓶颈</b>（蛮力法路线太多）给出了一个<b>简单的想法</b>（按由近到远的顺序一个个确定）。理解一个算法，最好的入口就是先理解它要解决的那个麻烦。
+  </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 章</div>
+  <h2>小测验：这一篇的四个要点</h2>
+  <div class="card" id="quiz"></div>
+  <div class="boxcard">
+    <div class="bc-h">📦 带到下一篇的盒子</div>
+    <dl>
+      <dt>问题</dt><dd>从起点到其他节点，边权之和最小的路径</dd>
+      <dt>笨办法</dt><dd>列出所有路径：数量会爆炸</dd>
+      <dt>核心直觉</dt><dd>从起点烧一把火，城市按距离从小到大的顺序被点着；点着时的时间就是答案，之后不会再变</dd>
+      <dt>前提</dt><dd>路长不能是负数</dd>
+    </dl>
+  </div>
+  <div class="pager">
+    <a href="index.html"><small>← 目录</small>Dijkstra 专题</a>
+    <a class="next" href="02.html"><small>下一篇 →</small>2 · 算法本身：每一步、每个细节</a>
+  </div>
+  <div class="credit">Dijkstra 专题是第 13 集《算法入门》的补充讲义，不属于 Crash Course 原课程内容；示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。历史部分参考 Dijkstra 1959 年原论文及 Frana 2010 年发表的访谈。</div>
+</section>
+
+</main>
+</div>
+
+<script src="dj.js"></script>
+<script>
+/* ---------- 1 自己找路线 ---------- */
+(function () {
+  const api = drawGraph($('#g1'), GOT, { blank: true });
+  let path = [];
+  const W = (a, b) => (GOT.edges.find(([x, y]) => (x === a && y === b) || (x === b && y === a)) || [])[2];
+  function paint() {
+    const cls = {}, ecls = {};
+    path.forEach(k => { cls[k] = 'cand'; });
+    if (path.length) cls[path[path.length - 1]] = 'cur';
+    let sum = 0;
+    for (let i = 1; i < path.length; i++) { ecls[path[i - 1] + '|' + path[i]] = 'path'; sum += W(path[i - 1], path[i]); }
+    api.paint({ cls, ecls });
+    if (!path.length) { $('#g1-cap').innerHTML = '先点一座城市作为起点（比如高庭）。'; return; }
+    const names = path.map(k => GOT.nodes[k][0]).join(' → ');
+    $('#g1-cap').innerHTML = path.length === 1 ? `起点：${names}。接着点一座和它有路相连的城市。`
+      : `${names}：${path.slice(1).map((k, i) => W(path[i], k)).join(' + ')} = <b>${sum} 周</b>` +
+        (path[0] === 'HG' && path[path.length - 1] === 'WF' ? (sum === 22 ? '。🎉 这就是最短的！' : '。到了临冬城，但还有更短的路线，再试试？') : '');
+  }
+  api.onClick(k => {
+    if (!path.length) path = [k];
+    else if (path.includes(k)) { $('#g1-cap').innerHTML += '<br><span class="muted">这座城市已经走过了。</span>'; return; }
+    else if (W(path[path.length - 1], k) === undefined) { $('#g1-cap').innerHTML += `<br><span class="muted">${GOT.nodes[path[path.length - 1]][0]}和${GOT.nodes[k][0]}之间没有直接的路。</span>`; return; }
+    else path.push(k);
+    paint();
+  });
+  $('#g1-reset').onclick = () => { path = []; paint(); };
+  paint();
+})();
+
+/* ---------- 2 蛮力列举 ---------- */
+(function () {
+  const api = drawGraph($('#g2'), GOT, { blank: true });
+  const all = [];
+  (function dfs(u, seen, path, cost) {
+    if (u === 'WF') { all.push({ path: path.slice(), cost }); return; }
+    neighbors(GOT, u).forEach(([v, w]) => {
+      if (seen.has(v)) return;
+      seen.add(v); path.push(v);
+      dfs(v, seen, path, cost + w);
+      seen.delete(v); path.pop();
+    });
+  })('HG', new Set(['HG']), ['HG'], 0);
+  const best = Math.min(...all.map(p => p.cost));
+  const steps = all.map((p, i) => ({ i })).concat([{ i: -1 }]);
+  stepper('g2', steps, s => {
+    const n = s.i < 0 ? all.length : s.i + 1;
+    $('#g2-list').innerHTML = all.slice(0, n).map((p, i) =>
+      `<div class="${s.i < 0 && p.cost === best ? 'best' : i === s.i ? 'cur' : ''}">${String(i + 1).padStart(2)}. ${p.path.map(k => GOT.nodes[k][0]).join(' → ')}　= ${p.cost} 周</div>`).join('');
+    const ecls = {}, cls = {};
+    const p = s.i < 0 ? all.find(p => p.cost === best) : all[s.i];
+    p.path.forEach((k, j) => { cls[k] = 'cand'; if (j) ecls[p.path[j - 1] + '|' + k] = s.i < 0 ? 'path' : 'try'; });
+    api.paint({ cls, ecls });
+    $('#g2-cap').innerHTML = s.i < 0
+      ? `一共 <b>${all.length}</b> 条路线，最短的是 <b>${p.path.map(k => GOT.nodes[k][0]).join(' → ')}，${best} 周</b>。答案对了，但我们每一条都得算一遍。`
+      : `第 ${s.i + 1} 条：${p.path.map(k => GOT.nodes[k][0]).join(' → ')}，${p.cost} 周。${s.i === all.length - 1 ? '这是最后一条，再点一下看结果。' : ''}`;
+    const L = $('#g2-list'), c = L.querySelector('.cur,.best');
+    if (c) L.scrollTop = c.offsetTop - L.offsetTop - 60;
+  });
+})();
+
+/* ---------- 2 棋盘爆炸 ---------- */
+(function () {
+  const C = k => { let r = 1n; for (let i = 1n; i <= BigInt(k); i++) r = r * (BigInt(k) + i) / i; return r; };
+  const fmt = n => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const dur = s => s < 1 ? '不到 1 秒' : s < 60 ? `${s.toFixed(0)} 秒` : s < 3600 ? `${(s / 60).toFixed(0)} 分钟` : s < 86400 ? `${(s / 3600).toFixed(1)} 小时` : s < 3.15e7 ? `${(s / 86400).toFixed(0)} 天` : `${(s / 3.15e7).toExponential(1).replace('e+', ' × 10^')} 年`;
+  function upd() {
+    const k = +$('#gx').value, n = C(k), cities = (k + 1) ** 2;
+    $('#gx-k').textContent = k;
+    $('#gx-read').innerHTML = `${cities} 座城市，路线数 C(${2 * k}, ${k}) = <b>${fmt(n)}</b> 条。全部算一遍要 <b>${dur(Number(n) / 1e8)}</b>。` +
+      (k >= 25 ? '<br>宇宙的年龄大约是 1.4 × 10^10 年。' : '');
+  }
+  $('#gx').addEventListener('input', upd);
+  upd();
+})();
+
+/* ---------- 3 BFS ---------- */
+(function () {
+  const G = {
+    nodes: { S: ['起点', 80, 200], A: ['A', 200, 90], B: ['B', 200, 310], C: ['C', 330, 60], D: ['D', 330, 200],
+             E: ['E', 330, 340], F: ['F', 460, 130], H: ['H', 460, 290], T: ['T', 560, 210] },
+    edges: [['S', 'A', 1], ['S', 'B', 1], ['A', 'C', 1], ['A', 'D', 1], ['B', 'D', 1], ['B', 'E', 1],
+            ['C', 'F', 1], ['D', 'F', 1], ['D', 'H', 1], ['E', 'H', 1], ['F', 'T', 1], ['H', 'T', 1]],
+    view: '0 0 640 400',
+  };
+  const api = drawGraph($('#g3'), G, { noWeight: true });
+  const layer = { S: 0 }, L = [['S']], par = {};
+  while (true) {
+    const nx = [];
+    L[L.length - 1].forEach(u => neighbors(G, u).forEach(([v]) => { if (layer[v] === undefined) { layer[v] = L.length; par[v] = u; nx.push(v); } }));
+    if (!nx.length) break;
+    L.push(nx);
+  }
+  const nm = k => G.nodes[k][0];
+  stepper('g3', L.map((_, i) => i), i => {
+    const cost = {}, cls = {}, ecls = {};
+    Object.keys(layer).forEach(k => { if (layer[k] <= i) { cost[k] = layer[k]; cls[k] = layer[k] === i ? 'cur' : 'done'; if (par[k]) ecls[par[k] + '|' + k] = layer[k] === i ? 'try' : 'tree'; } });
+    api.paint({ cost, cls, ecls });
+    $('#g3-cap').innerHTML = i === 0 ? '第 0 圈：只有起点，距离 0。'
+      : `第 ${i} 圈：${L[i].map(nm).join('、')}——它们是上一圈节点的邻居里<b>还没到过</b>的，距离都是 ${i}。` +
+        (i === L.length - 1 ? `<br>T 在第 ${i} 圈被碰到，所以起点到 T 最少要走 ${i} 条路。所有节点都到过了，结束。` : '');
+  });
+})();
+
+/* ---------- 4 水波 ---------- */
+(function () {
+  const svg = $('#g4');
+  const api = drawGraph(svg, GOT, { blank: true });
+  const D = {};
+  const tr = dijkstraTrace(GOT, { stopAtDst: false });
+  Object.assign(D, tr[tr.length - 1].dist);
+  const N = GOT.nodes;
+  // 在边的下面插一层"火"
+  const waveLayer = el('g', {}, null);
+  svg.insertBefore(waveLayer, svg.firstChild.nextSibling);
+  const segs = GOT.edges.map(([a, b, w]) => {
+    const [, x1, y1] = N[a], [, x2, y2] = N[b];
+    return { a, b, w, x1, y1, x2, y2,
+      fa: el('line', { x1, y1, x2: x1, y2: y1, class: 'wave' }, waveLayer),
+      fb: el('line', { x1: x2, y1: y2, x2, y2, class: 'wave' }, waveLayer) };
+  });
+  const order = Object.keys(D).sort((a, b) => D[a] - D[b]);
+  let t = 0, timer = null;
+  const MAX = 32;
+  function paint() {
+    $('#g4-t').textContent = `第 ${t.toFixed(t % 1 ? 1 : 0)} 周`;
+    segs.forEach(s => {
+      let pa = Math.max(0, Math.min(s.w, t - D[s.a])), pb = Math.max(0, Math.min(s.w, t - D[s.b]));
+      if (pa + pb > s.w) { const k = s.w / (pa + pb); pa *= k; pb *= k; }
+      s.fa.setAttribute('x2', s.x1 + (s.x2 - s.x1) * pa / s.w); s.fa.setAttribute('y2', s.y1 + (s.y2 - s.y1) * pa / s.w);
+      s.fb.setAttribute('x2', s.x2 + (s.x1 - s.x2) * pb / s.w); s.fb.setAttribute('y2', s.y2 + (s.y1 - s.y2) * pb / s.w);
+    });
+    const cls = {};
+    order.forEach(k => { if (t >= D[k]) cls[k] = 'done'; });
+    api.paint({ cls });
+    order.forEach(k => { api.node(k).c.textContent = t >= D[k] ? D[k] : ''; });
+    const lit = order.filter(k => t >= D[k]);
+    $('#g4-log').innerHTML = '点着的顺序：' + lit.map(k => `<b>${N[k][0]} ${D[k]}</b>`).join(' → ');
+    const next = order.find(k => t < D[k]);
+    $('#g4-cap').innerHTML = next
+      ? (t === 0 ? '第 0 周：火从高庭开始烧。' : `下一座要被点着的是<b>${N[next][0]}</b>，在第 ${D[next]} 周。`) +
+        (t >= 12 && t < 13 ? '<br>注意三叉戟河：从奔流城来的火先到（第 12 周），从君临来的火还在路上（第 13 周才到）。' : '')
+      : '所有城市都点着了。临冬城在第 <b>22</b> 周被点着——这就是最短路线的周数。之后火还会在长路上烧一阵，但已经不会改变任何答案。';
+  }
+  const S = $('#g4-s');
+  S.addEventListener('input', () => { stop(); t = +S.value / 10; paint(); });
+  function stop() { clearInterval(timer); timer = null; $('#g4-play').textContent = '▶ 播放'; }
+  $('#g4-play').onclick = () => {
+    if (timer) return stop();
+    if (t >= MAX) t = 0;
+    $('#g4-play').textContent = '⏸ 暂停';
+    timer = setInterval(() => { t = Math.min(MAX, Math.round((t + 0.1) * 10) / 10); S.value = t * 10; paint(); if (t >= MAX) stop(); }, 40);
+  };
+  paint();
+})();
+
+/* ---------- 小测验 ---------- */
+quiz('#quiz', [
+  { q: '最短路径里的"短"指的是什么？', o: ['经过的城市最少', '经过的边最少', '边的权重加起来最小', '直线距离最近'], a: 2,
+    e: '比如高庭 → 派克城 → 临冬城只走 2 条路，却要 32 周；绕一点的 3 条路只要 22 周。' },
+  { q: '为什么不能用"把所有路线列出来"的办法？', o: ['会算错', '路线数量随城市数爆炸式增长', '电脑没法存路线', '路线有无限多条'], a: 1,
+    e: '10 × 10 的棋盘，只许往右往上走都有 18 万多条路线；真实路网有几十万个路口。' },
+  { q: 'BFS 为什么能保证第一次碰到一个节点时的距离就是最短的？', o: ['因为它一圈一圈由近到远地扩，更短的路会在更内层的圈先碰到它', '因为它会检查所有路线', '因为它总走最便宜的边', '它不能保证'], a: 0,
+    e: '这就是"先到的就是最近的"。Dijkstra 把它推广到边长不同的情况。' },
+  { q: '在"火"的比喻里，Dijkstra 每一轮"挑预计成本最小的城市"相当于什么？', o: ['随便挑一座城市', '找出下一座被火点着的城市', '找离终点最近的城市', '找连着最多条路的城市'], a: 1,
+    e: '城市按被点着的顺序（也就是距离从小到大）一座座被确定。Dijkstra 直接跳到下一个"点着"时刻，不用逐周模拟。' },
+  { q: 'Dijkstra 当初为什么要研究这个问题？', o: ['为了写博士论文', '为了给 ARMAC 计算机做一个人人能看懂的公开演示', '为了规划荷兰的高速公路', '为了参加编程比赛'], a: 1,
+    e: '他想要一个观众一听就懂、答案一看就知道对不对的题目，于是选了荷兰城市间的最短路线。' },
+], ['🎉 全对，直觉已经有了，去第 2 篇。', '👍 不错，回头再玩一下第 4 章的火。', '建议重新拖一遍第 4 章的时间轴，再往下走。']);
+</script>
+</body>
+</html>

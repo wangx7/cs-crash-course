@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dijkstra 写成代码</title>
+<link rel="stylesheet" href="dj.css">
+<style>
+.heapbox{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:14px;align-items:start}
+.harr{display:flex;flex-wrap:wrap;gap:4px;font:13px var(--mono);margin:6px 0}
+.harr span{border:1px solid var(--line);border-radius:6px;padding:2px 8px;background:var(--panel)}
+.harr span small{display:block;font-size:10px;text-align:center}
+.harr span.hl{border-color:var(--on);background:var(--on-soft);font-weight:700}
+.hn circle{fill:var(--panel);stroke:var(--ink);stroke-width:2;transition:all .2s}
+.hn.hl circle{fill:var(--on-soft);stroke:var(--on);stroke-width:3}
+.hn.top circle{stroke:var(--ok);stroke-width:3}
+.hn text{font:700 14px var(--mono);text-anchor:middle;fill:var(--ink)}
+.hl-line{stroke:var(--wire);stroke-width:2}
+.cmp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0}
+.cmp div{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:14px}
+.cmp b{display:block;font:700 18px var(--mono);color:var(--on)}
+.cmp div.win{outline:2px solid var(--ok)}
+@media (max-width:700px){ .heapbox,.cmp{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="index.html">← Dijkstra 专题目录</a><a href="../13.html#ch5">回到第 13 集</a></div>
+
+<header class="hero">
+  <div class="eyebrow">DIJKSTRA 专题 · 第 3 篇 / 共 4 篇</div>
+  <h1>写成代码：从 N² 到堆</h1>
+  <p>算法已经会手算了，这一篇把它变成真正能跑的 JavaScript。先写最朴素的 1959 年原版，一行一行看变量怎么变；再找出它慢在哪里，用一种叫"堆"的数据结构把"挑最小"加速，这就是第 13 集里说的 N log N + L。</p>
+  <div class="road">
+    <span class="done">✓ 问题与直觉</span><i>→</i><span class="done">✓ 算法本身</span><i>→</i><span class="now">图怎么存</span><i>→</i><span class="now">原版代码</span><i>→</i><span class="now">瓶颈</span><i>→</i><span class="now">堆</span><i>→</i><span class="now">堆版代码</span><i>→</i><span>今生</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 图怎么存进电脑</a></li>
+    <li><a href="#ch2">2 · 原版代码，逐行运行</a></li>
+    <li><a href="#ch3">3 · 慢在哪里</a></li>
+    <li><a href="#ch4">4 · 堆：随时拿到最小值</a></li>
+    <li><a href="#ch5">5 · 堆版代码与"懒删除"</a></li>
+    <li><a href="#ch6">6 · 到底快多少</a></li>
+    <li><a href="#ch7">7 · 写代码时的细节清单</a></li>
+    <li><a href="#ch8">8 · 小测验</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ================= 1 ================= -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 章</div>
+  <h2>图怎么存进电脑：邻接表</h2>
+  <p>代码不认识图画，我们得把地图变成数据。最常用的方式叫<b>邻接表</b>：给每座城市列一张清单，写上"从这里出发能直接到哪、路多长"。</p>
+<pre class="plain">const graph = {
+  HG: [['KL', 8], ['RR', 10], ['PY', 14]],          // 高庭
+  KL: [['HG', 8], ['TR', 5], ['RR', 25]],           // 君临
+  RR: [['HG', 10], ['KL', 25], ['TR', 2], ['PY', 3]], // 奔流城
+  TR: [['KL', 5], ['RR', 2], ['WF', 10]],           // 三叉戟河
+  PY: [['HG', 14], ['RR', 3], ['WF', 18]],          // 派克城
+  WF: [['TR', 10], ['PY', 18]],                     // 临冬城
+};</pre>
+  <p>注意每条路出现了<b>两次</b>：高庭的清单里有 <code>['KL', 8]</code>，君临的清单里也有 <code>['HG', 8]</code>。因为路是双向的。如果是单行道（<b>有向图</b>），就只写一次。</p>
+  <details class="deep">
+    <summary>🔍 另一种存法：邻接矩阵，以及什么时候用它</summary>
+    <p>也可以画一张 N × N 的表格，第 i 行第 j 列写"i 到 j 的路长"，没有路就写 ∞。这叫<b>邻接矩阵</b>。它查"i 和 j 之间有没有路"只要一步，但不管路多不多都要占 N² 个格子。</p>
+    <p>道路网这种图，每个路口只连着三四条路，矩阵里绝大部分是 ∞，非常浪费。所以导航软件这类场景都用邻接表。1959 年 Dijkstra 的原论文其实没有规定存法，他的分析默认每一轮要把所有节点扫一遍，这在矩阵上和在表上一样。</p>
+  </details>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 章 · 本篇核心</div>
+  <h2>原版代码：一行一行跑给你看</h2>
+  <p>下面是和 1959 年原版思路一致的写法：每一轮把所有城市扫一遍，找出最小的候选。左边高亮的是正在执行的那一行，右边是此刻所有变量的值。</p>
+  <div class="card">
+    <div class="split">
+      <div class="code" id="c1"></div>
+      <div>
+        <div class="vars" id="c1-vars"></div>
+        <div class="step-text" id="c1-cap"></div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn" id="c1-prev">上一步</button><button class="btn primary" id="c1-next">下一步</button>
+      <button class="btn" id="c1-round">跳到下一轮</button><button class="btn" id="c1-play">▶ 自动</button><button class="btn" id="c1-reset">重来</button>
+    </div>
+    <div class="score-line muted" id="c1-cnt" style="font:13px var(--mono)"></div>
+  </div>
+  <p>对照上一篇，每一行都能找到对应：</p>
+  <div class="card tbl-wrap">
+    <table class="tt wide">
+      <thead><tr><th>代码行</th><th>对应的步骤</th></tr></thead>
+      <tbody>
+        <tr><td>2–4</td><td class="l">三本账，初始化：起点 0，其他 ∞，确定名单为空</td></tr>
+        <tr><td>7–9</td><td class="l">① 挑最小：扫一遍所有城市，记住没确定的里 dist 最小的</td></tr>
+        <tr><td>10</td><td class="l">没有候选了（剩下的都是 ∞，从起点到不了），结束</td></tr>
+        <tr><td>11</td><td class="l">把 u 加入确定名单</td></tr>
+        <tr><td>13–17</td><td class="l">② 松弛 u 的每条边</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details class="deep">
+    <summary>🔍 第 13 行为什么没有跳过已确定的邻居</summary>
+    <p>上一篇说"松弛还没确定的邻居"，代码里却对所有邻居都做了比较。这样写不会出错：已确定的邻居 v，dist[v] 已经是最短距离，<code>dist[u] + w</code> 不可能比它小（边权 ≥ 0，而且 dist[u] ≥ dist[v]，因为 v 比 u 先确定），比较自然不成立，什么也不会改。少写一个判断，代码更短。想省掉这几次比较，加一句 <code>if (done.has(v)) continue;</code> 也可以。</p>
+  </details>
+  <h3>把路线倒推出来，再跑一次真的</h3>
+<pre class="plain">function pathTo(prev, target) {
+  const path = [target];
+  while (prev[target] !== undefined) {   // 起点没有 prev，到起点就停
+    target = prev[target];
+    path.unshift(target);                // 往前插，最后就是正序
+  }
+  return path;
+}</pre>
+  <div class="card">
+    <div class="btns"><button class="btn primary" id="run1">在浏览器里运行 dijkstra(graph, 'HG')</button></div>
+    <div class="out" id="run1-out">（点按钮，下面会显示真正运行的输出）</div>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 章</div>
+  <h2>慢在哪里：数一数每一行跑了几次</h2>
+  <p>刚才运行的时候，代码下面的计数器记下了每部分执行的次数。设城市数为 <b>N</b>，路的条数为 <b>L</b>：</p>
+  <ul>
+    <li><b>第 9 行（扫描找最小）</b>：外层循环每轮确定一座城市，一共 N 轮；每轮把 N 座城市都扫一遍。共约 <b>N × N = N²</b> 次。地图上是 7 × 6 = 42 次（6 轮各确定一座城市，第 7 轮扫完才发现没有候选了，退出）。</li>
+    <li><b>第 14 行（松弛）</b>：每座城市确定时，把它的清单走一遍。所有清单加起来，每条路出现两次，共 <b>2L</b> 次。地图上是 18 次。</li>
+  </ul>
+  <p>路网里每个路口通常只连三四条路，L 大约是 N 的一两倍。所以 N 很大时，<b>松弛</b>部分只是 N 的几倍，真正要命的是<b>扫描找最小</b>的 N²。</p>
+  <div class="callout key">
+    <span class="t">瓶颈</span>
+    每一轮都把所有城市从头扫一遍，只为了找出一个最小值。可是两轮之间，账本只有<b>几个邻居</b>的成本变了，其余几乎全没动。每次都从头扫，大部分工作都是重复的。<br>
+    要是有一种容器，能<b>随时直接拿出最小的</b>，同时<b>改一个数也很便宜</b>就好了。这种容器叫<b>优先队列</b>，最常见的实现叫<b>堆</b>。
+  </div>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 章</div>
+  <h2>堆：随时拿到最小值的容器</h2>
+  <p><b>二叉堆</b>（binary heap，1964 年由 J. W. J. Williams 提出）是一棵按规则摆放的树：</p>
+  <ul>
+    <li><b>形状规则</b>：从上到下、从左到右一层层填满，中间不留空。所以它可以直接存进一个数组：位置 i 的两个孩子在 2i+1 和 2i+2，父亲在 ⌊(i−1)/2⌋。</li>
+    <li><b>大小规则</b>：每个节点都<b>不大于</b>它的孩子。所以最小的那个永远在<b>最顶上</b>（数组第 0 位）。</li>
+  </ul>
+  <p>它只支持两个操作，都只沿着一条从上到下的路径走：</p>
+  <ul>
+    <li><b>放进去</b>（push）：先放到最末尾，然后和父亲比，比父亲小就交换，一路<b>上浮</b>。</li>
+    <li><b>取最小</b>（pop）：拿走顶上的，把最末尾的一个挪到顶上，然后和较小的孩子比，比孩子大就交换，一路<b>下沉</b>。</li>
+  </ul>
+  <div class="card">
+    <h3>动手：往堆里放数、取最小</h3>
+    <div class="heapbox">
+      <svg class="diagram" id="hp" viewBox="0 0 420 230" role="img" aria-label="二叉堆"></svg>
+      <div>
+        <div class="muted" style="font-size:13px">它在数组里的样子：</div>
+        <div class="harr" id="hp-arr"></div>
+        <div class="step-text" id="hp-cap"></div>
+      </div>
+    </div>
+    <div class="btns">
+      <label style="font-size:14px">放进 <input id="hp-v" type="number" value="3" min="0" max="99" style="width:4em;font:inherit"></label>
+      <button class="btn primary" id="hp-push">放进去</button><button class="btn" id="hp-rand">放一个随机数</button>
+      <button class="btn primary" id="hp-pop">取最小</button><button class="btn" id="hp-reset">清空</button>
+    </div>
+    <p class="hint">动画里橙色的是正在比较/交换的节点。数一数每次操作交换了几次</p>
+  </div>
+  <p>一棵堆每多一层，能装的节点数就翻一倍：1 层 1 个，2 层 3 个，3 层 7 个……20 层就能装 100 万个。所以 N 个元素的堆只有大约 <b>log₂N 层</b>，上浮或下沉最多走 log₂N 步。100 万座城市，每次取最小只要约 20 步，而不是扫描 100 万次。</p>
+  <div class="boxcard">
+    <div class="bc-h">📦 封装：优先队列（用二叉堆实现）</div>
+    <dl>
+      <dt>push(x)</dt><dd>放进一个元素，约 log N 步</dd>
+      <dt>pop()</dt><dd>取出并删除最小的元素，约 log N 步</dd>
+      <dt>承诺</dt><dd>任何时候 pop 出来的都是当前最小的</dd>
+    </dl>
+    <div class="bc-f">JavaScript 没有内置的堆（Python 有 heapq、Java 有 PriorityQueue、C++ 有 priority_queue），下面的折叠框里给出一个 30 行的实现。</div>
+  </div>
+  <details class="deep">
+    <summary>🔍 一个完整的最小堆实现（可直接复制）</summary>
+<pre class="plain">class MinHeap {
+  constructor() { this.a = []; }           // 元素是 [优先级, 值]
+  get size() { return this.a.length; }
+  push(x) {
+    const a = this.a;
+    a.push(x);
+    let i = a.length - 1;
+    while (i > 0) {                         // 上浮
+      const p = (i - 1) >> 1;
+      if (a[p][0] <= a[i][0]) break;
+      [a[p], a[i]] = [a[i], a[p]];
+      i = p;
+    }
+  }
+  pop() {
+    const a = this.a, top = a[0], last = a.pop();
+    if (a.length) {
+      a[0] = last;
+      let i = 0;
+      for (;;) {                            // 下沉
+        const l = 2 * i + 1, r = l + 1;
+        let m = i;
+        if (l < a.length && a[l][0] < a[m][0]) m = l;
+        if (r < a.length && a[r][0] < a[m][0]) m = r;
+        if (m === i) break;
+        [a[m], a[i]] = [a[i], a[m]];
+        i = m;
+      }
+    }
+    return top;
+  }
+}</pre>
+  </details>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 章</div>
+  <h2>堆版代码，以及一个偷懒的技巧</h2>
+  <p>把"扫描找最小"换成堆。但有个麻烦：松弛把某个城市的成本从 13 改成 12 时，堆里那个"13"怎么办？标准的二叉堆不支持"修改中间某个元素"。</p>
+  <p>实际写代码时最常用的办法是<b>懒删除</b>：不去改旧的，直接把新的 <code>[12, 三叉戟河]</code> 再放进去一份。旧的 <code>[13, 三叉戟河]</code> 留在堆里当垃圾。以后它被取出来时，发现它比账本上的 dist 大（13 &gt; 12），说明是<b>过期记录</b>，直接扔掉。</p>
+  <div class="card">
+    <div class="split">
+      <div class="code" id="c2"></div>
+      <div>
+        <div class="muted" style="font-size:13px">堆里的记录（按成本排列，划掉的是过期记录）：</div>
+        <div class="chips" id="c2-heap"></div>
+        <div class="vars" id="c2-vars"></div>
+      </div>
+    </div>
+    <div class="scroll-x"><svg class="diagram" id="c2-map" role="img" aria-label="堆版地图"></svg></div>
+    <div class="step-text" id="c2-cap"></div>
+    <div class="btns"><button class="btn" id="c2-prev">上一步</button><button class="btn primary" id="c2-next">下一步</button><button class="btn" id="c2-reset">重来</button></div>
+  </div>
+  <p>跑完会看到两条过期记录 <code>[13, 三叉戟河]</code> 和 <code>[14, 派克城]</code> 被取出来又扔掉。第 9 行那一句 <code>if (d &gt; dist[u]) continue;</code> 就是懒删除的全部代价。</p>
+  <p>这个版本里，<b>不再需要"确定名单"</b>：一座城市第一次从堆里被取出（且不是过期记录）时，就是它被确定的时刻；之后再取出它的记录，都会被第 9 行挡掉。</p>
+  <details class="deep">
+    <summary>🔍 懒删除会不会让堆变得很大</summary>
+    <p>只有松弛成功时才 push。而每座城市只会被确定一次，它的每条路也只在那一刻被看一次，所以 push 的次数不超过路的条数（无向图每条路算两个方向），再加上起点那一次。堆里最多约 L 条记录，每次操作约 log L 步。而 L ≤ N²，log L ≤ 2 log N，量级上和 log N 一样。</p>
+    <p>教科书里的另一种做法是"降低键值"（decrease-key）：在堆里找到那个城市，直接把 13 改成 12 再上浮。它需要额外记录每个城市在堆数组里的位置，代码更长，实际速度往往还不如懒删除。</p>
+  </details>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 章</div>
+  <h2>到底快多少，以及原版什么时候反而更好</h2>
+  <div class="card tbl-wrap">
+    <table class="tt wide">
+      <thead><tr><th>版本</th><th>挑最小</th><th>松弛</th><th>总复杂度</th></tr></thead>
+      <tbody>
+        <tr><td class="l">原版：每轮扫描（1959）</td><td>N 轮 × N</td><td>L</td><td><b>O(N²)</b></td></tr>
+        <tr><td class="l">二叉堆 + 懒删除（最常用）</td><td>最多 L 次 pop × log</td><td>L 次 push × log</td><td><b>O((N + L) log N)</b></td></tr>
+        <tr><td class="l">斐波那契堆（1984）</td><td>N 次 × log N</td><td>L 次 × 几乎 1 步</td><td><b>O(N log N + L)</b></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>第 13 集说的 "N log N + L" 是最后一行，用的是 1984 年 Fredman 和 Tarjan 发明的<b>斐波那契堆</b>，它让"降低某个城市的成本"几乎不花时间。它理论上最好，但实现复杂、常数大，实际工程中很少用；二叉堆版本已经快得足够。</p>
+  <div class="card">
+    <h3>动手：比较三种写法要走多少步</h3>
+    <div class="ctl">
+      <label>城市数 N = <b id="sc-n-o"></b></label><input type="range" id="sc-n" min="0" max="100" value="40" aria-label="城市数">
+    </div>
+    <div class="btns"><span class="muted" style="font-size:14px">图的类型：</span><button class="btn sel" data-den="sparse">稀疏（道路网：每城约 3 条路）</button><button class="btn" data-den="dense">稠密（任意两城都有路）</button></div>
+    <div class="cmp" id="sc-cmp"></div>
+    <div class="step-text" id="sc-cap"></div>
+    <p class="hint">按每秒 1 亿步估算，只看量级，忽略常数</p>
+  </div>
+  <div class="callout">
+    <span class="t">一个反直觉的结论</span>
+    在<b>稠密图</b>里（L 接近 N²），堆版本是 N² log N，反而比原版的 N² <b>更慢</b>。所以"原版 N²"不是过时的写法，它是稠密图的最佳选择。选哪种实现，要看你的图长什么样。
+  </div>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 章</div>
+  <h2>写代码时的细节清单</h2>
+  <div class="card tbl-wrap">
+    <table class="tt wide">
+      <thead><tr><th>情况</th><th>该怎么办</th></tr></thead>
+      <tbody>
+        <tr><td class="l">有两个候选成本一样</td><td class="l">挑哪个都行，最终成本一样。只是最短路线可能不止一条，挑法不同，得到的那条可能不同。</td></tr>
+        <tr><td class="l">有的城市从起点根本到不了</td><td class="l">它的 dist 会一直是 ∞，prev 为空。原版代码第 10 行在剩下全是 ∞ 时退出，堆版本则是堆空了自然退出。</td></tr>
+        <tr><td class="l">只关心一个终点</td><td class="l">在终点<b>被取出/确定</b>的那一刻 break。不能在它第一次被松弛到时就停。</td></tr>
+        <tr><td class="l">单行道（有向图）</td><td class="l">邻接表里只写一个方向。算法本身一个字都不用改。</td></tr>
+        <tr><td class="l">两城之间有好几条路</td><td class="l">邻接表里都写上就行，松弛自然会选更短的那条。</td></tr>
+        <tr><td class="l">边权是 0</td><td class="l">没问题，证明只要求 ≥ 0。</td></tr>
+        <tr><td class="l">边权是负数</td><td class="l"><b>不能用 Dijkstra</b>，结果可能是错的，而且不会报错。改用 Bellman-Ford（第 4 篇）。</td></tr>
+        <tr><td class="l">成本是小数</td><td class="l">可以，但浮点数相加有误差，两条"一样长"的路比较时可能差一点点。要求精确时可以换成整数单位（比如米代替公里）。</td></tr>
+        <tr><td class="l">要求"经过的边最少"而不是成本最小</td><td class="l">那是 BFS（第 1 篇第 3 章），比 Dijkstra 更简单更快。</td></tr>
+        <tr><td class="l">起点到所有点 vs. 所有点两两之间</td><td class="l">Dijkstra 算的是一个起点到所有点。所有点两两之间可以对每个起点各跑一次，或者用 Floyd-Warshall 算法。</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <details class="deep">
+    <summary>🔍 完整代码：复制到 Node.js 里就能跑</summary>
+<pre class="plain" id="full-code"></pre>
+  </details>
+</section>
+
+<!-- ================= 8 ================= -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 章</div>
+  <h2>小测验</h2>
+  <div class="card" id="quiz"></div>
+  <div class="boxcard">
+    <div class="bc-h">📦 封装：两种实现</div>
+    <dl>
+      <dt>原版</dt><dd>每轮扫描所有节点找最小，O(N²)，稠密图首选</dd>
+      <dt>堆版</dt><dd>候选放进最小堆，过期记录取出时丢掉，O((N + L) log N)，稀疏图（道路网、网络）首选</dd>
+      <dt>共同点</dt><dd>松弛部分完全一样；算出来的结果完全一样</dd>
+    </dl>
+  </div>
+  <div class="pager">
+    <a href="02.html"><small>← 上一篇</small>2 · 算法本身</a>
+    <a class="next" href="04.html"><small>下一篇 →</small>4 · 今生：缺陷、后代与现实世界</a>
+  </div>
+  <div class="credit">Dijkstra 专题是第 13 集《算法入门》的补充讲义，不属于 Crash Course 原课程内容；示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。</div>
+</section>
+
+</main>
+</div>
+
+<script src="dj.js"></script>
+<script>
+const NM = k => GOT.nodes[k][0];
+const show = v => v === Infinity ? '∞' : v;
+const ADJ = {};
+Object.keys(GOT.nodes).forEach(k => { ADJ[k] = neighbors(GOT, k); });
+
+/* 把代码字符串渲染成带行号的块 */
+function renderCode(box, src) {
+  box.innerHTML = src.split('\n').map(l => {
+    const esc = l.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const i = esc.indexOf('//');
+    return `<span class="ln">${i < 0 ? esc : esc.slice(0, i) + '<span class="cm">' + esc.slice(i) + '</span>'}</span>`;
+  }).join('');
+  const lines = $$('.ln', box);
+  return n => lines.forEach((x, i) => x.classList.toggle('hl', i + 1 === n));
+}
+
+/* ---------- 2 原版代码逐行 ---------- */
+const CODE1 = `function dijkstra(graph, src) {
+  const dist = {}, prev = {}, done = new Set();
+  for (const v in graph) dist[v] = Infinity;
+  dist[src] = 0;
+  while (true) {
+    // ① 在没确定的城市里，找 dist 最小的
+    let u = null;
+    for (const v in graph)
+      if (!done.has(v) && (u === null || dist[v] < dist[u])) u = v;
+    if (u === null || dist[u] === Infinity) break;
+    done.add(u);
+    // ② 松弛 u 的每一条路
+    for (const [v, w] of graph[u]) {
+      if (dist[u] + w < dist[v]) {
+        dist[v] = dist[u] + w;
+        prev[v] = u;
+      }
+    }
+  }
+  return { dist, prev };
+}`;
+(function () {
+  const hl = renderCode($('#c1'), CODE1);
+  const S = [];
+  const dist = {}, prev = {}, done = new Set();
+  let u = null, v = null, w = null, round = 0;
+  const cnt = { scan: 0, relax: 0 };
+  const snap = (line, text) => S.push({ line, text, dist: { ...dist }, prev: { ...prev }, done: [...done], u, v, w, round, cnt: { ...cnt } });
+  snap(1, '调用 dijkstra(graph, "HG")，src 是高庭。');
+  snap(2, '建三本账：dist、prev 都是空的，done（确定名单）是空集合。');
+  for (const k in ADJ) dist[k] = Infinity;
+  snap(3, '每座城市的 dist 先设成 ∞。');
+  dist.HG = 0;
+  snap(4, '起点 dist 设成 0。');
+  for (;;) {
+    round++;
+    u = null; v = null; w = null;
+    snap(7, `第 ${round} 轮开始。u 先设成 null，表示"还没找到"。`);
+    for (const k in ADJ) {
+      v = k; cnt.scan++;
+      const take = !done.has(k) && (u === null || dist[k] < dist[u]);
+      const why = done.has(k) ? `${NM(k)} 已确定，跳过` : u === null ? `目前还没有 u，先记下${NM(k)}（${show(dist[k])}）` :
+        take ? `${NM(k)} 的 ${show(dist[k])} 比 ${NM(u)} 的 ${show(dist[u])} 小，换成它` : `${NM(k)} 的 ${show(dist[k])} 不比 ${NM(u)} 的 ${show(dist[u])} 小，不换`;
+      if (take) u = k;
+      snap(9, `扫描 v = ${NM(k)}：${why}。`);
+    }
+    v = null;
+    if (u === null || dist[u] === Infinity) { snap(10, '没有候选了，跳出循环。'); break; }
+    snap(10, `扫完了，u = <b>${NM(u)}</b>（${dist[u]}），不是 ∞，继续。`);
+    done.add(u);
+    snap(11, `${NM(u)} 加入确定名单，它的 ${dist[u]} 是最终答案。`);
+    for (const [vv, ww] of ADJ[u]) {
+      v = vv; w = ww; cnt.relax++;
+      const nc = dist[u] + ww;
+      if (nc < dist[vv]) {
+        snap(14, `路 ${NM(u)} → ${NM(vv)}（${ww}）：${dist[u]} + ${ww} = ${nc} &lt; ${show(dist[vv])}，条件成立。`);
+        dist[vv] = nc; snap(15, `dist[${NM(vv)}] 改成 ${nc}。`);
+        prev[vv] = u; snap(16, `prev[${NM(vv)}] 改成 ${NM(u)}。`);
+      } else snap(14, `路 ${NM(u)} → ${NM(vv)}（${ww}）：${dist[u]} + ${ww} = ${nc}，不比 ${show(dist[vv])} 小，跳过。` + (done.has(vv) ? '（它已确定，本来也不可能更小）' : ''));
+    }
+    v = null; w = null;
+  }
+  snap(20, '返回 dist 和 prev。');
+  let timer = null;
+  const st = stepper('c1', S, s => {
+    hl(s.line);
+    $('#c1-cap').innerHTML = s.text;
+    const d = Object.keys(ADJ).map(k => `${NM(k)}:<b>${s.dist[k] === undefined ? '-' : show(s.dist[k])}</b>`).join(' ');
+    const p = Object.entries(s.prev).map(([a, b]) => `${NM(a)}←${NM(b)}`).join(' ') || '{}';
+    $('#c1-vars').innerHTML = [
+      ['dist', d], ['prev', p], ['done', s.done.map(NM).join('、') || '{}'],
+      ['u', s.u ? NM(s.u) : 'null'], ['v', s.v ? NM(s.v) : '—'], ['w', s.w === null ? '—' : s.w],
+    ].map(([k, v]) => `<div class="row"><span class="k">${k}</span><span class="v">${v}</span></div>`).join('');
+    $('#c1-cnt').textContent = `第 9 行（扫描）已执行 ${s.cnt.scan} 次；第 14 行（松弛）已执行 ${s.cnt.relax} 次`;
+  });
+  const nextBtn = $('#c1-next');
+  $('#c1-round').onclick = () => {
+    const r = S[st.k].round;
+    while (!nextBtn.disabled && !(S[st.k].round > r && S[st.k].line === 7)) nextBtn.click();
+  };
+  function stop() { clearInterval(timer); timer = null; $('#c1-play').textContent = '▶ 自动'; }
+  $('#c1-play').onclick = () => {
+    if (timer) return stop();
+    $('#c1-play').textContent = '⏸ 暂停';
+    timer = setInterval(() => { if (nextBtn.disabled) return stop(); nextBtn.click(); }, 450);
+  };
+  ['#c1-prev', '#c1-reset'].forEach(s => $(s).addEventListener('click', stop));
+})();
+
+/* 真正运行一次 */
+const dijkstra = new Function('return ' + CODE1)();
+function pathTo(prev, target) {
+  const path = [target];
+  while (prev[target] !== undefined) { target = prev[target]; path.unshift(target); }
+  return path;
+}
+$('#run1').onclick = () => {
+  const graph = {};
+  Object.entries(ADJ).forEach(([k, l]) => { graph[k] = l.map(([v, w]) => [v, w]); });
+  const t0 = performance.now();
+  const { dist, prev } = dijkstra(graph, 'HG');
+  const ms = (performance.now() - t0).toFixed(3);
+  $('#run1-out').textContent =
+    `> const { dist, prev } = dijkstra(graph, 'HG')\n` +
+    `dist = ${JSON.stringify(dist)}\nprev = ${JSON.stringify(prev)}\n\n` +
+    `> pathTo(prev, 'WF')\n${JSON.stringify(pathTo(prev, 'WF'))}   // 高庭 → 奔流城 → 三叉戟河 → 临冬城\n\n` +
+    `（用时 ${ms} 毫秒）`;
+};
+
+/* ---------- 4 堆演示 ---------- */
+(function () {
+  const svg = $('#hp');
+  let a = [], busy = false;
+  const pos = i => { const d = Math.floor(Math.log2(i + 1)), k = i - (2 ** d - 1), n = 2 ** d; return [420 * (k + 0.5) / n, 30 + d * 52]; };
+  function draw(hl = []) {
+    svg.innerHTML = '';
+    a.forEach((_, i) => { if (i) { const [x1, y1] = pos(i), [x2, y2] = pos((i - 1) >> 1); el('line', { x1, y1, x2, y2, class: 'hl-line' }, svg); } });
+    a.forEach((v, i) => {
+      const [x, y] = pos(i);
+      const g = el('g', { class: 'hn' + (hl.includes(i) ? ' hl' : i === 0 ? ' top' : '') }, svg);
+      el('circle', { cx: x, cy: y, r: 17 }, g);
+      txt(g, x, y + 5, String(v), '');
+    });
+    if (!a.length) txt(svg, 210, 115, '堆是空的', 'svg-text');
+    $('#hp-arr').innerHTML = a.map((v, i) => `<span class="${hl.includes(i) ? 'hl' : ''}">${v}<small>[${i}]</small></span>`).join('') || '<span class="muted">[]</span>';
+  }
+  const btns = ['#hp-push', '#hp-rand', '#hp-pop', '#hp-reset'].map(s => $(s));
+  const lock = b => { busy = b; btns.forEach(x => { x.disabled = b; }); if (!b) $('#hp-push').disabled = a.length >= 15; };
+  async function push(v) {
+    if (busy || a.length >= 15) return;
+    lock(true);
+    a.push(v);
+    let i = a.length - 1, n = 0;
+    draw([i]); $('#hp-cap').innerHTML = `${v} 先放到最末尾（位置 ${i}）。`;
+    await sleep(500);
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      draw([i, p]);
+      if (a[p] <= a[i]) { $('#hp-cap').innerHTML += ` 和父亲 ${a[p]} 比：不比它小，停。`; break; }
+      $('#hp-cap').innerHTML += ` 比父亲 ${a[p]} 小，交换。`;
+      await sleep(500);
+      [a[p], a[i]] = [a[i], a[p]]; i = p; n++;
+      draw([i]); await sleep(400);
+    }
+    draw(); $('#hp-cap').innerHTML += `<br>上浮了 ${n} 层。现在 ${a.length} 个元素，${Math.floor(Math.log2(a.length)) + 1} 层。顶上是 <b>${a[0]}</b>。`;
+    lock(false);
+  }
+  async function pop() {
+    if (busy) return;
+    if (!a.length) { $('#hp-cap').innerHTML = '堆是空的，没什么可取。'; return; }
+    lock(true);
+    const top = a[0];
+    draw([0]); $('#hp-cap').innerHTML = `取走顶上的 <b>${top}</b>（它一定是最小的）。`;
+    await sleep(600);
+    const last = a.pop();
+    let n = 0;
+    if (a.length) {
+      a[0] = last; let i = 0;
+      draw([0]); $('#hp-cap').innerHTML += ` 把末尾的 ${last} 挪到顶上。`;
+      await sleep(600);
+      for (;;) {
+        const l = 2 * i + 1, r = l + 1; let m = i;
+        if (l < a.length && a[l] < a[m]) m = l;
+        if (r < a.length && a[r] < a[m]) m = r;
+        if (m === i) { $('#hp-cap').innerHTML += ' 不比孩子大了，停。'; break; }
+        draw([i, m]); $('#hp-cap').innerHTML += ` 比孩子 ${a[m]} 大，交换。`;
+        await sleep(500);
+        [a[m], a[i]] = [a[i], a[m]]; i = m; n++;
+        draw([i]); await sleep(400);
+      }
+    }
+    draw(); $('#hp-cap').innerHTML += `<br>下沉了 ${n} 层。` + (a.length ? `新的顶是 <b>${a[0]}</b>。` : '堆空了。');
+    lock(false);
+  }
+  $('#hp-push').onclick = () => { const v = Math.max(0, Math.min(99, Math.round(+$('#hp-v').value || 0))); push(v); };
+  $('#hp-rand').onclick = () => push(Math.floor(Math.random() * 99) + 1);
+  $('#hp-pop').onclick = pop;
+  $('#hp-reset').onclick = () => { a = []; draw(); $('#hp-cap').innerHTML = '空了。'; lock(false); };
+  a = [8, 10, 13, 14, 25, 22, 31]; draw();
+  $('#hp-cap').innerHTML = '已经放了几个数。每个节点都不大于它的孩子，所以 8 在顶上。试试放一个 3，或者取最小。';
+})();
+
+/* ---------- 5 堆版代码 ---------- */
+const CODE2 = `function dijkstra(graph, src) {
+  const dist = {}, prev = {};
+  for (const v in graph) dist[v] = Infinity;
+  dist[src] = 0;
+  const pq = new MinHeap();           // 元素是 [成本, 城市]
+  pq.push([0, src]);
+  while (pq.size) {
+    const [d, u] = pq.pop();          // 取出成本最小的记录
+    if (d > dist[u]) continue;        // 过期记录：扔掉
+    for (const [v, w] of graph[u]) {  // u 在这一刻被确定
+      if (d + w < dist[v]) {
+        dist[v] = d + w;
+        prev[v] = u;
+        pq.push([dist[v], v]);        // 新记录放进堆，旧的不管
+      }
+    }
+  }
+  return { dist, prev };
+}`;
+(function () {
+  const hl = renderCode($('#c2'), CODE2);
+  const api = drawGraph($('#c2-map'), GOT, { inf: true });
+  const S = [];
+  const dist = {}, prev = {}, fin = new Set();
+  let pq = [], cur = null, out = [];
+  for (const k in ADJ) dist[k] = Infinity;
+  dist.HG = 0;
+  const snap = (line, text, o = {}) => S.push({ line, text, dist: { ...dist }, prev: { ...prev }, fin: new Set(fin), pq: pq.map(x => x.slice()), cur, out: out.slice(), ...o });
+  snap(4, 'dist 全是 ∞，起点设成 0。');
+  pq.push([0, 'HG', S.length]);
+  snap(6, '把 [0, 高庭] 放进堆。');
+  while (pq.length) {
+    pq.sort((x, y) => x[0] - y[0] || x[2] - y[2]);
+    const [d, u] = pq.shift();
+    cur = [d, u];
+    if (d > dist[u]) { out.push([d, u]); snap(9, `取出 [${d}, ${NM(u)}]，可账本上 ${NM(u)} 已经是 ${dist[u]} 了，${d} &gt; ${dist[u]}：<b>过期记录，扔掉</b>。`); continue; }
+    fin.add(u);
+    snap(8, `取出堆里最小的 [${d}, ${NM(u)}]。${d} 等于账本上的 dist，不是过期记录，<b>${NM(u)} 确定</b>。`);
+    for (const [v, w] of ADJ[u]) {
+      if (d + w < dist[v]) {
+        dist[v] = d + w; prev[v] = u; pq.push([dist[v], v, S.length]);
+        snap(14, `${NM(u)} → ${NM(v)}：${d} + ${w} = ${dist[v]}，更短，更新账本，并把 <b>[${dist[v]}, ${NM(v)}]</b> 放进堆。` +
+          (pq.some(x => x[1] === v && x[0] > dist[v]) ? `堆里那条旧的 ${NM(v)} 记录现在过期了，但先不管它。` : ''), { relax: [u, v] });
+      }
+    }
+  }
+  cur = null;
+  snap(18, `堆空了，结束。一共扔掉了 ${out.length} 条过期记录。结果和原版完全一样：到临冬城 ${dist.WF} 周。`);
+  stepper('c2', S, s => {
+    hl(s.line);
+    const sorted = s.pq.slice().sort((x, y) => x[0] - y[0]);
+    $('#c2-heap').innerHTML = (s.cur ? `<span class="chip ${s.line === 9 ? 'stale' : 'min'}"><small>刚取出</small>[${s.cur[0]}, ${NM(s.cur[1])}]</span>` : '') +
+      sorted.map(([d, u]) => `<span class="chip ${d > s.dist[u] ? 'stale' : ''}"><small>${NM(u)}</small>${d}</span>`).join('') +
+      (sorted.length || s.cur ? '' : '<span class="muted">（空）</span>');
+    $('#c2-vars').innerHTML = `<div class="row"><span class="k">dist</span><span class="v">${Object.keys(ADJ).map(k => `${NM(k)}:<b>${show(s.dist[k])}</b>`).join(' ')}</span></div>`;
+    const cls = {}, ecls = {};
+    api.ids.forEach(k => { if (s.fin.has(k)) cls[k] = 'done'; else if (s.dist[k] < Infinity) cls[k] = 'cand'; });
+    if (s.cur && s.line === 8) cls[s.cur[1]] = 'cur';
+    Object.entries(s.prev).forEach(([v, u]) => { ecls[u + '|' + v] = 'tree'; });
+    if (s.relax) { cls[s.relax[0]] = 'cur'; ecls[s.relax[0] + '|' + s.relax[1]] = 'try'; }
+    api.paint({ cost: s.dist, cls, ecls });
+    $('#c2-cap').innerHTML = s.text;
+  });
+})();
+
+/* ---------- 6 规模比较 ---------- */
+(function () {
+  let den = 'sparse';
+  const Ns = n => Math.round(10 ** (1 + n / 100 * 6));   // 10 ~ 10^7
+  const fmt = x => x >= 1e12 ? (x / 1e12).toFixed(1) + ' 万亿' : x >= 1e8 ? (x / 1e8).toFixed(1) + ' 亿' : x >= 1e4 ? (x / 1e4).toFixed(1) + ' 万' : Math.round(x).toString();
+  const dur = s => s < 0.001 ? '不到 1 毫秒' : s < 1 ? (s * 1000).toFixed(0) + ' 毫秒' : s < 60 ? s.toFixed(1) + ' 秒' : s < 3600 ? (s / 60).toFixed(0) + ' 分钟' : s < 86400 ? (s / 3600).toFixed(1) + ' 小时' : (s / 86400).toFixed(0) + ' 天';
+  function upd() {
+    const N = Ns(+$('#sc-n').value), L = den === 'sparse' ? 1.5 * N : N * (N - 1) / 2, lg = Math.log2(N);
+    $('#sc-n-o').textContent = N.toLocaleString();
+    const r = [['原版 N²', N * N], ['二叉堆 (N+L) log N', (N + L) * lg], ['斐波那契堆 N log N + L', N * lg + L]];
+    const best = Math.min(r[0][1], r[1][1]);
+    $('#sc-cmp').innerHTML = r.map(([k, v], i) => `<div class="${i < 2 && v === best ? 'win' : ''}">${k}<b>${fmt(v)} 步</b>${dur(v / 1e8)}</div>`).join('');
+    $('#sc-cap').innerHTML = `N = ${N.toLocaleString()}，L = ${fmt(L)}。` + (den === 'sparse'
+      ? `稀疏图里，堆版本比原版快约 <b>${Math.round(r[0][1] / r[1][1]).toLocaleString()}</b> 倍。${N >= 1e6 ? '这差不多是一个国家路网的规模。' : ''}`
+      : `稠密图里，原版反而比二叉堆快约 ${(r[1][1] / r[0][1]).toFixed(1)} 倍（绿框是两种常用实现里更快的）。${N > 1e5 ? '当然，这么大的稠密图光是存下来都放不进内存。' : ''}`);
+  }
+  $('#sc-n').addEventListener('input', upd);
+  $$('[data-den]').forEach(b => b.addEventListener('click', () => { den = b.dataset.den; $$('[data-den]').forEach(x => x.classList.toggle('sel', x === b)); upd(); }));
+  upd();
+})();
+
+/* ---------- 7 完整代码 ---------- */
+$('#full-code').textContent = `// dijkstra.js —— 运行：node dijkstra.js
+class MinHeap {
+  constructor() { this.a = []; }
+  get size() { return this.a.length; }
+  push(x) {
+    const a = this.a; a.push(x);
+    for (let i = a.length - 1; i > 0;) {
+      const p = (i - 1) >> 1;
+      if (a[p][0] <= a[i][0]) break;
+      [a[p], a[i]] = [a[i], a[p]]; i = p;
+    }
+  }
+  pop() {
+    const a = this.a, top = a[0], last = a.pop();
+    if (a.length) {
+      a[0] = last;
+      for (let i = 0; ;) {
+        const l = 2 * i + 1, r = l + 1; let m = i;
+        if (l < a.length && a[l][0] < a[m][0]) m = l;
+        if (r < a.length && a[r][0] < a[m][0]) m = r;
+        if (m === i) break;
+        [a[m], a[i]] = [a[i], a[m]]; i = m;
+      }
+    }
+    return top;
+  }
+}
+
+${CODE2}
+
+function pathTo(prev, target) {
+  const path = [target];
+  while (prev[target] !== undefined) { target = prev[target]; path.unshift(target); }
+  return path;
+}
+
+const graph = {
+  HG: [['KL', 8], ['RR', 10], ['PY', 14]],
+  KL: [['HG', 8], ['TR', 5], ['RR', 25]],
+  RR: [['HG', 10], ['KL', 25], ['TR', 2], ['PY', 3]],
+  TR: [['KL', 5], ['RR', 2], ['WF', 10]],
+  PY: [['HG', 14], ['RR', 3], ['WF', 18]],
+  WF: [['TR', 10], ['PY', 18]],
+};
+const { dist, prev } = dijkstra(graph, 'HG');
+console.log(dist);                 // { HG: 0, KL: 8, RR: 10, TR: 12, PY: 13, WF: 22 }
+console.log(pathTo(prev, 'WF'));   // [ 'HG', 'RR', 'TR', 'WF' ]`;
+
+/* ---------- 小测验 ---------- */
+quiz('#quiz', [
+  { q: '原版代码里，哪一部分让总复杂度变成 N²？', o: ['松弛邻居', '每一轮都扫描所有城市找最小', '初始化 dist', '倒推路线'], a: 1,
+    e: 'N 轮，每轮扫 N 个，N × N。松弛加起来只有 L 次。' },
+  { q: '二叉堆里最小的元素在哪？', o: ['最末尾', '最顶上（数组第 0 位）', '最左下', '不一定'], a: 1,
+    e: '每个节点都不大于它的孩子，所以最小的一定在根上。' },
+  { q: '堆版本里，从堆中取出 [13, 三叉戟河]，但 dist[三叉戟河] 已经是 12，该怎么办？', o: ['把 dist 改回 13', '用 13 去松弛邻居', '这是过期记录，直接跳过', '报错'], a: 2,
+    e: '这就是懒删除：更新时不改旧记录，旧记录被取出时发现比账本大，扔掉即可。' },
+  { q: '一张图任意两点之间都有路（稠密图），选哪种实现更好？', o: ['原版 O(N²)', '二叉堆 O((N + L) log N)', '一样', '蛮力法'], a: 0,
+    e: 'L ≈ N²/2 时，堆版本约 N² log N，比原版的 N² 还多一个 log N。' },
+  { q: '第 13 集说的"N log N + L"需要什么数据结构？', o: ['数组', '二叉堆', '斐波那契堆', '链表'], a: 2,
+    e: '1984 年的斐波那契堆让"降低成本"几乎不花时间。日常写代码通常用二叉堆，复杂度 (N + L) log N。' },
+  { q: '把无向图改成有向图（单行道），代码要改哪里？', o: ['松弛的条件', '挑最小的方法', '算法不用改，只是邻接表里每条路只写一个方向', '要换成别的算法'], a: 2,
+    e: 'Dijkstra 本来就是沿着"从 u 出发的边"松弛，有向无向都一样。' },
+], ['🎉 全对！你已经能自己写出 Dijkstra 了。', '👍 不错，回头看看错的那章。', '建议回到第 2 章，用"自动"按钮慢慢看一遍。']);
+</script>
+</body>
+</html>

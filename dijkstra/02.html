@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dijkstra 算法本身</title>
+<link rel="stylesheet" href="dj.css">
+<style>
+.phase{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.phase span{padding:3px 14px;border-radius:999px;border:1px solid var(--line);font-size:14px;color:var(--muted)}
+.phase span.cur{background:var(--on);color:#fff;border-color:var(--on);font-weight:700}
+.dj-wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;align-items:start}
+.st{display:inline-block;font-size:12px;padding:0 8px;border-radius:999px;border:1px solid var(--line);font-family:"PingFang SC",system-ui,sans-serif}
+.st.done{border-color:var(--ok);color:var(--ok);background:var(--ok-soft)}
+.st.cand{border:1px dashed var(--accent);color:var(--accent)}
+.st.cur{border-color:var(--on);color:var(--on);background:var(--on-soft)}
+.st.unk{color:var(--muted)}
+.relax-ctl{display:grid;grid-template-columns:auto 1fr auto;gap:6px 12px;align-items:center;font-size:14px;max-width:460px}
+.relax-ctl output{font:700 15px var(--mono);min-width:2.5em}
+.proof-btns .btn.sel{background:var(--accent);border-color:var(--accent);color:#fff}
+.zone{fill:var(--ok-soft);stroke:var(--ok);stroke-width:2;stroke-dasharray:6 4}
+.ppath{fill:none;stroke:var(--on);stroke-width:3.5;stroke-dasharray:8 5}
+.pnote{font-size:13px;fill:var(--on);font-weight:700}
+.znote{font-size:13px;fill:var(--ok);font-weight:700}
+.score-line{font:14px var(--mono);color:var(--muted)}
+@media (max-width:900px){ .dj-wrap{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="index.html">← Dijkstra 专题目录</a><a href="../13.html#ch5">回到第 13 集</a></div>
+
+<header class="hero">
+  <div class="eyebrow">DIJKSTRA 专题 · 第 2 篇 / 共 4 篇</div>
+  <h1>算法本身：三本账、一个动作、一个循环</h1>
+  <p>上一篇得到了"火从起点往外烧"的直觉。这一篇把它变成精确的步骤：先认识算法要记的三样东西，再练熟它唯一的动作"松弛"，然后一步一步跑完整张地图，证明它为什么不会错，最后由你亲手当一次 Dijkstra。</p>
+  <div class="road">
+    <span class="done">✓ 问题与直觉</span><i>→</i><span class="now">三本账</span><i>→</i><span class="now">松弛</span><i>→</i><span class="now">完整循环</span><i>→</i><span class="now">为什么对</span><i>→</i><span class="now">亲手跑</span><i>→</i><span>写成代码</span><i>→</i><span>今生</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch0">带过来的盒子</a></li>
+    <li><a href="#ch1">1 · 三本账</a></li>
+    <li><a href="#ch2">2 · 一个动作：松弛</a></li>
+    <li><a href="#ch3">3 · 一个循环：完整跑一遍</a></li>
+    <li><a href="#ch4">4 · 为什么挑最小的一定对</a></li>
+    <li><a href="#ch5">5 · 你来当 Dijkstra</a></li>
+    <li><a href="#ch6">6 · 五个常见误区</a></li>
+    <li><a href="#ch7">7 · 路线怎么倒推</a></li>
+    <li><a href="#ch8">8 · 小测验</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section class="ch" id="ch0">
+  <div class="ch-num">开始之前</div>
+  <h2>带过来的盒子</h2>
+  <div class="boxcard">
+    <div class="bc-h">📦 上一篇的结论</div>
+    <dl>
+      <dt>核心直觉</dt><dd>从起点烧一把火，城市按距离从小到大被点着；点着时的时间就是最短距离，之后不会再变</dd>
+      <dt>Dijkstra</dt><dd>不逐周模拟，每轮直接跳到"下一座被点着的城市"</dd>
+      <dt>前提</dt><dd>边的权重 ≥ 0</dd>
+    </dl>
+    <div class="bc-f">这一篇所有的步骤，都只是把这三行写得更精确。</div>
+  </div>
+</section>
+
+<!-- ================= 1 ================= -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 章</div>
+  <h2>三本账：算法从头到尾只记这三样东西</h2>
+  <p>很多人学不会 Dijkstra，是因为一上来就看代码，<code>dist</code>、<code>prev</code>、<code>visited</code> 一堆变量不知道各管什么。其实它们就是三本账：</p>
+  <div class="card tbl-wrap">
+    <table class="tt wide">
+      <thead><tr><th>账本</th><th>代码里常叫</th><th>每个城市记什么</th><th>用火来说</th></tr></thead>
+      <tbody>
+        <tr><td class="l"><b>① 成本账</b></td><td>dist</td><td class="l">目前已知的、从起点到这里的<b>最低</b>总成本</td><td class="l">火最早能在第几周烧到这里（目前的预计）</td></tr>
+        <tr><td class="l"><b>② 来路账</b></td><td>prev</td><td class="l">上面那个最低成本，是从<b>哪座城市</b>过来的</td><td class="l">最早那股火是从哪个方向烧来的</td></tr>
+        <tr><td class="l"><b>③ 确定名单</b></td><td>visited / done</td><td class="l">哪些城市的成本已经是<b>最终答案</b>了</td><td class="l">哪些城市已经被点着了</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>根据这三本账，任何时刻每座城市都处于下面三种状态之一。<b>这三种状态贯穿整个算法，请一定分清楚：</b></p>
+  <div class="card tbl-wrap">
+    <table class="tt wide">
+      <thead><tr><th>状态</th><th>图上的样子</th><th>成本账</th><th>还会变吗</th></tr></thead>
+      <tbody>
+        <tr><td class="l"><span class="st unk">未发现</span></td><td><span class="lg"></span>白圈</td><td>∞</td><td class="l">会。还没有任何路通到这里</td></tr>
+        <tr><td class="l"><span class="st cand">候选（暂定）</span></td><td><span class="lg cand"></span>蓝色虚线圈</td><td>一个数</td><td class="l"><b>会</b>。只是"目前找到的最好"，以后可能被更好的路替换</td></tr>
+        <tr><td class="l"><span class="st done">已确定</span></td><td><span class="lg done"></span>绿圈</td><td>一个数</td><td class="l"><b>不会</b>。这就是最终答案</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>为什么用 ∞（无穷大）表示"不知道"？因为下面的"松弛"要做比较："新成本比旧成本小吗？"任何具体的数都比 ∞ 小，所以第一次发现一座城市时，比较自然成立，不用写特殊情况。这是个小小的编程技巧。</p>
+</section>
+
+<!-- ================= 2 ================= -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 章</div>
+  <h2>一个动作：松弛（relax）</h2>
+  <p>Dijkstra 算法里真正"修改账本"的动作只有一个，名字叫<b>松弛</b>。它回答的问题是：</p>
+  <p class="big">从 u 走这条路到 v，会不会比 v 现在记的更便宜？</p>
+  <p>做法：算一下 <code>dist[u] + w</code>（到 u 的成本，加上这条路的长度）。如果它<b>比 dist[v] 小</b>，就说明找到了一条更好的路，于是：</p>
+  <ul>
+    <li>成本账：<code>dist[v] = dist[u] + w</code></li>
+    <li>来路账：<code>prev[v] = u</code></li>
+  </ul>
+  <p>如果不比 dist[v] 小，什么也不做。就这么多。</p>
+  <div class="card">
+    <h3>动手：调数字，看松弛会不会更新</h3>
+    <div class="scroll-x"><svg class="diagram" id="rx" viewBox="0 0 560 170" role="img" aria-label="松弛示意"></svg></div>
+    <div class="relax-ctl">
+      <label for="rx-du">dist[u]</label><input type="range" id="rx-du" min="0" max="20" value="10"><output id="rx-du-o"></output>
+      <label for="rx-w">路长 w</label><input type="range" id="rx-w" min="0" max="20" value="2"><output id="rx-w-o"></output>
+      <label for="rx-dv">dist[v]</label><input type="range" id="rx-dv" min="0" max="31" value="13"><output id="rx-dv-o"></output>
+    </div>
+    <div class="step-text" id="rx-cap"></div>
+    <p class="hint">把 dist[v] 拖到最右边就是 ∞（还没发现 v）。默认数字是地图上"奔流城 → 三叉戟河"那一步</p>
+  </div>
+  <details class="deep">
+    <summary>🔍 为什么叫"松弛"这么奇怪的名字</summary>
+    <p>最短距离一定满足一个不等式：<code>dist[v] ≤ dist[u] + w</code>。意思是"到 v 的最短距离，不会比先到 u 再走一步更长"——否则先到 u 再走过去就是更短的路了。</p>
+    <p>把这个不等式想成一根橡皮筋：如果眼下记的 dist[v] 比 dist[u] + w 大，这根筋就"绷紧"了，不等式被违反。松弛就是把 dist[v] 调小到 dist[u] + w，让它"松"下来、重新满足不等式。名字是历史遗留，不用纠结字面意思，记成<b>"试试抄近道"</b>就行。</p>
+  </details>
+  <div class="boxcard">
+    <div class="bc-h">📦 封装：松弛 relax(u, v, w)</div>
+    <dl>
+      <dt>输入</dt><dd>一条从 u 到 v、长度为 w 的路</dd>
+      <dt>做什么</dt><dd>如果 dist[u] + w &lt; dist[v]，就把 dist[v] 改成 dist[u] + w，把 prev[v] 改成 u</dd>
+      <dt>承诺</dt><dd>只会让 dist[v] 变小或不变，永远不会变大</dd>
+    </dl>
+  </div>
+</section>
+
+<!-- ================= 3 ================= -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 章 · 本篇核心</div>
+  <h2>一个循环：完整跑一遍</h2>
+  <p>有了三本账和松弛，Dijkstra 算法就是下面这几行：</p>
+  <div class="card">
+    <ol class="steps-list" style="margin:0">
+      <li><b>初始化</b>：dist[起点] = 0，其他全是 ∞；确定名单为空。</li>
+      <li><b>① 挑最小</b>：在所有<b>候选</b>（未确定、成本不是 ∞ 的）城市里，挑 dist 最小的那个，叫它 u。把 u 加入确定名单。</li>
+      <li><b>② 松弛邻居</b>：对 u 的每一个<b>还没确定</b>的邻居 v，做一次松弛。</li>
+      <li>回到 ①。直到没有候选城市了（或者终点被确定了，如果你只关心终点）。</li>
+    </ol>
+  </div>
+  <p>把它和火对照：① 就是"下一座被点着的城市是谁"，② 就是"火从它出发沿各条路继续烧，更新邻居们的预计时间"。下面一步一步跑。<b>请每一步都先自己猜下一步会发生什么，再点"下一步"。</b></p>
+  <div class="card">
+    <div class="phase" id="dj-phase"><span>初始化</span><span>① 挑最小</span><span>② 松弛</span><span>结束</span></div>
+    <div class="dj-wrap">
+      <div class="scroll-x" style="margin:0"><svg class="diagram" id="dj" role="img" aria-label="Dijkstra 逐步演示"></svg></div>
+      <div class="tbl-wrap"><table class="tt wide" id="dj-tbl"></table></div>
+    </div>
+    <div class="step-text" id="dj-cap"></div>
+    <div class="btns"><button class="btn" id="dj-prev">上一步</button><button class="btn primary" id="dj-next">下一步</button><button class="btn" id="dj-reset">重来</button><span class="score-line" id="dj-cnt"></span></div>
+    <div class="legend"><span><span class="lg"></span>未发现</span><span><span class="lg cand"></span>候选</span><span><span class="lg cur"></span>本轮的 u</span><span><span class="lg done"></span>已确定</span><span><span class="lg ln try"></span>正在松弛的路</span><span><span class="lg ln tree"></span>当前的来路</span></div>
+    <p class="hint">右边账本里，蓝色格子 = 这一步刚改过的；绿色 = 已确定的最终答案</p>
+  </div>
+  <h3>跑完以后，请注意这几个细节</h3>
+  <ul>
+    <li><b>三叉戟河被改过一次</b>：第 2 轮从君临发现它，记成 13；第 3 轮从奔流城找到更便宜的 12，改掉了。候选的成本是会变的。</li>
+    <li><b>派克城也被改过</b>：14 → 13，来路从高庭改成了奔流城。</li>
+    <li><b>君临 → 奔流城那条 25 的路</b>，算出 33，比奔流城已有的 10 大，所以什么也没改。</li>
+    <li><b>被确定的顺序</b>是 高庭 0 → 君临 8 → 奔流城 10 → 三叉戟河 12 → 派克城 13 → 临冬城 22，和上一篇火"点着"的顺序完全一样，成本从小到大。</li>
+    <li>每座城市只当一次 u；每条路最多被松弛一次（从先确定的那一头）。</li>
+  </ul>
+</section>
+
+<!-- ================= 4 ================= -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 章 · 最难的一章</div>
+  <h2>为什么"挑最小的"就能直接确定？</h2>
+  <p>这是 Dijkstra 最反直觉的一点：一座城市被挑中的那一刻，算法就宣布"它的成本是最终答案"，以后再也不看它。凭什么这么肯定？以后会不会冒出一条更便宜的路？</p>
+  <h3>先看一个具体的例子</h3>
+  <p>第 3 轮开始时，高庭、君临已确定。候选是：<b>奔流城 10</b>、三叉戟河 13、派克城 14。算法挑了奔流城，宣布 10 是最终答案。我们来试着"反驳"它：找一条比 10 更便宜、到奔流城的路。</p>
+  <div class="card">
+    <div class="scroll-x"><svg class="diagram" id="pf" role="img" aria-label="反驳尝试"></svg></div>
+    <div class="btns proof-btns" id="pf-btns"></div>
+    <div class="step-text" id="pf-cap">点上面的按钮，尝试各种"可能更短"的路线。</div>
+  </div>
+  <p>发现规律了吗？任何一条从高庭出发的路线，都得<b>先从绿色区域（已确定的城市）里走出来</b>，走出来时踏上的第一座绿区外的城市，必然是某个候选。而走到那个候选，成本至少是它账上记的数（账上记的就是"只经过绿区能到它的最低成本"）。</p>
+  <p>可奔流城已经是所有候选里最小的了。从别的候选出发，起步就 ≥ 10，后面的路长都 ≥ 0，<b>只会更多，不会更少</b>。所以不可能有比 10 更便宜的路。</p>
+  <h3>一般的证明</h3>
+  <div class="card">
+    <svg class="diagram" id="pf2" viewBox="0 0 620 270" role="img" aria-label="一般证明示意" style="max-width:620px"></svg>
+  </div>
+  <p>设 u 是这一轮被挑中的、dist 最小的候选。假设存在一条比 dist[u] 更便宜的、从起点 s 到 u 的路线 P。</p>
+  <ol class="steps-list">
+    <li>P 从 s 出发（s 在绿区里），最终到达 u（u 在绿区外），所以 P 一定在某个地方<b>第一次</b>走出绿区。设走出时，最后一座绿区城市是 y，第一座绿区外的城市是 x。</li>
+    <li>y 已确定，从 y 出发的路都被松弛过，所以 x 的账上记的成本 <code>dist[x] ≤ P 走到 x 为止的成本</code>。</li>
+    <li>u 是候选里最小的，所以 <code>dist[u] ≤ dist[x]</code>。</li>
+    <li>P 从 x 走到 u 的剩余部分，路长都 ≥ 0，所以 <code>P 的总成本 ≥ P 走到 x 为止的成本</code>。</li>
+    <li>连起来：<code>P 的总成本 ≥ 到 x 的成本 ≥ dist[x] ≥ dist[u]</code>。和"P 比 dist[u] 便宜"矛盾。</li>
+  </ol>
+  <p>所以不存在这样的 P，dist[u] 就是最终答案。证毕。</p>
+  <div class="callout key">
+    <span class="t">一句话记住</span>
+    任何"绕远"的路，都要先经过一个比 u 更贵（至少一样贵）的候选，再往后只会越加越多。所以最便宜的候选，没有任何人能反超它。<br>
+    注意第 4 步用到了"路长 ≥ 0"——这就是负数边会让 Dijkstra 出错的原因（第 4 篇演示）。
+  </div>
+  <details class="deep">
+    <summary>🔍 证明里还隐含了一个前提：x 一定有账上的成本</summary>
+    <p>第 2 步说"从 y 出发的路都被松弛过"。这是因为 y 在绿区里，而每座城市被加入绿区时，算法都会立刻松弛它所有的边。所以 x 至少被 y 松弛过一次，dist[x] 不是 ∞，x 一定是候选。这就是为什么"挑中 u 之后<b>马上</b>松弛它的所有邻居"这个顺序不能乱。</p>
+    <p>数学上这种证明叫"循环不变式"：每一轮开始时，"绿区里每座城市的 dist 都是最终答案，每个候选的 dist 都是只经过绿区能到它的最低成本"这件事始终成立。每轮挑最小、再松弛，都不会破坏它。</p>
+  </details>
+</section>
+
+<!-- ================= 5 ================= -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 章</div>
+  <h2>你来当 Dijkstra</h2>
+  <p>换一张没见过的图。这次<b>由你决定每一轮挑哪座城市</b>，挑完后程序替你做松弛，并告诉你改了什么。挑错了会告诉你为什么错。</p>
+  <div class="card">
+    <div class="scroll-x"><svg class="diagram" id="me" role="img" aria-label="练习图"></svg></div>
+    <div class="step-text" id="me-cap"></div>
+    <div class="btns"><button class="btn" id="me-hint">提示</button><button class="btn" id="me-reset">重来</button><span class="score-line" id="me-score"></span></div>
+    <p class="hint">直接点图上的城市。起点是 A</p>
+  </div>
+</section>
+
+<!-- ================= 6 ================= -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 章</div>
+  <h2>五个常见误区</h2>
+
+  <h3>误区 1：Dijkstra 就是"每步走最便宜的那条路"</h3>
+  <p>不是。Dijkstra 比的是<b>从起点出发的总成本</b>，不是眼前这一条路有多长。"每到一座城市就走它最短的那条路"是另一种贪心，叫"最近邻"，它会出错：</p>
+  <div class="card">
+    <div class="scroll-x"><svg class="diagram" id="gr" role="img" aria-label="贪心对比"></svg></div>
+    <div class="btns"><button class="btn sel" id="gr-a">每步走最短的路</button><button class="btn" id="gr-b">Dijkstra</button></div>
+    <div class="step-text" id="gr-cap"></div>
+  </div>
+  <p>"最近邻"一旦走了一步就回不了头。Dijkstra 则同时维护所有候选的成本，每轮在<b>全局</b>里挑，所以随时可以"换一条路线走"——第 3 轮它就从君临这边转向了奔流城那边。</p>
+
+  <h3>误区 2：一座城市第一次被发现时的成本就是答案</h3>
+  <p>不是。被<b>发现</b>（变成候选）时的成本只是暂定的。只有被<b>挑中</b>（变成已确定）时才是最终答案。上面的地图里，三叉戟河先被记成 13，后来改成 12。</p>
+
+  <h3>误区 3：一发现终点就可以停</h3>
+  <p>不行，要等终点被<b>挑中</b>才能停。在第 5 章的练习图里，F 第一次被发现时成本是 14（从 D 过来），但最终答案是 12（从 E 过来）。如果 F 一出现就停，答案就错了。</p>
+
+  <h3>误区 4：已经确定的城市，后面还得回头检查</h3>
+  <p>不用。第 4 章证明了：确定了就不会再变。这正是 Dijkstra 高效的原因——每座城市只处理一次。（需要反复回头检查的是 Bellman-Ford 算法，它能处理负数边，代价是慢得多，见第 4 篇。）</p>
+
+  <h3>误区 5：Dijkstra 只能算出到一个终点的路</h3>
+  <p>不是。如果不提前停，它会算出<b>起点到所有城市</b>的最短成本和路线，一次全部搞定。这就是下一章的"最短路径树"。</p>
+</section>
+
+<!-- ================= 7 ================= -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 章</div>
+  <h2>路线怎么倒推：来路账和最短路径树</h2>
+  <p>算法跑完，成本账里有每座城市的最短成本。但"路线"在哪？答案在<b>来路账</b>（prev）里：每座城市只记了"最后一步是从谁过来的"。要得到完整路线，就从终点出发，<b>顺着 prev 一路往回走</b>，走到起点为止，再倒过来。</p>
+  <div class="card">
+    <div class="dj-wrap">
+      <div class="scroll-x" style="margin:0"><svg class="diagram" id="tree" role="img" aria-label="最短路径树"></svg></div>
+      <div class="tbl-wrap"><table class="tt wide" id="tree-tbl"></table></div>
+    </div>
+    <div class="step-text" id="tree-cap"></div>
+    <p class="hint">点任意一座城市，看它的路线是怎样一步步倒推出来的</p>
+  </div>
+  <p>把所有 prev 箭头画出来（图上的绿线），会得到一棵以起点为根的<b>树</b>，叫<b>最短路径树</b>。为什么一定是树、不会有环？因为每座城市只有一个 prev，而且 prev 一定比它自己<b>先被确定</b>、成本更小或相等，顺着 prev 走成本单调减少，最后只能停在起点。</p>
+  <details class="deep">
+    <summary>🔍 为什么只记"最后一步"就够了，不用记整条路线</summary>
+    <p>最短路线有一个性质：<b>最短路线的任何一段前缀，本身也是最短路线</b>。高庭 → 奔流城 → 三叉戟河 → 临冬城是到临冬城的最短路线，那么其中的高庭 → 奔流城 → 三叉戟河一定也是到三叉戟河的最短路线（如果有更短的到三叉戟河的路，把它接上最后一段，就能得到更短的到临冬城的路，矛盾）。</p>
+    <p>所以只要知道"最后一步从谁来"，前面的部分就是"到那个谁的最短路线"，可以继续往回查。每座城市只用存一个名字，而不是一整条路线，省了大量空间。这个性质叫<b>最优子结构</b>，以后学动态规划还会再见到它。</p>
+  </details>
+</section>
+
+<!-- ================= 8 ================= -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 章</div>
+  <h2>小测验</h2>
+  <div class="card" id="quiz"></div>
+  <div class="boxcard">
+    <div class="bc-h">📦 封装：Dijkstra 算法</div>
+    <dl>
+      <dt>输入</dt><dd>一张边权 ≥ 0 的图、一个起点</dd>
+      <dt>账本</dt><dd>dist（成本）、prev（来路）、确定名单</dd>
+      <dt>循环</dt><dd>挑成本最小的候选 → 确定它 → 松弛它的邻居</dd>
+      <dt>输出</dt><dd>起点到每个节点的最短成本，以及一棵最短路径树（顺着 prev 倒推出路线）</dd>
+      <dt>承诺</dt><dd>节点按成本从小到大的顺序被确定，被确定时就是最终答案</dd>
+    </dl>
+    <div class="bc-f">验证过了。下一篇把它变成真正能跑的代码，并看看"挑最小"这一步怎样从 N² 加速到 N log N。</div>
+  </div>
+  <div class="pager">
+    <a href="01.html"><small>← 上一篇</small>1 · 前世：问题从哪来</a>
+    <a class="next" href="03.html"><small>下一篇 →</small>3 · 写成代码：从 N² 到堆</a>
+  </div>
+  <div class="credit">Dijkstra 专题是第 13 集《算法入门》的补充讲义，不属于 Crash Course 原课程内容；示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。</div>
+</section>
+
+</main>
+</div>
+
+<script src="dj.js"></script>
+<script>
+const NM = k => GOT.nodes[k][0];
+const show = v => v === Infinity ? '∞' : v;
+
+/* ---------- 2 松弛 ---------- */
+(function () {
+  const svg = $('#rx');
+  el('line', { x1: 110, y1: 80, x2: 450, y2: 80, class: 'edge', id: 'rx-e' }, svg);
+  el('rect', { x: 255, y: 66, width: 50, height: 26, rx: 6, class: 'ew-bg' }, svg);
+  const tw = txt(svg, 280, 85, '', 'ew');
+  const mk = (x, name) => { const g = el('g', { class: 'node' }, svg); el('circle', { cx: x, cy: 80, r: 34 }, g); const c = txt(g, x, 86, '', 'cost'); txt(g, x, 140, name, 'nm'); return { g, c }; };
+  const U = mk(110, 'u（已确定）'), V = mk(450, 'v');
+  const res = txt(svg, 450, 28, '', 'node-label');
+  function upd() {
+    const du = +$('#rx-du').value, w = +$('#rx-w').value, dvr = +$('#rx-dv').value, dv = dvr === 31 ? Infinity : dvr;
+    $('#rx-du-o').textContent = du; $('#rx-w-o').textContent = w; $('#rx-dv-o').textContent = show(dv);
+    const nc = du + w, upd = nc < dv;
+    U.c.textContent = du; tw.textContent = w; U.g.setAttribute('class', 'node done');
+    V.c.textContent = upd ? nc : show(dv);
+    V.g.setAttribute('class', 'node ' + (upd ? 'cur' : 'cand'));
+    $('#rx-e').setAttribute('class', 'edge ' + (upd ? 'path' : 'try'));
+    res.textContent = upd ? `${show(dv)} → ${nc}` : '不变';
+    $('#rx-cap').innerHTML = `dist[u] + w = ${du} + ${w} = <b>${nc}</b>，和 dist[v] = ${show(dv)} 比：` + (upd
+      ? `${nc} &lt; ${show(dv)}，<b>更新</b>。dist[v] 改成 ${nc}，prev[v] 改成 u。` + (dv === Infinity ? '（v 原来是 ∞，这是第一次发现 v。）' : '')
+      : `${nc} ≥ ${dv}，从 u 过来不划算，<b>什么也不改</b>。` + (nc === dv ? '（一样便宜也不改，保留原来的来路。）' : ''));
+  }
+  ['du', 'w', 'dv'].forEach(k => $('#rx-' + k).addEventListener('input', upd));
+  upd();
+})();
+
+/* ---------- 3 完整跑一遍 ---------- */
+function ledger(tbl, s, ids, nm, extra = {}) {
+  const prevS = extra.prevStep;
+  const st = k => s.u === k && s.type !== 'end' ? ['cur', '本轮 u'] : s.done.has(k) ? ['done', '已确定'] : s.dist[k] < Infinity ? ['cand', '候选'] : ['unk', '未发现'];
+  tbl.innerHTML = '<thead><tr><th>城市</th><th>状态</th><th>dist</th><th>prev</th></tr></thead><tbody>' + ids.map(k => {
+    const [c, t] = st(k);
+    const chD = prevS && prevS.dist[k] !== s.dist[k], chP = prevS && prevS.prev[k] !== s.prev[k];
+    const fin = s.done.has(k) && !(s.u === k);
+    return `<tr><td class="l">${nm(k)}</td><td><span class="st ${c}">${t}</span></td>` +
+      `<td class="${chD ? 'chg' : fin ? 'fin' : ''}">${show(s.dist[k])}</td>` +
+      `<td class="${chP ? 'chg' : ''}">${s.prev[k] === undefined ? '—' : nm(s.prev[k])}</td></tr>`;
+  }).join('') + '</tbody>';
+}
+(function () {
+  const api = drawGraph($('#dj'), GOT, { inf: true });
+  const steps = dijkstraTrace(GOT, { stopAtDst: false });
+  const phases = $$('#dj-phase span');
+  stepper('dj', steps, (s, k) => {
+    paintStep(api, s, GOT);
+    ledger($('#dj-tbl'), s, api.ids, NM, { prevStep: steps[k - 1] });
+    const ph = { init: 0, pick: 1, relax: 2, 'relax-none': 2, end: 3 }[s.type];
+    phases.forEach((p, i) => p.classList.toggle('cur', i === ph));
+    let t = s.text;
+    if (s.type === 'pick' && s.u === 'WF') t += '<br>（如果只关心临冬城，到这里就可以停了：它已经确定，22 周。我们继续跑完，看看全部结果。）';
+    if (s.type === 'end') {
+      let v = 'WF', p = [];
+      while (s.prev[v]) { p.push(s.prev[v] + '|' + v); v = s.prev[v]; }
+      const ecls = {};
+      Object.entries(s.prev).forEach(([v, u]) => { ecls[u + '|' + v] = 'tree'; });
+      p.forEach(e => { ecls[e] = 'path'; });
+      const cls = {}; api.ids.forEach(k => { cls[k] = 'done'; });
+      api.paint({ cost: s.dist, cls, ecls });
+      t = '所有城市都确定了，算法结束。绿线是每座城市的来路，合起来是一棵树；橙色是到临冬城的最短路线：<b>高庭 → 奔流城 → 三叉戟河 → 临冬城，22 周</b>。';
+    }
+    $('#dj-cap').innerHTML = t;
+    const relaxN = steps.slice(0, k + 1).filter(x => x.type === 'relax').length;
+    const updN = steps.slice(0, k + 1).filter(x => x.type === 'relax' && x.updated).length;
+    $('#dj-cnt').textContent = `已松弛 ${relaxN} 次，其中更新 ${updN} 次`;
+  });
+})();
+
+/* ---------- 4 反驳尝试 ---------- */
+(function () {
+  const api = drawGraph($('#pf'), GOT, { inf: true });
+  const tr = dijkstraTrace(GOT, { stopAtDst: false });
+  const s = tr.find(x => x.type === 'pick' && x.u === 'RR');
+  const base = { cost: { ...s.dist }, cls: { HG: 'done', KL: 'done', RR: 'cur', TR: 'cand', PY: 'cand' }, ecls: {} };
+  const tries = [
+    ['直接走 高庭 → 奔流城', ['HG', 'RR'], '10，就是账上的 10。'],
+    ['经君临：高庭 → 君临 → 奔流城', ['HG', 'KL', 'RR'], '8 + 25 = 33 &gt; 10。这条在第 2 轮松弛时就算过了。'],
+    ['经三叉戟河：高庭 → 君临 → 三叉戟河 → 奔流城', ['HG', 'KL', 'TR', 'RR'], '走出绿区时踏上的第一座城市是<b>三叉戟河</b>，到这里已经 13 ≥ 10 了，再加 2 只会更多：15 &gt; 10。'],
+    ['经派克城：高庭 → 派克城 → 奔流城', ['HG', 'PY', 'RR'], '走出绿区踏上的第一座城市是<b>派克城</b>，到这里已经 14 ≥ 10，再加 3 是 17 &gt; 10。'],
+    ['绕更大的圈：高庭 → 派克城 → 临冬城 → 三叉戟河 → 奔流城', ['HG', 'PY', 'WF', 'TR', 'RR'], '第一座绿区外的城市还是派克城，14 起步，之后 18 + 10 + 2 一路往上加：44 &gt; 10。绕得越远越贵。'],
+  ];
+  const box = $('#pf-btns');
+  tries.forEach(([label, p, why], i) => {
+    const b = document.createElement('button');
+    b.className = 'btn'; b.textContent = label;
+    b.onclick = () => {
+      $$('.btn', box).forEach(x => x.classList.toggle('sel', x === b));
+      const ecls = {};
+      for (let j = 1; j < p.length; j++) ecls[p[j - 1] + '|' + p[j]] = 'path';
+      api.paint({ ...base, ecls });
+      $('#pf-cap').innerHTML = `${label}：${why}`;
+    };
+    box.appendChild(b);
+  });
+  api.paint(base);
+})();
+(function () {
+  const svg = $('#pf2');
+  el('path', { d: 'M30,40 Q20,135 40,230 Q160,262 250,225 Q300,135 255,45 Q150,10 30,40 Z', class: 'zone' }, svg);
+  txt(svg, 140, 30, '绿区：已确定', 'znote');
+  const dotN = (x, y, name, cls) => { const g = el('g', { class: 'node ' + cls }, svg); el('circle', { cx: x, cy: y, r: 18 }, g); txt(g, x, y + 5, name, 'cost'); };
+  el('path', { d: 'M90,140 C140,120 170,200 210,180 C240,165 260,120 330,110', class: 'ppath' }, svg);
+  el('path', { d: 'M330,110 C400,90 470,40 520,80 C560,110 540,170 520,190', class: 'ppath' }, svg);
+  el('line', { x1: 90, y1: 140, x2: 520, y2: 200, class: 'edge', 'stroke-dasharray': '3 6' }, svg);
+  dotN(90, 140, 's', 'done'); dotN(210, 180, 'y', 'done'); dotN(330, 110, 'x', 'cand'); dotN(520, 200, 'u', 'cur');
+  txt(svg, 330, 150, 'dist[x] ≥ dist[u]', 'pnote');
+  txt(svg, 330, 166, '（u 是最小的候选）', 'svg-text');
+  txt(svg, 490, 50, '这一段 ≥ 0', 'pnote');
+  txt(svg, 300, 250, '橙色虚线：假想中"更短"的路线 P', 'svg-text');
+  txt(svg, 410, 210, '算法找到的 dist[u]', 'svg-text');
+})();
+
+/* ---------- 5 你来当 Dijkstra ---------- */
+const PRAC = {
+  nodes: { A: ['A', 70, 200], B: ['B', 220, 80], C: ['C', 220, 320], D: ['D', 380, 140], E: ['E', 400, 330], F: ['F', 540, 230] },
+  edges: [['A', 'B', 4], ['A', 'C', 2], ['C', 'B', 1], ['B', 'D', 5], ['C', 'D', 8], ['C', 'E', 10], ['D', 'E', 2], ['D', 'F', 6], ['E', 'F', 2]],
+  src: 'A', dst: 'F', view: '0 0 610 400',
+};
+(function () {
+  const api = drawGraph($('#me'), PRAC, { inf: true, clickable: true });
+  let dist, prev, done, wrong, ecls, last;
+  function reset() {
+    dist = {}; prev = {}; done = new Set(); wrong = 0; ecls = {}; last = null;
+    api.ids.forEach(k => { dist[k] = Infinity; });
+    dist.A = 0;
+    paint('起点 A 的成本是 0，其他都是 ∞。<b>第 1 轮：你会挑哪座城市？</b>');
+  }
+  const cands = () => api.ids.filter(k => !done.has(k) && dist[k] < Infinity);
+  const best = () => cands().sort((a, b) => dist[a] - dist[b])[0];
+  function paint(msg, bad) {
+    const cls = {}, e = {};
+    api.ids.forEach(k => { if (done.has(k)) cls[k] = 'done'; else if (dist[k] < Infinity) cls[k] = 'cand'; });
+    if (last) cls[last] = 'cur';
+    if (bad) cls[bad] = 'wrong';
+    Object.entries(prev).forEach(([v, u]) => { e[u + '|' + v] = 'tree'; });
+    api.paint({ cost: dist, cls, ecls: { ...e, ...ecls } });
+    $('#me-cap').innerHTML = msg;
+    $('#me-score').textContent = `已确定 ${done.size} / ${api.ids.length}，挑错 ${wrong} 次`;
+  }
+  api.onClick(k => {
+    if (done.size === api.ids.length) return;
+    const b = best();
+    if (done.has(k)) { wrong++; return paint(`${k} 已经确定过了（${dist[k]}），不会再变，不用再挑它。`, k); }
+    if (dist[k] === Infinity) { wrong++; return paint(`${k} 现在还是 ∞，还没有任何路通到它，它不可能是最小的。先挑候选（蓝色虚线圈）。`, k); }
+    if (dist[k] > dist[b]) { wrong++; return paint(`${k} 的成本是 ${dist[k]}，可候选里 ${b} 只要 ${dist[b]}。要挑<b>最小</b>的那个。`, k); }
+    done.add(k); last = k; ecls = {};
+    const lines = [];
+    neighbors(PRAC, k).forEach(([v, w]) => {
+      if (done.has(v)) return;
+      ecls[k + '|' + v] = 'try';
+      const nc = dist[k] + w;
+      if (nc < dist[v]) { lines.push(`${v}：${dist[k]} + ${w} = <b>${nc}</b> &lt; ${show(dist[v])}，更新`); dist[v] = nc; prev[v] = k; }
+      else lines.push(`${v}：${dist[k]} + ${w} = ${nc} ≥ ${dist[v]}，不变`);
+    });
+    const head = `✓ 对，${k}（${dist[k]}）是最小的候选，确定它。`;
+    const body = lines.length ? '松弛它的邻居：' + lines.join('；') + '。' : '它的邻居都已确定，没有可松弛的。';
+    if (done.size === api.ids.length) {
+      ecls = {};
+      let v = 'F'; while (prev[v]) { ecls[prev[v] + '|' + v] = 'path'; v = prev[v]; }
+      last = null;
+      return paint(`${head}<br>🎉 全部确定！A 到 F 最短是 <b>${dist.F}</b>，路线 ${routeOf(prev, 'F')}。你一共挑错 ${wrong} 次。` +
+        '<br>回顾：B 从 4 改成 3，D 从 10 改成 8，E 从 12 改成 10，F 从 14 改成 12——几乎每轮都有"抄近道"。');
+    }
+    paint(`${head}${body}<br><b>下一轮挑谁？</b>`);
+  });
+  $('#me-hint').onclick = () => {
+    const c = cands();
+    if (!c.length) return;
+    paint(`候选有：${c.map(k => `${k} ${dist[k]}`).join('、')}。哪个最小？`);
+  };
+  $('#me-reset').onclick = reset;
+  reset();
+})();
+
+/* ---------- 6 贪心对比 ---------- */
+(function () {
+  const api = drawGraph($('#gr'), GOT, { blank: true });
+  // 最近邻：每步走当前城市最短的、通往没去过城市的路
+  const walk = ['HG'], seen = new Set(['HG']);
+  let total = 0, notes = [];
+  while (walk[walk.length - 1] !== 'WF') {
+    const u = walk[walk.length - 1];
+    const opts = neighbors(GOT, u).filter(([v]) => !seen.has(v)).sort((a, b) => a[1] - b[1]);
+    const [v, w] = opts[0];
+    notes.push(`在${NM(u)}，最短的路是去${NM(v)}（${w}）`);
+    walk.push(v); seen.add(v); total += w;
+  }
+  function show(mode) {
+    $('#gr-a').classList.toggle('sel', mode === 'a');
+    $('#gr-b').classList.toggle('sel', mode === 'b');
+    const ecls = {}, cls = {};
+    if (mode === 'a') {
+      walk.forEach((k, i) => { cls[k] = 'cand'; if (i) ecls[walk[i - 1] + '|' + k] = 'bad'; });
+      api.paint({ cls, ecls });
+      $('#gr-cap').innerHTML = notes.join(' → ') + `。<br>总共 <b>${total} 周</b>，比最短的 22 周多了 ${total - 22} 周。第一步贪了君临那条 8 的路，后面就被带偏了。`;
+    } else {
+      ['HG', 'RR', 'TR', 'WF'].forEach((k, i, a) => { cls[k] = 'done'; if (i) ecls[a[i - 1] + '|' + k] = 'path'; });
+      api.paint({ cls, ecls });
+      $('#gr-cap').innerHTML = 'Dijkstra：第一轮也是先确定君临（8），但它并不"走过去"，而是继续比较所有候选的<b>总成本</b>。君临这边到三叉戟河要 13，奔流城那边只要 12，于是改用奔流城那边。结果 <b>22 周</b>。';
+    }
+  }
+  $('#gr-a').onclick = () => show('a');
+  $('#gr-b').onclick = () => show('b');
+  show('a');
+})();
+
+/* ---------- 7 倒推路线 ---------- */
+(function () {
+  const api = drawGraph($('#tree'), GOT, { inf: true, clickable: true });
+  const tr = dijkstraTrace(GOT, { stopAtDst: false });
+  const fin = tr[tr.length - 1];
+  const tbl = $('#tree-tbl');
+  function paint(target) {
+    const cls = {}, ecls = {};
+    api.ids.forEach(k => { cls[k] = 'done'; });
+    Object.entries(fin.prev).forEach(([v, u]) => { ecls[u + '|' + v] = 'tree'; });
+    const chain = [];
+    if (target) {
+      let v = target;
+      cls[v] = 'cur';
+      while (fin.prev[v] !== undefined) { chain.push(v); ecls[fin.prev[v] + '|' + v] = 'path'; v = fin.prev[v]; }
+      chain.push(v);
+    }
+    api.paint({ cost: fin.dist, cls, ecls });
+    tbl.innerHTML = '<thead><tr><th>城市</th><th>dist</th><th>prev</th></tr></thead><tbody>' + api.ids.map(k =>
+      `<tr class="${chain.includes(k) ? 'cur' : ''}"><td class="l">${NM(k)}</td><td>${fin.dist[k]}</td><td>${fin.prev[k] ? NM(fin.prev[k]) : '—（起点）'}</td></tr>`).join('') + '</tbody>';
+    if (!target) { $('#tree-cap').innerHTML = '算法跑完后的账本。点一座城市试试。'; return; }
+    if (target === 'HG') { $('#tree-cap').innerHTML = '高庭就是起点，prev 为空，路线就是它自己，成本 0。'; return; }
+    const steps = [];
+    for (let i = 0; i < chain.length - 1; i++) steps.push(`${NM(chain[i])} 的 prev 是 <b>${NM(chain[i + 1])}</b>`);
+    $('#tree-cap').innerHTML = steps.join('；') + '；高庭是起点，停。<br>倒过来：<b>' + chain.slice().reverse().map(NM).join(' → ') + `</b>，共 ${fin.dist[target]} 周。`;
+  }
+  api.onClick(paint);
+  paint(null);
+})();
+
+/* ---------- 小测验 ---------- */
+quiz('#quiz', [
+  { q: '算法挑中一座城市后，紧接着要做什么？', o: ['把它的成本清零', '松弛它所有还没确定的邻居', '回到起点重新开始', '检查所有已确定的城市'], a: 1,
+    e: '挑中 → 确定 → 松弛邻居，这是每一轮的固定动作。' },
+  { q: 'dist[u] = 7，u 到 v 的路长 4，dist[v] = 11。松弛之后 dist[v] 是多少？', o: ['11', '7', '4', '3'], a: 0,
+    e: '7 + 4 = 11，不比 11 小，什么都不改。只有严格更小才更新。' },
+  { q: '"候选"和"已确定"的区别是？', o: ['没区别', '候选的成本可能还会被更便宜的路替换，已确定的不会再变', '候选的成本更小', '已确定的城市还要再检查一遍'], a: 1,
+    e: '三叉戟河当候选时从 13 改成了 12；一旦被挑中确定，就不会再变。' },
+  { q: '为什么最小的候选可以直接确定？', o: ['因为它离起点的直线距离最近', '因为任何别的路都要先经过一个成本不低于它的候选，而之后的边权 ≥ 0，只会更贵', '因为它的邻居最少', '这是一个经验规律，没有证明'], a: 1,
+    e: '这就是第 4 章的证明，它依赖"边权 ≥ 0"。' },
+  { q: '跑完算法后，怎样得到起点到 X 的完整路线？', o: ['再跑一遍算法', '从 X 开始顺着 prev 一路往回走到起点，再倒过来', '看 dist 表', '把所有路线列出来'], a: 1,
+    e: '每座城市只记最后一步从哪里来，顺着往回查即可。' },
+  { q: '只想知道到终点 T 的最短路，什么时候可以停？', o: ['T 第一次被发现的时候', 'T 被挑中（确定）的时候', '必须跑完所有城市', '走了 N 步之后'], a: 1,
+    e: '第一次被发现时只是暂定，比如练习图里的 F 先是 14、后来是 12。' },
+], ['🎉 全对！算法的每个细节都掌握了。', '👍 不错，回头看看错的那章。', '建议回到第 3 章，每一步先猜再点。']);
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dijkstra 的前世今生</title>
+<link rel="stylesheet" href="dj.css">
+<style>
+.wrap{max-width:900px;margin:0 auto;padding:0 24px 80px}
+.why{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin:14px 0}
+.why div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;font-size:15px}
+.why b{display:block;color:var(--bad);margin-bottom:4px}
+.why i{font-style:normal;display:block;color:var(--ok);margin-top:6px;font-size:14px}
+@media (max-width:600px){ .wrap{padding:0 16px 60px} }
+</style>
+</head>
+<body>
+
+<div class="topbar"><a href="../index.html">← 课程目录</a><a href="../13.html#ch5">第 13 集：算法入门</a></div>
+
+<header class="hero">
+  <div class="eyebrow">第 13 集 · 补充专题</div>
+  <h1>Dijkstra 算法的前世今生</h1>
+  <p>第 13 集用几分钟讲完了 Dijkstra 算法，看完觉得懂了，合上页面却说不出它为什么对、代码为什么这样写，这很正常。这个专题分四篇，从它要解决的问题讲起，把每一个细节都摊开来，每一层都让你亲手点一遍。</p>
+  <div class="road">
+    <span>问题</span><i>→</i><span>直觉</span><i>→</i><span>算法</span><i>→</i><span>证明</span><i>→</i><span>代码</span><i>→</i><span>加速</span><i>→</i><span>后代</span><i>→</i><span>现实</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <h2>为什么觉得 Dijkstra 难学</h2>
+  <p>学不会 Dijkstra，通常卡在下面四个地方之一。每一篇各对付一个：</p>
+  <div class="why">
+    <div><b>"它到底在干嘛？"</b>一上来就是步骤，不知道它在解决什么、为什么不能用笨办法。<i>→ 第 1 篇：从问题和"火"的直觉讲起</i></div>
+    <div><b>"凭什么挑最小的就对？"</b>步骤能背，但不信它，换张图就乱。<i>→ 第 2 篇：逐步演示 + 一个看得懂的证明 + 亲手练习</i></div>
+    <div><b>"代码里那些变量是干嘛的？"</b>dist、prev、visited、堆，混成一团。<i>→ 第 3 篇：代码逐行运行，变量实时可见</i></div>
+    <div><b>"学了有什么用？"</b>不知道它和真实世界的关系，记不牢。<i>→ 第 4 篇：负数边、A*、导航、路由器、理论前沿</i></div>
+  </div>
+
+  <h2>四篇</h2>
+  <div class="parts">
+    <a class="part" href="01.html"><div class="n">第 1 篇 · 前世</div><h3>问题从哪来</h3><p>最短路径问题、蛮力法的爆炸、BFS 一圈圈扩散、"在起点点一把火"的核心直觉，以及 1956 年阿姆斯特丹咖啡馆里的二十分钟。</p></a>
+    <a class="part" href="02.html"><div class="n">第 2 篇 · 本体</div><h3>算法本身</h3><p>三本账、松弛、完整的循环逐步演示、"为什么挑最小的一定对"的证明、你来当 Dijkstra、五个常见误区、路线倒推。</p></a>
+    <a class="part" href="03.html"><div class="n">第 3 篇 · 代码</div><h3>从 N² 到堆</h3><p>邻接表、原版代码逐行运行、瓶颈在哪、二叉堆动画、堆版代码与懒删除、稀疏图和稠密图该选哪个。</p></a>
+    <a class="part" href="04.html"><div class="n">第 4 篇 · 今生</div><h3>缺陷、后代与现实</h3><p>负数边反例和 Bellman-Ford、A* 网格对比、导航软件的收缩层次、OSPF 路由表、到 2025 年为止的理论进展、Dijkstra 本人。</p></a>
+  </div>
+
+  <h2>怎么用这个专题</h2>
+  <ul>
+    <li>按顺序读。每篇开头有一张<b>📦 带过来的盒子</b>，写着上一篇的结论；往后走时只记卡片，不用回想细节。</li>
+    <li>每个<b>动手</b>框都点一遍。尤其是第 1 篇第 4 章的火、第 2 篇第 3 章的逐步演示和第 5 章的练习，<b>先猜下一步，再点</b>。</li>
+    <li><b>🔍 折叠框</b>是更深一层的内容，好奇就点开，跳过也不影响往后读。</li>
+    <li>每篇最后有小测验。答错的题，回到对应章节重新点一遍。</li>
+  </ul>
+
+  <div class="boxcard">
+    <div class="bc-h">📦 先给你最后的答案：一张卡说完 Dijkstra</div>
+    <dl>
+      <dt>解决什么</dt><dd>在边权 ≥ 0 的图里，求一个起点到所有节点的最短路径</dd>
+      <dt>核心想法</dt><dd>按距离从小到大的顺序，一个一个确定节点（像从起点往外烧的火）</dd>
+      <dt>怎么做</dt><dd>反复：挑成本最小的候选 → 确定它 → 用它松弛邻居</dd>
+      <dt>多快</dt><dd>原版 O(N²)；用堆 O((N + L) log N)</dd>
+      <dt>不能做</dt><dd>有负数边的图（用 Bellman-Ford）</dd>
+    </dl>
+    <div class="bc-f">现在看不懂这张卡没关系。读完四篇再回来看，每一行你都能自己解释。</div>
+  </div>
+
+  <div class="credit">本专题是第 13 集《算法入门》的补充讲义，不属于 Crash Course 原课程内容；示意图与交互演示由 Claude Opus 5.5 制作，以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布。示例地图沿用第 13 集。</div>
+</div>
+
+</body>
+</html>
