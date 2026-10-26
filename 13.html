@@ -32,6 +32,21 @@
 .edge.path{stroke:var(--on);stroke-width:6}
 .ew{font:700 13px var(--mono);fill:var(--muted);text-anchor:middle}
 .ew-bg{fill:var(--panel)}
+.cell rect{fill:var(--panel);stroke:var(--ink);stroke-width:1.5}
+.cell text{font:700 14px var(--mono);text-anchor:middle;fill:var(--ink)}
+.cell.cur rect,.node.look circle{fill:var(--on-soft);stroke:var(--on);stroke-width:3}
+.cell.done rect{fill:var(--ok-soft);stroke:var(--ok);stroke-width:3}
+#hp .node circle{stroke-width:1.5}
+#hp .node.cur circle{stroke-width:3}
+#hp .node.empty circle{stroke-dasharray:4 3}
+#hp .node .cost{font-size:14px}
+.hp-lab{font-size:15px;font-weight:700;fill:var(--ink)}
+.hp-cnt{font:700 15px var(--mono);fill:var(--on);text-anchor:end}
+.cand{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:14px;min-height:30px}
+.cand .t{color:var(--muted)}
+.cand .c{padding:2px 8px;border:2px solid var(--line);border-radius:6px;background:var(--panel)}
+.cand .c b{font-family:var(--mono)}
+.cand .c.pick{background:var(--on-soft);border-color:var(--on)}
 </style>
 </head>
 <body data-ep="13">
@@ -165,9 +180,10 @@
   <div class="card">
     <h3>动手：从高庭到临冬城</h3>
     <div class="scroll-x"><svg class="diagram" id="map" viewBox="0 0 660 420" role="img" aria-label="Dijkstra 算法地图"></svg></div>
+    <div class="cand" id="dj-cand"></div>
     <div class="step-text" id="dj-cap"></div>
     <div class="btns"><button class="btn primary" id="dj-next">下一步</button><button class="btn" id="dj-reset">重来</button></div>
-    <p class="hint">圆圈里的数字 = 目前已知从高庭到这里的最低成本（周）；橙色 = 正在处理的城市；绿色 = 已经处理完的</p>
+    <p class="hint">圆圈里的数字 = 目前已知从高庭到这里的最低成本（周）；橙色 = 正在处理的城市；绿色 = 已经处理完的；"候选城市" = 有数字、还没变绿的城市，每轮从中挑最小的</p>
   </div>
 
   <p>我们从高庭出发，成本为 0，把它标在节点里。其他城市暂时都标上问号——我们还不知道到达它们的成本。Dijkstra 算法总是从<b>成本最低</b>的节点开始。现在它只知道一个节点，高庭，所以从这里开始。它沿着从这个节点出发的所有路径，走到一步之遥的所有相连节点，记录到达每个节点的成本。这样就完成了一轮算法。</p>
@@ -176,6 +192,29 @@
   <p>下一个成本最低的节点是三叉戟河，从三叉戟河出发、唯一还没检查的线，就是通往临冬城的！它的成本是 10，再加上到三叉戟河要花的 12，总成本是 22。我们再检查最后一条路，从派克城到临冬城，总共是 31。现在我们知道了最低的总成本，也知道了军队最快到达那里的路线——它避开了君临城！</p>
 
   <p>Dijkstra 最初的算法构思于 1956 年，复杂度是图中节点数的平方。前面说过，平方从来都不太好，因为这意味着算法没法扩展到大问题，比如整个美国的道路地图。幸运的是，几年后 Dijkstra 算法被改进成了"节点数乘以节点数的对数，再加上线的条数"。虽然看起来更复杂，但实际上快得多。代入我们的示例图——6 个城市、9 条线——就能证明这一点：算法从 36 次循环降到了大约 14 次。</p>
+  <div class="card">
+    <h3>动手：找出成本最低的城市，两种办法</h3>
+    <div class="scroll-x"><svg class="diagram" id="hp" viewBox="0 0 660 400" role="img" aria-label="从头扫和堆的对比"></svg></div>
+    <div class="step-text" id="hp-cap"></div>
+    <div class="btns"><button class="btn primary" id="hp-next">下一步</button><button class="btn" id="hp-reset">重来</button></div>
+    <p class="hint">每个数字 = 一个候选城市目前的成本；橙色 = 正在看的；绿色 = 找到的最小</p>
+  </div>
+
+  <div class="card">
+    <h3>动手：城市一多，差距有多大</h3>
+    <div class="cx-ctl"><label>城市数 N = <b id="sc-v"></b></label><input type="range" id="sc-n" min="0" max="100" value="0" aria-label="城市数"></div>
+    <div class="step-text" id="sc-read"></div>
+    <p class="hint">拖动滑块。假设平均每个城市连 3 条路（一条路连两个城市，所以 L = 1.5N，正好是示例图的 6 城 9 路），电脑每秒做 1 亿步。</p>
+  </div>
+
+  <div class="extra">
+    <span class="t">改良版快在哪里</span>
+    Dijkstra 每一轮做两件事：① 在还没处理的城市里<b>找出成本最低的那个</b>；② 沿着它的路去<b>更新邻居</b>的成本。② 加起来每条路只走一次，一共 L 步，两个版本一样。差别全在 ①。<br>
+    原版做 ① 的办法很笨：每轮都把 N 个城市<b>挨个看一遍</b>，N 轮 × 每轮 N 次 = <b>N²</b>。就像每次要找全班最矮的同学，都让全班重新站成一排，从头比到尾。<br>
+    改良版把候选城市排成一个<b>堆</b>：像一棵倒过来的树，每个城市都比它下面的城市成本低，所以<b>最顶上的永远是最小的</b>，直接拿走就行。拿走以后要把树重新整理好，只需要沿着从上到下的一条路比较几次，树有几层就最多几步。树每多一层，能装的城市就翻一倍，所以 N 个城市只有大约 log₂N 层——100 万个城市也才 20 层。N 轮 × 每轮约 log N 步 = <b>N log N</b>，再加上走路的 L，就是 N log N + L。<br>
+    上面的演示里，31 个城市找一次最小：原版看 31 个，改良版看 9 个。城市越多差别越大，100 万个路口时，原版要算几个小时，改良版不到 1 秒。<br>
+    （小补充：严格说，要做到 N log N + L，得用 1984 年发明的"斐波那契堆"，让"调低某个城市的成本"也几乎不花时间，所以课程说的"几年后"不太准确。平时更常用上面演示的普通堆，复杂度是 (N + L) × log N，同样远远好过 N²。）
+  </div>
   <div class="extra">
     <span class="t">36 和 14 怎么来的</span>
     6² = 36；6 × log₂6 + 9 ≈ 6 × 2.58 + 9 ≈ 24.5——课程说"大约 14"，可能用的是以 10 为底的对数（6 × 0.78 + 9 ≈ 13.7）。大 O 本来就只关心增长的量级、不在乎具体常数和底数，所以两种算法都对：重点是节点一多，n log n + l 会比 n² 小得多。
@@ -348,13 +387,14 @@ const PRICES = [307, 239, 214, 250, 384, 299, 223, 312];
 })();
 
 /* ---------- Dijkstra ---------- */
+const ROADS = [['HG', 'KL', 8], ['HG', 'RR', 10], ['HG', 'PY', 14], ['KL', 'TR', 5], ['KL', 'RR', 25], ['RR', 'TR', 2], ['RR', 'PY', 3], ['TR', 'WF', 10], ['PY', 'WF', 18]];
 (function () {
   const svg = $('#map');
   const N = {
     HG: ['高庭 Highgarden', 170, 360], KL: ["君临 King's Landing", 500, 320], RR: ['奔流城 Riverrun', 260, 210],
     TR: ['三叉戟河 Trident', 440, 180], PY: ['派克城 Pyke', 90, 150], WF: ['临冬城 Winterfell', 360, 50],
   };
-  const E = [['HG', 'KL', 8], ['HG', 'RR', 10], ['HG', 'PY', 14], ['KL', 'TR', 5], ['KL', 'RR', 25], ['RR', 'TR', 2], ['RR', 'PY', 3], ['TR', 'WF', 10], ['PY', 'WF', 18]];
+  const E = ROADS;
   const edgeEl = {}, nodeEl = {};
   E.forEach(([a, b, w]) => {
     const [, x1, y1] = N[a], [, x2, y2] = N[b];
@@ -377,16 +417,17 @@ const PRICES = [307, 239, 214, 250, 384, 299, 223, 312];
     // 按课程的顺序生成每一步
     const cost = { HG: 0 }, prev = {}, done = new Set();
     const S = [];
-    const snap = (cur, tries, text) => S.push({ cost: { ...cost }, done: new Set(done), cur, tries, text, prev: { ...prev } });
+    const snap = (cur, tries, text, pick) => S.push({ cost: { ...cost }, done: new Set(done), cur, tries, text, pick, prev: { ...prev } });
     snap(null, [], '从高庭出发，成本 0；其他城市都还是问号。点"下一步"。');
     while (true) {
       const cand = Object.keys(cost).filter(n => !done.has(n)).sort((a, b) => cost[a] - cost[b]);
       if (!cand.length) break;
       const u = cand[0];
-      if (u === 'WF') { done.add(u); snap(u, [], ''); break; }
+      const pickText = `① 比一比候选城市：${cand.map(n => `${N[n][0].split(' ')[0]} ${cost[n]}`).join('、')}，最小的是 <b>${N[u][0]}</b>（${cost[u]} 周）。`;
+      if (u === 'WF') { snap(u, [], pickText + '它就是终点！', true); break; }
       const lines = [];
       const nb = E.filter(([a, b]) => a === u || b === u).map(([a, b, w]) => [a === u ? b : a, w]).filter(([v]) => !done.has(v));
-      snap(u, [], `下一个成本最低、还没处理的城市是 <b>${N[u][0]}</b>（${cost[u]} 周），沿它所有没走过的路往外看。`);
+      snap(u, [], pickText + `<br>② 处理它：沿它所有没走过的路往外看。`, true);
       nb.forEach(([v, w]) => {
         const nc = cost[u] + w;
         let t;
@@ -400,7 +441,7 @@ const PRICES = [307, 239, 214, 250, 384, 299, 223, 312];
     // 最后一步：亮出路线
     const path = []; let x = 'WF'; while (prev[x]) { path.push(prev[x] + x); x = prev[x]; }
     const last = S[S.length - 1];
-    S.push({ ...last, cur: null, tries: [], path, text: `临冬城是成本最低的未处理城市，结束。最快路线：高庭 → 奔流城 → 三叉戟河 → 临冬城，共 <b>${last.cost.WF}</b> 周——绕开了君临城！` });
+    S.push({ ...last, done: new Set([...last.done, 'WF']), cur: null, tries: [], pick: false, path, text: `到达终点，结束。最快路线：高庭 → 奔流城 → 三叉戟河 → 临冬城，共 <b>${last.cost.WF}</b> 周——绕开了君临城！` });
     return S;
   }
   function paint() {
@@ -412,12 +453,107 @@ const PRICES = [307, 239, 214, 250, 384, 299, 223, 312];
     Object.values(edgeEl).forEach(e => e.setAttribute('class', 'edge'));
     s.tries.forEach(t => ek(t.slice(0, 2), t.slice(2)).setAttribute('class', 'edge try'));
     (s.path || []).forEach(t => ek(t.slice(0, 2), t.slice(2)).setAttribute('class', 'edge path'));
+    // 候选城市：有数字、还没处理完；正在处理的那个已经被挑走了
+    const cand = Object.keys(N).filter(n => s.cost[n] !== undefined && !s.done.has(n) && (s.pick || n !== s.cur));
+    $('#dj-cand').innerHTML = '<span class="t">候选城市：</span>' + (cand.length ? cand.map(n => `<span class="c${s.pick && n === s.cur ? ' pick' : ''}">${N[n][0].split(' ')[0]} <b>${s.cost[n]}</b></span>`).join('') : '<span class="t">（没有了）</span>');
     $('#dj-cap').innerHTML = s.text;
     $('#dj-next').disabled = k === steps.length - 1;
   }
   $('#dj-next').onclick = () => { k++; paint(); };
   $('#dj-reset').onclick = () => { k = 0; paint(); };
   steps = build(); k = 0; paint();
+})();
+
+/* ---------- 找最小：从头扫 vs 堆 ---------- */
+(function () {
+  const svg = $('#hp');
+  const VALS = [37, 21, 48, 9, 55, 30, 14, 42, 26, 60, 5, 33, 18, 51, 39, 12, 45, 28, 57, 7, 24, 40, 16, 53, 31, 11, 46, 35, 20, 58, 44];
+  const MIN = Math.min(...VALS), MINAT = VALS.indexOf(MIN);
+  // 原版：排成一排
+  txt(svg, 10, 22, '原版：31 个城市排成一排', 'hp-lab');
+  const rowCnt = txt(svg, 650, 22, '', 'hp-cnt');
+  const cells = VALS.map((v, i) => {
+    const x = i < 16 ? 30 + i * 40 : 50 + (i - 16) * 40, y = i < 16 ? 50 : 90;
+    const g = el('g', { class: 'cell' }, svg);
+    el('rect', { x: x - 17, y: y - 15, width: 34, height: 30, rx: 5 }, g);
+    txt(g, x, y + 5, String(v), '');
+    return g;
+  });
+  // 改良版：同样的数排成堆
+  txt(svg, 10, 140, '改良版：同样 31 个城市排成"堆"', 'hp-lab');
+  const heapCnt = txt(svg, 650, 140, '', 'hp-cnt');
+  const pos = i => { const d = Math.floor(Math.log2(i + 1)), n = 2 ** d, p = i - (n - 1); return [10 + (p + 0.5) * 640 / n, 172 + d * 52]; };
+  const links = [], slots = [];
+  for (let i = 1; i < 31; i++) { const [x1, y1] = pos(i), [x2, y2] = pos((i - 1) >> 1); links[i] = el('line', { x1, y1, x2, y2, class: 'edge' }, svg); }
+  for (let i = 0; i < 31; i++) {
+    const [x, y] = pos(i), g = el('g', { class: 'node' }, svg);
+    el('circle', { cx: x, cy: y, r: 16 }, g);
+    slots[i] = { g, c: txt(g, x, y + 5, '', 'cost') };
+  }
+
+  // 预先算好每一步
+  const sinkAll = a => { for (let i = (a.length >> 1) - 1; i >= 0; i--) for (let j = i; ;) { const l = 2 * j + 1, r = l + 1; if (l >= a.length) break; const m = r < a.length && a[r] < a[l] ? r : l; if (a[m] >= a[j]) break; [a[j], a[m]] = [a[m], a[j]]; j = m; } };
+  const H = VALS.slice(); sinkAll(H);
+  const S = [];
+  S.push({ heap: H.slice(), text: '这就是上面地图里每轮的第 ① 步：从<b>候选城市</b>里挑出成本最低的。示例地图的候选最多 3 个，一眼就看完了；真实地图的候选可能成千上万。假设现在有 31 个候选城市：上下两边是<b>同样的 31 个数</b>，只是摆法不同。点"下一步"，数数两种办法各要看几个数。' });
+  S.push({ heap: H.slice(), scan: true, rowDone: true, rowN: 31, text: `<b>原版</b>：从第一个看到最后一个，<b>看了 31 个</b>才敢确定最小的是 <b>${MIN}</b>。不看完不行——谁知道后面会不会藏着更小的？` });
+  S.push({ heap: H.slice(), rowDone: true, rowN: 31, took: 0, heapN: 1, text: `<b>改良版</b>：堆有一条规矩——<b>每个数都比它下面连着的数小</b>。所以最小的一定在最顶上，<b>看 1 个</b>就拿到了 ${MIN}。` });
+  const a = H.slice(); a[0] = null;
+  S.push({ heap: a.slice(), rowDone: true, rowN: 31, empty: 0, heapN: 1, text: `拿走以后，顶上空了。下一轮还得从顶上拿，所以要把堆<b>整理好</b>，让顶上重新变成最小的。` });
+  a[0] = a.pop();
+  S.push({ heap: a.slice(), rowDone: true, rowN: 31, look: [0], heapN: 1, text: `办法是：把最末尾的 <b>${a[0]}</b> 搬到顶上补位。可它太大了，放在顶上不合规矩，得一层层往下沉。` });
+  let n = 1, i = 0;
+  const trail = [0];
+  for (;;) {
+    const l = 2 * i + 1, r = l + 1;
+    if (l >= a.length) { S.push({ heap: a.slice(), rowDone: true, rowN: 31, look: [i], heapN: n, trail: trail.slice(), text: `${a[i]} 沉到最底下了，停。` }); break; }
+    const kids = r < a.length ? [l, r] : [l], m = kids.reduce((x, y) => a[y] < a[x] ? y : x);
+    n += kids.length;
+    if (a[m] >= a[i]) { S.push({ heap: a.slice(), rowDone: true, rowN: 31, look: [i, ...kids], heapN: n, trail: trail.slice(), text: `${a[i]} 和下面的 ${kids.map(k => a[k]).join('、')} 比，它已经最小，停。` }); break; }
+    S.push({ heap: a.slice(), rowDone: true, rowN: 31, look: [i, ...kids], heapN: n, trail: trail.slice(), text: `${a[i]} 和下面的 ${kids.map(k => a[k]).join('、')} 比：<b>${a[m]}</b> 最小，比 ${a[i]} 还小，两个<b>换位置</b>。（又看了 ${kids.length} 个）` });
+    [a[i], a[m]] = [a[m], a[i]]; i = m; trail.push(m);
+  }
+  S.push({ heap: a.slice(), rowDone: true, rowN: 31, took: 0, heapN: n, trail, text: `整理完毕！新的堆顶 <b>${a[0]}</b> 又是最小的，下一轮还是看 1 个就能拿到。<br>这一轮：原版看了 <b>31</b> 个，改良版只看了 <b>${n}</b> 个——它只沿着一条从上到下的路走，别的分支一眼都不用看（蓝色的那条路）。堆有 5 层，就最多走 5 层。城市翻一倍，原版要多看一倍；堆只多一层，改良版只多看 2 个。` });
+
+  let k, timer;
+  function paint(scanTo) {
+    const s = S[k];
+    cells.forEach((g, j) => g.setAttribute('class', 'cell' + (scanTo !== undefined ? (j === scanTo ? ' cur' : '') : s.rowDone && j === MINAT ? ' done' : '')));
+    rowCnt.textContent = scanTo !== undefined ? `看了 ${scanTo + 1} 个` : s.rowN ? `看了 ${s.rowN} 个` : '';
+    heapCnt.textContent = s.heapN ? `看了 ${s.heapN} 个` : '';
+    slots.forEach((o, j) => {
+      const v = s.heap[j], here = j < s.heap.length;
+      o.g.style.display = here ? '' : 'none';
+      if (links[j]) { links[j].style.display = here ? '' : 'none'; links[j].setAttribute('class', (s.trail || []).includes(j) ? 'edge try' : 'edge'); }
+      o.c.textContent = v == null ? '' : v;
+      o.g.setAttribute('class', 'node' + (j === s.took ? ' done' : j === s.empty ? ' empty' : (s.look || []).includes(j) ? (j === s.look[0] ? ' cur' : ' look') : ''));
+    });
+    $('#hp-cap').innerHTML = scanTo !== undefined ? `<b>原版</b>：一个一个看……` : s.text;
+    $('#hp-next').disabled = scanTo !== undefined || k === S.length - 1;
+  }
+  function go(to) {
+    clearInterval(timer); k = to;
+    if (!S[k].scan) return paint();
+    let j = 0; paint(0);
+    timer = setInterval(() => { if (++j < VALS.length) paint(j); else { clearInterval(timer); paint(); } }, 70);
+  }
+  $('#hp-next').onclick = () => go(k + 1);
+  $('#hp-reset').onclick = () => go(0);
+  go(0);
+})();
+
+/* ---------- 城市一多 ---------- */
+(function () {
+  const time = s => s < 0.001 ? '不到 1 毫秒' : s < 1 ? `约 ${Math.round(s * 1000)} 毫秒` : s < 60 ? `约 ${s.toFixed(1)} 秒` : s < 3600 ? `约 ${Math.round(s / 60)} 分钟` : s < 86400 ? `约 ${(s / 3600).toFixed(1)} 小时` : `约 ${Math.round(s / 86400).toLocaleString()} 天`;
+  function upd() {
+    const n = Math.round(6 * Math.pow(1e6 / 6, $('#sc-n').value / 100));
+    const a = n * n, b = n * Math.log2(n) + 1.5 * n;
+    $('#sc-v').textContent = n.toLocaleString();
+    $('#sc-read').innerHTML = `原版 N² ≈ <b style="color:var(--bad)">${Math.round(a).toLocaleString()}</b> 步（${time(a / 1e8)}）<br>`
+      + `改良版 N log₂N + L ≈ <b style="color:var(--ok)">${Math.round(b).toLocaleString()}</b> 步（${time(b / 1e8)}）<br>`
+      + `改良版快 <b>${(a / b).toLocaleString(undefined, { maximumFractionDigits: a / b < 10 ? 1 : 0 })}</b> 倍。堆只有 ${Math.ceil(Math.log2(n + 1))} 层，所以每轮找最小只要几步，而不是把 ${n.toLocaleString()} 个城市都看一遍。`;
+  }
+  $('#sc-n').oninput = upd; upd();
 })();
 </script>
 </body>
