@@ -10,7 +10,7 @@
 .tape div{width:42px;height:46px;border:2px solid var(--ink);border-radius:6px;background:var(--panel);display:flex;align-items:center;justify-content:center;font:700 20px var(--mono);position:relative}
 .tape div.blank{color:var(--line)}
 .tape div.head{border-color:var(--on);background:var(--on-soft)}
-.tape div.head::before{content:"▼ 读写头";position:absolute;top:-26px;font:600 12px inherit;color:var(--on);white-space:nowrap}
+.tape div.head::before{content:"读写头\A▼";position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:2px;font-size:12px;font-weight:600;line-height:1.15;text-align:center;color:var(--on);white-space:pre}
 .tape div.written{color:var(--ok)}
 .tm-state{text-align:center;font-size:15px;margin:8px 0}
 .tm-state b{font:700 16px var(--mono);padding:2px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent)}
