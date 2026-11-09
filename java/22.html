@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P22 计算机中的数据存储 · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.kbd{display:inline-block;font:600 13px var(--mono);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:0 6px;background:var(--panel);line-height:1.5}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;vertical-align:middle}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.row{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;font-size:14px;margin:6px 0}
+
+/* 二进制计数器 */
+.bits{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:6px 0}
+.bit{width:54px;text-align:center;cursor:pointer;user-select:none}
+.bit .lamp{width:46px;height:46px;margin:0 auto;border-radius:50%;border:2px solid var(--line);background:var(--bg);display:flex;align-items:center;justify-content:center;font:700 22px var(--mono);color:var(--muted);transition:background .15s,color .15s,border-color .15s}
+.bit.on .lamp{background:var(--on);border-color:var(--on);color:#fff;box-shadow:0 0 12px var(--on-glow)}
+.bit.carry .lamp{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.bit .w{font:12px var(--mono);color:var(--muted);margin-top:4px}
+.bit.on .w{color:var(--on);font-weight:700}
+.bin-read{text-align:center;font:15px var(--mono);margin-top:8px}
+.bin-read b{font-size:22px}
+.bin-note{text-align:center;font-size:14px;color:var(--muted);min-height:22px;margin-top:4px}
+
+/* 进制转换 */
+.cv-in{font:16px var(--mono);border:1px solid var(--line);border-radius:8px;padding:5px 9px;background:var(--panel);color:var(--ink);width:150px}
+.cv-res{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0}
+@media (max-width:560px){.cv-res{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cv-res div{background:var(--bg);border-radius:8px;padding:6px 8px;font:14px var(--mono);word-break:break-all}
+.cv-res div small{display:block;font:12px sans-serif;color:var(--muted)}
+.cv-res div.cur{outline:2px solid var(--accent)}
+.cv-steps{background:var(--bg);border-radius:10px;padding:10px 14px;font:14px/1.9 var(--mono);overflow-x:auto}
+.cv-steps .h{font:600 13.5px sans-serif;color:var(--muted)}
+.cv-steps table{border-collapse:collapse;font:14px var(--mono)}
+.cv-steps td{padding:0 10px 0 0;white-space:nowrap}
+.cv-steps td.r{color:var(--on);font-weight:700}
+.cv-err{color:var(--bad);font-size:14px;margin-top:6px}
+
+/* Java 前缀小测 */
+.pq{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.pq button{font:inherit;text-align:left;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:8px 10px;cursor:pointer;min-height:58px}
+.pq button code{font-size:16px;font-weight:700}
+.pq button small{display:block;font-size:12.5px;color:var(--muted);margin-top:3px}
+.pq button.ok{background:var(--ok-soft);border-color:var(--ok)}
+.pq button.bad{background:var(--bad-soft);border-color:var(--bad)}
+
+/* 文本编码 */
+.tx-in{font:16px inherit;border:1px solid var(--line);border-radius:8px;padding:5px 9px;background:var(--panel);color:var(--ink);width:100%;max-width:360px;box-sizing:border-box}
+.tx-tab{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
+.tx-tab th,.tx-tab td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left;vertical-align:top}
+.tx-tab th{color:var(--muted);font-weight:600;font-size:12.5px}
+.tx-tab td.c{font-size:20px;text-align:center}
+.tx-tab td code{font-size:12.5px;word-break:break-all}
+.tx-tab td.na{color:var(--muted)}
+.tx-wrap{overflow-x:auto}
+.tx-sum{font-size:14px;margin-top:8px}
+
+/* 像素 */
+.px-wrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:start}
+@media (max-width:600px){.px-wrap{grid-template-columns:1fr}}
+.px{display:grid;grid-template-columns:repeat(10,28px);grid-auto-rows:28px;gap:1px;background:var(--line);border:1px solid var(--line);width:max-content}
+.px div{display:flex;align-items:center;justify-content:center;font:9.5px var(--mono);cursor:pointer;user-select:none}
+.px.nums div{font-weight:700}
+.rgb{display:grid;grid-template-columns:auto minmax(0,1fr) 44px;gap:6px 10px;align-items:center;font:14px var(--mono);max-width:420px}
+.rgb input[type=range]{width:100%}
+.rgb .r{color:#e0453a;font-weight:700}.rgb .g{color:#2f9e44;font-weight:700}.rgb .b{color:#3b6fe0;font-weight:700}
+.sw{display:flex;gap:12px;align-items:center;margin-top:10px;flex-wrap:wrap}
+.sw .c{width:84px;height:60px;border-radius:10px;border:1px solid var(--line)}
+.sw code{font-size:13.5px}
+.presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.presets button{width:26px;height:26px;border-radius:50%;border:2px solid var(--panel);box-shadow:0 0 0 1px var(--line);cursor:pointer}
+
+/* 声音 */
+.snd-orig{fill:none;stroke:#e0453a;stroke-width:2;opacity:.75}
+.snd-rec{fill:none;stroke:var(--ink);stroke-width:2}
+.snd-dot{fill:var(--ink)}
+.snd-axis{stroke:var(--line);stroke-width:1}
+.snd-nums{font:12.5px var(--mono);color:var(--muted);word-break:break-all;margin-top:6px;max-height:60px;overflow:auto}
+</style>
+</head>
+<body data-ep="22" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=22" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">基础概念 · P22</div>
+  <h1>计算机中的数据存储</h1>
+  <p class="en">How Computers Store Data</p>
+  <p class="lead">上一篇用变量存了数字，这一节讲点大纲以外的好玩东西：计算机里见过的所有数据，文字、图片、声音，到底是怎么存的。结论只有一句：<b>任意数据都以二进制的形式存储</b>。为了弄懂这句话，要顺便学会二进制、进制转换、码表、像素和三原色，以及声音的采样。</p>
+  <div class="road">
+    <span>三类数据</span><i>→</i><span>二进制与其他进制</span><i>→</i><span>为什么用二进制</span><i>→</i><span>进制转换</span><i>→</i><span>文本与码表</span><i>→</i><span>图片</span><i>→</i><span>声音</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 三类数据</a></li>
+    <li><a href="#ch2">2 · 二进制</a></li>
+    <li><a href="#ch3">3 · 为什么用二进制</a></li>
+    <li><a href="#ch4">4 · 进制转换</a></li>
+    <li><a href="#ch5">5 · 文本与码表</a></li>
+    <li><a href="#ch6">6 · 图片</a></li>
+    <li><a href="#ch7">7 · 声音</a></li>
+    <li><a href="#ch8">8 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P22</div>
+  <h2>计算机里只有三类数据</h2>
+  <p>计算机里的数据一般分三类：<b>文本</b>、<b>图片</b>、<b>声音</b>。有人说还有视频，其实视频就是很多图片和声音的组合。文本又包括<b>数字</b>、<b>字母</b>和<b>汉字</b>。</p>
+  <p>先看结论：<b>在计算机中，任意数据都是以二进制的形式来存储的</b>。"任意"就是不管文本、图片还是声音，都一样。零基础的同学看到这句话，心里一般会冒出两个问题：</p>
+  <ol>
+    <li>什么是二进制？</li>
+    <li>计算机为什么要用二进制，不用别的？</li>
+  </ol>
+  <p>下面一个一个解释。每种数据的存储方式里都藏着一些新知识点，认真听。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P22</div>
+  <h2>二进制，以及八进制、十六进制</h2>
+  <p>直接说二进制容易懵，先从熟悉的<b>十进制</b>说起。十进制由 0~9 这十个数字组成，规则是<b>逢十进一，借一当十</b>（小学二年级的口诀）。</p>
+  <ul>
+    <li><code>1 + 1 = 2</code>：没超过 10，不用进位。</li>
+    <li><code>9 + 1</code>：个位满 10，往前进一，个位变 0；十位没有数，进上来的 1 落下来，得 10。</li>
+    <li><code>99 + 1</code>：别直接说 100，看过程：个位 9+1=10，个位写 0 进 1；十位 9+进上来的 1=10，又写 0 进 1；百位只有进上来的 1。合起来 100。</li>
+    <li><code>15 − 9</code>：个位 5 减 9 不够，向十位<b>借一当十</b>，15−9=6；十位的 1 被借走了，没东西落下来，结果 6。</li>
+  </ul>
+  <p><b>二进制</b>也类似：只由 <b>0 和 1</b> 组成，规则是<b>逢二进一，借一当二</b>。</p>
+  <ul>
+    <li>十进制 0 → 二进制 0；1 → 1。</li>
+    <li>十进制 2：二进制里 1+1 满二了，进一，原位写 0，结果是 <code>10</code>。所以有个梗："1+1 什么时候不等于 2？"在二进制里，它等于 10。</li>
+    <li>十进制 3：在 10 的基础上加 1，没满二不用进位，<code>11</code>。</li>
+    <li>十进制 4：<code>11 + 1</code>，最右边 1+1=2，写 0 进 1；进上来的 1 和左边的 1 相加又是 2，再写 0 进 1。结果 <code>100</code>。</li>
+  </ul>
+  <p>视频里放了一段二进制从 0 数到 63 的动画，下面这个计数器可以自己数：</p>
+
+  <div class="card">
+    <h3>动手：二进制计数器</h3>
+    <p style="margin-top:0">点"+1"看进位一位一位往前传；也可以直接点灯泡开关某一位。每盏灯下面的数字是这一位代表的值（第 4 节会用到）。</p>
+    <div class="bits" id="bits"></div>
+    <div class="bin-read" id="bin-read"></div>
+    <div class="bin-note" id="bin-note"></div>
+    <div class="btns" style="justify-content:center;margin-top:8px">
+      <button class="btn primary" id="bin-inc">+1</button>
+      <button class="btn" id="bin-auto">自动数到 63</button>
+      <button class="btn" id="bin-clr">清零</button>
+    </div>
+  </div>
+
+  <p>常见的进制除了十进制和二进制，还有：</p>
+  <ul>
+    <li><b>八进制</b>：由 0~7 组成，逢八进一。</li>
+    <li><b>十六进制</b>：逢十六进一。0~9 只有 10 个数字不够用，于是用字母 <b>a~f</b> 表示 10~15：a=10，b=11，c=12，d=13，e=14，f=15。</li>
+  </ul>
+  <p>这么多进制会出问题吗？会：代码里写一个 <code>1</code>，怎么知道它是几进制？所以 Java 做了规定（<b>JDK 7</b> 起支持这些写法，大小写都可以）：</p>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>二进制</b></td><td>以 <code>0b</code> 开头</td><td><code>0b101</code></td></tr>
+      <tr><td><b>十进制</b></td><td>默认，不加前缀</td><td><code>101</code></td></tr>
+      <tr><td><b>八进制</b></td><td>以 <code>0</code> 开头</td><td><code>0101</code></td></tr>
+      <tr><td><b>十六进制</b></td><td>以 <code>0x</code> 开头</td><td><code>0x101</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="card">
+    <h3>考考你：这些是几进制？</h3>
+    <p style="margin-top:0">先想，再点开。答案里写了 <code>System.out.println(…)</code> 会打印出什么。</p>
+    <div class="pq" id="pq"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">补充：0b 写法的版本和一个坑</span>
+    严格地说，<code>0</code> 开头的八进制和 <code>0x</code> 开头的十六进制从 Java 一开始就有，JDK 7 新增的是 <code>0b</code> 二进制写法（还有可以在数字里加下划线，比如 <code>1_000_000</code>）。<br>
+    坑在八进制：平时我们觉得 <code>017</code> 和 <code>17</code> 是一回事，但在 Java 里 <code>017</code> 是八进制，等于十进制 15。写代码时别随手在数字前面补 0。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P22</div>
+  <h2>计算机为什么用二进制</h2>
+  <p>用二进制存数据，看起来很反人类，其实有个小故事。上个世纪的计算机用<b>打孔纸带</b>：纸带就是写好的程序，<span class="fix" title="通常的约定是有孔表示 1，没孔表示 0；不同机器的约定也不完全一样">打了孔是 0，没打孔是 1</span>，想让计算机执行，就把纸带交给它。视频放了一段 1958 年的电脑录像：把纸带送进机器，打印出来的纸就是程序运行的结果。</p>
+  <p>编程得先准备很长的纸带，用打孔器一个个打。手一抖打错了怎么办？当年的程序员还有两件神器：<b>胶水和改正纸</b>，多打的孔就糊上；错得太多，只能重新打。</p>
+  <p>纸带上只有两种状态：<b>有孔</b>和<b>没孔</b>，所以计算机就用二进制来表示。如果用十进制，就得在纸带上做出 10 种完全不同的状态。打 1/2、1/3、1/4 个孔？不行：孔本来就很小，当时的机器也没那么精密，只能区分有孔和没孔。</p>
+  <p>这个习惯一直延续到今天。现在计算机里是电路板，常用 5 伏的电路，<span class="fix" title="高低电平的门限取决于电路类型，3.3 伏本身是一种常见的工作电压，见下方补充">规定大于 3.3 伏为 1，小于 3.3 伏为 0</span>。所以计算机用二进制，就是因为<b>只要两种状态就能表示</b>：以前是有孔、没孔，现在是高电压、低电压。用十进制要 10 种完全不同的状态，太麻烦了。</p>
+  <div class="extra">
+    <span class="t">更正：电压的"门限"</span>
+    电路判断 0 和 1 不是靠一条线，而是两个区间，中间留一段"缓冲带"防止误判。比如经典的 5 伏 TTL 电路：输入<b>高于约 2 伏</b>算 1，<b>低于约 0.8 伏</b>算 0。3.3 伏本身是现在很常见的一种芯片<b>工作电压</b>，不是 5 伏电路的分界线。不过视频想说的道理完全对：只区分"高"和"低"两种状态，最简单、最不容易出错。<br>
+    打孔纸带的约定也是各家不同，比较常见的是有孔表示 1。这些细节不影响结论。想看 0 和 1 怎样用电路做加法，可以看本站的 <a href="../03.html">速成课第 3 集"布尔逻辑与逻辑门"</a>。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P22</div>
+  <h2>进制之间的转换</h2>
+  <p>进制之间当然可以互相转换，分两种：任意进制转十进制，十进制转任意进制。</p>
+  <h3>任意进制 → 十进制：系数 × 基数的权次幂，再相加</h3>
+  <ul>
+    <li><b>系数</b>：每一位上的数字；</li>
+    <li><b>基数</b>：当前是几进制，基数就是几；</li>
+    <li><b>权</b>：从右往左依次是 0、1、2、3……</li>
+  </ul>
+  <p>三个例子：</p>
+  <ul>
+    <li>二进制 <code>101</code>：1×2² + 0×2¹ + 1×2⁰ = 4 + 0 + 1 = <b>5</b>。</li>
+    <li>八进制 <code>101</code>：1×8² + 0×8¹ + 1×8⁰ = 64 + 0 + 1 = <b>65</b>。（任何数的 0 次幂都是 1。）</li>
+    <li>十六进制 <code>abc</code>：10×16² + 11×16¹ + 12×16⁰ = 2560 + 176 + 12 = <b>2748</b>。</li>
+  </ul>
+  <p>二进制转十进制还有个快速方法：<b>8421 快速转换法</b>。二进制每一位上的 1 都代表一个固定的值，从右往左是 1、2、4、8、16、32、64、128（每次翻倍，因为逢二进一）。把是 1 的那些位代表的数加起来就行。比如 <code>1101</code>：8 + 4 + 1 = <b>13</b>（是 0 的位不用管）。上面计数器里每盏灯下面的数字就是这张表。</p>
+  <h3>十进制 → 任意进制：除基取余法</h3>
+  <p>不断除以基数（转几进制就除几），记下余数，<b>一直除到商为 0</b>，再把余数<b>倒着</b>拼起来。</p>
+  <ul>
+    <li>11 转二进制：11÷2=5 余 1，5÷2=2 余 1，2÷2=1 余 0，1÷2=0 余 1。倒着拼：<code>1011</code>。</li>
+    <li>7 转二进制：7÷2=3 余 1，3÷2=1 余 1，1÷2=0 余 1。倒着拼：<code>111</code>。</li>
+    <li>转八进制，就把除 2 换成除 8。</li>
+  </ul>
+  <p>有些资料除到商为 1 就停了，再把最后的商 1 和余数一起倒着拼，结果一样，只是偷了个懒。正统的做法是除到商为 0。</p>
+
+  <div class="card">
+    <h3>动手：进制转换器（带过程）</h3>
+    <div class="row">
+      <input class="cv-in" id="cv-in" value="101" aria-label="要转换的数">
+      <span>是</span><span class="seg" id="cv-from"><button data-b="2">二进制</button><button data-b="8">八进制</button><button data-b="10">十进制</button><button data-b="16">十六进制</button></span>
+    </div>
+    <div class="row"><span>转成</span><span class="seg" id="cv-to"><button data-b="2">二进制</button><button data-b="8">八进制</button><button data-b="10">十进制</button><button data-b="16">十六进制</button></span></div>
+    <div class="cv-err" id="cv-err"></div>
+    <div class="cv-res" id="cv-res"></div>
+    <div class="cv-steps" id="cv-steps"></div>
+  </div>
+
+  <p>数字就是这样存的：<b>转成二进制再存</b>。比如 99 转成二进制是 <code>1100011</code>，课件里写成 <code>01100011</code>，前面补了个 0（为什么补，后面会讲）。这些转换其实<b>不需要口算</b>，讲它是为了长见识，真要算就用电脑的计算器：左上角三道杠 → <b>程序员</b>模式，有 HEX、DEC、OCT、BIN 四种进制。选二进制时只有 0 和 1 能按，选八进制时 8 和 9 按不了，选十六进制时 A~F 也能按了。在十进制下输入 99，点一下二进制，就是 1100011。</p>
+  <div class="extra">
+    <span class="t">为什么补成 8 位</span>
+    计算机存储的基本单位是<b>字节</b>（byte），1 字节 = 8 个二进制位（bit）。99 只需要 7 位，存进一个字节时左边空着的那位就补 0，所以写成 01100011。8 位最大能表示 11111111 = 255，这个数第 6 节还会出现。<br>
+    Mac 自带的"计算器"也有程序员模式：菜单"显示 → 程序员"，或按 <span class="kbd">⌘</span>+<span class="kbd">3</span>。<br>
+    本站的 <a href="../04.html">速成课第 4 集"二进制"</a>从另一个角度讲了同一件事（还有负数和小数怎么存），可以对照着看。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P22</div>
+  <h2>文本：字母和汉字靠查码表</h2>
+  <p>弄懂二进制，剩下的就 so easy 了。存一个小写字母 a，它和二进制是怎么对应上的？靠一张码表：<b>ASCII</b>（American Standard Code for Information Interchange，美国信息交换标准码，读作"阿斯克"）。在 ASCII 码表里，每个字母都和一个唯一的数字对应，比如小写 <b>a 对应十进制 97</b>。存字母时就查码表，找到对应的数字，再转成二进制存进计算机。</p>
+  <p>可 ASCII 码表里没有汉字：它是外国人做的，没考虑中文。没有码表，汉字就没法存进计算机。为了解决这个问题，中国自己推出了码表：</p>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>GB2312</b></td><td>1981 年 5 月 1 日发布。收录 7000 多个图形字符，其中 6000 多个汉字，只有简体。从这时起汉字才能在计算机里存储和运行</td></tr>
+      <tr><td><b>BIG5</b></td><td>1984 年台湾地区推出，收录的是繁体字。一个国家出现了两张码表，不统一</td></tr>
+      <tr><td><b>GBK</b></td><td>视频说是<span class="fix" title="GBK 是 1995 年发布的；2000 年 3 月 17 日发布的是 GB18030，见下方补充">2000 年 3 月 17 日</span>推出，为了统一成一张码表。收录 2 万多个汉字，包括繁体字，还有日文、韩文。<b>目前简体中文 Windows 默认使用的码表</b>。不足是一些欧洲、非洲国家的文字还没有</td></tr>
+      <tr><td><b>Unicode</b></td><td>由<span class="fix" title="应为统一码联盟（Unicode Consortium）">美国国家标准学会</span>提出，叫"万国码"。"万"是虚词，表示包含了世界上大多数国家的文字</td></tr>
+    </tbody>
+  </table>
+  <p>小结一下：<b>数字直接转成二进制</b>存；<b>字母和汉字先查对应的码表，找到数字，再转成二进制</b>存。码表不用自己下载，每个操作系统都内置了。</p>
+
+  <div class="card">
+    <h3>动手：一段文字存进去是什么</h3>
+    <div class="row"><input class="tx-in" id="tx-in" value="Hi, 黑马a" aria-label="要查看的文字"></div>
+    <div class="row"><span>用哪张码表存：</span><span class="seg" id="tx-enc"><button data-e="gbk">GBK</button><button data-e="utf8">UTF-8（Unicode）</button></span></div>
+    <div class="tx-wrap"><table class="tx-tab" id="tx-tab"></table></div>
+    <div class="tx-sum" id="tx-sum"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">更正与补充：几张码表的时间</span>
+    <b>GBK</b> 是 1995 年发布的（微软 Windows 95 简体中文版开始用它）；<b>2000 年 3 月 17 日</b>发布的是更大的国家标准 <b>GB18030</b>，后来又在 2005 年、2022 年两次扩充。<b>ASCII</b> 是 1963 年由美国标准协会（美国国家标准学会的前身）制定的，只有 128 个字符（0~127），可能视频把它和 Unicode 记混了。<b>Unicode</b> 由统一码联盟（Unicode Consortium）在 1991 年推出第一版，现在已经收录了 15 万多个字符，连表情符号都在里面。<br>
+    再细一点："码表"其实分两层：<b>字符集</b>规定"哪个字对应哪个编号"（比如 Unicode 里"中"是 4E2D），<b>编码方式</b>规定"编号怎么变成字节"。Unicode 最常用的编码方式是 <b>UTF-8</b>：英文字母 1 个字节（和 ASCII 完全一样），常用汉字 3 个字节。GBK 里汉字是 2 个字节。上面的演示可以对比。同一串字节用错了码表来读，就是乱码，<a href="06.html#ch6">P6–11 那篇</a>的编码演示讲过这件事。现在网页、Mac、Linux 和 JDK 18 以后的 Java 默认都是 UTF-8。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P22</div>
+  <h2>图片：像素和三原色</h2>
+  <p>图片分三种：<b>黑白图</b>、<b>灰度图</b>和平时看得最多的<b>彩色图</b>。讲图片的存储，先要知道显示器的三个概念：分辨率、像素、三原色。</p>
+  <p><b>分辨率</b>：常听说的 2K 屏、4K 屏，说的是最大分辨率。最常见的是 2K 屏里的 <span class="fix" title="国内常说的'2K 屏'多指 2560×1440；1920×1080 通常叫 1080p 或全高清">1920×1080</span> 和 4K 屏里的 3840×2160。</p>
+  <p><b>像素</b>：1920×1080 的意思是，显示器宽有 1920 个小方格，高有 1080 个小方格，整个屏幕由这么多方形小格子组成，<b>每个小格子叫一个像素</b>。画一张小图再放大，边缘会有锯齿，就是因为屏幕由方格组成。以后写软件设置窗口大小，比如宽 514 像素、高 595 像素，大概占屏幕宽的 1/4、高的 1/2。后面的拼图游戏会用到像素，到时候说"宽高 100 像素"，你得知道大概多大。</p>
+  <ul>
+    <li><b>黑白图</b>：给每个像素涂颜色，白色是 1，黑色是 0。视频画了个笑脸，两个黑点是眼睛，一道黑色弯钩是嘴。</li>
+    <li><b>灰度图</b>：有一张灰度表，0 是纯黑，255 是纯白，中间是不同层次的灰。视频画了个 8：没有笔画的地方是 0，笔画上是不同程度的灰，比如 4、62、146、182……</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：像素就是一格一格的数字</h3>
+    <div class="row"><span class="seg" id="px-mode"><button data-m="bw">黑白图（笑脸）</button><button data-m="gray">灰度图（8）</button></span><button class="btn sm" id="px-num">显示数字</button></div>
+    <div class="px-wrap">
+      <div class="px" id="px"></div>
+      <div id="px-desc" style="font-size:14.5px"></div>
+    </div>
+  </div>
+
+  <p><b>彩色图</b>怎么记录颜色？小学美术课学过三原色红、黄、蓝，叫<b>美学三原色</b>。计算机里也有三原色：<b>红、绿、蓝</b>，叫<b>光学三原色</b>。把屏幕放大看，每个像素内部就是红、绿、蓝三个小点组成的。给三种颜色设置不同的值，值越大颜色越浓，越小越淡。比如红 43、绿 123、蓝 194，就像用 43 份红颜料、123 份绿颜料、194 份蓝颜料一搅和，得到一种说不出名字但挺好看的蓝。</p>
+  <ul>
+    <li>每种颜色的取值范围是 <b>0~255</b>（包含 0 和 255）。<code>255 0 0</code> 是纯红，<code>0 255 0</code> 纯绿，<code>0 0 255</code> 纯蓝。</li>
+    <li>也可以用十六进制写：十进制 255 正好是 <code>FF</code>，所以每种颜色是 00~FF。</li>
+    <li>取三种颜色英文的首字母（Red、Green、Blue），叫 <b>RGB</b>。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：调一个颜色</h3>
+    <div class="rgb">
+      <span class="r">R</span><input type="range" min="0" max="255" id="c-r" value="43" aria-label="红"><span id="c-rv"></span>
+      <span class="g">G</span><input type="range" min="0" max="255" id="c-g" value="123" aria-label="绿"><span id="c-gv"></span>
+      <span class="b">B</span><input type="range" min="0" max="255" id="c-b" value="194" aria-label="蓝"><span id="c-bv"></span>
+    </div>
+    <div class="presets" id="c-pre"></div>
+    <div class="sw"><div class="c" id="c-sw"></div><div id="c-txt" style="font-size:14px;line-height:1.8"></div></div>
+  </div>
+
+  <p>彩色图片里，每个像素就是搭配了不同的三原色。手机里那些舍不得删的照片，其实就是一组又一组数字搭配出来的颜色。从计算机的角度看，两张照片没什么区别，都只是数字。</p>
+  <div class="extra">
+    <span class="t">一张照片有多大</span>
+    RGB 每种颜色 0~255，正好用 1 个字节，所以一个彩色像素占 3 字节。一张 1920×1080 的图，如果原样存，就是 1920×1080×3 ≈ 622 万字节，约 6 MB。实际的 JPG、PNG 文件小得多，是因为做了<b>压缩</b>：PNG 找重复的规律来省空间，一点不丢；JPG 会扔掉一些人眼不太看得出的细节，换来更小的体积。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节 · P22</div>
+  <h2>声音：对波形采样</h2>
+  <p>声音的存储涉及<b>波形图</b>。波形上的每个点都可以对应一个数字，比如 100、101、110、111……存声音时会对声波进行<b>采样</b>，每个采样点记一个数字。</p>
+  <p>听音乐时，"氪金"的音质好，没氪金的朋友听的是"全损音质"，技术上怎么做到的？氪了金，<b>采样点多</b>，记录的数据多，播放时能最大程度地还原；采样点少，还原时只能把这些点连起来，像波峰上冒尖的地方，因为没有采样点，就还原不出来了。</p>
+
+  <div class="card">
+    <h3>动手：采样点越少，还原得越差</h3>
+    <p style="margin-top:0">红线是原本的声音，黑点是采样点，黑线是用这些点还原出来的声音。拖动滑块改变采样点的数量。</p>
+    <div class="row"><span>采样点：</span><input type="range" min="4" max="120" value="12" id="snd-n" aria-label="采样点数量" style="flex:1;max-width:320px"><b id="snd-nv" style="font-family:var(--mono)"></b></div>
+    <svg class="diagram" id="snd" viewBox="0 0 640 200" role="img" aria-label="声音波形和采样点"></svg>
+    <div class="snd-nums" id="snd-nums"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">真实的数字和"音质"</span>
+    CD 的标准是每秒采样 <b>44100</b> 次（44.1 kHz），每个采样点用 <b>16 位</b>二进制记录（能分出 65536 个高低层次），左右两个声道。这样一分钟的音乐约 10 MB。平时听的 MP3、AAC 文件小得多，是像 JPG 一样做了有损压缩，扔掉人耳不太听得出的部分。音乐 App 里"标准""高品质""无损"的区别，主要就是压缩扔掉了多少（码率高低），而不只是采样点多少。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>结论</b></td><td>计算机里任意数据都以二进制存储。因为二进制只需要两种状态（有孔/没孔、高电压/低电压）</td></tr>
+      <tr><td><b>进制</b></td><td>二进制 0、1，逢二进一；八进制 0~7；十六进制 0~9 加 a~f。Java 前缀：<code>0b</code> 二进制、无前缀十进制、<code>0</code> 八进制、<code>0x</code> 十六进制</td></tr>
+      <tr><td><b>转换</b></td><td>任意→十进制：系数×基数<sup>权</sup>再相加（二进制可用 8421）；十进制→任意：除基取余，除到商为 0，余数倒着拼</td></tr>
+      <tr><td><b>文本</b></td><td>数字直接转二进制；字母、汉字查码表（ASCII、GB2312、BIG5、GBK、Unicode）得到数字再转二进制</td></tr>
+      <tr><td><b>图片</b></td><td>由像素组成；黑白 0/1，灰度 0~255，彩色每个像素是 RGB 三原色，各 0~255（00~FF）</td></tr>
+      <tr><td><b>声音</b></td><td>对波形采样，每个采样点记一个数字再转二进制；采样点越多越接近原声</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    文字查码表变成数字，图片拆成像素的 RGB 数字，声音采样成一串数字。所有数字最后都写成 0 和 1。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. 二进制 <code>1101</code> 是十进制几？十进制 11 是二进制多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">1101 用 8421：8+4+1 = 13。11 除基取余：11÷2=5…1，5÷2=2…1，2÷2=1…0，1÷2=0…1，余数倒着拼：1011。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. Java 代码里 <code>System.out.println(017);</code> 和 <code>System.out.println(0x1F);</code> 分别打印什么？<code>0b102</code> 呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>017</code> 是八进制，1×8+7 = 15；<code>0x1F</code> 是十六进制，1×16+15 = 31；<code>0b102</code> 语法错误，二进制里没有 2。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 为什么计算机用二进制而不是十进制？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">二进制只需要两种状态：以前纸带上有孔、没孔，现在电路里高电压、低电压。十进制需要 10 种能可靠区分的状态，机器做不到或者太容易出错。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 字母 a 是怎么存进计算机的？汉字呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">查 ASCII 码表，a 对应 97，再把 97 转成二进制 01100001 存起来。ASCII 里没有汉字，要查 GBK、Unicode 这类包含中文的码表得到数字，再转二进制。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. RGB(255, 255, 0) 是什么颜色？用十六进制怎么写？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">红和绿开满、不要蓝，是黄色（光的三原色里，红 + 绿 = 黄）。十六进制写作 FF FF 00，网页里常写成 <code>#FFFF00</code>。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="19.html"><small>← 上一篇</small>P19–21 变量</a>
+    <a class="next" href="23.html"><small>下一篇 →</small>P23–25 数据类型与标识符</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P22（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=22" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const SUP = n => String(n).split('').map(d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]).join('');
+
+/* ---------- 二进制计数器 ---------- */
+(function () {
+  const N = 6, W = [32, 16, 8, 4, 2, 1];
+  let v = 0, busy = false, auto = false;
+  const box = $('#bits');
+  box.innerHTML = W.map((w, i) => `<div class="bit" data-i="${i}"><div class="lamp">0</div><div class="w">${w}</div></div>`).join('');
+  const cells = $$('.bit', box);
+  function paint(carryIdx) {
+    cells.forEach((c, i) => {
+      const on = (v >> (N - 1 - i)) & 1;
+      c.classList.toggle('on', !!on);
+      c.classList.toggle('carry', i === carryIdx);
+      c.querySelector('.lamp').textContent = on;
+    });
+    const parts = W.filter((w, i) => (v >> (N - 1 - i)) & 1);
+    $('#bin-read').innerHTML = `二进制 <b>${v.toString(2).padStart(N, '0')}</b>　=　十进制 <b>${v}</b>` + (parts.length > 1 ? `<br><span style="font-size:13.5px;color:var(--muted)">8421：${parts.join(' + ')} = ${v}</span>` : '');
+  }
+  async function inc() {
+    if (busy) return; busy = true;
+    if (v === 63) { $('#bin-note').textContent = '6 位最多只能到 63（111111），再加 1 就溢出成 0 了'; v = 0; paint(); busy = false; return; }
+    let i = N - 1, msg = [];
+    while (i >= 0) {
+      const bit = (v >> (N - 1 - i)) & 1;
+      paint(i);
+      if (bit) { v &= ~(1 << (N - 1 - i)); msg.push('1+1=10，写 0 进 1'); paint(i); await sleep(auto ? 60 : 260); i--; }
+      else { v |= (1 << (N - 1 - i)); paint(i); break; }
+    }
+    $('#bin-note').textContent = msg.length ? `${msg.length} 次进位：` + (msg.length === 1 ? msg[0] : '逢二进一，一路往左传') : '这一位是 0，变成 1，不用进位';
+    await sleep(auto ? 80 : 200); paint(); busy = false;
+  }
+  cells.forEach((c, i) => c.onclick = () => { if (busy) return; v ^= 1 << (N - 1 - i); $('#bin-note').textContent = '直接开关一盏灯'; paint(); });
+  $('#bin-inc').onclick = inc;
+  $('#bin-clr').onclick = () => { auto = false; v = 0; $('#bin-note').textContent = ''; paint(); };
+  $('#bin-auto').onclick = async () => {
+    if (auto) { auto = false; return; }
+    auto = true; $('#bin-auto').textContent = '停';
+    if (v === 63) v = 0;
+    while (auto && v < 63) { await inc(); await sleep(120); }
+    auto = false; $('#bin-auto').textContent = '自动数到 63';
+  };
+  paint();
+})();
+
+/* ---------- Java 进制前缀小测 ---------- */
+(function () {
+  const Q = [
+    ['17', true, '十进制（没有前缀），打印 17'],
+    ['017', true, '0 开头是八进制：1×8+7，打印 15'],
+    ['0b123', false, '语法错误：0b 是二进制，二进制里没有 2 和 3'],
+    ['0x123', true, '0x 开头是十六进制：1×256+2×16+3，打印 291'],
+    ['0B101', true, '大写 B 也行，二进制 101，打印 5'],
+    ['0xFF', true, '十六进制 FF = 15×16+15，打印 255'],
+    ['08', false, '语法错误：0 开头就是八进制，八进制里没有 8', 1],
+    ['0x1G', false, '语法错误：十六进制只到 f，没有 G', 1],
+  ];
+  $('#pq').innerHTML = Q.map(([c], i) => `<button data-i="${i}"><code>${c}</code><small>点开看答案</small></button>`).join('');
+  $$('#pq button').forEach(b => b.onclick = () => { const [c, ok, a] = Q[+b.dataset.i]; b.classList.add(ok ? 'ok' : 'bad'); b.innerHTML = `<code>${c}</code><small>${a}</small>`; });
+})();
+
+/* ---------- 进制转换器 ---------- */
+(function () {
+  let from = 2, to = 10;
+  const NAME = { 2: '二进制', 8: '八进制', 10: '十进制', 16: '十六进制' };
+  const PRE = { 2: '0b', 8: '0', 10: '', 16: '0x' };
+  const DIG = '0123456789abcdef';
+  function paint() {
+    $$('#cv-from button').forEach(b => b.classList.toggle('sel', +b.dataset.b === from));
+    $$('#cv-to button').forEach(b => b.classList.toggle('sel', +b.dataset.b === to));
+    const raw = $('#cv-in').value.trim().toLowerCase().replace(/^0[bx]/, '');
+    const err = $('#cv-err'), res = $('#cv-res'), st = $('#cv-steps');
+    const bad = [...raw].find(c => DIG.indexOf(c) < 0 || DIG.indexOf(c) >= from);
+    if (!raw || bad !== undefined || raw.length > 12) {
+      err.textContent = !raw ? '输入一个数' : raw.length > 12 ? '演示里最多输入 12 位' : `"${bad}" 不是${NAME[from]}里的数字：${NAME[from]}只能用 ${DIG.slice(0, from).split('').join(' ')}`;
+      res.innerHTML = st.innerHTML = ''; return;
+    }
+    err.textContent = '';
+    const n = parseInt(raw, from);
+    res.innerHTML = [2, 8, 10, 16].map(b => `<div class="${b === to ? 'cur' : ''}"><small>${NAME[b]}${b === from ? '（输入）' : ''}</small>${n.toString(b)}<small>Java 写作 ${PRE[b]}${n.toString(b)}</small></div>`).join('');
+    let h = '';
+    if (from !== 10) {
+      const ds = [...raw], L = ds.length;
+      const terms = ds.map((d, i) => `${DIG.indexOf(d)}×${from}${SUP(L - 1 - i)}`);
+      const vals = ds.map((d, i) => DIG.indexOf(d) * Math.pow(from, L - 1 - i));
+      h += `<div class="h">① ${NAME[from]} → 十进制：系数 × 基数的权次幂，再相加</div>${terms.join(' + ')}<br>= ${vals.join(' + ')}<br>= <b>${n}</b>`;
+      if (from === 2) { const ones = vals.filter(x => x); h += `<br><span class="h">8421 法：只把是 1 的位代表的数加起来 → ${ones.join(' + ') || 0} = ${n}</span>`; }
+    }
+    if (to !== 10 && to !== from) {
+      const rows = []; let q = n;
+      do { rows.push([q, Math.floor(q / to), q % to]); q = Math.floor(q / to); } while (q > 0);
+      h += `${h ? '<br><br>' : ''}<div class="h">${from !== 10 ? '②' : '①'} 十进制 → ${NAME[to]}：除基取余，一直除到商为 0</div><table>` +
+        rows.map(([a, b, r]) => `<tr><td>${a} ÷ ${to}</td><td>= ${b}</td><td>余</td><td class="r">${DIG[r]}</td></tr>`).join('') +
+        `</table>余数从下往上倒着拼：<b>${n.toString(to)}</b>`;
+    }
+    if (!h) h = '<span class="h">输入和输出是同一种进制，不用转。</span>';
+    st.innerHTML = h;
+  }
+  $$('#cv-from button').forEach(b => b.onclick = () => { from = +b.dataset.b; paint(); });
+  $$('#cv-to button').forEach(b => b.onclick = () => { to = +b.dataset.b; paint(); });
+  $('#cv-in').addEventListener('input', paint);
+  paint();
+})();
+
+/* ---------- 文本编码 ---------- */
+(function () {
+  let enc = 'gbk', GBK = null;
+  function buildGBK() { // 用浏览器的 GBK 解码器反推出"字 → 两个字节"的表
+    GBK = new Map();
+    let dec;
+    try { dec = new TextDecoder('gbk'); } catch (e) { return; }
+    for (let a = 0x81; a <= 0xfe; a++) for (let b = 0x40; b <= 0xfe; b++) {
+      if (b === 0x7f) continue;
+      const ch = dec.decode(new Uint8Array([a, b]));
+      if (ch.length === 1 && ch !== '�' && !GBK.has(ch)) GBK.set(ch, [a, b]);
+    }
+  }
+  const hex = bs => bs.map(x => x.toString(16).toUpperCase().padStart(2, '0')).join(' ');
+  const bin = bs => bs.map(x => x.toString(2).padStart(8, '0')).join(' ');
+  function gbkBytes(ch) { const cp = ch.codePointAt(0); if (cp < 0x80) return [cp]; return GBK && GBK.get(ch) || null; }
+  function paint() {
+    if (!GBK) buildGBK();
+    $$('#tx-enc button').forEach(b => b.classList.toggle('sel', b.dataset.e === enc));
+    const chars = [...$('#tx-in').value].slice(0, 24);
+    let total = 0, missing = 0;
+    const rows = chars.map(ch => {
+      const cp = ch.codePointAt(0), u8 = [...new TextEncoder().encode(ch)], g = gbkBytes(ch);
+      const use = enc === 'gbk' ? g : u8;
+      if (use) total += use.length; else missing++;
+      const num = cp < 128 ? `${cp}<br><small style="color:var(--muted)">ASCII</small>` : `${cp}<br><small style="color:var(--muted)">U+${cp.toString(16).toUpperCase().padStart(4, '0')}</small>`;
+      return `<tr><td class="c">${ch === ' ' ? '␣' : esc(ch)}</td><td>${num}</td><td>${g ? '<code>' + hex(g) + '</code>' : '<span class="na">GBK 里没有</span>'}</td><td><code>${hex(u8)}</code></td><td>${use ? '<code>' + bin(use) + '</code>' : '<span class="na">存不了</span>'}</td></tr>`;
+    }).join('');
+    $('#tx-tab').innerHTML = `<tr><th>字符</th><th>编号（十进制）</th><th>GBK 字节</th><th>UTF-8 字节</th><th>按 ${enc === 'gbk' ? 'GBK' : 'UTF-8'} 存成的二进制</th></tr>` + rows;
+    $('#tx-sum').innerHTML = chars.length ? `一共 ${chars.length} 个字符，按 ${enc === 'gbk' ? 'GBK' : 'UTF-8'} 存需要 <b>${total} 个字节</b>` + (missing ? `，另有 ${missing} 个字符这张码表里没有` : '') + '。英文字母和数字在两张码表里一模一样（都沿用 ASCII）；汉字 GBK 用 2 个字节，UTF-8 用 3 个。' : '';
+  }
+  $$('#tx-enc button').forEach(b => b.onclick = () => { enc = b.dataset.e; paint(); });
+  $('#tx-in').addEventListener('input', paint);
+  paint();
+})();
+
+/* ---------- 像素 ---------- */
+(function () {
+  const SMILE = [
+    '1111111111',
+    '1111111111',
+    '1100110011',
+    '1100110011',
+    '1111111111',
+    '1111111111',
+    '1011111101',
+    '1101111011',
+    '1110000111',
+    '1111111111'];
+  // 灰度 8：0 = 黑底，笔画是不同程度的灰
+  const EIGHT = [
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 62, 146, 182, 146, 4, 0, 0],
+    [0, 0, 62, 230, 120, 110, 235, 62, 0, 0],
+    [0, 0, 120, 200, 0, 0, 200, 120, 0, 0],
+    [0, 0, 30, 220, 182, 190, 215, 30, 0, 0],
+    [0, 0, 62, 230, 146, 150, 230, 62, 0, 0],
+    [0, 0, 182, 160, 0, 0, 170, 182, 0, 0],
+    [0, 0, 160, 210, 62, 70, 215, 146, 0, 0],
+    [0, 0, 4, 120, 210, 220, 120, 4, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]];
+  let mode = 'bw', nums = false;
+  let bw = SMILE.map(r => r.split('').map(Number)), gray = EIGHT.map(r => [...r]);
+  const LV = [0, 62, 146, 182, 255];
+  function paint() {
+    $$('#px-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    $('#px-num').textContent = nums ? '显示颜色' : '显示数字';
+    const g = mode === 'bw' ? bw : gray, box = $('#px');
+    box.classList.toggle('nums', nums);
+    box.innerHTML = g.map((row, y) => row.map((v, x) => {
+      const c = mode === 'bw' ? (v ? 255 : 0) : v;
+      const bg = nums ? 'var(--panel)' : `rgb(${c},${c},${c})`;
+      const fg = nums ? 'var(--ink)' : 'transparent';
+      return `<div data-x="${x}" data-y="${y}" style="background:${bg};color:${fg}">${v}</div>`;
+    }).join('')).join('');
+    $$('#px div').forEach(d => d.onclick = () => {
+      const x = +d.dataset.x, y = +d.dataset.y;
+      if (mode === 'bw') bw[y][x] ^= 1; else gray[y][x] = LV[(LV.indexOf(gray[y][x]) + 1) % LV.length] ?? 0;
+      paint();
+    });
+    $('#px-desc').innerHTML = mode === 'bw'
+      ? '<b>黑白图</b>：每个像素只有两种可能，白是 <code>1</code>，黑是 <code>0</code>。这张 10×10 的笑脸就是 100 个 0 和 1。点格子可以改。'
+      : '<b>灰度图</b>：每个像素是 0~255 之间的一个数，<code>0</code> 纯黑，<code>255</code> 纯白，中间是不同深浅的灰。点格子在 0、62、146、182、255 之间切换。';
+  }
+  $$('#px-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; paint(); });
+  $('#px-num').onclick = () => { nums = !nums; paint(); };
+  paint();
+})();
+
+/* ---------- RGB ---------- */
+(function () {
+  const P = [[43, 123, 194], [198, 62, 85], [240, 190, 40], [255, 0, 0], [0, 255, 0], [0, 0, 255], [255, 255, 255], [0, 0, 0]];
+  $('#c-pre').innerHTML = P.map(([r, g, b]) => `<button style="background:rgb(${r},${g},${b})" data-c="${r},${g},${b}" aria-label="rgb ${r} ${g} ${b}"></button>`).join('');
+  $$('#c-pre button').forEach(b => b.onclick = () => { const [r, g, bl] = b.dataset.c.split(',').map(Number); $('#c-r').value = r; $('#c-g').value = g; $('#c-b').value = bl; paint(); });
+  const H = n => n.toString(16).toUpperCase().padStart(2, '0');
+  function paint() {
+    const r = +$('#c-r').value, g = +$('#c-g').value, b = +$('#c-b').value;
+    $('#c-rv').textContent = r; $('#c-gv').textContent = g; $('#c-bv').textContent = b;
+    $('#c-sw').style.background = `rgb(${r},${g},${b})`;
+    $('#c-txt').innerHTML = `十进制：<code>${r} ${g} ${b}</code><br>十六进制：<code>${H(r)} ${H(g)} ${H(b)}</code>（网页里写 <code>#${H(r)}${H(g)}${H(b)}</code>）<br>二进制：<code>${[r, g, b].map(x => x.toString(2).padStart(8, '0')).join(' ')}</code><br><span style="color:var(--muted)">一个像素 = 24 个 0 和 1</span>`;
+  }
+  ['#c-r', '#c-g', '#c-b'].forEach(s => $(s).addEventListener('input', paint));
+  paint();
+})();
+
+/* ---------- 声音采样 ---------- */
+(function () {
+  const svg = $('#snd'), W = 640, H = 200, M = 10;
+  const f = t => 0.55 * Math.sin(2 * Math.PI * 1.5 * t) + 0.3 * Math.sin(2 * Math.PI * 4.3 * t + 0.6) + 0.15 * Math.sin(2 * Math.PI * 9.1 * t + 1.1);
+  const X = t => M + t * (W - 2 * M), Y = v => H / 2 - v * (H / 2 - 12);
+  function paint() {
+    const n = +$('#snd-n').value;
+    $('#snd-nv').textContent = n + ' 个';
+    svg.innerHTML = '';
+    el('line', { x1: M, y1: H / 2, x2: W - M, y2: H / 2, class: 'snd-axis' }, svg);
+    let d = '';
+    for (let i = 0; i <= 400; i++) { const t = i / 400; d += (i ? 'L' : 'M') + X(t).toFixed(1) + ',' + Y(f(t)).toFixed(1); }
+    el('path', { d, class: 'snd-orig' }, svg);
+    const pts = Array.from({ length: n }, (_, i) => { const t = i / (n - 1); return [t, f(t)]; });
+    el('path', { d: pts.map(([t, v], i) => (i ? 'L' : 'M') + X(t).toFixed(1) + ',' + Y(v).toFixed(1)).join(''), class: 'snd-rec' }, svg);
+    if (n <= 60) pts.forEach(([t, v]) => el('circle', { cx: X(t), cy: Y(v), r: 3.2, class: 'snd-dot' }, svg));
+    const q = pts.map(([, v]) => Math.round((v + 1) / 2 * 255));
+    $('#snd-nums').textContent = `存下来的就是这 ${n} 个数字（0~255）：` + q.join(' ');
+  }
+  $('#snd-n').addEventListener('input', paint);
+  paint();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P30–31 算术运算符与类型转换 · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;font-size:14px;margin:6px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:6px 0}
+.chips button{font:12.5px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 9px;cursor:pointer}
+.chips button:hover{border-color:var(--accent);color:var(--accent)}
+select,.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink)}
+.inp{width:110px}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:8px 12px;font:13.5px/1.7 var(--mono);margin-top:8px;white-space:pre-wrap;word-break:break-all}
+.out .err{color:#ff8a8a}.out .note{color:#7f8794}.out .ok{color:#7ee2a0}.out .acc{color:#ffb03a}
+.flow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:10px;font:13.5px var(--mono)}
+.flow span{padding:3px 8px;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
+.flow span.up{border-color:var(--on);background:var(--on-soft)}
+.flow span.res{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+.flow i{font-style:normal;color:var(--muted)}
+
+/* 范围条 */
+.ladder{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:8px 0;font:14px var(--mono)}
+.ladder span{padding:3px 9px;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
+.ladder i{font-style:normal;color:var(--muted)}
+
+/* 拆数 */
+.dig{display:grid;grid-template-columns:auto auto minmax(0,1fr);gap:4px 14px;font:14px var(--mono);margin-top:8px;align-items:center}
+.dig .h{font:600 12.5px sans-serif;color:var(--muted)}
+.dig b{color:var(--on);font-size:16px}
+
+/* 小测 */
+.tq{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.tq .it{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel)}
+.tq .it code{display:block;white-space:pre;font-size:13px;line-height:1.6}
+.tq .opts{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.tq .opts button{font:12.5px var(--mono);border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:1px 7px;cursor:pointer}
+.tq .opts button.on{border-color:var(--ok);color:var(--ok);font-weight:700}
+.tq .opts button.bad{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.tq .it.ok{border-color:var(--ok);background:var(--ok-soft)}
+.tq .it.no{border-color:var(--bad);background:var(--bad-soft)}
+.tq .why{font-size:13px;margin-top:6px}
+
+/* 强转 */
+.bits{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.bits .byte{display:flex;gap:1px;border:1px solid var(--line);border-radius:6px;padding:3px;background:var(--panel)}
+.bits .byte b{width:15px;height:20px;display:flex;align-items:center;justify-content:center;font:11px var(--mono);border-radius:2px;background:var(--bg);color:var(--muted)}
+.bits .byte b.one{background:var(--muted);color:var(--panel)}
+.bits .byte.keep{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.bits .byte.keep b.one{background:var(--on);color:#fff}
+.bits .byte.cut{opacity:.4}
+.bits .byte.cut b{text-decoration:line-through}
+.cast-res{font-size:15px;margin-top:8px}
+</style>
+</head>
+<body data-ep="30" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=30" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">运算符 · P30–P31</div>
+  <h1>算术运算符与类型转换</h1>
+  <p class="en">Arithmetic Operators, Implicit &amp; Explicit Casting</p>
+  <p class="lead">加减乘除小学就会，但在代码里有几处不一样：小数算出来可能不精确，整数相除只得整数，还多了一个取余数的 <code>%</code>。不同类型的数据相加时，Java 会先把它们转成同一种类型：小的自动变大叫<b>隐式转换</b>，大的硬塞进小的叫<b>强制转换</b>，后者可能把数据弄错。</p>
+  <div class="road">
+    <span>运算符与表达式</span><i>→</i><span>+ − *</span><i>→</i><span>/ 和 %</span><i>→</i><span>练习：数值拆分</span><i>→</i><span>隐式转换</span><i>→</i><span>强制转换</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 运算符与表达式</a></li>
+    <li><a href="#ch2">2 · 加减乘除和取模</a></li>
+    <li><a href="#ch3">3 · 练习：数值拆分</a></li>
+    <li><a href="#ch4">4 · 隐式转换</a></li>
+    <li><a href="#ch5">5 · 强制转换</a></li>
+    <li><a href="#ch6">6 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P30</div>
+  <h2>运算符和表达式</h2>
+  <p>第三天的内容很"快乐"：很多东西小学、初中数学里都见过，主要看它们在代码里有什么不一样。先看两个概念：</p>
+  <ul>
+    <li><b>运算符</b>：对字面量或者变量进行操作的<b>符号</b>；</li>
+    <li><b>表达式</b>：用运算符把字面量或变量连接起来、符合 Java 语法的<b>式子</b>。不同运算符连接的表达式，是不同类型的表达式。</li>
+  </ul>
+  <code class="blk"><span class="hk">int</span> a = 10;
+<span class="hk">int</span> b = 20;
+<span class="hk">int</span> c = a + b;   <span class="hc">// + 是运算符（算术运算符）；a + b 是表达式（算术表达式）</span>
+                 <span class="hc">// 变量 c 记录了右边这个表达式的最终结果</span></code>
+  <p>一共要学六种运算符：<b>算术</b>运算符、<b>自增自减</b>运算符、<b>赋值</b>运算符、<b>关系</b>运算符、<b>逻辑</b>运算符、<b>三元</b>运算符。最后还会学运算符的<b>优先级</b>，看谁先算。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P30</div>
+  <h2>加减乘除和取模</h2>
+  <p>算术运算符有 <code>+</code> <code>-</code> <code>*</code> <code>/</code> <code>%</code>，基本用法参见小学数学。在 day03-code 模块里建包 <code>com.itheima.arithmeticoperator</code>，新建类 ArithmeticDemo1 来试。</p>
+  <ul>
+    <li><b>乘号</b>不是 ×，是 <code>*</code>（<code>Shift</code>+<code>8</code>）；<b>除号</b>是 <code>/</code>（右边 Shift 左边的那个键）。运算符前后一般加个空格，读起来更清楚。</li>
+    <li><code>3 + 2</code> = 5，<code>5 - 1</code> = 4，<code>7 * 9</code> = 63，和小学一模一样。</li>
+  </ul>
+  <p><b>细节一：有小数参与计算，结果<u>有可能</u>不精确。</b><code>1.1 + 1.01</code> 本该是 2.11，运行结果却是 <code>2.1100000000000003</code>。不只是加法，加减乘除都可能这样。但只是"有可能"：<code>1.1 + 1.1</code> 就正好是 2.2。原因涉及小数在计算机里的存储方式，比较难，放到进阶再讲，现在先记住结论。</p>
+  <p><b>细节二：整数参与计算，结果只能得到整数。</b><code>10 / 2</code> 是 5，<code>10 / 3</code> 按小学应该是 3.333…，运行结果却是 <code>3</code>。想要小数，<b>必须有小数参与计算</b>：<code>10.0 / 3</code> 得 <code>3.3333333333333335</code>，最后一位的 5 又是"不精确"在作怪。需要精确计算要用后面的知识。</p>
+  <p><b>取模 <code>%</code></b>，也叫<b>取余</b>：做的也是除法，只不过得到的是<b>余数</b>。<code>10 % 2</code> 商 5 余 0，结果 0；<code>10 % 3</code> 商 3 余 1，结果 1。取模的应用场景：</p>
+  <ol>
+    <li>判断 A 能不能被 B 整除：<code>A % B</code> 是不是 0；</li>
+    <li>判断 A 是不是偶数：<code>A % 2</code> 为 0 是偶数，为 1 是奇数；</li>
+    <li>斗地主发牌：给每张牌编个序号，序号 <code>% 3</code> 为 1 发给第一个玩家，为 2 发给第二个，为 0 发给第三个（以后有这个练习）。</li>
+  </ol>
+
+  <div class="card">
+    <h3>动手：Java 计算器（会按 Java 的规矩算）</h3>
+    <p style="margin-top:0">选两个数的类型、填值、选运算符。下面会显示 Java 算出来的结果，以及类型是怎么提升的（第 4 节会讲）。先点几个例子。</p>
+    <div class="row">
+      <select id="ca-ta" aria-label="a 的类型"></select><input class="inp" id="ca-a" aria-label="a 的值">
+      <select id="ca-op" aria-label="运算符"><option>+</option><option>-</option><option>*</option><option>/</option><option>%</option></select>
+      <select id="ca-tb" aria-label="b 的类型"></select><input class="inp" id="ca-b" aria-label="b 的值">
+    </div>
+    <div class="chips" id="ca-ex"></div>
+    <div class="flow" id="ca-flow"></div>
+    <div class="out" id="ca-out"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">补充：负数取模、除以 0</span>
+    Java 里 <code>%</code> 的结果<b>符号跟着被除数走</b>：<code>-10 % 3</code> 是 <code>-1</code>，<code>10 % -3</code> 是 <code>1</code>。所以判断奇数最好写 <code>a % 2 != 0</code>，而不是 <code>a % 2 == 1</code>（负奇数取模得 −1）。<br>
+    整数除以 0 会让程序崩溃（<code>ArithmeticException: / by zero</code>）；小数除以 0 不会崩，得到 <code>Infinity</code>（无穷大），<code>0.0 / 0</code> 得到 <code>NaN</code>（不是一个数）。上面的计算器都能试。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P30</div>
+  <h2>练习：数值拆分</h2>
+  <div class="callout"><span class="t">需求</span>键盘录入一个三位数，拆分出它的个位、十位、百位，打印在控制台。比如输入 123：个位 3，十位 2，百位 1。</div>
+  <p><b>分析</b>：键盘录入用 Scanner。怎么拆？提示：<b>整数相除只能得到整数</b>，这个结果就是<b>商</b>；<b>%</b> 做的也是除法，得到的是<b>余数</b>。</p>
+  <ul>
+    <li><b>个位</b>：<code>123 % 10</code>，123÷10 商 12 余 3，取余数 3。</li>
+    <li><b>十位</b>：先除 10 再模 10。<code>123 / 10</code> 得商 12，<code>12 % 10</code> 得 2。</li>
+    <li><b>百位</b>：先除 100 再模 10。<code>123 / 100</code> 已经是 1 了，最后的 <code>% 10</code> 可以不写，但建议补上：这样就是一个完整的公式，千位、万位都能往下推。</li>
+  </ul>
+  <code class="blk">个位：数字 % 10
+十位：数字 / 10 % 10
+百位：数字 / 100 % 10
+千位：数字 / 1000 % 10
+……</code>
+  <p>练习放在新包 <code>com.itheima.test</code> 里（包名用来区分演示和练习）。用 IDEA 写 Scanner 不用自己导包，它会自动加上。</p>
+  <code class="blk"><span class="hk">public class</span> Test1 {
+    <span class="hk">public static void</span> main(String[] args) {
+        <span class="hc">// 键盘录入一个三位数，获取其中的个位、十位、百位</span>
+        Scanner sc = <span class="hk">new</span> Scanner(System.in);
+        System.out.println(<span class="hs">"请输入一个三位数"</span>);
+        <span class="hk">int</span> number = sc.nextInt();
+        <span class="hk">int</span> ge = number % 10;
+        <span class="hk">int</span> shi = number / 10 % 10;
+        <span class="hk">int</span> bai = number / 100 % 10;
+        System.out.println(ge);
+        System.out.println(shi);
+        System.out.println(bai);
+    }
+}</code>
+  <p>想重新运行，可以再右键 Run，或者点控制台左边的绿色小三角。</p>
+
+  <div class="card">
+    <h3>动手：拆一个数</h3>
+    <div class="row"><span>输入一个整数：</span><input class="inp" id="dg-in" value="123" aria-label="要拆分的数"></div>
+    <div class="dig" id="dg"></div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P31</div>
+  <h2>隐式转换：小的自动变大</h2>
+  <p>算术运算符的高级用法有三种情况：数字相加、字符串相加、字符相加。这一节先说数字相加。"1+1=2 就这？"来看看代码里加法的险恶：</p>
+  <ul>
+    <li><code>int a = 10; double b = 12.3;</code>，<code>a + b</code> 的结果是什么类型？22.3 是小数，所以是 double，没问题。</li>
+    <li><code>int a = 10; double b = 20.0;</code>，<code>a + b</code> 呢？结果 30.0，说是 int 和 double 好像都解释得通。所以要学规则。</li>
+  </ul>
+  <p><b>规则</b>：数字运算时，数据类型不一样<b>不能直接运算</b>，需要先转成一样的类型。转换有两种：</p>
+  <ul>
+    <li><b>隐式转换</b>（也叫<b>自动类型提升</b>）：取值范围<b>小</b>的 → 取值范围<b>大</b>的。<b>不需要我们写代码</b>，程序自动完成。</li>
+    <li><b>强制转换</b>：取值范围<b>大</b>的 → 取值范围<b>小</b>的。下一节讲。</li>
+  </ul>
+  <p>取值范围从小到大：</p>
+  <div class="ladder"><span>byte</span><i>&lt;</i><span>short</span><i>&lt;</i><span>int</span><i>&lt;</i><span>long</span><i>&lt;</i><span>float</span><i>&lt;</i><span>double</span></div>
+  <p>比如 <code>int a = 10; double b = a;</code>，以前看这行肯定有问题（类型不一样怎么赋值），现在能解释了：a 的取值范围小，赋值给范围大的 b 时，a 里记录的 10 <b>自动提升</b>为 10.0，b 里就是 10.0。就像把 1 升水倒进 8 升的盆里，最多盆没装满，水不会洒。</p>
+  <p>有了隐式转换，不同类型的数据才能一起计算。计算时有两条<b>提升规则</b>：</p>
+  <ol>
+    <li>取值范围小的和取值范围大的一起算，<b>小的先提升为大的</b>，再计算。<code>int a + double b</code>：a 先变成 double，相当于两个 double 相加，结果 double。</li>
+    <li><b>byte、short、char 三种类型在运算时，都会先直接提升为 int</b>，再计算。所以 <code>byte a = 10; byte b = 20;</code>，<code>a + b</code> 的结果是 <b>int</b>，不是 byte！（char 怎么提升，下一篇讲字符相加时说。）</li>
+  </ol>
+
+  <div class="card">
+    <h3>考考你：结果是什么类型？</h3>
+    <p style="margin-top:0">前三题是视频里的练习，后面三题是补充的。</p>
+    <div class="tq" id="tq"></div>
+  </div>
+
+  <p>这些题的关键是：加法<b>从左到右</b>依次算，每一步都按两条规则判断要不要提升。第三题有个坑：<code>byte + short</code> 不是提升成 short，而是两个都直接变 int。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P31</div>
+  <h2>强制转换：大的硬塞进小的</h2>
+  <p>把取值范围大的数据赋值给取值范围小的变量，<b>不允许直接赋值</b>。一定要这么做，就加上强制转换，需要自己手动写：</p>
+  <code class="blk">目标数据类型 变量名 = (目标数据类型) 被强转的数据;
+
+<span class="hk">double</span> a = 12.3;
+<span class="hk">int</span> b = (<span class="hk">int</span>) a;      <span class="hc">// 想转成什么类型，括号里就写什么类型</span></code>
+  <p>注意：<b>强制转换有可能导致数据发生错误</b>。用 8 升的盆往 1 升的杯子里倒水，盆里超过 1 升，水就洒了。比如 <code>int a = 300;</code> 强转成 byte：byte 最大只到 127，数据就错了。具体原理视频说放到第二阶段讲，本站的 <a href="38.html">P38 原码反码补码</a>那篇已经讲了，下面的演示也能直接看到。</p>
+  <p><b>练习</b>：</p>
+  <code class="blk"><span class="hk">byte</span> b1 = 10;
+<span class="hk">byte</span> b2 = 20;
+<span class="hk">int</span> result = b1 + b2;            <span class="hc">// 没问题：b1、b2 先提升为 int，结果是 int</span>
+<span class="hk">byte</span> result = (<span class="hk">byte</span>) b1 + b2;    <span class="hc">// 红色波浪线！只强转了 b1，加完还是 int</span>
+<span class="hk">byte</span> result = (<span class="hk">byte</span>) (b1 + b2);  <span class="hc">// 正确：先算括号里的，再把整体结果强转成 byte</span></code>
+  <p>把 result 改成 byte 类型时，等号右边要转的是 <code>b1 + b2</code> 的<b>整体结果</b>，所以要用括号把它们括起来。运行结果 30 没问题；把 b1、b2 都改成 100，结果不是 200，而是 <code>-56</code>：200 超出了 byte 的范围，数据过大，强转后就错了。</p>
+
+  <div class="card">
+    <h3>动手：强转到底丢了什么</h3>
+    <p style="margin-top:0">整数强转成更小的类型时，Java 只是<b>把多出来的高位字节直接砍掉</b>，留下的那几个字节重新解读成新类型。小数转整数则是直接<b>丢掉小数部分</b>。</p>
+    <div class="row">
+      <span>(</span><select id="cs-to" aria-label="目标类型"><option>byte</option><option>short</option><option>char</option><option>int</option></select><span>)</span>
+      <input class="inp" id="cs-v" value="200" aria-label="被强转的数据"><span id="cs-from" style="color:var(--muted)"></span>
+    </div>
+    <div class="chips" id="cs-ex"></div>
+    <div class="bits" id="cs-bits"></div>
+    <div class="cast-res" id="cs-res"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">补充：为什么 200 变成了 −56</span>
+    200 的 int 是 32 位：<code>00000000 00000000 00000000 11001000</code>。强转成 byte 只留最后 8 位 <code>11001000</code>。byte 的最高位是符号位，1 表示负数，按补码解读，<code>11001000</code> 就是 −56（200 − 256 = −56）。同理 300 留下 <code>00101100</code>，变成 44。<br>
+    小数强转整数是<b>直接截掉小数部分</b>，不是四舍五入：<code>(int) 12.7</code> 是 12，<code>(int) -12.7</code> 是 −12。想四舍五入要用 <code>Math.round</code>，P155 会学。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>算术运算符</b></td><td><code>+ - * / %</code>。有小数参与，结果可能不精确；整数相除只得整数（商）；<code>%</code> 取余数</td></tr>
+      <tr><td><b>取模用途</b></td><td>判断整除（余数为 0）、判断奇偶（<code>% 2</code>）、按序号分组发牌</td></tr>
+      <tr><td><b>数值拆分</b></td><td>个位 <code>% 10</code>，十位 <code>/ 10 % 10</code>，百位 <code>/ 100 % 10</code></td></tr>
+      <tr><td><b>隐式转换</b></td><td>小 → 大，自动。范围 byte &lt; short &lt; int &lt; long &lt; float &lt; double。小的和大的算，小的先提升；byte、short、char 运算时先提升为 int</td></tr>
+      <tr><td><b>强制转换</b></td><td>大 → 小，手动：<code>(目标类型) 数据</code>。转整体结果要加括号；数据过大会出错</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    不同类型先统一再计算：小的自动往大的提升（byte、short、char 直接到 int）；大的往小的塞要自己写强转，装不下就会出错。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>System.out.println(10 / 3);</code> 和 <code>System.out.println(10.0 / 3);</code> 分别打印什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">3 和 3.3333333333333335。整数相除只得整数；有小数参与才有小数，而且小数的结果可能不精确。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 怎么拿到 4567 的十位和千位？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">十位 <code>4567 / 10 % 10</code> = 6；千位 <code>4567 / 1000 % 10</code> = 4。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. <code>byte b1 = 10; byte b2 = 20; byte r = b1 + b2;</code> 为什么报错？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">byte 参与运算时会先提升为 int，b1 + b2 的结果是 int，不能直接赋值给 byte。要写 <code>byte r = (byte) (b1 + b2);</code></div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>int i = 10; long n = 100; double d = 20.0;</code>，<code>i + n + d</code> 是什么类型？说出提升过程。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">从左到右：i + n，int 提升为 long，结果 long；long + d，long 提升为 double，结果 double。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. <code>(byte) (100 + 100)</code> 是多少？为什么不是 200？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">−56。byte 的范围是 −128 ~ 127，200 装不下；强转时只保留最低 8 位 11001000，按补码解读是 −56。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="26.html"><small>← 上一篇</small>P26–29 键盘录入与 IDEA</a>
+    <a class="next" href="32.html"><small>下一篇 →</small>P32–34 字符串相加、自增自减、赋值与关系</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P30–P31（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=30" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function javaFloatStr(x, isFloat) {
+  if (Number.isNaN(x)) return 'NaN';
+  if (!isFinite(x)) return x > 0 ? 'Infinity' : '-Infinity';
+  if (x === 0) return (Object.is(x, -0) ? '-' : '') + '0.0';
+  let v = x;
+  if (isFloat) { for (let p = 1; p <= 9; p++) { const t = Number(x.toPrecision(p)); if (Math.fround(t) === x) { v = t; break; } } }
+  const neg = v < 0, a = Math.abs(v);
+  const [m, e] = a.toExponential().split('e'), ex = +e, digits = m.replace('.', '');
+  let s;
+  if (a >= 1e-3 && a < 1e7) {
+    if (ex >= 0) { const ip = digits.slice(0, ex + 1).padEnd(ex + 1, '0'), fp = digits.slice(ex + 1); s = ip + '.' + (fp || '0'); }
+    else s = '0.' + '0'.repeat(-ex - 1) + digits;
+  } else s = digits[0] + '.' + (digits.slice(1) || '0') + 'E' + ex;
+  return (neg ? '-' : '') + s;
+}
+
+/* ---------- Java 计算器 ---------- */
+(function () {
+  const TY = ['byte', 'short', 'char', 'int', 'long', 'float', 'double'];
+  const RANGE = { byte: [-128n, 127n], short: [-32768n, 32767n], char: [0n, 65535n], int: [-2147483648n, 2147483647n], long: [-(2n ** 63n), 2n ** 63n - 1n] };
+  const RANK = { int: 1, long: 2, float: 3, double: 4 };
+  const EX = [['int', '10', '/', 'int', '3'], ['double', '10.0', '/', 'int', '3'], ['double', '1.1', '+', 'double', '1.01'], ['double', '1.1', '+', 'double', '1.1'], ['int', '10', '%', 'int', '3'], ['int', '-10', '%', 'int', '3'], ['byte', '10', '+', 'byte', '20'], ['int', '10', '+', 'long', '100'], ['char', 'a', '+', 'int', '1'], ['int', '10', '/', 'int', '0'], ['double', '10', '/', 'double', '0'], ['int', '2147483647', '+', 'int', '1']];
+  ['#ca-ta', '#ca-tb'].forEach(s => $(s).innerHTML = TY.map(t => `<option>${t}</option>`).join(''));
+  $('#ca-ex').innerHTML = '<span>例子：</span>' + EX.map((e, i) => `<button data-i="${i}">${e[1]} ${e[2]} ${e[4]}${e[0] !== 'int' || e[3] !== 'int' ? ` (${e[0]},${e[3]})` : ''}</button>`).join('');
+  $$('#ca-ex button').forEach(b => b.onclick = () => { const [ta, a, op, tb, bv] = EX[+b.dataset.i]; $('#ca-ta').value = ta; $('#ca-a').value = a; $('#ca-op').value = op; $('#ca-tb').value = tb; $('#ca-b').value = bv; paint(); });
+  function parse(t, s) {
+    s = s.trim();
+    if (t === 'char') { if ([...s].length !== 1) return { err: 'char 类型的值请填一个字符，比如 a' }; return { v: BigInt(s.charCodeAt(0)), shown: `'${s}'` }; }
+    if (t === 'float' || t === 'double') { if (!/^-?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?$/.test(s)) return { err: `${t} 的值要是一个数` }; const v = parseFloat(s); return { v: t === 'float' ? Math.fround(v) : v, shown: s }; }
+    if (!/^-?\d+$/.test(s)) return { err: `${t} 只能存整数` };
+    const v = BigInt(s), [lo, hi] = RANGE[t];
+    if (v < lo || v > hi) return { err: `${s} 超出了 ${t} 的范围（${lo} ~ ${hi}）` };
+    return { v, shown: s };
+  }
+  const promo1 = t => (t === 'byte' || t === 'short' || t === 'char') ? 'int' : t;
+  function paint() {
+    const ta = $('#ca-ta').value, tb = $('#ca-tb').value, op = $('#ca-op').value;
+    const A = parse(ta, $('#ca-a').value), B = parse(tb, $('#ca-b').value);
+    const out = $('#ca-out'), flow = $('#ca-flow');
+    if (A.err || B.err) { flow.innerHTML = ''; out.innerHTML = `<span class="err">${esc(A.err || B.err)}</span>`; return; }
+    // 提升
+    const pa = promo1(ta), pb = promo1(tb);
+    const R = RANK[pa] >= RANK[pb] ? pa : pb;
+    const steps = [];
+    const desc = (t, p) => t === p ? '' : `（byte/short/char 运算时先变 int）`;
+    let f = `<span>${esc(A.shown)} <small>${ta}</small></span>`;
+    if (ta !== R) f += `<i>→</i><span class="up">${R}${ta !== pa ? '' : ''}</span>`;
+    f += `<i>${esc(op)}</i><span>${esc(B.shown)} <small>${tb}</small></span>`;
+    if (tb !== R) f += `<i>→</i><span class="up">${R}</span>`;
+    // 计算
+    let val, err = null;
+    if (R === 'int' || R === 'long') {
+      const x = A.v, y = B.v, bits = R === 'int' ? 32 : 64;
+      if ((op === '/' || op === '%') && y === 0n) err = 'Exception in thread "main" java.lang.ArithmeticException: / by zero';
+      else { let r = op === '+' ? x + y : op === '-' ? x - y : op === '*' ? x * y : op === '/' ? x / y : x % y; val = String(BigInt.asIntN(bits, r)); if (BigInt.asIntN(bits, r) !== r) steps.push(`超出了 ${R} 的范围，发生溢出（绕回去了）`); }
+    } else {
+      const x = Number(A.v), y = Number(B.v);
+      let r = op === '+' ? x + y : op === '-' ? x - y : op === '*' ? x * y : op === '/' ? x / y : x % y;
+      if (R === 'float') r = Math.fround(r);
+      val = javaFloatStr(r, R === 'float');
+      const exact = { '+': 1, '-': 1, '*': 1 }[op] && !/E/.test(val) && /\d{12,}/.test(val.replace('.', ''));
+      if (exact) steps.push('有小数参与计算，结果不精确');
+    }
+    f += `<i>=</i><span class="res">${err ? '💥' : esc(val)} <small>${R}</small></span>`;
+    flow.innerHTML = f;
+    const why = [];
+    if (ta !== R || tb !== R) {
+      if ((ta === 'byte' || ta === 'short' || ta === 'char') || (tb === 'byte' || tb === 'short' || tb === 'char')) why.push('规则 2：byte、short、char 参与运算先提升为 int');
+      if (RANK[pa] !== RANK[pb]) why.push(`规则 1：${RANK[pa] < RANK[pb] ? pa : pb} 比 ${R} 的范围小，先提升为 ${R}`);
+    }
+    if (R === 'int' && op === '/' && !err) why.push('整数相除，只保留商，小数部分直接丢掉');
+    if (op === '%' && !err) why.push('% 取余数' + (A.v < 0 ? '，结果的正负跟着被除数走' : ''));
+    out.innerHTML = `<span class="note">System.out.println(a ${esc(op)} b);</span>\n` + (err ? `<span class="err">${esc(err)}</span>` : `<span class="ok">${esc(val)}</span>`) + `\n<span class="note">结果类型：${R}</span>` + [...why, ...steps].map(s => `\n<span class="acc">· ${esc(s)}</span>`).join('');
+  }
+  ['#ca-ta', '#ca-tb', '#ca-op'].forEach(s => $(s).addEventListener('change', paint));
+  ['#ca-a', '#ca-b'].forEach(s => $(s).addEventListener('input', paint));
+  $$('#ca-ex button')[0].click();
+})();
+
+/* ---------- 数值拆分 ---------- */
+(function () {
+  const NAMES = ['个位', '十位', '百位', '千位', '万位', '十万位', '百万位', '千万位', '亿位', '十亿位'];
+  function paint() {
+    const s = $('#dg-in').value.trim(), box = $('#dg');
+    if (!/^\d{1,10}$/.test(s) || Number(s) > 2147483647) { box.innerHTML = '<span style="color:var(--bad);grid-column:1/-1">请输入一个 int 范围内的非负整数</span>'; return; }
+    const n = Number(s), len = String(n).length;
+    let h = '<span class="h">位</span><span class="h">公式</span><span class="h">过程</span>';
+    for (let k = 0; k < len; k++) {
+      const p = 10 ** k, q = Math.floor(n / p), d = q % 10;
+      const formula = k === 0 ? `${n} % 10` : `${n} / ${p} % 10`;
+      const proc = k === 0 ? `${n} ÷ 10 = ${Math.floor(n / 10)} 余 <b>${d}</b>` : `${n} / ${p} = ${q}，${q} % 10 = <b>${d}</b>`;
+      h += `<span>${NAMES[k]}</span><span>${formula}</span><span>${proc}</span>`;
+    }
+    box.innerHTML = h;
+  }
+  $('#dg-in').addEventListener('input', paint);
+  paint();
+})();
+
+/* ---------- 类型小测 ---------- */
+(function () {
+  const OPT = ['byte', 'short', 'int', 'long', 'float', 'double'];
+  const Q = [
+    ['byte b1 = 10;\nbyte b2 = 20;\n数据类型 result = b1 + b2;', 'int', 'byte 参与运算先提升为 int，两个 int 相加，结果 int。'],
+    ['int i = 10;\nlong n = 100L;\ndouble d = 20.0;\n数据类型 result = i + n + d;', 'double', '先算 i + n：int 提升为 long，得 long；再 long + d：long 提升为 double，得 double。'],
+    ['byte b = 10;\nshort s = 20;\nlong n = 100L;\n数据类型 result = b + s + n;', 'long', '坑：b + s 不是变 short，而是两个都直接变 int，得 int；int + long 得 long。'],
+    ['char c = \'a\';\nchar d = \'b\';\n数据类型 result = c + d;', 'int', 'char 和 byte、short 一样，运算时先变 int。'],
+    ['long n = 100L;\nfloat f = 1.5F;\n数据类型 result = n + f;', 'float', 'float 的取值范围比 long 大，long 提升为 float。'],
+    ['short s1 = 1;\nshort s2 = 2;\n数据类型 result = s1 * s2;', 'int', '乘法也一样，short 先变 int。'],
+  ];
+  const box = $('#tq');
+  Q.forEach(([code, ans, why], i) => {
+    const it = document.createElement('div'); it.className = 'it';
+    it.innerHTML = `<code>${esc(code)}</code><div class="opts">${OPT.map(o => `<button>${o}</button>`).join('')}</div>` + (i >= 3 ? '<div style="font-size:12px;color:var(--muted);margin-top:4px">补充题</div>' : '');
+    let done = false;
+    $$('button', it).forEach(b => b.onclick = () => {
+      if (done) return; done = true;
+      const ok = b.textContent === ans;
+      it.classList.add(ok ? 'ok' : 'no');
+      $$('button', it).forEach(x => { if (x.textContent === ans) x.classList.add('on'); else if (x === b) x.classList.add('bad'); });
+      it.insertAdjacentHTML('beforeend', `<div class="why">${ok ? '✓' : '✗ 是 ' + ans + '。'} ${why}</div>`);
+    });
+    box.appendChild(it);
+  });
+})();
+
+/* ---------- 强制转换 ---------- */
+(function () {
+  const EX = [['byte', '300'], ['byte', '200'], ['byte', '127'], ['byte', '128'], ['short', '40000'], ['char', '65'], ['int', '12.3'], ['int', '-12.7'], ['byte', '12.9']];
+  $('#cs-ex').innerHTML = '<span>例子：</span>' + EX.map(([t, v], i) => `<button data-i="${i}">(${t}) ${v}</button>`).join('');
+  $$('#cs-ex button').forEach(b => b.onclick = () => { const [t, v] = EX[+b.dataset.i]; $('#cs-to').value = t; $('#cs-v').value = v; paint(); });
+  const KEEP = { byte: 1, short: 2, char: 2, int: 4 };
+  function paint() {
+    const to = $('#cs-to').value, s = $('#cs-v').value.trim();
+    const res = $('#cs-res'), bits = $('#cs-bits');
+    let iv, from, note = '';
+    if (/^-?\d+$/.test(s)) {
+      const b = BigInt(s);
+      if (b > 2147483647n || b < -2147483648n) { res.innerHTML = '<span style="color:var(--bad)">演示里请填 int 范围内的整数</span>'; bits.innerHTML = ''; $('#cs-from').textContent = ''; return; }
+      iv = Number(b); from = 'int';
+    } else if (/^-?(\d+\.\d*|\.\d+)$/.test(s)) {
+      const d = parseFloat(s); from = 'double';
+      iv = Math.trunc(d); note = `第一步：double → int，直接丢掉小数部分：${s} → ${iv}（不是四舍五入）。`;
+      if (to !== 'int') note += ` 第二步：int → ${to}。`;
+    } else { res.innerHTML = '<span style="color:var(--bad)">请填一个整数或小数</span>'; bits.innerHTML = ''; return; }
+    $('#cs-from').textContent = `← 这是一个 ${from}`;
+    const dv = new DataView(new ArrayBuffer(4)); dv.setInt32(0, iv);
+    const bytes = [0, 1, 2, 3].map(i => dv.getUint8(i)), keep = KEEP[to];
+    bits.innerHTML = bytes.map((b, i) => `<div class="byte ${i >= 4 - keep ? 'keep' : 'cut'}">${b.toString(2).padStart(8, '0').split('').map(c => `<b class="${c === '1' ? 'one' : ''}">${c}</b>`).join('')}</div>`).join('');
+    let r;
+    if (to === 'byte') r = dv.getInt8(3);
+    else if (to === 'short') r = dv.getInt16(2);
+    else if (to === 'char') r = dv.getUint16(2);
+    else r = iv;
+    const shown = to === 'char' ? `'${String.fromCharCode(r)}'（编号 ${r}）` : String(r);
+    const changed = to === 'char' ? r !== iv : r !== iv;
+    res.innerHTML = (note ? `<div style="color:var(--muted);font-size:14px">${esc(note)}</div>` : '') +
+      `(${to}) ${esc(s)} = <b>${esc(shown)}</b>　` +
+      (to === 'int' ? (from === 'double' ? '' : '（int 转 int，什么都没丢）') :
+        changed ? `<span style="color:var(--bad)">数据变了！</span>${to} 只能留下最后 ${keep} 个字节（蓝框），前面的被砍掉了${to !== 'char' ? '；留下部分的最高位是符号位' : ''}。` : `<span style="color:var(--ok)">没变</span>：这个数在 ${to} 的范围内，砍掉的都是 0${iv < 0 ? '（负数砍掉的是全 1）' : ''}。`);
+  }
+  $('#cs-to').addEventListener('change', paint);
+  $('#cs-v').addEventListener('input', paint);
+  paint();
+})();
+</script>
+</body>
+</html>

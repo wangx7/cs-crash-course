@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P39–42 顺序结构与 if · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:90px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:6px 0}
+.chips button{font:13px inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 10px;cursor:pointer}
+.chips button:hover,.chips button.sel{border-color:var(--accent);color:var(--accent)}
+.chips.v button{font-family:var(--mono)}
+
+/* 流程示意 */
+.flow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:10px 0}
+@media (max-width:680px){.flow3{grid-template-columns:1fr}}
+.flow3 > div{background:var(--bg);border-radius:10px;padding:8px 10px;font-size:13.5px}
+.flow3 h4{margin:0 0 6px;font-size:14px}
+.flow3 pre{margin:0;font:12.5px/1.6 var(--mono);white-space:pre;overflow-x:auto}
+
+/* 代码追踪 */
+.tr-code{font:14px/1.75 var(--mono);background:var(--bg);border-radius:10px;padding:6px 0;overflow-x:auto}
+.tr-code div{padding:0 10px 0 6px;white-space:pre;display:flex;gap:8px;align-items:center}
+.tr-code div .g{width:4.2em;flex:none;text-align:right;font:700 11px sans-serif}
+.tr-code div.T .g{color:var(--ok)}.tr-code div.F .g{color:var(--bad)}
+.tr-code div.run{background:var(--on-soft)}
+.tr-code div.T{background:var(--ok-soft)}
+.tr-code div.F{background:var(--bad-soft)}
+.tr-code div.skip{opacity:.38}
+.tr-out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;white-space:pre-wrap}
+.tr-out .note{color:#7f8794}
+.tr-msg{font-size:14px;margin-top:6px;color:var(--muted)}
+
+/* flag */
+.fl{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+@media (max-width:640px){.fl{grid-template-columns:1fr}}
+.fl > div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel)}
+.fl code{font-size:13px}
+.fl .r{margin-top:6px;font-size:13.5px}
+.fl > div.bad{border-color:var(--bad)}
+.v{display:inline-block;min-width:3.4em;text-align:center;font:700 13px var(--mono);border-radius:6px;padding:1px 6px}
+.v.t{background:var(--ok-soft);color:var(--ok)}
+.v.f{background:var(--bad-soft);color:var(--bad)}
+
+/* 红绿灯 */
+.lights{display:flex;gap:14px;margin:6px 0 10px;flex-wrap:wrap}
+.lamp{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;user-select:none;font-size:13px}
+.lamp i{width:38px;height:38px;border-radius:50%;background:var(--line);border:2px solid var(--line);transition:all .15s}
+.lamp.on.g i{background:#2fb35a;border-color:#2fb35a;box-shadow:0 0 12px rgba(47,179,90,.7)}
+.lamp.on.y i{background:#f2b705;border-color:#f2b705;box-shadow:0 0 12px rgba(242,183,5,.7)}
+.lamp.on.r i{background:#e5484d;border-color:#e5484d;box-shadow:0 0 12px rgba(229,72,77,.7)}
+.cmp{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media (max-width:640px){.cmp{grid-template-columns:1fr}}
+.cmp h4{margin:0 0 4px;font-size:13.5px}
+.cmp .note2{font-size:13px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body data-ep="39" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=39" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">判断和循环 · P39–P42</div>
+  <h1>顺序结构与 if</h1>
+  <p class="en">Sequential Flow &amp; the if Statement</p>
+  <p class="lead">到现在为止，程序都是从上往下一行一行执行的。可现实里经常要"如果……就……"：酒量大于 2 斤才夸你，钱够 100 才吃网红餐厅，分数不同奖励不同。这一篇学流程控制里的<b>顺序结构</b>和 <b>if 的三种格式</b>，从这一章开始，这样的代码以后每天都要写。</p>
+  <div class="road">
+    <span>流程控制</span><i>→</i><span>顺序结构</span><i>→</i><span>if 格式一</span><i>→</i><span>三个注意事项</span><i>→</i><span>if 格式二</span><i>→</i><span>if 格式三</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 顺序结构</a></li>
+    <li><a href="#ch2">2 · if 第一种格式</a></li>
+    <li><a href="#ch3">3 · if 第二种格式</a></li>
+    <li><a href="#ch4">4 · if 第三种格式</a></li>
+    <li><a href="#ch5">5 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P39</div>
+  <h2>流程控制语句与顺序结构</h2>
+  <p>学习就像闯关：计算机基础、Java 基础语法、运算符三关都过了，接下来是第四关<b>流程控制语句</b>。地图上六关全部通关，就可以开始写游戏了。这一章内容不多，但非常重要，重要到<b>以后每天都会写这样的代码</b>。</p>
+  <p>学习方法也要变一变：以前学的多是概念和格式（数据类型、类型提升、运算符……），记住了多练就行；从这一章开始，每天学的内容少一点，但要<b>分析题目的逻辑、多思考、多练习</b>。</p>
+  <p><b>流程控制语句</b>：通过一些语句控制程序的执行流程。分三类：<b>顺序结构</b>、<b>分支结构</b>、<b>循环结构</b>。</p>
+  <p>最简单的是<b>顺序结构</b>：main 方法里写四条打印语句，从上往下依次执行。它是 Java 程序<b>默认的执行流程</b>，按代码的先后顺序从上往下执行。</p>
+  <p>分支结构包含两种语句：<b>if</b>（判断）和 <b>switch</b>（选择）。先学 if，它有三种格式：</p>
+  <div class="flow3">
+    <div><h4>格式一：一种情况</h4><pre>if (关系表达式) {
+    语句体;
+}</pre>满足就执行，不满足就不执行</div>
+    <div><h4>格式二：二选一</h4><pre>if (关系表达式) {
+    语句体1;
+} else {
+    语句体2;
+}</pre>满足执行 1，不满足执行 2</div>
+    <div><h4>格式三：多选一</h4><pre>if (关系表达式1) {
+    语句体1;
+} else if (关系表达式2) {
+    语句体2;
+}
+…
+else {
+    语句体 n+1;
+}</pre>从上往下依次判断</div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P40</div>
+  <h2>if 的第一种格式</h2>
+  <p>为什么要有 if？老师的朋友去见老丈人，老丈人问：能喝多少？喝不到 2 斤就不行。按以前学的，可以定义变量 <code>wine = 10</code> 表示酒量，再打印"小伙子，不错嘛"。可要是把 wine 改成 1，这句话还会打印，就不合理了：小于 2 斤，老丈人应该不搭理。能不能对变量做个判断，大于 2 才执行这句话？这就是 if。</p>
+  <p><b>执行流程</b>：先算小括号里关系表达式的值（一个判断，结果是 boolean）；为 true 就执行大括号里的语句体，为 false 就不执行；然后继续执行 if 下面的其他语句。</p>
+  <code class="blk"><span class="hc">// 键盘录入女婿的酒量，大于 2 斤老丈人给出回应，反之不回应</span>
+Scanner sc = <span class="hk">new</span> Scanner(System.in);
+System.out.println(<span class="hs">"请输入女婿的酒量"</span>);
+<span class="hk">int</span> wine = sc.nextInt();
+<span class="hk">if</span> (wine &gt; 2) {
+    System.out.println(<span class="hs">"小伙子，不错嘛！"</span>);
+}</code>
+  <p>输入 10，打印"小伙子，不错嘛！"；输入 0，什么都没有。在下面的追踪器里可以看到每次走了哪几行。</p>
+
+  <div class="card">
+    <h3>动手：代码追踪器</h3>
+    <p style="margin-top:0">选一个例子，改输入值，看哪个判断是 <span class="v t">true</span>、哪个是 <span class="v f">false</span>，哪些行执行了（黄色）、哪些被跳过（变淡）。本页的例子都在这里。</p>
+    <div class="chips" id="tr-pre"></div>
+    <div class="row" id="tr-in"></div>
+    <div class="chips v" id="tr-ex"></div>
+    <div class="tr-code" id="tr-code"></div>
+    <div class="tr-out" id="tr-out"></div>
+    <div class="tr-msg" id="tr-msg"></div>
+  </div>
+
+  <h3>三个注意事项</h3>
+  <ol>
+    <li><b>大括号的开头可以另起一行写</b>，语法上没问题（有些其他语言习惯这么写），但建议按 Java 的习惯<b>写在第一行的末尾</b>。</li>
+    <li><b>语句体只有一句代码时，大括号可以省略</b>，但建议<b>不要省略</b>。因为有时分不清什么才算"一句"：比如 <code>int a = 100;</code> 其实包含了"定义变量 a"和"给 a 赋值 100"两句，省略大括号就会报错。</li>
+    <li><b>对 boolean 类型的变量判断时，不要用 <code>==</code></b>，直接把变量写在小括号里：<code>if (flag)</code>。因为 <code>==</code> 很容易少写一个，<code>if (flag = true)</code> 就从判断变成了<b>赋值</b>，不管 flag 原来是什么，赋值完都是 true，大括号里的代码一定会执行。</li>
+  </ol>
+  <div class="card">
+    <h3>动手：少写一个等号会怎样</h3>
+    <div class="row"><span>flag 原来的值：</span><div class="chips v" id="fl-v" style="margin:0"><button data-v="false">false</button><button data-v="true">true</button></div></div>
+    <div class="fl" id="fl"></div>
+  </div>
+
+  <h3>两个练习</h3>
+  <p><b>考试奖励</b>：班里小红对小明说，这次考试你要是全班第一，我就做你女朋友。其他同学很感动，决定集体交白卷。用代码实现小红的心理活动：定义变量记录小明的名次 <code>ranking</code>（其他人都交白卷，所以是 1），判断 <code>ranking == 1</code> 就打印"小红成为了小明的女朋友"。要是有个暗恋小红的男生没交白卷，还考得比小明好，名次变成 2，这句话就不打印了。</p>
+  <p><b>自动驾驶</b>：车开到十字路口，绿灯亮就前进，黄灯亮就减速，红灯亮就停止。定义三个 boolean 变量记录三个灯的状态（true 亮，false 灭），然后写<b>三个独立的 if</b>，每个都直接把变量写在小括号里：<code>if (isLightGreen)</code> 打印 go go go，<code>if (isLightYellow)</code> 打印 slow，<code>if (isLightRed)</code> 打印 stop。三个 if 互相独立，程序会从上往下挨个判断。第 4 节会用第三种格式改进它。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P41</div>
+  <h2>if 的第二种格式：二选一</h2>
+  <p>第二种格式就是在第一种的基础上加了个 <code>else</code>。先算关系表达式：true 执行 if 里的语句体1，false 执行 else 里的语句体2，最后执行 if 下面的其他语句。注意：执行了语句体1，就<b>不会再执行</b>语句体2，整个 if 结束；反过来也一样，不会回头。</p>
+  <p><b>练习一：吃饭</b>。键盘录入身上的钱，大于等于 100 就吃网红餐厅，否则吃经济实惠的沙县小吃（也叫福建大酒店）。</p>
+  <code class="blk"><span class="hk">int</span> money = sc.nextInt();
+<span class="hk">if</span> (money &gt;= 100) {
+    System.out.println(<span class="hs">"吃网红餐厅"</span>);
+} <span class="hk">else</span> {
+    System.out.println(<span class="hs">"吃经济实惠的沙县小吃"</span>);
+}</code>
+  <p>视频里解释 else 时说"否则就表示钱<span class="fix" title="money >= 100 的反面是 money < 100，不包括 100">小于等于 100</span>"。朋友媳妇刚给了 200 零花钱，吃网红餐厅；月底只剩 30，就吃沙县小吃。什么时候用第二种格式？<b>两种情况二选一的时候</b>。</p>
+  <p><b>练习二：商品付款</b>（斯坦福入门练习）：商品总价 600，键盘录入实际支付的钱，大于等于 600 打印"付款成功"，否则"付款失败"。写法和上面一样。</p>
+  <p><b>练习三：影院选座</b>（斯坦福入门练习）：票号 1~100，奇数坐左边，偶数坐右边。键盘录入票号 ticket，用 <code>ticket % 2 == 1</code> 判断奇数。写完测一下：50 坐右边、11 坐左边都对，可输入 200 还提示"坐右边"，票号只到 100，这是张假票！所以显示座位之前，还要先判断票是不是真实有效的：</p>
+  <code class="blk"><span class="hk">if</span> (ticket &gt;= <span class="fix" title="票号范围是 1~100，这里应该写 ticket >= 1">0</span> &amp;&amp; ticket &lt;= 100) {   <span class="hc">// 只有真实有效的票才判断坐哪边</span>
+    <span class="hk">if</span> (ticket % 2 == 1) {
+        System.out.println(<span class="hs">"坐左边"</span>);
+    } <span class="hk">else</span> {
+        System.out.println(<span class="hs">"坐右边"</span>);
+    }
+}</code>
+  <p>输入 200，外面的判断为 false，里面的代码都不执行，程序直接结束。这叫对数据做<b>合法性校验</b>；if 里面还有 if，叫 <b>if 的嵌套</b>。</p>
+  <div class="extra">
+    <span class="t">更正：票号的下限</span>
+    题目说票号是 1~100，校验应该写 <code>ticket &gt;= 1 &amp;&amp; ticket &lt;= 100</code>。视频写成了 &gt;= 0，输入 0 会被当成有效的偶数票，提示"坐右边"。追踪器里输入 0 可以看到这个漏洞。<b>测试时，边界值（0、1、100、101）一定要测</b>。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P42</div>
+  <h2>if 的第三种格式：多选一</h2>
+  <p>第一种格式判断一种情况，第二种在两种情况里选一种。情况更多怎么办？老师的朋友对儿子小明说：根据考试分数送不同的礼物，95~100 分送自行车一辆，90~94 分游乐场玩一天，80~89 分送变形金刚一个，80 分以下揍一顿。四种情况，就要用 if 的第三种格式：在第二种格式的中间加上对其他条件的判断。</p>
+  <p><b>执行流程</b>：先判断关系表达式1，true 就执行语句体1，然后整个 if 结束；false 就继续判断关系表达式2，true 执行语句体2，结束……一句话：<b>从上往下依次判断，只要有一个为真，就执行对应的语句体，然后结束；所有判断都为假，就执行 else 里的语句体</b>。最后的 else 就像个"备胎"，上面都不满足才轮到它。</p>
+  <code class="blk"><span class="hk">int</span> score = sc.nextInt();
+<span class="hk">if</span> (score <span class="fix" title="0 分也是合法成绩，应该写 >= 0">&gt;</span> 0 &amp;&amp; score &lt;= 100) {          <span class="hc">// 对异常数据进行校验</span>
+    <span class="hk">if</span> (score &gt;= 95 &amp;&amp; score &lt;= 100) {
+        System.out.println(<span class="hs">"送自行车一辆"</span>);
+    } <span class="hk">else if</span> (score &gt;= 90 &amp;&amp; score &lt;= 94) {
+        System.out.println(<span class="hs">"游乐场玩一天"</span>);
+    } <span class="hk">else if</span> (score &gt;= 80 &amp;&amp; score &lt;= 89) {
+        System.out.println(<span class="hs">"送变形金刚一个"</span>);
+    } <span class="hk">else</span> {
+        System.out.println(<span class="hs">"揍一顿"</span>);
+    }
+} <span class="hk">else</span> {
+    System.out.println(<span class="hs">"当前录入的成绩不合法"</span>);
+}</code>
+  <p>一开始没有外层的校验：考 100 送自行车、考 60 揍一顿都对；可"超常发挥连附加题都做了"考了 110，也要挨揍，肯定不爽。所以加上外层判断，只有 0~100 之间的分数才去发奖励，否则提示"当前录入的成绩不合法"。</p>
+  <p><b>练习：商品的价格</b>（斯坦福入门练习，原题是 1000 美元）：商品总价 1000，键盘录入会员级别，计算实际支付的钱。1 级会员打 9 折，2 级打 8 折，3 级打 7 折，其他数字是非会员，不打折（"要打也打骨折"）。</p>
+  <code class="blk"><span class="hk">int</span> price = 1000;
+<span class="hk">int</span> vip = sc.nextInt();
+<span class="hk">if</span> (vip == 1) {
+    System.out.println(<span class="hs">"实际支付的钱为"</span> + (price * 0.9));
+} <span class="hk">else if</span> (vip == 2) {
+    System.out.println(<span class="hs">"实际支付的钱为"</span> + (price * 0.8));
+} <span class="hk">else if</span> (vip == 3) {
+    System.out.println(<span class="hs">"实际支付的钱为"</span> + (price * 0.7));
+} <span class="hk">else</span> {
+    System.out.println(<span class="hs">"实际支付的钱为"</span> + price);
+}</code>
+  <p><code>price * 0.9</code> 要用括号括起来，否则就是先和前面的字符串拼接了（上一篇讲过：从左到右，有字符串就拼接）。</p>
+
+  <p><b>改进自动驾驶</b>：之前三个独立的 if，每次都要从上往下把三个判断全部执行一遍，效率低。用第三种格式把它们连成一个整体：</p>
+  <code class="blk"><span class="hk">if</span> (isLightGreen) {
+    System.out.println(<span class="hs">"go go go"</span>);
+} <span class="hk">else if</span> (isLightYellow) {
+    System.out.println(<span class="hs">"slow"</span>);
+} <span class="hk">else if</span> (isLightRed) {
+    System.out.println(<span class="hs">"stop"</span>);
+}</code>
+  <p>只有三种情况，最后的 else 可以省略不写。现在第一个判断为 true 就直接打印 go go go，下面的判断不再执行，提高了效率。</p>
+  <div class="card">
+    <h3>动手：三个独立的 if vs 一个 else if 整体</h3>
+    <p style="margin-top:0">点灯泡开关。试试同时亮两盏灯（比如信号灯坏了），看两种写法的区别。</p>
+    <div class="lights" id="lights"></div>
+    <div class="cmp">
+      <div><h4>三个独立的 if</h4><div class="tr-out" id="lt-a"></div><div class="note2" id="lt-an"></div></div>
+      <div><h4>if … else if … else if</h4><div class="tr-out" id="lt-b"></div><div class="note2" id="lt-bn"></div></div>
+    </div>
+  </div>
+  <p>总结规律：<b>一种情况的判断用第一种格式，两种情况用第二种格式，多种情况用第三种格式</b>。</p>
+
+  <div class="extra">
+    <span class="t">补充：更正、输出细节和一个小技巧</span>
+    <b>成绩校验的下限</b>：视频写的是 <code>score &gt; 0</code>，这样考 0 分会被当成"不合法"，应该写 <code>score &gt;= 0</code>。追踪器里用的是改正后的写法。<br>
+    <b>VIP 的输出</b>：1000 乘 0.9 有小数参与，结果是 double，打印出来是 <code>900.0</code>、<code>800.0</code>、<code>700.0</code>，不是 900；非会员那行打印的是 int，就是 <code>1000</code>。<br>
+    <b>else if 可以利用顺序省掉一半条件</b>：能走到第二个判断，说明第一个已经是 false（分数不到 95），所以 <code>score &gt;= 90 &amp;&amp; score &lt;= 94</code> 可以只写 <code>score &gt;= 90</code>，后面同理。从上往下依次判断，正是 else if 的优势。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>流程控制</b></td><td>顺序结构（默认，从上往下）、分支结构（if、switch）、循环结构</td></tr>
+      <tr><td><b>if 格式一</b></td><td>一种情况：判断为 true 执行语句体，false 不执行</td></tr>
+      <tr><td><b>if 格式二</b></td><td>二选一：true 执行 if 的语句体，false 执行 else 的语句体，执行完就结束</td></tr>
+      <tr><td><b>if 格式三</b></td><td>多选一：从上往下依次判断，有一个为真就执行并结束；都为假执行 else</td></tr>
+      <tr><td><b>注意事项</b></td><td>大括号写在行尾；大括号别省略；boolean 变量直接写 <code>if (flag)</code>，别写 ==</td></tr>
+      <tr><td><b>校验与嵌套</b></td><td>先判断数据是否合法，再做业务判断；if 里还有 if 叫嵌套</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    几种情况就选几号格式：一种用 if，两种用 if-else，多种用 if-else if-else；先校验数据，再判断业务。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>boolean flag = false; if (flag = true) { System.out.println("执行了"); }</code> 会打印吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">会。<code>flag = true</code> 是赋值不是判断，赋值后小括号里的结果是 true，所以一定执行。判断 boolean 变量应该直接写 <code>if (flag)</code>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. if 第二种格式里，执行完语句体1之后还会执行语句体2吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不会。if 和 else 只会执行其中一个，执行完整个 if 就结束了，接着执行 if 下面的代码。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 影院选座里为什么要在外面再套一个 if？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">对数据做合法性校验：只有 1~100 之间的票号才是真实有效的票，才去判断坐左边还是右边；200 这种假票直接不处理。if 里面套 if 叫嵌套。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 成绩是 92 时，第三种格式的 if 会判断几次？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">外层合法性校验 1 次（true），然后内层：第一个"95~100"为 false，第二个"90~94"为 true，执行"游乐场玩一天"后结束。内层一共判断 2 次，后面的不再判断。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 自动驾驶用三个独立的 if 和用 else if 连起来，有什么区别？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">三个独立的 if 每次都要把三个判断全部执行一遍，而且如果同时有两盏灯亮，会打印两句；else if 连成一个整体，从上往下只要有一个成立就执行并结束，效率更高，也只会打印一句。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="38.html"><small>← 上一篇</small>P38 原码、反码、补码</a>
+    <a class="next" href="43.html"><small>下一篇 →</small>P43–44 switch</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P39–P42（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=39" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const V = b => `<span class="v ${b ? 't' : 'f'}">${b}</span>`;
+function jd(x) { return Number.isInteger(x) ? x.toFixed(1) : String(x); }
+
+/* ---------- 代码追踪器 ---------- */
+(function () {
+  // 每个程序：name, var, def, ex, lines, run(v) → {m: {行号: 'run'|'T'|'F'}, out: [...], msg}
+  const P = [
+    { name: '酒量（格式一）', v: 'wine', def: 10, ex: [10, 3, 2, 0],
+      lines: ['int wine = sc.nextInt();', 'if (wine > 2) {', '    System.out.println("小伙子，不错嘛！");', '}', 'System.out.println("（if 下面的其他代码）");'],
+      run(w) { const c = w > 2; return { m: { 0: 'run', 1: c ? 'T' : 'F', 2: c ? 'run' : 'skip', 4: 'run' }, out: c ? ['小伙子，不错嘛！', '（if 下面的其他代码）'] : ['（if 下面的其他代码）'], msg: c ? '判断为 true，执行大括号里的语句体，再执行 if 下面的代码' : '判断为 false，跳过语句体，直接执行 if 下面的代码。注意 2 也不行：题目是"大于"2 斤' }; } },
+    { name: '吃饭（格式二）', v: 'money', def: 200, ex: [200, 100, 99, 30],
+      lines: ['int money = sc.nextInt();', 'if (money >= 100) {', '    System.out.println("吃网红餐厅");', '} else {', '    System.out.println("吃经济实惠的沙县小吃");', '}'],
+      run(x) { const c = x >= 100; return { m: { 0: 'run', 1: c ? 'T' : 'F', 2: c ? 'run' : 'skip', 3: c ? 'skip' : 'run', 4: c ? 'skip' : 'run' }, out: [c ? '吃网红餐厅' : '吃经济实惠的沙县小吃'], msg: '二选一：只会执行其中一个' }; } },
+    { name: '付款（格式二）', v: 'money', def: 601, ex: [601, 600, 400],
+      lines: ['int money = sc.nextInt();', 'if (money >= 600) {', '    System.out.println("付款成功");', '} else {', '    System.out.println("付款失败");', '}'],
+      run(x) { const c = x >= 600; return { m: { 0: 'run', 1: c ? 'T' : 'F', 2: c ? 'run' : 'skip', 3: c ? 'skip' : 'run', 4: c ? 'skip' : 'run' }, out: [c ? '付款成功' : '付款失败'], msg: '' }; } },
+    { name: '影院选座（嵌套）', v: 'ticket', def: 11, ex: [11, 50, 200, 0, 1, 100, 101],
+      lines: ['int ticket = sc.nextInt();', 'if (ticket >= 0 && ticket <= 100) {   // 视频写的 >= 0', '    if (ticket % 2 == 1) {', '        System.out.println("坐左边");', '    } else {', '        System.out.println("坐右边");', '    }', '}'],
+      run(t) {
+        const ok = t >= 0 && t <= 100;
+        if (!ok) return { m: { 0: 'run', 1: 'F', 2: 'skip', 3: 'skip', 4: 'skip', 5: 'skip', 6: 'skip' }, out: [], msg: '外层校验为 false，里面的代码全部跳过，什么都不打印（假票）' };
+        const odd = t % 2 === 1;
+        return { m: { 0: 'run', 1: 'T', 2: odd ? 'T' : 'F', 3: odd ? 'run' : 'skip', 4: odd ? 'skip' : 'run', 5: odd ? 'skip' : 'run' }, out: [odd ? '坐左边' : '坐右边'], msg: t === 0 ? '漏洞：票号 0 不存在，却被当成有效的偶数票。下限应该写 >= 1' : '外层校验通过，再进里面判断奇偶' };
+      } },
+    { name: '成绩（格式三 + 校验）', v: 'score', def: 92, ex: [100, 95, 92, 85, 60, 0, 110, -5],
+      lines: ['int score = sc.nextInt();', 'if (score >= 0 && score <= 100) {', '    if (score >= 95 && score <= 100) {', '        System.out.println("送自行车一辆");', '    } else if (score >= 90 && score <= 94) {', '        System.out.println("游乐场玩一天");', '    } else if (score >= 80 && score <= 89) {', '        System.out.println("送变形金刚一个");', '    } else {', '        System.out.println("揍一顿");', '    }', '} else {', '    System.out.println("当前录入的成绩不合法");', '}'],
+      run(s) {
+        const m = { 0: 'run' };
+        for (let i = 2; i <= 10; i++) m[i] = 'skip';
+        const ok = s >= 0 && s <= 100;
+        if (!ok) { m[1] = 'F'; m[11] = 'run'; m[12] = 'run'; return { m, out: ['当前录入的成绩不合法'], msg: '外层校验为 false，直接走外层的 else' }; }
+        m[1] = 'T'; m[11] = 'skip'; m[12] = 'skip';
+        const C = [[2, s >= 95 && s <= 100, 3, '送自行车一辆'], [4, s >= 90 && s <= 94, 5, '游乐场玩一天'], [6, s >= 80 && s <= 89, 7, '送变形金刚一个']];
+        let n = 0;
+        for (const [ln, c, body, txt] of C) { n++; m[ln] = c ? 'T' : 'F'; if (c) { m[body] = 'run'; return { m, out: [txt], msg: `内层判断了 ${n} 次就找到了，后面的不再判断` }; } }
+        m[8] = 'run'; m[9] = 'run';
+        return { m, out: ['揍一顿'], msg: '内层三个判断都是 false，轮到"备胎" else' };
+      } },
+    { name: 'VIP 折扣（格式三）', v: 'vip', def: 3, ex: [1, 2, 3, 10],
+      lines: ['int price = 1000;', 'int vip = sc.nextInt();', 'if (vip == 1) {', '    System.out.println("实际支付的钱为" + (price * 0.9));', '} else if (vip == 2) {', '    System.out.println("实际支付的钱为" + (price * 0.8));', '} else if (vip == 3) {', '    System.out.println("实际支付的钱为" + (price * 0.7));', '} else {', '    System.out.println("实际支付的钱为" + price);', '}'],
+      run(v) {
+        const m = { 0: 'run', 1: 'run' };
+        for (let i = 3; i <= 9; i++) m[i] = 'skip';
+        const C = [[2, 1, 3, 0.9], [4, 2, 5, 0.8], [6, 3, 7, 0.7]];
+        for (const [ln, k, body, r] of C) { const c = v === k; m[ln] = c ? 'T' : 'F'; if (c) { m[body] = 'run'; return { m, out: ['实际支付的钱为' + jd(1000 * r)], msg: '有小数参与计算，结果是 double，所以打印 ' + jd(1000 * r) }; } }
+        m[8] = 'run'; m[9] = 'run';
+        return { m, out: ['实际支付的钱为1000'], msg: '非会员，不打折，price 是 int，打印 1000' };
+      } },
+  ];
+  let cur = 3;
+  $('#tr-pre').innerHTML = P.map((p, i) => `<button data-i="${i}">${p.name}</button>`).join('');
+  $$('#tr-pre button').forEach(b => b.onclick = () => { cur = +b.dataset.i; build(); });
+  function build() {
+    const p = P[cur];
+    $$('#tr-pre button').forEach((b, i) => b.classList.toggle('sel', i === cur));
+    $('#tr-in').innerHTML = `<span>键盘录入 ${p.v} =</span><input class="inp" id="tr-v" value="${p.def}" aria-label="${p.v}">`;
+    $('#tr-ex').innerHTML = '<span>试试：</span>' + p.ex.map(x => `<button>${x}</button>`).join('');
+    $$('#tr-ex button').forEach(b => b.onclick = () => { $('#tr-v').value = b.textContent; paint(); });
+    $('#tr-v').addEventListener('input', paint);
+    paint();
+  }
+  function paint() {
+    const p = P[cur], raw = $('#tr-v').value.trim();
+    if (!/^-?\d+$/.test(raw)) { $('#tr-out').innerHTML = '<span class="note">请输入一个整数（nextInt 只能接收整数）</span>'; $('#tr-code').innerHTML = ''; $('#tr-msg').textContent = ''; return; }
+    const r = p.run(parseInt(raw, 10));
+    $('#tr-code').innerHTML = p.lines.map((L, i) => {
+      const s = r.m[i];
+      const cls = s === 'T' ? 'T' : s === 'F' ? 'F' : s === 'run' ? 'run' : s === 'skip' ? 'skip' : '';
+      const g = s === 'T' ? 'true ✓' : s === 'F' ? 'false ✗' : s === 'run' ? '执行' : '';
+      return `<div class="${cls}"><span class="g">${g}</span>${esc(L)}</div>`;
+    }).join('');
+    $('#tr-out').innerHTML = r.out.length ? esc(r.out.join('\n')) : '<span class="note">（没有任何输出）</span>';
+    $('#tr-msg').textContent = r.msg || '';
+  }
+  build();
+})();
+
+/* ---------- flag 判断 ---------- */
+(function () {
+  let f = false;
+  $$('#fl-v button').forEach(b => b.onclick = () => { f = b.dataset.v === 'true'; paint(); });
+  function paint() {
+    $$('#fl-v button').forEach(b => b.classList.toggle('sel', (b.dataset.v === 'true') === f));
+    const C = [
+      ['if (flag == true)', f, `判断 flag 是否等于 true → ${f}`, ''],
+      ['if (flag)', f, `直接判断 flag 的值 → ${f}（推荐）`, ''],
+      ['if (flag = true)', true, '少写了一个 =：先把 true <b>赋值</b>给 flag，结果永远是 true！', 'bad'],
+    ];
+    $('#fl').innerHTML = C.map(([c, r, d, cls]) => `<div class="${cls}"><code>${esc(c)}</code><div class="r">${d}</div><div class="r">大括号里的代码：${r ? '<b>执行</b>' : '不执行'}</div></div>`).join('');
+  }
+  paint();
+})();
+
+/* ---------- 红绿灯 ---------- */
+(function () {
+  const L = [['isLightGreen', 'g', '绿灯', 'go go go'], ['isLightYellow', 'y', '黄灯', 'slow'], ['isLightRed', 'r', '红灯', 'stop']];
+  const S = [false, false, true];
+  $('#lights').innerHTML = L.map(([n, c, t], i) => `<div class="lamp ${c}" data-i="${i}" role="switch" tabindex="0"><i></i><span>${t}</span><code style="font-size:11px">${n}</code></div>`).join('');
+  $$('.lamp').forEach(el => { const fl = () => { S[+el.dataset.i] = !S[+el.dataset.i]; paint(); }; el.onclick = fl; el.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); fl(); } }; });
+  function paint() {
+    $$('.lamp').forEach((el, i) => { el.classList.toggle('on', S[i]); el.setAttribute('aria-checked', S[i]); });
+    const a = L.filter((_, i) => S[i]).map(l => l[3]);
+    $('#lt-a').innerHTML = a.length ? esc(a.join('\n')) : '<span class="note">（没有输出）</span>';
+    $('#lt-an').textContent = `判断了 3 次（每个 if 都要判断）` + (a.length > 1 ? `，打印了 ${a.length} 句` : '');
+    let n = 0, b = null;
+    for (let i = 0; i < 3; i++) { n++; if (S[i]) { b = L[i][3]; break; } }
+    $('#lt-b').innerHTML = b ? esc(b) : '<span class="note">（没有输出）</span>';
+    $('#lt-bn').textContent = `判断了 ${n} 次` + (b && n < 3 ? '，找到第一个成立的就结束了' : '') + (a.length > 1 ? '，只打印最先满足的那一句' : '');
+  }
+  paint();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,617 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P23–25 数据类型与标识符 · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.seg{display:inline-flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.seg button{font:13px var(--mono);border:0;background:var(--panel);color:var(--ink);padding:4px 10px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:4px 0}
+.chips button{font:13px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 10px;cursor:pointer}
+.chips button:hover{border-color:var(--accent);color:var(--accent)}
+
+/* 四类八种 */
+.types{width:100%;border-collapse:collapse;font-size:14px}
+.types th,.types td{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.types th{font-size:12.5px;color:var(--muted);font-weight:600}
+.types td.k{font:700 14px var(--mono);color:var(--accent)}
+.types td.g{font-weight:700;background:var(--bg)}
+.types tr.def td.k::after{content:"默认";margin-left:6px;font:700 10px sans-serif;color:#fff;background:var(--on);border-radius:4px;padding:1px 4px}
+.mem-bar{display:inline-flex;gap:2px;vertical-align:middle}
+.mem-bar i{display:inline-block;width:10px;height:12px;border-radius:2px;background:var(--accent);opacity:.7}
+
+/* 类型实验台 */
+.tl-code{font:15px var(--mono);background:var(--bg);border-radius:10px;padding:8px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.tl-code input{font:15px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 7px;background:var(--panel);color:var(--ink);width:210px}
+.tl-out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:8px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;white-space:pre-wrap;word-break:break-all;min-height:44px}
+.tl-out .err{color:#ff8a8a}.tl-out .note{color:#7f8794}.tl-out .ok{color:#7ee2a0}
+.bytes{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.byte{display:flex;gap:1px;border:1px solid var(--line);border-radius:6px;padding:3px;background:var(--panel)}
+.byte b{width:15px;height:20px;display:flex;align-items:center;justify-content:center;font:11px var(--mono);border-radius:2px;background:var(--bg);color:var(--muted)}
+.byte b.one{background:var(--on);color:#fff}
+.byte b.sign{outline:2px solid var(--accent);outline-offset:-2px}
+.tl-info{font-size:13.5px;color:var(--muted);margin-top:6px}
+
+/* 选类型 */
+.pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:8px}
+.pick .it{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel)}
+.pick .it .d{font-size:15px;font-weight:700}
+.pick .it .d small{font-weight:400;color:var(--muted);font-size:12.5px;margin-left:4px}
+.pick .opts{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.pick .opts button{font:12.5px var(--mono);border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:1px 7px;cursor:pointer}
+.pick .opts button.on{border-color:var(--ok);color:var(--ok);font-weight:700;background:var(--ok-soft)}
+.pick .opts button.bad{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.pick .why{font-size:13px;margin-top:5px}
+.pick .it.ok{border-color:var(--ok)}
+.pick-out{margin-top:10px}
+
+/* 标识符 */
+.id-in{font:16px var(--mono);border:1px solid var(--line);border-radius:8px;padding:5px 9px;background:var(--panel);color:var(--ink);width:220px}
+.chk{list-style:none;margin:8px 0 0;padding:0;font-size:14.5px}
+.chk li{padding:3px 0}
+.chk li .m{display:inline-block;width:1.5em;font-weight:700}
+.chk li.y .m{color:var(--ok)}.chk li.n .m{color:var(--bad)}.chk li.w .m{color:var(--on)}
+.id-verdict{margin-top:8px;padding:8px 12px;border-radius:10px;font-size:15px}
+.id-verdict.y{background:var(--ok-soft)}.id-verdict.n{background:var(--bad-soft)}.id-verdict.w{background:var(--on-soft)}
+.idq{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.idq .it{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel)}
+.idq code{font-size:16px;font-weight:700}
+.idq .opts{display:flex;gap:4px;margin-top:6px}
+.idq .opts button{font:12.5px inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:1px 8px;cursor:pointer}
+.idq .it.ok{border-color:var(--ok);background:var(--ok-soft)}
+.idq .it.no{border-color:var(--bad);background:var(--bad-soft)}
+.idq .why{font-size:12.5px;margin-top:5px}
+.camel{display:flex;flex-wrap:wrap;gap:4px;font:15px var(--mono);margin:6px 0}
+.camel span{padding:1px 6px;border-radius:5px;background:var(--bg)}
+.camel span b{color:var(--on)}
+</style>
+</head>
+<body data-ep="23" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=23" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">基础概念 · P23–P25</div>
+  <h1>数据类型与标识符</h1>
+  <p class="en">Primitive Types &amp; Identifiers</p>
+  <p class="lead">变量的定义格式是 <code>数据类型 变量名 = 数据值;</code>。之前数据类型只学了 int 和 double，变量名随手写 a、b、c。这一篇把前两部分补全：Java 一共有<b>四类八种</b>基本数据类型，各自能存多大的数；起名字（<b>标识符</b>）有哪些必须遵守的规则和业内都在用的规范。第三部分"数据值"放在下一篇的键盘录入里。</p>
+  <div class="road">
+    <span>基本 / 引用数据类型</span><i>→</i><span>四类八种</span><i>→</i><span>long 加 L、float 加 F</span><i>→</i><span>三个练习</span><i>→</i><span>标识符规则</span><i>→</i><span>驼峰命名</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 四类八种</a></li>
+    <li><a href="#ch2">2 · 八种类型写一遍</a></li>
+    <li><a href="#ch3">3 · 三个练习</a></li>
+    <li><a href="#ch4">4 · 标识符</a></li>
+    <li><a href="#ch5">5 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P23</div>
+  <h2>基本数据类型：四类八种</h2>
+  <p>接下来难度升一级，学三个比较难、又都和变量有关的知识点：</p>
+  <ul>
+    <li><b>数据类型</b>（对应格式里的"数据类型"）：之前只介绍了两种，其实还有别的；</li>
+    <li><b>标识符</b>（对应"变量名"）：用 a、b、c、d 起名规范吗？学一学现在大多数程序员都在遵守的<b>阿里巴巴编码规范</b>，从一开始就养成好习惯；</li>
+    <li><b>键盘录入</b>（对应"数据值"）：之前的数据值都是写死的，能不能键盘敲 1 变量就记 1，敲 2 就记 2？下一篇讲。</li>
+  </ul>
+  <p>Java 的数据类型分两种：<b>基本数据类型</b>和<b>引用数据类型</b>。引用数据类型学数组和面向对象时再讲，先学基本数据类型。它分<b>四类八种</b>：</p>
+
+  <table class="types">
+    <thead><tr><th>类</th><th>关键字</th><th>取值范围</th><th>内存占用（字节）</th></tr></thead>
+    <tbody>
+      <tr><td class="g" rowspan="4">整数</td><td class="k">byte</td><td><b>−128 ~ 127</b>（要记）</td><td>1 <span class="mem-bar"><i></i></span></td></tr>
+      <tr><td class="k">short</td><td>−32768 ~ 32767</td><td>2 <span class="mem-bar"><i></i><i></i></span></td></tr>
+      <tr class="def"><td class="k">int</td><td>约 −21 亿 ~ 21 亿（10 位数）</td><td>4 <span class="mem-bar"><i></i><i></i><i></i><i></i></span></td></tr>
+      <tr><td class="k">long</td><td>更大，19 位数</td><td>8 <span class="mem-bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></td></tr>
+      <tr><td class="g" rowspan="2">浮点数<br><small>（小数）</small></td><td class="k">float</td><td>约 ±3.4×10³⁸</td><td>4 <span class="mem-bar"><i></i><i></i><i></i><i></i></span></td></tr>
+      <tr class="def"><td class="k">double</td><td>约 ±1.8×10³⁰⁸</td><td>8 <span class="mem-bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></td></tr>
+      <tr><td class="g">字符</td><td class="k">char</td><td>0 ~ 65535</td><td>2 <span class="mem-bar"><i></i><i></i></span></td></tr>
+      <tr><td class="g">布尔</td><td class="k">boolean</td><td>true、false</td><td>1 <span class="mem-bar"><i></i></span></td></tr>
+    </tbody>
+  </table>
+
+  <p>一个整数搞出四种、一个小数搞出两种，有什么不一样？最本质的区别是<b>取值范围不一样</b>。最小的 byte 只能存 −128 到 127，所以把 200 赋值给 byte 变量是<b>错的</b>，一定要在范围内。常用的 int 大约是正负 21 亿，最大的 long 是一个 19 位数。范围不同，占用的内存空间也不同（1、2、4、8、4、8、2、1 个字节），这涉及计算机底层的存储原理，第二阶段再深入，现在了解一下就行。</p>
+  <p>实际使用时：<b>整数一般用 int，小数一般用 double</b>。</p>
+  <p>要记住的有三点：</p>
+  <ol>
+    <li>四类八种的名字；</li>
+    <li>byte 的取值范围 −128 ~ 127（其他的不用记）；</li>
+    <li>整数和小数取值范围的大小关系：<b>double &gt; float &gt; long &gt; int &gt; short &gt; byte</b>。</li>
+  </ol>
+  <div class="extra">
+    <span class="t">float 只有 4 个字节，范围却比 8 字节的 long 大？</span>
+    是的。整数类型每个二进制位都用来表示数值，所以 long 能<b>精确</b>表示 19 位以内的每一个整数。浮点数用一部分位记"有效数字"、一部分位记"小数点挪几位"（类似科学计数法 1.23×10³⁸），所以能表示特别大或特别小的数，代价是<b>精度有限</b>：float 大约只有 7 位有效数字，double 大约 15~16 位。上面的范围是"能表示多大"，不是"每个数都精确"。<br>
+    另外，boolean 占几个字节，Java 规范其实没有规定，视频说的 1 个字节是常见的实现方式。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P23</div>
+  <h2>八种类型的变量写一遍</h2>
+  <p>复制 VariableDemo2 成 <code>VariableDemo3.java</code>（类名跟着改），把八种基本数据类型的变量都定义一遍：</p>
+  <code class="blk"><span class="hk">public class</span> VariableDemo3 {
+    <span class="hk">public static void</span> main(String[] args) {
+        <span class="hk">byte</span> b = 10;            <span class="hc">// 写成 200 会报错：超出 byte 的范围</span>
+        <span class="hk">short</span> s = 20;
+        <span class="hk">int</span> i = 30;
+        <span class="hk">long</span> n = 9999999999L;   <span class="hc">// long 的数据值要加 L 后缀</span>
+        <span class="hk">float</span> f = 10.1F;       <span class="hc">// float 的数据值要加 F 后缀</span>
+        <span class="hk">double</span> d = 20.2;
+        <span class="hk">char</span> c = <span class="hs">'中'</span>;
+        <span class="hk">boolean</span> o = <span class="hk">true</span>;      <span class="hc">// 只有 true 和 false 两个值</span>
+        System.out.println(b);  <span class="hc">// 每个变量都打印一下（这里省略后面几行）</span>
+    }
+}</code>
+  <ul>
+    <li><b>long 要加 L</b>：一开始按老写法 <code>long n = 12345678910;</code>（10 位数），编译报错 <code>整数太大</code>。定义 long 类型变量时，数据值后面要加 <b>L</b> 作为后缀。大小写都行，但建议<b>大写</b>：小写的 <code>l</code> 和数字 <code>1</code> 长得太像了。</li>
+    <li><b>float 要加 F</b>：同理，大小写都行，为了和 L 统一，建议大写。</li>
+    <li>double 不用加后缀，和之前一样。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：类型实验台</h3>
+    <p style="margin-top:0">选一个类型，填一个数据值，看能不能编译、打印出什么，以及它在内存里实际是哪些 0 和 1（每个方块是一个字节）。点下面的例子试试视频里的几个坑。</p>
+    <div class="row"><span class="seg" id="tl-type"></span></div>
+    <div class="tl-code"><span id="tl-left"></span><input id="tl-val" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="数据值"><span>;</span></div>
+    <div class="chips" id="tl-ex"></div>
+    <div class="tl-out" id="tl-out"></div>
+    <div class="bytes" id="tl-bytes"></div>
+    <div class="tl-info" id="tl-info"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">"整数太大"为什么写在 long 前面也会报</span>
+    代码里直接写的整数（字面量），Java 默认把它当成 <b>int</b>。<code>12345678910</code> 超出了 int 的范围，所以还没轮到"存进 long"这一步，光是"这个 int 字面量"本身就不合法了，报"整数太大"。加上 L，等于告诉 Java"这是个 long 字面量"，就没问题了。同理，代码里直接写的小数默认是 <b>double</b>，存进 float 时会报"从double转换到float可能会有损失"，所以要加 F 说明"这是个 float"。<br>
+    把 200 存进 byte 的报错是 <code>不兼容的类型: 从int转换到byte可能会有损失</code>。在实验台里都能看到。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P24</div>
+  <h2>三个练习：根据数据选类型</h2>
+  <p>这一章的重点是：<b>根据不同的数据，选择不同的数据类型</b>。三个练习：</p>
+  <ol>
+    <li><b>输出老师的信息</b>：姓名"黑马谢广坤"、年龄 18、性别男、身高 180.1、是否单身。</li>
+    <li><b>输出电影的信息</b>：电影名"送初恋回家"、三位主演的名字、年份 2020、评分 9.0。</li>
+    <li><b>输出商品的信息</b>：从几部手机里选一部，记录价格（5299.00、1699.00……）和品牌（华为、荣耀……）。</li>
+  </ol>
+  <p>分析老师的信息时，先挑简单的：年龄 18 是整数，整数默认用 int；性别"男"只有一个字，用 char；身高 180.1 是小数，默认用 double；是否单身只有"是"和"否"两种状态，不可能又是又否，用布尔 true / false。最后剩下"黑马谢广坤"：五个汉字，整数、小数、布尔、字符都不像，在代码里用<b>字符串</b>表示最合适。字符串的类型叫 <b><code>String</code></b>（后面会专门学）。</p>
+
+  <div class="card">
+    <h3>动手：给每个数据选类型</h3>
+    <p style="margin-top:0">都选对了，下面会生成三个练习的代码和运行结果。</p>
+    <div class="pick" id="pick"></div>
+    <div class="pick-out" id="pick-out"></div>
+  </div>
+
+  <ul>
+    <li>变量名起得有意义：<code>name</code>、<code>age</code>、<code>gender</code>（性别）、<code>height</code>、<code>flag</code>（标记），比 a、b、c 好懂得多。下一节就讲怎么起名。</li>
+    <li>输出语句建议自己一行行敲，老师写熟了才直接复制粘贴。</li>
+    <li>评分 9.0 打印出来是 <code>9.0</code>，价格 5299.00 打印出来是 <code>5299.0</code>：double 只记数值，不记你写了几个 0。</li>
+  </ul>
+  <div class="extra">
+    <span class="t">真实项目里，钱不用 double</span>
+    练习里用 double 存价格没问题，但真正的电商、金融系统不会这么做。小数在计算机里是用二进制近似存的，有的数存不精确，比如 <code>0.1 + 0.2</code> 算出来是 <code>0.30000000000000004</code>。钱一分都不能错，所以实际开发会用"以分为单位的 long"或者专门的 <code>BigDecimal</code> 类，P161–162 会学到。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P25</div>
+  <h2>标识符：给类、方法、变量起名字</h2>
+  <p>之前起变量名用 a、b、c、d，不符合规范，名字没有意义，时间一长也忘了它们是什么意思。<b>标识符</b>就是我们自己给类、方法、变量起的名字，是个统称：类名、方法名、变量名都是标识符（方法马上就会学）。</p>
+  <p>现实里起名字也有讲究：给家里的二哈起名"刘建国""王翠花"也行，但太土；"亚托克斯""阿里斯塔"也行，但难记；要是起个更离谱的，怕是要被二哈嘲讽。现实中起名要讲规矩，代码里也一样。业内大多数程序员遵守的是<b>阿里巴巴 Java 开发手册</b>里的命名规范（课程资料里有）。规矩分两类：</p>
+
+  <h3>硬性要求：必须遵守，否则报错</h3>
+  <ol>
+    <li>由<b>数字、字母、下划线 <code>_</code>、美元符 <code>$</code></b> 组成，括号、感叹号这些都不行；</li>
+    <li><b>不能以数字开头</b>；</li>
+    <li><b>不能是关键字</b>：关键字已经被 Java 赋予了特定含义，比如 class；</li>
+    <li><b>区分大小写</b>：小写 <code>a</code> 和大写 <code>A</code> 是两个完全不同的变量。</li>
+  </ol>
+  <p>按这四条判断一下视频里的 9 个名字：</p>
+  <div class="card">
+    <h3>考考你：哪些不符合规则？</h3>
+    <div class="idq" id="idq"></div>
+  </div>
+
+  <h3>软性建议：不遵守不报错，但读起来费劲、不专业</h3>
+  <p>就像在路上看到漂亮的小姐姐偷偷瞄一眼，不违法，就是显得有点猥琐。</p>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>小驼峰命名法</b><br><small>方法名、变量名</small></td><td>一个单词时全部小写：<code>name</code>；多个单词时，第一个单词首字母小写，<b>从第二个单词起首字母大写</b>：<code>firstName</code></td></tr>
+      <tr><td><b>大驼峰命名法</b><br><small>类名</small></td><td>一个单词时首字母大写：<code>Student</code>；多个单词时<b>每个单词首字母都大写</b>：<code>GoodStudent</code></td></tr>
+      <tr><td><b>见名知意</b><br><small>不管给什么起名</small></td><td>看到名字大概就知道它表示什么：<code>name</code> 可能是姓名，<code>firstName</code> 可能是第一个人的名字，<code>Student</code> 和学生有关。用 a~z 起名不报错，但过几天问你 w 是什么，自己都不记得了</td></tr>
+    </tbody>
+  </table>
+  <p>后面所有代码都会按阿里巴巴规范来写，自己练习时也尽量遵守。刚开始会觉得痛苦，时间长了养成习惯就好了。</p>
+
+  <div class="card">
+    <h3>动手：名字检查器</h3>
+    <div class="row">
+      <input class="id-in" id="id-in" value="firstName" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="要检查的名字">
+      <span>用来给</span><span class="seg" id="id-use"><button data-u="var">变量 / 方法</button><button data-u="cls">类</button></span>
+    </div>
+    <div class="camel" id="id-camel"></div>
+    <ul class="chk" id="id-chk"></ul>
+    <div class="id-verdict" id="id-verdict"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">补充：规则的几个细节</span>
+    <b>"字母"不止英文</b>：Java 其实允许中文等各国文字当标识符，<code>int 年龄 = 18;</code> 能编译通过。但几乎没人这么写，团队协作、工具支持都会出问题，记住"用英文"就好。<br>
+    <b>下划线和 $</b>：语法上允许开头，但阿里巴巴手册明确要求<b>不要</b>以 <code>_</code> 或 <code>$</code> 开头或结尾；<code>$</code> 一般留给编译器自动生成的名字用。单独一个 <code>_</code> 从 Java 9 起是关键字，不能当名字。<br>
+    <b>以后还会遇到的</b>：常量全部大写、单词间用下划线（<code>MAX_VALUE</code>），包名全部小写（<code>com.itheima.demo</code>）。学到时再说。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>两大类</b></td><td>基本数据类型、引用数据类型（以后学）</td></tr>
+      <tr><td><b>四类八种</b></td><td>整数 byte short int long；浮点 float double；字符 char；布尔 boolean。整数默认 int，小数默认 double</td></tr>
+      <tr><td><b>要记的范围</b></td><td>byte：−128 ~ 127；大小关系 double &gt; float &gt; long &gt; int &gt; short &gt; byte</td></tr>
+      <tr><td><b>后缀</b></td><td>long 加 <code>L</code>，float 加 <code>F</code>，建议大写</td></tr>
+      <tr><td><b>标识符硬性要求</b></td><td>数字、字母、_、$ 组成；不能数字开头；不能是关键字；区分大小写</td></tr>
+      <tr><td><b>软性建议</b></td><td>变量名、方法名小驼峰（firstName），类名大驼峰（GoodStudent），见名知意</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    选类型看数据：整数 int、小数 double、一个字 char、是非 boolean、一串字 String；起名字看规矩：英文、小驼峰、见名知意。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>byte b = 200;</code> 能编译吗？<code>byte b = -128;</code> 呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">第一个不行，byte 的范围是 −128 ~ 127，200 超出了（报"从int转换到byte可能会有损失"）。第二个可以，正好是最小值。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. <code>long n = 12345678910;</code> 为什么报错？怎么改？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">代码里的整数默认是 int，12345678910 超出了 int 的范围，报"整数太大"。在后面加 L：<code>long n = 12345678910L;</code>（建议大写 L，小写 l 容易和 1 混淆）。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 把六种整数、小数类型按取值范围从大到小排一下。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">double &gt; float &gt; long &gt; int &gt; short &gt; byte。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 下面哪些不是合法的标识符：<code>_2b</code>、<code>2b</code>、<code>Class</code>、<code>#itheima</code>、<code>ak47</code>、<code>class</code>？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>2b</code>（数字开头）、<code>#itheima</code>（# 不允许）、<code>class</code>（关键字）不合法。<code>_2b</code> 以下划线开头可以；<code>Class</code> 大写，和关键字 class 不是一个东西，可以；<code>ak47</code> 可以。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. "学生的年龄"做变量名、"好学生"做类名，按规范分别怎么写？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">变量用小驼峰：<code>studentAge</code>；类用大驼峰：<code>GoodStudent</code>。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="22.html"><small>← 上一篇</small>P22 计算机中的数据存储</a>
+    <a class="next" href="26.html"><small>下一篇 →</small>P26–29 键盘录入与 IDEA</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P23–P25（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=23" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* Java 风格的浮点数输出（Double.toString / Float.toString 的规则） */
+function javaFloatStr(x, isFloat) {
+  if (Number.isNaN(x)) return 'NaN';
+  if (!isFinite(x)) return x > 0 ? 'Infinity' : '-Infinity';
+  if (x === 0) return (Object.is(x, -0) ? '-' : '') + '0.0';
+  let v = x;
+  if (isFloat) { for (let p = 1; p <= 9; p++) { const t = Number(x.toPrecision(p)); if (Math.fround(t) === x) { v = t; break; } } }
+  const neg = v < 0, a = Math.abs(v);
+  const [m, e] = a.toExponential().split('e'), ex = +e, digits = m.replace('.', '');
+  let s;
+  if (a >= 1e-3 && a < 1e7) {
+    if (ex >= 0) { const ip = digits.slice(0, ex + 1).padEnd(ex + 1, '0'), fp = digits.slice(ex + 1); s = ip + '.' + (fp || '0'); }
+    else s = '0.' + '0'.repeat(-ex - 1) + digits;
+  } else s = digits[0] + '.' + (digits.slice(1) || '0') + 'E' + ex;
+  return (neg ? '-' : '') + s;
+}
+
+/* ---------- 类型实验台 ---------- */
+(function () {
+  const T = {
+    byte: { n: 'b', bytes: 1, min: -128n, max: 127n, def: '10' },
+    short: { n: 's', bytes: 2, min: -32768n, max: 32767n, def: '20' },
+    int: { n: 'i', bytes: 4, min: -2147483648n, max: 2147483647n, def: '30' },
+    long: { n: 'n', bytes: 8, min: -9223372036854775808n, max: 9223372036854775807n, def: '9999999999L' },
+    float: { n: 'f', bytes: 4, def: '10.1F' },
+    double: { n: 'd', bytes: 8, def: '20.2' },
+    char: { n: 'c', bytes: 2, def: "'中'" },
+    boolean: { n: 'o', bytes: 1, def: 'true' },
+  };
+  const EX = [['byte', '200'], ['byte', '-128'], ['long', '12345678910'], ['long', '12345678910L'], ['int', '12345678910L'], ['float', '10.1'], ['int', '3.14'], ['double', '10'], ['char', "'中'"], ['int', "'中'"], ['char', "'ab'"], ['boolean', '1'], ['byte', '-1']];
+  let type = 'byte';
+  $('#tl-type').innerHTML = Object.keys(T).map(k => `<button data-t="${k}">${k}</button>`).join('');
+  $$('#tl-type button').forEach(b => b.onclick = () => { type = b.dataset.t; $('#tl-val').value = T[type].def; paint(); });
+  $('#tl-ex').innerHTML = '<span>例子：</span>' + EX.map(([t, v], i) => `<button data-i="${i}">${t} = ${esc(v)}</button>`).join('');
+  $$('#tl-ex button').forEach(b => b.onclick = () => { const [t, v] = EX[+b.dataset.i]; type = t; $('#tl-val').value = v; paint(); });
+  $('#tl-val').addEventListener('input', paint);
+
+  // 解析字面量 → {kind:'int'|'long'|'double'|'float'|'char'|'boolean'|'String', val} 或 {err}
+  function lit(s) {
+    s = s.trim();
+    let m;
+    if (s === 'true' || s === 'false') return { kind: 'boolean', val: s === 'true' };
+    if ((m = s.match(/^(-?)\s*(\d+)([lL]?)$/))) {
+      const neg = m[1] === '-', mag = BigInt(m[2]), L = !!m[3];
+      const lim = L ? (neg ? 9223372036854775808n : 9223372036854775807n) : (neg ? 2147483648n : 2147483647n);
+      if (mag > lim) return { err: '整数太大', note: L ? '超出了 long 的范围' : '没加 L 的整数默认是 int，这个数超出了 int 的范围（加 L 才算 long）' };
+      return { kind: L ? 'long' : 'int', val: neg ? -mag : mag };
+    }
+    if ((m = s.match(/^-?\s*(\d+\.\d*|\.\d+|\d+)([eE][+-]?\d+)?([fFdD]?)$/)) && (s.includes('.') || /[eE]/.test(s) || m[3])) {
+      const v = parseFloat(s.replace(/\s|[fFdD]$/g, ''));
+      const isF = /[fF]$/.test(s);
+      return { kind: isF ? 'float' : 'double', val: isF ? Math.fround(v) : v };
+    }
+    if ((m = s.match(/^'([\s\S]*)'$/))) {
+      const inner = m[1];
+      if (inner.length === 1) return { kind: 'char', val: inner.charCodeAt(0) };
+      if (inner === '') return { err: '空字符文字', note: '单引号里必须正好有一个字符' };
+      if (/^\\[ntr'"\\]$/.test(inner)) return { kind: 'char', val: { n: 10, t: 9, r: 13, "'": 39, '"': 34, '\\': 92 }[inner[1]] };
+      return { err: '未结束的字符文字', note: '单引号里只能放一个字符' };
+    }
+    if (/^".*"$/.test(s)) return { kind: 'String', val: s.slice(1, -1) };
+    return { err: null };
+  }
+  const RANK = { byte: 1, short: 2, char: 2, int: 3, long: 4, float: 5, double: 6 };
+  function assign(to, L) { // 返回 {ok, value, err}
+    const from = L.kind;
+    if (to === 'boolean' || from === 'boolean') {
+      if (to === from) return { ok: true, value: L.val };
+      return { err: `不兼容的类型: ${from}无法转换为${to}` };
+    }
+    if (from === 'String') return { err: `不兼容的类型: String无法转换为${to}`, note: '双引号是字符串，八种基本类型都存不了' };
+    // 数值类
+    const info = T[to];
+    if (to === 'float' || to === 'double') {
+      if (from === 'double' && to === 'float') return { err: '不兼容的类型: 从double转换到float可能会有损失', note: '代码里的小数默认是 double，存进 float 要加 F 后缀' };
+      let v = (from === 'int' || from === 'long') ? Number(L.val) : L.val;
+      if (from === 'char') v = L.val;
+      if (to === 'float') v = Math.fround(v);
+      return { ok: true, value: v, widened: from !== to };
+    }
+    if (from === 'float' || from === 'double') return { err: `不兼容的类型: 从${from}转换到${to}可能会有损失`, note: `${to} 只能存整数，小数部分会丢` };
+    // 整数 / char → 整数 / char
+    const bv = from === 'char' ? BigInt(L.val) : L.val;
+    if (to === 'char') {
+      if (from === 'int' && bv >= 0n && bv <= 65535n) return { ok: true, value: Number(bv) };
+      if (from === 'char') return { ok: true, value: L.val };
+      return { err: `不兼容的类型: 从${from}转换到char可能会有损失` };
+    }
+    if (from === 'long' && to !== 'long') return { err: `不兼容的类型: 从long转换到${to}可能会有损失`, note: '加了 L 就是 long，比 ' + to + ' 大，不能直接存' };
+    if (RANK[from] <= RANK[to] && !(from === 'char' && to === 'short')) return { ok: true, value: bv, widened: from !== to };
+    // int 常量存进 byte / short：在范围内就行
+    if (bv >= info.min && bv <= info.max) return { ok: true, value: bv };
+    return { err: `不兼容的类型: 从${from}转换到${to}可能会有损失`, note: `${to} 的范围是 ${info.min} ~ ${info.max}` };
+  }
+  function bitsOf(to, v) {
+    const n = T[to].bytes, buf = new DataView(new ArrayBuffer(8));
+    if (to === 'float') buf.setFloat32(0, v);
+    else if (to === 'double') buf.setFloat64(0, v);
+    else if (to === 'char') buf.setUint16(0, v);
+    else if (to === 'boolean') buf.setUint8(0, v ? 1 : 0);
+    else buf.setBigInt64(0, BigInt.asIntN(64, BigInt(v)) << BigInt(64 - n * 8));
+    return Array.from({ length: n }, (_, i) => buf.getUint8(i));
+  }
+  function show(to, v) {
+    if (to === 'char') return String.fromCharCode(v);
+    if (to === 'float') return javaFloatStr(v, true);
+    if (to === 'double') return javaFloatStr(v, false);
+    return String(v);
+  }
+  function paint() {
+    $$('#tl-type button').forEach(b => b.classList.toggle('sel', b.dataset.t === type));
+    const info = T[type];
+    $('#tl-left').innerHTML = `<span class="hk">${type}</span> ${info.n} =`;
+    const raw = $('#tl-val').value, out = $('#tl-out'), bytes = $('#tl-bytes');
+    const L = lit(raw);
+    let r;
+    if (L.err === null) { out.innerHTML = '<span class="note">（模拟器看不懂这个值。试试整数、小数、\'字\'、true/false，或者加 L / F 后缀）</span>'; bytes.innerHTML = ''; $('#tl-info').textContent = ''; return; }
+    if (L.err) r = { err: L.err, note: L.note }; else r = assign(type, L);
+    const code = `${type} ${info.n} = ${raw.trim()};`;
+    if (r.err) {
+      out.innerHTML = `<span class="note">&gt; javac VariableDemo3.java</span>\n<span class="err">VariableDemo3.java:3: 错误: ${esc(r.err)}</span>\n        ${esc(code)}\n<span class="err">1 个错误</span>` + (r.note ? `\n<span class="note">（${esc(r.note)}）</span>` : '');
+      bytes.innerHTML = ''; $('#tl-info').textContent = '';
+      return;
+    }
+    const txt = show(type, r.value);
+    let note = '';
+    if (L.kind === 'char' && type !== 'char') note = `（字符存进 ${type}，存的是它在码表里的编号）`;
+    else if (r.widened && (type === 'float' || type === 'double') && (L.kind === 'int' || L.kind === 'long')) note = '（整数存进小数类型，自动变成小数）';
+    else if (type === 'float' && Math.abs(r.value - parseFloat(raw)) > 0 && txt !== raw.replace(/[fF]$/, '').trim()) note = '（float 精度有限，存进去的值和写的不完全一样）';
+    out.innerHTML = `<span class="note">&gt; javac VariableDemo3.java\n&gt; java VariableDemo3</span>\n${esc(txt)}` + (note ? `\n<span class="note">${esc(note)}</span>` : '');
+    const bs = bitsOf(type, r.value);
+    const signed = ['byte', 'short', 'int', 'long'].includes(type);
+    bytes.innerHTML = bs.map((b, i) => `<div class="byte">${b.toString(2).padStart(8, '0').split('').map((c, j) => `<b class="${c === '1' ? 'one' : ''}${signed && i === 0 && j === 0 ? ' sign' : ''}">${c}</b>`).join('')}</div>`).join('');
+    const tip = {
+      byte: '1 个字节 = 8 位。最左边带框的一位是符号位（0 正 1 负），负数用补码存，P38 会讲。',
+      short: '2 个字节 = 16 位。', int: '4 个字节 = 32 位。', long: '8 个字节 = 64 位，整数里最大的。',
+      float: '4 个字节：1 位符号 + 8 位指数 + 23 位有效数字，有效数字只有约 7 位十进制。',
+      double: '8 个字节：1 位符号 + 11 位指数 + 52 位有效数字，约 15~16 位十进制。',
+      char: '2 个字节，存的是字符在 Unicode 里的编号（UTF-16），所以范围是 0 ~ 65535。',
+      boolean: '这里画成 1 个字节（true 存 1，false 存 0），这是常见的实现方式，Java 规范并没有规定。',
+    }[type];
+    $('#tl-info').textContent = `${type} 占 ${T[type].bytes} 个字节。` + tip;
+  }
+  $('#tl-val').value = '200';
+  paint();
+})();
+
+/* ---------- 选类型 ---------- */
+(function () {
+  const OPT = ['int', 'double', 'char', 'boolean', 'String', 'long', 'float'];
+  const D = [
+    ['黑马谢广坤', '老师的姓名', 'String', '五个字，用字符串。', 'name', '"黑马谢广坤"', 0],
+    ['18', '年龄', 'int', '整数默认用 int。', 'age', '18', 0],
+    ['男', '性别', 'char', '只有一个字，用 char（单引号）。', 'gender', "'男'", 0],
+    ['180.1', '身高', 'double', '小数默认用 double。', 'height', '180.1', 0],
+    ['是', '是否单身', 'boolean', '只有是/否两种状态，用 true / false。', 'flag', 'true', 0],
+    ['送初恋回家', '电影名', 'String', '一串字，用字符串。', 'name', '"送初恋回家"', 1],
+    ['2020', '年份', 'int', '整数，用 int。', 'year', '2020', 1],
+    ['9.0', '评分', 'double', '小数，用 double。', 'grade', '9.0', 1],
+    ['5299.00', '手机价格', 'double', '小数默认用 double（float 也能存，但要加 F，而且精度低）。', 'price', '5299.0', 2],
+    ['华为', '手机品牌', 'String', '两个字，不是一个字，用字符串。', 'brand', '"华为"', 2],
+  ];
+  const box = $('#pick'), done = new Set();
+  D.forEach(([v, what, ans, why], i) => {
+    const it = document.createElement('div'); it.className = 'it';
+    it.innerHTML = `<div class="d">${esc(v)}<small>${what}</small></div><div class="opts">${OPT.map(o => `<button>${o}</button>`).join('')}</div><div class="why"></div>`;
+    $$('button', it).forEach(b => b.onclick = () => {
+      if (done.has(i)) return;
+      if (b.textContent === ans) { b.classList.add('on'); it.classList.add('ok'); $('.why', it).textContent = '✓ ' + why; done.add(i); out(); }
+      else { b.classList.add('bad'); $('.why', it).textContent = b.textContent === 'char' ? '✗ char 只能放一个字。' : b.textContent === 'float' || b.textContent === 'long' ? '✗ 能存，但默认不用它，再想想。' : '✗ 再想想。'; }
+    });
+    box.appendChild(it);
+  });
+  function out() {
+    if (done.size < D.length) { $('#pick-out').innerHTML = `<span style="color:var(--muted);font-size:14px">已选对 ${done.size} / ${D.length}</span>`; return; }
+    const cls = ['VariableTest2', 'VariableTest3', 'VariableTest4'];
+    const blocks = [0, 1, 2].map(g => {
+      const rows = D.filter(d => d[6] === g);
+      const decl = rows.map(d => `        <span class="hk">${d[2] === 'String' ? 'String' : d[2]}</span> ${d[4]} = ${d[2] === 'String' || d[2] === 'char' ? '<span class="hs">' + esc(d[5]) + '</span>' : d[5]};`).join('\n');
+      const extra = g === 1 ? `\n        <span class="hk">String</span> star = <span class="hs">"三位主演的名字"</span>;` : '';
+      const prints = rows.map(d => `        System.out.println(${d[4]});`).concat(g === 1 ? ['        System.out.println(star);'] : []).join('\n');
+      const outs = rows.map(d => d[2] === 'String' || d[2] === 'char' ? d[5].slice(1, -1) : d[5]).concat(g === 1 ? ['三位主演的名字'] : []);
+      return `<code class="blk"><span class="hk">public class</span> ${cls[g]} {
+    <span class="hk">public static void</span> main(String[] args) {
+${decl}${extra}
+${prints}
+    }
+}</code><div class="tl-out" style="margin:4px 0 12px">${esc(outs.join('\n'))}</div>`;
+    });
+    $('#pick-out').innerHTML = '<b>全对！</b>三个练习的代码和运行结果：' + blocks.join('');
+  }
+  out();
+})();
+
+/* ---------- 标识符 ---------- */
+const KEYWORDS = new Set('abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for goto if implements import instanceof int interface long native new package private protected public return short static strictfp super switch synchronized this throw throws transient try void volatile while _'.split(' '));
+const LITS = new Set(['true', 'false', 'null']);
+(function () {
+  const Q = [
+    ['bj', true, '数字字母组成，不是数字开头，不是关键字'],
+    ['b2', true, '数字在后面没问题'],
+    ['2b', false, '不能以数字开头'],
+    ['class', false, 'class 是关键字'],
+    ['_2b', true, '只是不能数字开头，下划线开头可以'],
+    ['#itheima', false, '# 不在"数字、字母、_、$"里'],
+    ['ak47', true, '符合要求'],
+    ['Class', true, '区分大小写：大写的 Class 不是关键字'],
+    ['helloworld', true, '符合要求（按规范最好写成 helloWorld）'],
+  ];
+  const box = $('#idq');
+  Q.forEach(([n, ok, why]) => {
+    const it = document.createElement('div'); it.className = 'it';
+    it.innerHTML = `<code>${esc(n)}</code><div class="opts"><button data-a="1">合法</button><button data-a="0">不合法</button></div>`;
+    let ans = false;
+    $$('button', it).forEach(b => b.onclick = () => {
+      if (ans) return; ans = true;
+      const right = (b.dataset.a === '1') === ok;
+      it.classList.add(right ? 'ok' : 'no');
+      it.insertAdjacentHTML('beforeend', `<div class="why">${right ? '✓' : '✗'} ${ok ? '合法' : '不合法'}：${why}</div>`);
+    });
+    box.appendChild(it);
+  });
+})();
+(function () {
+  let use = 'var';
+  const words = s => s.replace(/[_$]+/g, ' ').replace(/([a-z0-9])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2').trim().split(/\s+/).filter(Boolean);
+  const cap = w => w[0].toUpperCase() + w.slice(1).toLowerCase();
+  function paint() {
+    $$('#id-use button').forEach(b => b.classList.toggle('sel', b.dataset.u === use));
+    const s = $('#id-in').value;
+    const chk = [], add = (st, t) => chk.push(`<li class="${st}"><span class="m">${st === 'y' ? '✓' : st === 'n' ? '✗' : '!'}</span>${t}</li>`);
+    if (!s) { $('#id-chk').innerHTML = ''; $('#id-verdict').className = 'id-verdict'; $('#id-verdict').textContent = '输入一个名字'; $('#id-camel').innerHTML = ''; return; }
+    const badCh = [...s].filter(c => !/[A-Za-z0-9_$]/.test(c));
+    const uniOnly = badCh.length && badCh.every(c => /\p{L}/u.test(c));
+    let hard = true;
+    if (!badCh.length) add('y', '只用了数字、字母、_、$');
+    else if (uniOnly) add('w', `用了 ${esc(badCh.join(''))}：Java 其实允许中文等文字，但不推荐，课程按"数字、字母、_、$"来要求`);
+    else { add('n', `含有不允许的字符：${esc([...new Set(badCh)].join(' '))}`); hard = false; }
+    if (/^[0-9]/.test(s)) { add('n', '以数字开头'); hard = false; } else add('y', '没有以数字开头');
+    if (KEYWORDS.has(s)) { add('n', `<code>${esc(s)}</code> 是关键字`); hard = false; }
+    else if (LITS.has(s)) { add('n', `<code>${s}</code> 是字面量，同样不能当名字`); hard = false; }
+    else add('y', KEYWORDS.has(s.toLowerCase()) ? `不是关键字（区分大小写：<code>${esc(s)}</code> ≠ <code>${esc(s.toLowerCase())}</code>）` : '不是关键字');
+    // 软性
+    const ws = words(s.replace(/[^A-Za-z0-9_$]/g, ''));
+    const want = ws.length ? (use === 'var' ? ws[0].toLowerCase() + ws.slice(1).map(cap).join('') : ws.map(cap).join('')) : '';
+    const okCamel = use === 'var' ? /^[a-z][a-z0-9]*([A-Z][a-z0-9]*)*$/.test(s) : /^[A-Z][a-z0-9]*([A-Z][a-z0-9]*)*$/.test(s);
+    let soft = true;
+    if (hard && uniOnly) { soft = false; }
+    else if (hard) {
+      if (okCamel) add('y', use === 'var' ? '符合小驼峰（变量名、方法名）' : '符合大驼峰（类名）');
+      else {
+        soft = false;
+        let tip = '';
+        if (want && want !== s && /^[A-Za-z]/.test(want)) tip = KEYWORDS.has(want) || LITS.has(want) ? `（改成小驼峰就成了关键字 <code>${esc(want)}</code>，得换个名字，比如 <code>${esc(want)}Name</code>）` : `，建议写成 <code>${esc(want)}</code>`;
+        add('w', (use === 'var' ? '不符合小驼峰' : '不符合大驼峰') + tip);
+      }
+      if (/^[_$]|[_$]$/.test(s)) { soft = false; add('w', '阿里巴巴规范：不要以 _ 或 $ 开头或结尾'); }
+      if (s.length <= 2 || /^[a-z]\d*$/i.test(s)) { soft = false; add('w', '太短了，看不出意思，不够"见名知意"'); }
+    }
+    $('#id-chk').innerHTML = chk.join('');
+    $('#id-camel').innerHTML = ws.length > 1 && hard ? '拆成单词：' + ws.map(w => `<span><b>${esc(w[0])}</b>${esc(w.slice(1))}</span>`).join('') : '';
+    const v = $('#id-verdict');
+    if (!hard) { v.className = 'id-verdict n'; v.innerHTML = '✗ 不合法：违反了硬性要求，编译会报错。'; }
+    else if (!soft) { v.className = 'id-verdict w'; v.innerHTML = '! 合法，能编译，但不够规范。'; }
+    else { v.className = 'id-verdict y'; v.innerHTML = '✓ 合法，而且符合规范。'; }
+  }
+  $$('#id-use button').forEach(b => b.onclick = () => { use = b.dataset.u; paint(); });
+  $('#id-in').addEventListener('input', paint);
+  paint();
+})();
+</script>
+</body>
+</html>

@@ -30,3 +30,7 @@
    ```
    yt-dlp 下 B 站音频不需要登录。第一次会下载约 1.6 GB 的模型。M1 上约 10 倍速，heima-java-1 的 89 集（约 30 小时）跑了约 3 小时。换课程时改一下 `PROMPT` 里的术语。
 4. **检查并重建索引**：`python3 build_index.py OUT_DIR OUT_DIR/pages.json`，会列出缺失、覆盖不足和疑似重复循环的集数。
+5. **抽查内容是否对得上**：时长筛选挡不住"时长差不多、内容完全是别的视频"的 AI 字幕。heima-java-1 里 P32、P33、P70、P82、P86 的 `ai-zh` 字幕就是别的视频（明星、电影、游戏、手机测评……），已移到 `bad-ai/` 并用本地 whisper 重转。简单的检查办法：统计每集里课程术语出现的次数，特别少的打开看看。
+   ```bash
+   cd OUT_DIR && for f in $(awk -F'\t' '$2=="ai-zh"{printf "%03d.txt\n",$1}' INDEX.tsv); do echo "$f $(grep -o -E 'Java|java|代码|变量|方法|数组|对象|idea|字符串|类' $f | wc -l)"; done | sort -k2 -n | head
+   ```

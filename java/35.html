@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P35–37 逻辑、短路与三元运算符 · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:13px var(--mono);border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:80px}
+
+/* 真值开关 */
+.sw-row{display:flex;flex-wrap:wrap;gap:12px;margin:6px 0 10px}
+.tog{display:flex;align-items:center;gap:8px;cursor:pointer;user-select:none;font-size:14px;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--panel)}
+.tog .k{width:40px;height:22px;border-radius:999px;background:var(--line);position:relative;transition:background .15s}
+.tog .k::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.tog.on .k{background:var(--ok)}
+.tog.on .k::after{left:21px}
+.tog b{font-family:var(--mono)}
+.tt2{width:100%;border-collapse:collapse;font-size:14px}
+.tt2 td,.tt2 th{border-bottom:1px solid var(--line);padding:6px 8px;text-align:left}
+.tt2 th{font-size:12.5px;color:var(--muted);font-weight:600}
+.tt2 td.e{font:14px var(--mono)}
+.v{display:inline-block;min-width:3.4em;text-align:center;font:700 13px var(--mono);border-radius:6px;padding:1px 6px}
+.v.t{background:var(--ok-soft);color:var(--ok)}
+.v.f{background:var(--bad-soft);color:var(--bad)}
+.scene{font-size:13px;color:var(--muted)}
+
+/* 短路 */
+.sc-code{font:14.5px/1.8 var(--mono);background:var(--bg);border-radius:10px;padding:8px 12px;white-space:pre;overflow-x:auto}
+.sc-code .side{border-radius:5px;padding:1px 3px}
+.sc-code .side.run{background:var(--on-soft);box-shadow:inset 0 -2px 0 var(--on)}
+.sc-code .side.skip{opacity:.4;text-decoration:line-through}
+.sc-steps{margin:8px 0 0;padding-left:1.4em;font-size:14.5px}
+.sc-steps li{margin:3px 0}
+.memrow{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.memrow div{border:2px solid var(--line);border-radius:10px;padding:4px 12px;font:14px var(--mono);background:var(--panel);text-align:center}
+.memrow div b{display:block;font-size:18px}
+.memrow div.chg{border-color:var(--on)}
+
+/* 三元 */
+.tern{font:15px/1.9 var(--mono);background:var(--bg);border-radius:10px;padding:8px 12px;overflow-x:auto;white-space:nowrap}
+.tern .c{border-radius:5px;padding:1px 4px;border:1px solid transparent}
+.tern .c.pick{background:var(--ok-soft);border-color:var(--ok);font-weight:700}
+.tern .c.drop{opacity:.4}
+.tern .q{border-radius:5px;padding:1px 4px;background:var(--accent-soft)}
+.tern-res{font-size:15px;margin-top:6px}
+.bars{display:flex;gap:14px;align-items:flex-end;height:120px;margin-top:10px}
+.bars div{width:46px;background:var(--line);border-radius:6px 6px 0 0;position:relative;transition:height .3s,background .3s}
+.bars div span{position:absolute;bottom:-20px;left:0;right:0;text-align:center;font:12px var(--mono);color:var(--muted)}
+.bars div i{position:absolute;top:-18px;left:0;right:0;text-align:center;font:12px var(--mono);font-style:normal}
+.bars div.win{background:var(--on)}
+.bars div.tmp{background:var(--accent)}
+
+/* 6 */
+.chk6{list-style:none;padding:0;margin:8px 0 0;font:14px var(--mono)}
+.chk6 li{padding:3px 0}
+.chk6 li .m{display:inline-block;width:5.2em;font:700 12px sans-serif}
+.chk6 li.y .m{color:var(--ok)}.chk6 li.n .m{color:var(--bad)}.chk6 li.s{opacity:.45}
+.chk6 li.s .m{color:var(--muted)}
+.big{font:700 20px var(--mono);margin-top:6px}
+</style>
+</head>
+<body data-ep="35" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=35" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">运算符 · P35–P37</div>
+  <h1>逻辑、短路与三元运算符</h1>
+  <p class="en">Logical, Short-Circuit &amp; Ternary Operators</p>
+  <p class="lead">"大于 5 并且小于 15""有房子或者有车子"：把几个判断连起来，靠的是<b>逻辑运算符</b>；左边已经能决定结果时就不再算右边，这是<b>短路</b>；根据一个判断在两个结果里挑一个，用<b>三元运算符</b>。最后看看一堆运算符混在一起时谁先算。</p>
+  <div class="road">
+    <span>&amp; | ^ !</span><i>→</i><span>&amp;&amp; ||</span><i>→</i><span>练习：数字 6</span><i>→</i><span>三元运算符</span><i>→</i><span>两只老虎、三个和尚</span><i>→</i><span>优先级</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 四种逻辑运算符</a></li>
+    <li><a href="#ch2">2 · 短路逻辑运算符</a></li>
+    <li><a href="#ch3">3 · 练习：数字 6</a></li>
+    <li><a href="#ch4">4 · 三元运算符</a></li>
+    <li><a href="#ch5">5 · 两只老虎、三个和尚</a></li>
+    <li><a href="#ch6">6 · 运算符优先级</a></li>
+    <li><a href="#ch7">7 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P35</div>
+  <h2>四种逻辑运算符</h2>
+  <p>数学里"一个数大于 5、小于 15"可以写成 <code>5 &lt; x &lt; 15</code>，但在 Java 里<b>不能连着写</b>。要先拆成 <code>x &gt; 5</code> 和 <code>x &lt; 15</code> 两个式子，再用逻辑运算符合起来：<code>x &gt; 5 &amp; x &lt; 15</code>，中间的 <code>&amp;</code> 表示"并且"，x 要同时满足两个条件。这就是逻辑运算符存在的意义。</p>
+  <table class="tt" style="width:100%">
+    <thead><tr><th>符号</th><th>名字</th><th>读作</th><th>规则</th></tr></thead>
+    <tbody>
+      <tr><td><code>&amp;</code></td><td>逻辑与</td><td>并且、而且</td><td><b>两边都为真，结果才是真</b>（Shift+7）</td></tr>
+      <tr><td><code>|</code></td><td>逻辑或</td><td>或者</td><td><b>两边都为假，结果才是假</b>（Shift+回车上方的 \ 键）</td></tr>
+      <tr><td><code>^</code></td><td>逻辑异或</td><td></td><td><b>相同为 false，不同为 true</b>（Shift+6）。用得非常少，了解即可</td></tr>
+      <tr><td><code>!</code></td><td>逻辑非</td><td>取反</td><td>true 变 false，false 变 true</td></tr>
+    </tbody>
+  </table>
+  <p>在 IDEA 里写四行 <code>System.out.println(true &amp; true);</code> 再改成其他组合就能验证（<b>Ctrl+D</b> 可以把当前行向下复制一行）。实际开发中怎么选：</p>
+  <ul>
+    <li><b>并且</b>：用户登录时用户名<b>和</b>密码都要正确才算成功。两边条件<b>同时满足</b>，用 &amp;。</li>
+    <li><b>或者</b>：丈母娘说"有房子<b>或者</b>有车子，就可以娶走我女儿"，只要有一个就行，用 |。要是改口"房子和车子都要有"，就得换成并且。所以不能随便用，要看业务场景。</li>
+    <li><b>异或</b>，记忆小故事：民政局结婚登记，两个男生不行、两个女生也不行（相同为 false），一男一女才行（不同为 true）。</li>
+    <li><b>取反</b>：感叹号<b>要么不写，要么只写一次</b>。<code>!!false</code> 取两次反又回到 false，和不写一样，写三个和写一个一样，"程序员何苦为难程序员"。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：拨开关看结果</h3>
+    <div class="sw-row">
+      <div class="tog on" id="tg-a" role="switch" tabindex="0" aria-checked="true"><span class="k"></span><span>左边 <b>a</b> = <b class="val">true</b></span></div>
+      <div class="tog on" id="tg-b" role="switch" tabindex="0" aria-checked="true"><span class="k"></span><span>右边 <b>b</b> = <b class="val">true</b></span></div>
+    </div>
+    <table class="tt2" id="tt2"></table>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P36</div>
+  <h2>短路逻辑运算符：左边能定就不算右边</h2>
+  <p>用逻辑运算符写代码还能再优化。还是用户登录：先判断用户名，再判断密码。用户名正确，继续判断密码是必须的；可<b>用户名都错了，还需要判断密码吗？</b>不需要，不管密码对不对，整个表达式都是 false，登录失败。但用单个的 <code>&amp;</code>，不管用户名对不对，都会去判断密码，效率低。</p>
+  <p>丈母娘也一样：先看房子，没房子才需要去看车子；房子已经有了，再去看车子就没意义了（"您老还看什么车子呢，够累的"）。单个的 <code>|</code> 不管左边真假，右边都会执行。</p>
+  <p>所以有了<b>短路逻辑运算符</b>：</p>
+  <table class="tt" style="width:100%">
+    <thead><tr><th>符号</th><th>名字</th><th>结果</th><th>短路效果</th></tr></thead>
+    <tbody>
+      <tr><td><code>&amp;&amp;</code></td><td>短路与</td><td>和 &amp; 一样</td><td>左边为 <b>false</b>，右边不执行（结果一定是 false）</td></tr>
+      <tr><td><code>||</code></td><td>短路或</td><td>和 | 一样</td><td>左边为 <b>true</b>，右边不执行（结果一定是 true）</td></tr>
+    </tbody>
+  </table>
+  <p>两个符号连在一起，中间没有空格。<b>运行结果和单个的完全一样，只是多了短路效果：左边的表达式已经能确定最终结果时，右边就不参与运行了</b>，效率更高。</p>
+  <p>视频用自增（P33 学过的 <code>++</code>）来证明右边到底有没有执行：</p>
+  <code class="blk"><span class="hk">int</span> a = 10;
+<span class="hk">int</span> b = 10;
+<span class="hk">boolean</span> result = ++a &lt; 5 &amp;&amp; ++b &lt; 5;
+System.out.println(result);   <span class="hc">// false</span>
+System.out.println(a);        <span class="hc">// 11</span>
+System.out.println(b);        <span class="hc">// 10 ← 右边根本没执行，b 没有自增</span></code>
+  <p>a 先自增成 11，<code>11 &lt; 5</code> 是 false；&amp;&amp; 的左边是 false，结果已经确定，右边不执行，所以 b 还是 10。换成单个的 <code>&amp;</code>，右边照样执行，b 就变成 11。</p>
+
+  <div class="card">
+    <h3>动手：右边到底执行了没有</h3>
+    <div class="row">
+      <span>a =</span><input class="inp" id="sc-a" value="10" aria-label="a 的初值">
+      <span>b =</span><input class="inp" id="sc-b" value="10" aria-label="b 的初值">
+      <span>运算符：</span><span class="seg" id="sc-op"><button>&amp;</button><button>&amp;&amp;</button><button>|</button><button>||</button></span>
+    </div>
+    <div class="row"><span>左边判断：</span><span class="seg" id="sc-l"><button data-v="lt">++a &lt; 5</button><button data-v="gt">++a &gt; 5</button></span></div>
+    <div class="sc-code" id="sc-code"></div>
+    <ol class="sc-steps" id="sc-steps"></ol>
+    <div class="memrow" id="sc-mem"></div>
+  </div>
+
+  <p>这个过程听着有点懵也没关系，只要记住最后一句：<b>以后最常用的逻辑运算符是三个：短路与 <code>&amp;&amp;</code>、短路或 <code>||</code>、取反 <code>!</code></b>。</p>
+  <div class="extra">
+    <span class="t">补充：短路不只是快，还能防错</span>
+    短路最大的用处其实是"先检查、再使用"。比如 <code>b != 0 &amp;&amp; a / b &gt; 1</code>：b 是 0 时左边为 false，右边的除法根本不会执行，也就不会出现"除以 0"的异常；要是写成单个 &amp;，b 为 0 时程序直接崩溃。以后学到对象，<code>str != null &amp;&amp; str.length() &gt; 0</code> 这种写法会天天见。<br>
+    另外，单个的 <code>&amp;</code>、<code>|</code>、<code>^</code> 用在两个<b>整数</b>之间时，是按二进制位来运算的（位运算），这在 <a href="38.html">P38</a> 讲完补码之后会更好理解。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P36</div>
+  <h2>练习：数字 6</h2>
+  <div class="callout"><span class="t">需求（斯坦福大学 Java 入门练习）</span>数字 6 是一个伟大的数字。键盘录入两个整数：如果其中一个为 6，输出 true；如果它们的和是 6 的倍数，也输出 true；其他情况输出 false。</div>
+  <p><b>分析</b>：第一步键盘录入两个整数（变量名起得有意义：number1、number2，别叫 a、b）。第二步判断。输出 true 的情况有几种？不是两种，是<b>三种</b>：</p>
+  <ol>
+    <li>number1 为 6；</li>
+    <li>number2 为 6；</li>
+    <li>两数之和是 6 的倍数：和对 6 取模等于 0。</li>
+  </ol>
+  <p>三个条件满足其中一个就行。以前都是两个条件，三个能连吗？能：三个条件中间写两个 <code>||</code>。</p>
+  <code class="blk">Scanner sc = <span class="hk">new</span> Scanner(System.in);
+System.out.println(<span class="hs">"请输入一个整数"</span>);
+<span class="hk">int</span> number1 = sc.nextInt();
+System.out.println(<span class="hs">"请输入第二个整数"</span>);
+<span class="hk">int</span> number2 = sc.nextInt();
+<span class="hk">boolean</span> result = number1 == 6 || number2 == 6 || (number1 + number2) % 6 == 0;
+System.out.println(result);</code>
+  <p>测试时除了测正常情况（6 和 10、1 和 6、2 和 4 都是 true），还要测<b>不满足的情况</b>（5 和 10 应该是 false），这样才能证明代码是对的。</p>
+  <div class="card">
+    <h3>动手：测一测</h3>
+    <div class="row"><span>number1 =</span><input class="inp" id="s6-a" value="2" aria-label="number1"><span>number2 =</span><input class="inp" id="s6-b" value="4" aria-label="number2"></div>
+    <ul class="chk6" id="s6"></ul>
+    <div class="big" id="s6-r"></div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P37</div>
+  <h2>三元运算符：根据判断二选一</h2>
+  <p>这个知识点有点小难，认真听。定义一个变量记录整数 10，小菜一碟；如果要让变量记录<b>两个整数中的较大值</b>呢？得先比较，再把比较后的结果存进去。这个比较可以用<b>三元运算符</b>（也叫三元表达式）完成：根据判断的结果得到不同的内容。</p>
+  <code class="blk">关系表达式 ? 表达式1 : 表达式2;
+
+<span class="hk">int</span> max = a &gt; b ? a : b;            <span class="hc">// 把结果赋值给变量</span>
+System.out.println(a &gt; b ? a : b);   <span class="hc">// 或者直接打印（括号里不加分号）</span></code>
+  <p><b>计算规则</b>：先算问号前面的关系表达式（一个判断）。结果为 <b>true</b>，表达式1 的值就是整个三元运算符的结果；为 <b>false</b>，表达式2 的值就是结果。</p>
+  <p><b>注意</b>：三元运算符的结果<b>必须被使用</b>：要么赋值给变量，要么直接打印。单独写一行 <code>a &gt; b ? a : b;</code> 会报错。</p>
+  <p>它的两个难点：格式长不好记，先花点时间记下来；运算规则容易忘，记住"问号前面是判断，真取冒号左边，假取冒号右边"。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P37</div>
+  <h2>两个练习：两只老虎、三个和尚</h2>
+  <p><b>两只老虎</b>：动物园里有两只老虎，体重分别通过键盘录入获得，判断两只老虎的体重是否相同。</p>
+  <p>直接写 <code>weight1 == weight2</code> 也能判断，但结果只能是 true 或 false。想看到"相同"或"不同"，就用三元运算符：两个结果都是字符串，所以用 String 变量接收。</p>
+  <code class="blk"><span class="hk">String</span> result = weight1 == weight2 ? <span class="hs">"相同"</span> : <span class="hs">"不同"</span>;
+System.out.println(result);</code>
+  <p><b>三个和尚</b>：寺庙里住着三个和尚，身高分别是 150cm、210cm、165cm，获取三个和尚的最高身高。三个数怎么比？<b>先拿前两个比，得到较大值，再拿这个较大值和第三个比</b>。</p>
+  <code class="blk"><span class="hk">int</span> height1 = 150;
+<span class="hk">int</span> height2 = 210;
+<span class="hk">int</span> height3 = 165;
+<span class="hk">int</span> temp = height1 &gt; height2 ? height1 : height2;   <span class="hc">// 临时变量：1 和 2 中的较大值</span>
+<span class="hk">int</span> max = temp &gt; height3 ? temp : height3;
+System.out.println(max);   <span class="hc">// 210</span></code>
+  <p>代码排得不整齐时，按 <b>Ctrl+Alt+L</b> 自动格式化（会和 QQ、网易云音乐、百度网盘等软件的快捷键冲突，把它们关掉就行）。</p>
+
+  <div class="card">
+    <h3>动手：三元运算符走的是哪条路</h3>
+    <div class="row"><span class="seg" id="tn-mode"><button data-m="tiger">两只老虎</button><button data-m="monk">三个和尚</button></span></div>
+    <div class="row" id="tn-in"></div>
+    <div class="tern" id="tn-code"></div>
+    <div class="tern-res" id="tn-res"></div>
+    <div class="bars" id="tn-bars"></div>
+  </div>
+  <div class="extra">
+    <span class="t">补充：三元运算符的两个结果要"合得来"</span>
+    冒号两边的表达式类型要能统一，因为整个三元运算符只能有一个结果类型。<code>int max = a &gt; b ? a : b;</code> 两边都是 int 没问题；<code>int x = flag ? 1 : "一";</code> 就会报错。三元运算符适合"二选一、结果很简单"的情况；条件一多、逻辑一复杂，下一章的 <code>if</code> 读起来更清楚。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P37</div>
+  <h2>运算符的优先级</h2>
+  <p><code>a + b * c</code> 先算谁？小学说过先乘除后加减，所以先算 b * c，再加 a。但现在学了这么多运算符，它们都有优先级，视频给了一张完整的优先级表。让你背下来，内心是拒绝的吧？只要记住一点：<b>小括号优先于所有</b>。想让谁先算，就用小括号把它括起来：<code>a + (b * c)</code>。不管谁来看，都知道先算 b * c 再加 a，提高了阅读性。养成加小括号的习惯就好。</p>
+  <div class="extra">
+    <span class="t">补充：一张够用的优先级简表（从高到低）</span>
+    <table class="tt" style="width:100%;margin-top:6px">
+      <tbody>
+        <tr><td>1</td><td><code>()</code></td><td>小括号</td></tr>
+        <tr><td>2</td><td><code>++ -- !</code>、正负号、强制转换</td><td>一元运算符</td></tr>
+        <tr><td>3</td><td><code>* / %</code></td><td>乘除取模</td></tr>
+        <tr><td>4</td><td><code>+ -</code></td><td>加减（也包括字符串拼接）</td></tr>
+        <tr><td>5</td><td><code>&lt; &lt;= &gt; &gt;=</code></td><td>比较大小</td></tr>
+        <tr><td>6</td><td><code>== !=</code></td><td>相等</td></tr>
+        <tr><td>7</td><td><code>&amp;</code> → <code>^</code> → <code>|</code></td><td>逻辑与、异或、或</td></tr>
+        <tr><td>8</td><td><code>&amp;&amp;</code> → <code>||</code></td><td>短路与比短路或高</td></tr>
+        <tr><td>9</td><td><code>? :</code></td><td>三元</td></tr>
+        <tr><td>10</td><td><code>= += -= …</code></td><td>赋值，最后算</td></tr>
+      </tbody>
+    </table>
+    最容易踩坑的一条：<code>&amp;&amp;</code> 比 <code>||</code> 优先级高，<code>a || b &amp;&amp; c</code> 实际是 <code>a || (b &amp;&amp; c)</code>。混用时加括号最稳。还有：比较运算符比 &amp;&amp; 高，所以 <code>x &gt; 5 &amp;&amp; x &lt; 15</code> 不用加括号也是对的。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>逻辑运算符</b></td><td><code>&amp;</code> 两边都真才真（并且）；<code>|</code> 两边都假才假（或者）；<code>^</code> 相同为 false、不同为 true（少用）；<code>!</code> 取反（最多写一个）</td></tr>
+      <tr><td><b>短路</b></td><td><code>&amp;&amp;</code> 左边 false 右边不执行；<code>||</code> 左边 true 右边不执行。结果和单个的一样，效率更高。常用：<code>&amp;&amp; || !</code></td></tr>
+      <tr><td><b>三元运算符</b></td><td><code>关系表达式 ? 表达式1 : 表达式2</code>。真取 1，假取 2；结果必须被使用</td></tr>
+      <tr><td><b>三个数比较</b></td><td>先比前两个得到较大值（temp），再和第三个比</td></tr>
+      <tr><td><b>优先级</b></td><td>小括号优先于所有，想先算谁就括起来</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    用 &amp;&amp; 和 || 连条件，左边能定就不看右边；用 ?: 在两个结果里挑一个；拿不准先后，就加括号。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. Java 里怎么写"x 大于 5 并且小于 15"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>x &gt; 5 &amp;&amp; x &lt; 15</code>（用单个 &amp; 结果也对，但推荐短路与）。不能写成 <code>5 &lt; x &lt; 15</code>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. <code>int a = 10, b = 10; boolean r = ++a &gt; 5 || ++b &gt; 5;</code> 之后 r、a、b 分别是多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">r = true，a = 11，b = 10。左边 11 &gt; 5 为 true，短路或的结果已经确定，右边不执行，b 不自增。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 数字 6 练习里，为什么是三个条件、用两个 || 连起来？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">输出 true 的情况有三种：number1 是 6、number2 是 6、两数之和是 6 的倍数（<code>(number1 + number2) % 6 == 0</code>），满足任意一个就行，所以用"或者"连接，三个条件需要两个 ||。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 单独写一行 <code>a &gt; b ? a : b;</code> 为什么报错？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">三元运算符的结果必须被使用：赋值给变量（<code>int max = a &gt; b ? a : b;</code>）或者直接打印。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 用三元运算符求三个数 150、210、165 的最大值，思路是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">先 <code>int temp = h1 &gt; h2 ? h1 : h2;</code> 得到前两个的较大值 210，再 <code>int max = temp &gt; h3 ? temp : h3;</code>，结果 210。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="32.html"><small>← 上一篇</small>P32–34 字符串相加、自增自减、赋值与关系</a>
+    <a class="next" href="38.html"><small>下一篇 →</small>P38 原码、反码、补码</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P35–P37（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=35" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const V = b => `<span class="v ${b ? 't' : 'f'}">${b}</span>`;
+
+/* ---------- 真值开关 ---------- */
+(function () {
+  let a = true, b = true;
+  function bind(id, get, set) {
+    const el = $(id);
+    const flip = () => { set(!get()); paint(); };
+    el.onclick = flip;
+    el.onkeydown = e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); flip(); } };
+  }
+  bind('#tg-a', () => a, v => a = v);
+  bind('#tg-b', () => b, v => b = v);
+  function paint() {
+    [['#tg-a', a], ['#tg-b', b]].forEach(([s, v]) => { const el = $(s); el.classList.toggle('on', v); el.setAttribute('aria-checked', v); el.querySelector('.val').textContent = v; });
+    const rows = [
+      ['a & b', a && b, '用户名正确 & 密码正确 → 登录成功？'],
+      ['a | b', a || b, '有房子 | 有车子 → 丈母娘同意？'],
+      ['a ^ b', a !== b, '民政局：两人性别不同才能登记'],
+      ['!a', !a, '把 a 取反'],
+      ['a && b', a && b, a ? '左边 true，右边要看' : '左边 false，右边<b>不执行</b>（短路）'],
+      ['a || b', a || b, a ? '左边 true，右边<b>不执行</b>（短路）' : '左边 false，右边要看'],
+    ];
+    $('#tt2').innerHTML = '<tr><th>表达式</th><th>结果</th><th>说明</th></tr>' + rows.map(([e, r, s]) => `<tr><td class="e">${esc(e)}</td><td>${V(r)}</td><td class="scene">${s}</td></tr>`).join('');
+  }
+  paint();
+})();
+
+/* ---------- 短路 ---------- */
+(function () {
+  let op = '&&', left = 'lt';
+  $$('#sc-op button').forEach(b => b.onclick = () => { op = b.textContent; paint(); });
+  $$('#sc-l button').forEach(b => b.onclick = () => { left = b.dataset.v; paint(); });
+  ['#sc-a', '#sc-b'].forEach(s => $(s).addEventListener('input', paint));
+  function paint() {
+    $$('#sc-op button').forEach(b => b.classList.toggle('sel', b.textContent === op));
+    $$('#sc-l button').forEach(b => b.classList.toggle('sel', b.dataset.v === left));
+    const a0 = parseInt($('#sc-a').value, 10), b0 = parseInt($('#sc-b').value, 10);
+    if (isNaN(a0) || isNaN(b0)) { $('#sc-steps').innerHTML = '<li>a、b 请填整数</li>'; return; }
+    let a = a0, b = b0;
+    a++;
+    const L = left === 'lt' ? a < 5 : a > 5;
+    const isAnd = op.startsWith('&'), short = op.length === 2;
+    const skip = short && (isAnd ? !L : L);
+    let R = null;
+    if (!skip) { b++; R = b < 5; }
+    const res = isAnd ? (L && (R ?? false)) : (L || (R ?? false));
+    const lt = left === 'lt' ? '++a &lt; 5' : '++a &gt; 5';
+    $('#sc-code').innerHTML = `<span class="hk">int</span> a = ${a0};\n<span class="hk">int</span> b = ${b0};\n<span class="hk">boolean</span> result = <span class="side run">${lt}</span> ${esc(op)} <span class="side ${skip ? 'skip' : 'run'}">++b &lt; 5</span>;`;
+    const steps = [];
+    steps.push(`算左边：a 先自增成 <b>${a}</b>，<code>${a} ${left === 'lt' ? '&lt;' : '&gt;'} 5</code> 是 ${V(L)}`);
+    if (skip) steps.push(`<b>${esc(op)}</b> 的左边是 ${L}，结果已经确定是 ${V(res)}，<b>右边不执行</b>，b 不自增`);
+    else steps.push(`${short ? `左边是 ${L}，还不能确定结果，` : `单个 <b>${esc(op)}</b> 不短路，`}继续算右边：b 自增成 <b>${b}</b>，<code>${b} &lt; 5</code> 是 ${V(R)}`);
+    if (!skip) steps.push(`${L} ${esc(op)} ${R} = ${V(res)}`);
+    $('#sc-steps').innerHTML = steps.map(s => `<li>${s}</li>`).join('');
+    $('#sc-mem').innerHTML = `<div class="chg">result<b>${res}</b></div><div class="${a !== a0 ? 'chg' : ''}">a<b>${a}</b></div><div class="${b !== b0 ? 'chg' : ''}">b<b>${b}</b></div>`;
+  }
+  paint();
+})();
+
+/* ---------- 数字 6 ---------- */
+(function () {
+  function paint() {
+    const a = parseInt($('#s6-a').value, 10), b = parseInt($('#s6-b').value, 10);
+    if (isNaN(a) || isNaN(b)) { $('#s6').innerHTML = '<li>请填两个整数</li>'; $('#s6-r').textContent = ''; return; }
+    const C = [[`number1 == 6`, `${a} == 6`, a === 6], [`number2 == 6`, `${b} == 6`, b === 6], [`(number1 + number2) % 6 == 0`, `(${a} + ${b}) % 6 = ${(a + b) % 6}`, (a + b) % 6 === 0]];
+    let done = false, skipped = 0;
+    $('#s6').innerHTML = C.map(([c, p, v]) => {
+      if (done) { skipped++; return `<li class="s"><span class="m">不用判断</span>${esc(c)}</li>`; }
+      if (v) done = true;
+      return `<li class="${v ? 'y' : 'n'}"><span class="m">${v ? '✓ true' : '✗ false'}</span>${esc(c)}　<span style="color:var(--muted)">${esc(p)}</span></li>`;
+    }).join('');
+    $('#s6-r').innerHTML = `result = ${V(done)}` + (skipped ? '<span style="font:13px sans-serif;color:var(--muted);margin-left:8px">后面灰掉的条件被 || 短路了</span>' : '');
+  }
+  ['#s6-a', '#s6-b'].forEach(s => $(s).addEventListener('input', paint));
+  paint();
+})();
+
+/* ---------- 三元 ---------- */
+(function () {
+  let mode = 'tiger';
+  const inp = (id, v, lab) => `<span>${lab} =</span><input class="inp" id="${id}" value="${v}" aria-label="${lab}">`;
+  function build() {
+    $$('#tn-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    $('#tn-in').innerHTML = mode === 'tiger' ? inp('tn-w1', 150, 'weight1') + inp('tn-w2', 150, 'weight2') : inp('tn-h1', 150, 'height1') + inp('tn-h2', 210, 'height2') + inp('tn-h3', 165, 'height3');
+    $$('#tn-in input').forEach(i => i.addEventListener('input', paint));
+    paint();
+  }
+  const num = id => parseInt($('#' + id).value, 10);
+  function paint() {
+    const code = $('#tn-code'), res = $('#tn-res'), bars = $('#tn-bars');
+    if (mode === 'tiger') {
+      const w1 = num('tn-w1'), w2 = num('tn-w2');
+      if (isNaN(w1) || isNaN(w2)) { res.textContent = '请填整数'; return; }
+      const c = w1 === w2;
+      code.innerHTML = `String result = <span class="q">${w1} == ${w2}</span> ? <span class="c ${c ? 'pick' : 'drop'}">"相同"</span> : <span class="c ${c ? 'drop' : 'pick'}">"不同"</span>;`;
+      res.innerHTML = `判断 <code>${w1} == ${w2}</code> 是 ${V(c)}，取${c ? '冒号左边' : '冒号右边'}，打印 <b>${c ? '相同' : '不同'}</b>`;
+      bars.innerHTML = ''; bars.style.display = 'none';
+    } else {
+      const h = [num('tn-h1'), num('tn-h2'), num('tn-h3')];
+      if (h.some(isNaN)) { res.textContent = '请填整数'; return; }
+      const c1 = h[0] > h[1], temp = c1 ? h[0] : h[1], c2 = temp > h[2], max = c2 ? temp : h[2];
+      code.innerHTML = `int temp = <span class="q">${h[0]} &gt; ${h[1]}</span> ? <span class="c ${c1 ? 'pick' : 'drop'}">height1</span> : <span class="c ${c1 ? 'drop' : 'pick'}">height2</span>;　<span style="color:var(--muted)">// temp = ${temp}</span><br>int max&nbsp; = <span class="q">${temp} &gt; ${h[2]}</span> ? <span class="c ${c2 ? 'pick' : 'drop'}">temp</span> : <span class="c ${c2 ? 'drop' : 'pick'}">height3</span>;　<span style="color:var(--muted)">// max = ${max}</span>`;
+      res.innerHTML = `第一步前两个比，较大的是 <b>${temp}</b>（蓝色）；第二步再和 ${h[2]} 比，最高身高是 <b>${max}</b>（橙色）。`;
+      const top = Math.max(...h, 1);
+      const winIdx = c2 ? (c1 ? 0 : 1) : 2, tmpIdx = c1 ? 0 : 1;
+      bars.style.display = 'flex';
+      bars.innerHTML = h.map((v, i) => `<div class="${i === winIdx ? 'win' : i === tmpIdx ? 'tmp' : ''}" style="height:${Math.max(4, v / top * 100)}px"><i>${v}</i><span>和尚${i + 1}</span></div>`).join('');
+    }
+  }
+  $$('#tn-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; build(); });
+  build();
+})();
+</script>
+</body>
+</html>

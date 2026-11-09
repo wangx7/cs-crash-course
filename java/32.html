@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P32–34 字符串相加、自增自减、赋值与关系 · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:80px}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:6px 0}
+.chips button{font:12.5px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 9px;cursor:pointer}
+.chips button:hover,.chips button.sel{border-color:var(--accent);color:var(--accent)}
+.v{display:inline-block;min-width:3.4em;text-align:center;font:700 13px var(--mono);border-radius:6px;padding:1px 6px}
+.v.t{background:var(--ok-soft);color:var(--ok)}
+.v.f{background:var(--bad-soft);color:var(--bad)}
+
+/* 拼接步进 */
+.cc-in{font:15px var(--mono);border:1px solid var(--line);border-radius:8px;padding:5px 9px;background:var(--panel);color:var(--ink);width:100%;max-width:420px;box-sizing:border-box}
+.cc-steps{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.cc-step{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font:14px var(--mono)}
+.cc-step .tok{padding:2px 7px;border-radius:6px;background:var(--bg);border:1px solid var(--line)}
+.cc-step .tok.s{border-color:var(--ok);color:var(--ok)}
+.cc-step .tok.n{border-color:var(--accent);color:var(--accent)}
+.cc-step .tok.c{border-color:var(--wood);color:var(--wood)}
+.cc-step .tok.b{border-color:var(--on);color:var(--on)}
+.cc-step .op{font-weight:700;color:var(--muted)}
+.cc-step .why{font:13px sans-serif;color:var(--muted)}
+.cc-step .why b{color:var(--ink)}
+.cc-res{font:700 16px var(--mono);margin-top:8px}
+.cc-err{color:var(--bad);font-size:14px;margin-top:6px}
+
+/* 自增 */
+.inc-code{font:14.5px/1.9 var(--mono);background:var(--bg);border-radius:10px;padding:6px 0}
+.inc-code div{padding:0 12px;white-space:pre}
+.inc-code div.cur{background:var(--on-soft)}
+.inc-code div.done{color:var(--muted)}
+.mem{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+.mem div{border:2px solid var(--line);border-radius:10px;padding:4px 12px;font:14px var(--mono);background:var(--panel);text-align:center;min-width:56px}
+.mem div b{display:block;font-size:18px}
+.mem div.chg{border-color:var(--on);box-shadow:0 0 0 3px var(--on-soft)}
+.inc-msg{background:var(--bg);border-radius:10px;padding:8px 12px;font-size:14.5px;margin-top:8px;min-height:24px}
+.inc-out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:30px;white-space:pre-wrap}
+
+/* 关系 */
+.rel{width:100%;border-collapse:collapse;font-size:14px;margin-top:8px}
+.rel td,.rel th{border-bottom:1px solid var(--line);padding:5px 8px;text-align:left}
+.rel th{font-size:12.5px;color:var(--muted);font-weight:600}
+.rel td.e{font:14px var(--mono)}
+</style>
+</head>
+<body data-ep="32" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=32" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">运算符 · P32–P34</div>
+  <h1>字符串相加、自增自减、赋值与关系</h1>
+  <p class="en">String &amp; Char Concatenation, ++/--, Assignment &amp; Comparison</p>
+  <p class="lead">"加"的另外两种情况：遇到字符串就变成<b>拼接</b>，遇到字符就去<b>查 ASCII 码表</b>。然后是让变量加一减一的 <code>++</code>、<code>--</code>，把计算和赋值合二为一的 <code>+=</code>（里面藏着一个强制转换），以及结果只有 true / false 的<b>关系运算符</b>。</p>
+  <div class="road">
+    <span>字符串相加</span><i>→</i><span>字符相加</span><i>→</i><span>++ 和 --</span><i>→</i><span>+= 等赋值运算符</span><i>→</i><span>关系运算符</span><i>→</i><span>练习：约会</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 字符串相加</a></li>
+    <li><a href="#ch2">2 · 字符相加</a></li>
+    <li><a href="#ch3">3 · 自增自减</a></li>
+    <li><a href="#ch4">4 · 赋值运算符</a></li>
+    <li><a href="#ch5">5 · 关系运算符</a></li>
+    <li><a href="#ch6">6 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P32</div>
+  <h2>字符串相加：遇到字符串就拼接</h2>
+  <p>规则：<b>"+"操作中出现字符串时，这个 + 就是字符串连接符</b>，而不是算术运算符了。它会把前后的数据<b>拼接</b>起来，产生一个<b>新的字符串</b>。</p>
+  <ul>
+    <li><code>"123" + 123</code> 是 246 还是 "123123"？是 <b>"123123"</b>：有字符串参与，做的是拼接。有没有觉得像贪吃蛇？</li>
+    <li><b>连续加的时候，从左到右逐个执行</b>。<code>1 + 99 + "年黑马"</code>：先算 <code>1 + 99</code>，没有字符串，就是普通加法得 100；再和 "年黑马" 拼接，结果 <b>"100年黑马"</b>，不是 "199年黑马"。</li>
+  </ul>
+  <p>五个小练习，能说出理由，字符串相加就没问题了：</p>
+  <table class="tt" style="width:100%">
+    <thead><tr><th>表达式</th><th>结果</th><th>理由</th></tr></thead>
+    <tbody>
+      <tr><td><code>3.7 + "abc"</code></td><td><code>"3.7abc"</code></td><td>有字符串，拼接</td></tr>
+      <tr><td><code>"abc" + true</code></td><td><code>"abctrue"</code></td><td>有字符串，拼接</td></tr>
+      <tr><td><code>'中' + "abc" + true</code></td><td><code>"中abctrue"</code></td><td>从左到右：字符和字符串拼成"中abc"，再和 true 拼接</td></tr>
+      <tr><td><code>"我的年龄是" + age + "岁"</code><br><code>"我的年龄是" + "age" + "岁"</code></td><td><code>"我的年龄是18岁"</code><br><code>"我的年龄是age岁"</code></td><td>没加双引号的 age 是<b>变量</b>，拼接的是它的值；加了双引号就是普通字符串，原样拼接</td></tr>
+      <tr><td><code>1 + 2 + "abc" + 2 + 1</code></td><td><code>"3abc21"</code></td><td>最难的一题：1+2 先算成 3；3+"abc" 拼成"3abc"；之后都是字符串在拼，"3abc2"、"3abc21"</td></tr>
+    </tbody>
+  </table>
+  <p>所以要抓住两个核心：<b>有字符串参与就是拼接；连续加从左到右依次计算</b>。变量和字符串拼接时，变量<b>前后不能加双引号</b>。</p>
+  <p><b>练习：改进数值拆分</b>。之前拆三位数打印出来的是 3、2、1，不看题目根本不知道哪个是个位。用拼接加上说明：</p>
+  <code class="blk">System.out.println(<span class="hs">"个位是："</span> + ge);
+System.out.println(<span class="hs">"十位是："</span> + shi);
+System.out.println(<span class="hs">"百位是："</span> + bai);</code>
+  <p>输入 123，打印"个位是：3""十位是：2""百位是：1"，阅读性好多了。后面会大量用到字符串拼接。</p>
+
+  <div class="card">
+    <h3>动手：一步一步算"+"</h3>
+    <p style="margin-top:0">输入一串用 + 连起来的值（数字、"字符串"、'字'、true/false，可以用 age 代表变量 18），看每一步是加法还是拼接。</p>
+    <input class="cc-in" id="cc-in" value='1 + 2 + "abc" + 2 + 1' spellcheck="false" autocapitalize="off" aria-label="用加号连起来的表达式">
+    <div class="chips" id="cc-ex"></div>
+    <div class="cc-steps" id="cc-steps"></div>
+    <div class="cc-res" id="cc-res"></div>
+    <div class="cc-err" id="cc-err"></div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P32</div>
+  <h2>字符相加：查 ASCII 码表</h2>
+  <p>隐式转换里说过：byte、short、char 运算时都先提升为 int。byte 和 short 本来就是数字，好提升；char 是个字符，怎么提升？</p>
+  <code class="blk"><span class="hk">char</span> c = <span class="hs">'a'</span>;
+<span class="hk">int</span> result = c + 0;
+System.out.println(result);   <span class="hc">// 97</span></code>
+  <p>字符 a 加数字 0 居然得到 97。规则是：<b>字符 + 字符、字符 + 数字时，会把字符通过 ASCII 码表查到对应的数字，再进行计算</b>。ASCII 码表（美国信息交换标准码，P22 讲过）里每个字符都和一个唯一的数字对应，操作系统内置，不用下载。只需要记住两个：</p>
+  <ul>
+    <li><b>'a' 对应 97</b></li>
+    <li><b>'A' 对应 65</b></li>
+  </ul>
+  <p>所以 <code>1 + 'a'</code> 是 <b>98</b>；而 <code>'a' + "abc"</code> 有字符串参与，做的是拼接，结果是 <b>"aabc"</b>。两者规则不一样，上面的演示里都能试。</p>
+  <p><b>算术运算符总结</b>：</p>
+  <ul>
+    <li><b>加</b>：数字相加，类型不一样要先转成一样（隐式转换 / 强制转换）；字符串相加，有字符串就拼接；字符相加，查 ASCII 码表得到数字再算。</li>
+    <li><b>减、乘</b>：数字和字符的运算规律和加法一样；但<b>字符串没有减、乘、除</b>这些操作。</li>
+    <li><b>除和取模</b>：都是做除法，除取的是商，取模取的是余数。整数和整数操作，结果只能是整数；要得到小数，必须有小数参与。</li>
+  </ul>
+  <div class="extra">
+    <span class="t">补充：几个顺手的 ASCII 规律</span>
+    数字字符 '0'~'9' 对应 48~57，所以 <code>'7' - '0'</code> 等于 7，这是把数字字符变成整数的常用写法。大小写字母正好差 32：<code>'a' - 'A'</code> 是 32，小写转大写就是减 32。<br>
+    想打印字符本身而不是数字，结果要是 char 类型：<code>char next = (char) ('a' + 1);</code> 打印出来是 b。直接 <code>System.out.println('a' + 1);</code> 打印的是 98，因为相加后是 int。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P33</div>
+  <h2>自增自减运算符</h2>
+  <p>这个知识点相对简单：<b>自增 <code>++</code></b> 把变量里的值<b>加 1</b>，<b>自减 <code>--</code></b> 把变量里的值<b>减 1</b>。可以写在变量后面（<code>a++</code>，叫"后加加"），也可以写在前面（<code>++a</code>，叫"先加加"）。</p>
+  <p><b>用法一：单独写一行</b>。不管放在前面还是后面，<b>结果都一样</b>，都是把变量加 1 或减 1。</p>
+  <code class="blk"><span class="hk">int</span> a = 10;
+a++;  System.out.println(a);   <span class="hc">// 11</span>
+++a;  System.out.println(a);   <span class="hc">// 12 ← 注意不是 11，上面已经自增过一次了</span>
+a--;  System.out.println(a);   <span class="hc">// 11</span>
+--a;  System.out.println(a);   <span class="hc">// 10</span></code>
+  <p>应用场景：</p>
+  <ul>
+    <li>过生日：变量 age 记录 1 岁，过一个生日 <code>age++</code>，变成 2 岁；</li>
+    <li>购物车里的商品数量：点一次"+"变量自增一次，点一次"−"自减一次（老师的朋友帮女朋友"清空购物车"就是一直点减）；</li>
+    <li>统计：数一数图里有几个美女，心里先记 0，从左往右数，遇到一个就 <code>++</code>，最后记的数就是结果。这个"心里记的数"就是一个变量。</li>
+  </ul>
+  <p><b>用法二：参与计算</b>。这种比较难，实际开发用得很少，了解即可。参与计算时，先加加和后加加的结果<b>不一样</b>：</p>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><code>int b = a++;</code></td><td>后加加，口诀<b>先用后加</b>：先把 a 的值拿出来用（赋值给 b），用完 a 再自增</td><td>a = 10 时：b 是 <b>10</b>，a 变成 11</td></tr>
+      <tr><td><code>int b = ++a;</code></td><td>先加加，口诀<b>先加后用</b>：a 先自增，再把自增之后的值赋值给 b</td><td>a = 10 时：a 变成 11，b 是 <b>11</b></td></tr>
+    </tbody>
+  </table>
+  <p>练习：<code>int x = 10; int y = x++; int z = ++x;</code> 之后，x、y、z 分别是多少？答案是 <b>x = 12，y = 10，z = 12</b>。第二行先用后加：y 拿到自增前的 10，x 变 11；第三行先加后用：x 再自增成 12（它已经自增过一次了），z 拿到 12。下面一步步看：</p>
+
+  <div class="card">
+    <h3>动手：先用后加 vs 先加后用</h3>
+    <div class="chips" id="inc-pre"></div>
+    <div class="inc-code" id="inc-code"></div>
+    <div class="mem" id="inc-mem"></div>
+    <div class="inc-msg" id="inc-msg"></div>
+    <div class="inc-out" id="inc-out"></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary sm" id="inc-step">下一行</button><button class="btn sm" id="inc-reset">重来</button></div>
+  </div>
+  <p>再强调一次：参与计算的写法以后用得非常少，大多数情况都是<b>单独写成一行</b>。</p>
+  <div class="extra">
+    <span class="t">补充：++ 自带强转，别和自己赋值</span>
+    和下一节的 <code>+=</code> 一样，<code>++</code> 也隐含强制转换：<code>byte b = 127; b++;</code> 不报错，b 变成 −128。另外，<b>千万别写</b> <code>a = a++;</code>：先用后加，右边先把 a 的旧值拿出来，a 自增了，接着又把旧值赋回给 a，结果 a 根本没变。这是面试里的经典坑题。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P34</div>
+  <h2>赋值运算符：+= 里藏着强制转换</h2>
+  <p>最常见的赋值运算符就是 <code>=</code>：<code>int a = 10;</code> 把右边的 10 赋值给左边的变量 a。此外还有扩展的赋值运算符：<code>+=</code>、<code>-=</code>、<code>*=</code>、<code>/=</code>、<code>%=</code>，两个符号之间<b>没有空格</b>。规则都类似，学会一个就会全部。</p>
+  <p>以 <code>+=</code> 为例，叫"加后赋值"：<code>a += b</code> 把左右两边相加，再把结果赋值给左边的变量。</p>
+  <code class="blk"><span class="hk">int</span> a = 10;
+<span class="hk">int</span> b = 20;
+a += b;                    <span class="hc">// 相当于 a = a + b;  →  a 是 30，b 还是 20</span>
+System.out.println(a);     <span class="hc">// 30</span>
+System.out.println(b);     <span class="hc">// 20</span></code>
+  <p>换成 <code>-=</code> 就相当于 <code>a = a - b</code>，其余同理。</p>
+  <p><b>细节</b>：</p>
+  <code class="blk"><span class="hk">short</span> s = 1;
+s += 1;
+System.out.println(s);     <span class="hc">// 2</span></code>
+  <p>结果是 2，好理解。但这行代码有点怪：说好 <code>s += 1</code> 相当于 <code>s = s + 1</code>，可 short 参与计算会先提升为 int，<code>s + 1</code> 的结果是 int，把 int 赋值给 short 是大给小，为什么没报错？</p>
+  <p>因为 <b><code>+=</code>、<code>-=</code>、<code>*=</code>、<code>/=</code>、<code>%=</code> 底层都隐藏了一个强制类型转换</b>，转成什么类型由<b>左边变量</b>的类型决定。所以：</p>
+  <code class="blk">s += 1;    <span class="hc">// 实际上等同于  s = (short) (s + 1);</span>
+a += b;    <span class="hc">// 实际上等同于  a = (int) (a + b);</span></code>
+  <div class="extra">
+    <span class="t">补充：隐藏的强转也会"偷偷出错"</span>
+    正因为自动强转，<code>+=</code> 永远不会因为类型报错，但数据过大时也会像强制转换一样<b>悄悄出错</b>：<code>byte b = 127; b += 1;</code> 编译通过，b 变成了 −128。而写成 <code>b = b + 1;</code> 编译就会报错，反倒提醒了你。写的时候心里要有数。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P34</div>
+  <h2>关系运算符（比较运算符）</h2>
+  <p>关系运算符也叫比较运算符，就是拿左右两边做一个判断。一共六种：</p>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><code>a == b</code></td><td>判断 a 和 b 是否<b>相等</b>，成立为 true，不成立为 false</td></tr>
+      <tr><td><code>a != b</code></td><td>判断是否<b>不相等</b></td></tr>
+      <tr><td><code>a &gt; b</code>　<code>a &gt;= b</code></td><td>大于、大于等于</td></tr>
+      <tr><td><code>a &lt; b</code>　<code>a &lt;= b</code></td><td>小于、小于等于</td></tr>
+    </tbody>
+  </table>
+  <p>和小学、初中数学几乎一模一样，只要知道两个注意点：</p>
+  <ol>
+    <li>关系运算符的结果都是 <b>boolean</b> 类型，要么 true，要么 false；</li>
+    <li><b>千万不要把 <code>==</code> 写成 <code>=</code></b>：两个等号是判断，一个等号是赋值。另外两个符号中间都没有空格。</li>
+  </ol>
+  <code class="blk"><span class="hk">int</span> a = 10;
+<span class="hk">int</span> b = 10;
+<span class="hk">int</span> c = 20;
+System.out.println(a == b);   <span class="hc">// true</span>
+System.out.println(a == c);   <span class="hc">// false</span></code>
+
+  <h3>练习：约会</h3>
+  <div class="callout"><span class="t">需求（斯坦福大学 Java 入门练习）</span>您和您的约会对象在餐厅里约会。键盘录入两个整数，表示您和约会对象衣服的时髦程度（0~10 之间的整数）。如果您的时髦程度<b>大于</b>对象的时髦程度，相亲成功，输出 true，否则输出 false。</div>
+  <p><b>分析</b>：键盘录入两次，然后直接比较。</p>
+  <code class="blk">Scanner sc = <span class="hk">new</span> Scanner(System.in);
+System.out.println(<span class="hs">"请输入我们自己的衣服时髦度"</span>);
+<span class="hk">int</span> myFashion = sc.nextInt();
+System.out.println(<span class="hs">"请输入相亲对象衣服的时髦度"</span>);
+<span class="hk">int</span> girlFashion = sc.nextInt();
+<span class="hk">boolean</span> result = myFashion &gt; girlFashion;
+System.out.println(result);</code>
+  <p>为什么用 <code>&gt;</code> 而不是 <code>&gt;=</code>？因为题目说的是"大于"。题目要是说"大于等于"，就得用 <code>&gt;=</code>。<b>代码一定要和题目的业务逻辑吻合</b>。输入 10 和 5，true；穿着睡衣去相亲，时髦度 1，对方的可爱睡衣是 3，false。</p>
+
+  <div class="card">
+    <h3>动手：六种比较一起看</h3>
+    <div class="row"><span>a =</span><input class="inp" id="rl-a" value="10" aria-label="a"><span>b =</span><input class="inp" id="rl-b" value="20" aria-label="b"></div>
+    <table class="rel" id="rl"></table>
+  </div>
+  <div class="extra">
+    <span class="t">补充：0~10 这个范围，现在还检查不了</span>
+    题目说时髦度要在 0~10 之间，但现在的代码输入 99 也照样比较。想检查输入是否合法，要用下一章的 <code>if</code> 判断：<code>if (myFashion &lt; 0 || myFashion &gt; 10)</code> 就提示重新输入。另外，<code>==</code> 用来比较<b>数字</b>没问题，以后比较两个<b>字符串</b>的内容是否相同不能用 ==，要用 <code>equals</code>，P98 会讲为什么。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>字符串相加</b></td><td>有字符串参与就是拼接，产生新字符串；连续加从左到右</td></tr>
+      <tr><td><b>字符相加</b></td><td>字符+字符、字符+数字：查 ASCII 码表转成数字再算（'a' = 97，'A' = 65）</td></tr>
+      <tr><td><b>自增自减</b></td><td><code>++</code> 加 1，<code>--</code> 减 1。单独一行前后都一样；参与计算时 <code>a++</code> 先用后加，<code>++a</code> 先加后用（少用）</td></tr>
+      <tr><td><b>赋值运算符</b></td><td><code>= += -= *= /= %=</code>；扩展的赋值运算符底层隐含强制类型转换</td></tr>
+      <tr><td><b>关系运算符</b></td><td><code>== != &gt; &gt;= &lt; &lt;=</code>，结果是 boolean；== 别写成 =</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    "+"看两边：有字符串就拼接，有字符就查码表；<code>+=</code> 自带强转；比较的结果只有 true 和 false。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>System.out.println(1 + 2 + "abc" + 2 + 1);</code> 打印什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">3abc21。从左到右：1+2=3（没有字符串，普通加法）；3+"abc" 拼接成 "3abc"；后面都是字符串在拼接。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. <code>System.out.println('a' + 1);</code> 和 <code>System.out.println('a' + "1");</code> 分别打印什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">98 和 a1。前者是字符加数字，查 ASCII 码表 'a' = 97，再加 1；后者有字符串参与，是拼接。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. <code>int x = 10; int y = x++; int z = ++x;</code> 之后 x、y、z 各是多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">x = 12，y = 10，z = 12。<code>y = x++</code> 先用后加，y 拿到 10，x 变 11；<code>z = ++x</code> 先加后用，x 变 12，z 拿到 12。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>short s = 1; s = s + 1;</code> 报错，<code>s += 1;</code> 却不报错，为什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">s + 1 中 short 先提升为 int，结果 int 不能直接赋值给 short；而 += 底层隐含了强制类型转换，等同于 <code>s = (short) (s + 1);</code></div>
+    </div>
+    <div class="q">
+      <div class="qt">5. <code>int a = 5; System.out.println(a = 6);</code> 和 <code>System.out.println(a == 6);</code> 有什么区别？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">第一个是赋值：把 6 赋给 a，打印赋值的结果 6；第二个是比较：判断 a 是否等于 6，打印 true 或 false。所以 == 千万别写成 =。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="30.html"><small>← 上一篇</small>P30–31 算术运算符与类型转换</a>
+    <a class="next" href="35.html"><small>下一篇 →</small>P35–37 逻辑、短路与三元运算符</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P32–P34（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=32" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const V = b => `<span class="v ${b ? 't' : 'f'}">${b}</span>`;
+function jdbl(x) { if (!isFinite(x)) return String(x); if (Number.isInteger(x) && Math.abs(x) < 1e7) return x.toFixed(1); return String(x); }
+
+/* ---------- 一步一步算 + ---------- */
+(function () {
+  const EX = ['"123" + 123', '1 + 99 + "年黑马"', '3.7 + "abc"', '"abc" + true', "'中' + \"abc\" + true", '"我的年龄是" + age + "岁"', '"我的年龄是" + "age" + "岁"', '1 + 2 + "abc" + 2 + 1', "'a' + 0", "1 + 'a'", "'a' + \"abc\"", "'a' + 'b' + \"c\""];
+  $('#cc-ex').innerHTML = '<span>例子：</span>' + EX.map((e, i) => `<button data-i="${i}">${esc(e)}</button>`).join('');
+  $$('#cc-ex button').forEach(b => b.onclick = () => { $('#cc-in').value = EX[+b.dataset.i]; paint(); });
+  $('#cc-in').addEventListener('input', paint);
+  function tokens(s) { // 按顶层 + 拆
+    const out = []; let cur = '', q = null;
+    for (const ch of s) {
+      if (q) { cur += ch; if (ch === q) q = null; continue; }
+      if (ch === '"' || ch === "'") { q = ch; cur += ch; continue; }
+      if (ch === '+') { out.push(cur.trim()); cur = ''; continue; }
+      cur += ch;
+    }
+    out.push(cur.trim());
+    return q ? null : out;
+  }
+  function val(t) {
+    let m;
+    if ((m = t.match(/^"(.*)"$/))) return { k: 's', v: m[1], show: t };
+    if ((m = t.match(/^'(.)'$/u))) { if (m[1].length > 1) return null; return { k: 'c', v: m[1], show: t }; }
+    if (t === 'true' || t === 'false') return { k: 'b', v: t, show: t };
+    if (t === 'age') return { k: 'n', v: 18, int: true, show: 'age(18)' };
+    if (/^-?\d+$/.test(t)) return { k: 'n', v: parseInt(t, 10), int: true, show: t };
+    if (/^-?\d+\.\d+$/.test(t)) return { k: 'n', v: parseFloat(t), int: false, show: t };
+    return null;
+  }
+  const str = x => x.k === 's' ? x.v : x.k === 'c' ? x.v : x.k === 'b' ? x.v : (x.int ? String(x.v) : jdbl(x.v));
+  const showVal = x => x.k === 's' ? `"${x.v}"` : x.k === 'c' ? `'${x.v}'` : x.k === 'b' ? x.v : (x.int ? String(x.v) : jdbl(x.v));
+  function paint() {
+    const steps = $('#cc-steps'), res = $('#cc-res'), err = $('#cc-err');
+    steps.innerHTML = ''; res.innerHTML = ''; err.textContent = '';
+    const ts = tokens($('#cc-in').value);
+    if (!ts || ts.some(t => !t)) { err.textContent = '表达式没写完整（引号要成对，+ 两边都要有东西）'; return; }
+    const vs = ts.map(val);
+    const bad = vs.findIndex(v => !v);
+    if (bad >= 0) { err.textContent = `看不懂 "${ts[bad]}"：支持整数、小数、"字符串"、'单个字符'、true/false、age`; return; }
+    let acc = vs[0], html = '';
+    for (let i = 1; i < vs.length; i++) {
+      const b = vs[i];
+      let r, why;
+      if (acc.k === 's' || b.k === 's') { r = { k: 's', v: str(acc) + str(b) }; why = '有字符串参与 → <b>拼接</b>'; }
+      else if (acc.k === 'b' || b.k === 'b') { err.textContent = `boolean 不能和 ${acc.k === 'b' ? showVal(b) : showVal(acc)} 做加法（没有字符串时，true/false 不能参与 +），这里会编译报错`; steps.innerHTML = html; return; }
+      else {
+        const toNum = x => x.k === 'c' ? x.v.charCodeAt(0) : x.v;
+        const av = toNum(acc), bv = toNum(b), isInt = (acc.k === 'c' || acc.int) && (b.k === 'c' || b.int);
+        const look = [acc, b].filter(x => x.k === 'c').map(x => `'${x.v}' 查表是 ${x.v.charCodeAt(0)}`).join('，');
+        r = { k: 'n', v: isInt ? (av + bv) | 0 : av + bv, int: isInt };
+        why = look ? `有字符、没有字符串 → <b>查 ASCII 码表</b>：${esc(look)}，再相加` : '没有字符串 → 普通<b>加法</b>';
+      }
+      html += `<div class="cc-step"><span class="tok ${acc.k}">${esc(i === 1 ? acc.show : showVal(acc))}</span><span class="op">+</span><span class="tok ${b.k}">${esc(b.show)}</span><span class="op">=</span><span class="tok ${r.k}">${esc(showVal(r))}</span><span class="why">${why}</span></div>`;
+      acc = r;
+    }
+    steps.innerHTML = html || '<div class="cc-step"><span class="why">只有一个值，没有 + 可算</span></div>';
+    res.innerHTML = `打印出来：${esc(str(acc))}　<span style="font:13px sans-serif;color:var(--muted)">（结果类型：${acc.k === 's' ? 'String' : acc.k === 'n' ? (acc.int ? 'int' : 'double') : acc.k === 'c' ? 'char' : 'boolean'}）</span>`;
+  }
+  paint();
+})();
+
+/* ---------- 自增自减步进 ---------- */
+(function () {
+  const P = [
+    ['单独一行', ['int a = 10;', 'a++;', 'System.out.println(a);', '++a;', 'System.out.println(a);', 'a--;', 'System.out.println(a);', '--a;', 'System.out.println(a);']],
+    ['参与计算：x、y、z', ['int x = 10;', 'int y = x++;', 'int z = ++x;', 'System.out.println(x);', 'System.out.println(y);', 'System.out.println(z);']],
+    ['先用后加', ['int a = 10;', 'int b = a++;', 'System.out.println(a);', 'System.out.println(b);']],
+    ['先加后用', ['int a = 10;', 'int b = ++a;', 'System.out.println(a);', 'System.out.println(b);']],
+  ];
+  let prog = P[1][1], pc = 0, M = {}, hot = [], out = [];
+  $('#inc-pre').innerHTML = P.map((p, i) => `<button data-i="${i}">${p[0]}</button>`).join('');
+  $$('#inc-pre button').forEach(b => b.onclick = () => { prog = P[+b.dataset.i][1]; $$('#inc-pre button').forEach(x => x.classList.toggle('sel', x === b)); reset(); });
+  function paint(msg) {
+    $('#inc-code').innerHTML = prog.map((L, i) => `<div class="${i === pc ? 'cur' : i < pc ? 'done' : ''}">${esc(L)}</div>`).join('');
+    const ks = Object.keys(M);
+    $('#inc-mem').innerHTML = ks.length ? ks.map(k => `<div class="${hot.includes(k) ? 'chg' : ''}">${k}<b>${M[k]}</b></div>`).join('') : '<span style="color:var(--muted);font-size:13px">（还没有变量）</span>';
+    if (msg !== undefined) $('#inc-msg').innerHTML = msg;
+    $('#inc-out').textContent = out.length ? out.join('\n') : '控制台';
+    $('#inc-step').disabled = pc >= prog.length;
+  }
+  function reset() { pc = 0; M = {}; hot = []; out = []; paint('点"下一行"开始执行。黄色是下一行要执行的代码。'); }
+  function step() {
+    const L = prog[pc]; let m, msg = '';
+    hot = [];
+    if ((m = L.match(/^int (\w+) = (-?\d+);$/))) { M[m[1]] = +m[2]; hot = [m[1]]; msg = `定义变量 ${m[1]}，存入 ${m[2]}`; }
+    else if ((m = L.match(/^int (\w+) = (\w+)(\+\+|--);$/))) {
+      const [, t, v, op] = m, old = M[v];
+      M[t] = old; M[v] = op === '++' ? old + 1 : old - 1; hot = [t, v];
+      msg = `<b>后${op === '++' ? '加加' : '减减'}，先用后${op === '++' ? '加' : '减'}</b>：先把 ${v} 的值 <b>${old}</b> 拿出来赋值给 ${t}，用完 ${v} 再${op === '++' ? '自增' : '自减'}成 ${M[v]}`;
+    } else if ((m = L.match(/^int (\w+) = (\+\+|--)(\w+);$/))) {
+      const [, t, op, v] = m, old = M[v];
+      M[v] = op === '++' ? old + 1 : old - 1; M[t] = M[v]; hot = [t, v];
+      msg = `<b>先${op === '++' ? '加加' : '减减'}，先${op === '++' ? '加' : '减'}后用</b>：${v} 先从 ${old} ${op === '++' ? '自增' : '自减'}成 <b>${M[v]}</b>，再把它赋值给 ${t}`;
+    } else if ((m = L.match(/^(\w+)(\+\+|--);$/)) || (m = L.match(/^(\+\+|--)(\w+);$/))) {
+      const v = /^\w/.test(L) ? m[1] : m[2], op = L.includes('++') ? '++' : '--', old = M[v];
+      M[v] = op === '++' ? old + 1 : old - 1; hot = [v];
+      msg = `单独一行：${v} 从 ${old} ${op === '++' ? '加 1' : '减 1'} 变成 ${M[v]}（写在前面还是后面都一样）`;
+    } else if ((m = L.match(/^System\.out\.println\((\w+)\);$/))) { out.push(String(M[m[1]])); msg = `打印 ${m[1]} 的值 ${M[m[1]]}`; }
+    pc++;
+    paint(msg + (pc >= prog.length ? '<br><span style="color:var(--muted)">运行完毕。</span>' : ''));
+  }
+  $('#inc-step').onclick = step;
+  $('#inc-reset').onclick = reset;
+  $$('#inc-pre button')[1].click();
+})();
+
+/* ---------- 关系 ---------- */
+(function () {
+  function paint() {
+    const a = parseFloat($('#rl-a').value), b = parseFloat($('#rl-b').value);
+    if (isNaN(a) || isNaN(b)) { $('#rl').innerHTML = '<tr><td>请填数字</td></tr>'; return; }
+    const R = [['a == b', a === b], ['a != b', a !== b], ['a > b', a > b], ['a >= b', a >= b], ['a < b', a < b], ['a <= b', a <= b]];
+    $('#rl').innerHTML = '<tr><th>表达式</th><th>代入</th><th>结果</th></tr>' + R.map(([e, r]) => `<tr><td class="e">${esc(e)}</td><td class="e">${esc(e.replace('a', a).replace('b', b))}</td><td>${V(r)}</td></tr>`).join('');
+  }
+  ['#rl-a', '#rl-b'].forEach(s => $(s).addEventListener('input', paint));
+  paint();
+})();
+</script>
+</body>
+</html>
