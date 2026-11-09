@@ -1,2 +1,6 @@
-transcripts/
+# 字幕：提交 NNN.txt、INDEX.tsv、pages.json（换电脑也能接着写）；
+# 不提交带 B 站 auth_key 的下载清单、原始 JSON、以及挂错的别家视频字幕
+transcripts/**/ver.json
+transcripts/**/raw/
+transcripts/**/bad-ai/
 tools/bili-transcripts/venv/

@@ -1,6 +1,6 @@
 # B 站合集 → 逐集字幕文本
 
-把一个 B 站多 P 合集变成 `transcripts/<课程>/001.txt … NNN.txt`，供写图文版时"从字幕里汲取知识"。`transcripts/` 已在 `.gitignore` 里（字幕是原作者的内容，只留本地）。
+把一个 B 站多 P 合集变成 `transcripts/<课程>/001.txt … NNN.txt`，供写图文版时"从字幕里汲取知识"。逐集的 `NNN.txt`、`INDEX.tsv`、`pages.json` 会提交到仓库，换电脑 clone 下来就能接着写；`ver.json`（含 B 站签名链接）、`raw/`（原始 JSON）、`bad-ai/`（挂错的别家视频字幕）在 `.gitignore` 里，只留本地。字幕内容版权归原作者。
 
 已完成：`transcripts/heima-java-1/`（BV17F411T7Ao，200 集全齐）。还没做：下部 BV1yW4y1Y7Ms。
 
