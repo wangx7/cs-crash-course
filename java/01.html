@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P1–5 人机交互、CMD 与环境变量 · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.term{background:#0f1115;color:#d7dae0;border-radius:12px;padding:12px 14px;font:14px/1.6 var(--mono);height:300px;overflow-y:auto;cursor:text;border:1px solid #2a2f37}
+.term .ln{white-space:pre-wrap;word-break:break-all}
+.term .err{color:#ff8a8a}
+.term .note{color:#7f8794}
+.term .ok{color:#7ee2a0}
+.term .inrow{display:flex;white-space:pre}
+.term input{flex:1;min-width:40px;background:none;border:0;outline:0;color:inherit;font:inherit;padding:0}
+.term.closed{display:flex;align-items:center;justify-content:center;color:#7f8794;font-family:inherit}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:10px 0 2px}
+.chips button{font:13px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 10px;cursor:pointer}
+.chips button:hover{border-color:var(--accent);color:var(--accent)}
+.envbox{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px}
+@media (max-width:640px){.envbox{grid-template-columns:1fr}}
+.envbox h4{margin:0 0 6px;font-size:14px}
+.envbox .panel{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px}
+.plist{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:12.5px}
+.plist li{padding:3px 8px;border-radius:6px;margin:2px 0;word-break:break-all}
+.plist li.new{background:var(--accent-soft);color:var(--accent);font-weight:700}
+.plist li.miss{color:var(--bad)}
+.plist li.hit{background:var(--ok-soft);color:var(--ok);font-weight:700}
+.plist li .mk{display:inline-block;width:1.4em}
+.warn{margin-top:8px;padding:6px 10px;border-radius:8px;background:var(--on-soft);color:var(--ink);font-size:13px}
+.btn.sm{font-size:13px;padding:4px 10px}
+.tl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.tl button{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:10px;padding:6px 12px;cursor:pointer;text-align:left;line-height:1.3}
+.tl button small{display:block;font:700 12px var(--mono);color:var(--muted)}
+.tl button.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
+.tl button.ex{border-style:dashed}
+.tl-body{background:var(--bg);border-radius:10px;padding:10px 14px;font-size:15px;min-height:66px}
+.kbd{display:inline-block;font:600 13px var(--mono);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:0 6px;background:var(--panel);line-height:1.5}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.cli-a{fill:#0f1115}
+.cli-t{fill:#d7dae0;font:12px var(--mono)}
+.cli-g{fill:#7ee2a0;font:12px var(--mono)}
+.gui-win{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.gui-bar{fill:var(--accent);opacity:.85}
+.gui-ic{fill:var(--on);opacity:.85}
+.gui-desk{fill:var(--accent-soft);stroke:var(--line)}
+</style>
+</head>
+<body data-ep="1" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=1" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">入门 · P1–P5</div>
+  <h1>人机交互、CMD 与环境变量</h1>
+  <p class="en">Command Line, CMD &amp; the PATH Variable</p>
+  <p class="lead">学 Java 之前，先学会用另一种方式操作电脑：不用鼠标双击，而是在黑色窗口里敲命令。后面装 JDK、编译运行第一个程序，全都要在这个窗口里完成。这一篇讲它从哪来、怎么打开、8 个最常用的命令，以及"环境变量"到底在解决什么问题。</p>
+  <div class="road">
+    <span>课程介绍</span><i>→</i><span>图形界面 vs 命令行</span><i>→</i><span>打开 CMD</span><i>→</i><span>8 个常用命令</span><i>→</i><span>用 CMD 打开 QQ</span><i>→</i><span>环境变量</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 这门课学什么</a></li>
+    <li><a href="#ch2">2 · 图形界面的来历</a></li>
+    <li><a href="#ch3">3 · 打开 CMD</a></li>
+    <li><a href="#ch4">4 · 8 个常用命令</a></li>
+    <li><a href="#ch5">5 · 打开 QQ</a></li>
+    <li><a href="#ch6">6 · 环境变量</a></li>
+    <li><a href="#ch7">7 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P1</div>
+  <h2>这门课学什么、怎么学</h2>
+  <p>整套课分<b>Java 基础</b>和<b>Java 进阶</b>两大块，是以后做 Java 开发的地基。学完要掌握的东西，老师列了几条：</p>
+  <ul>
+    <li><b>面向对象思想</b>：Java 近 30 年来最核心的思想，要能灵活运用。</li>
+    <li><b>核心知识点</b>：常用 API、集合、IO（BIO / NIO）、多线程、网络编程等。</li>
+    <li><b>练习题</b>：案例和课后作业取自斯坦福大学的 Java 题，还有一部分是力扣（LeetCode）上的算法题，很多公司面试也考这些。</li>
+    <li><b>综合项目</b>：拼图小游戏、学生管理系统、OA 管理系统、类似 QQ 的聊天软件，让你知道知识点在真实开发里怎么用。</li>
+    <li><b>编码规范</b>：所有代码按业内通用的《阿里巴巴 Java 开发手册》来写，从入门就养成好习惯。</li>
+    <li><b>拔高内容</b>：用 NIO 从零手写一个 Tomcat 服务器、虚拟机的内存结构和垃圾回收、常见数据结构的手写实现。</li>
+  </ul>
+  <p>讲课方式上，最值得记住的一条是：<b>先分析需求，再写代码</b>。老师不会直接给你"第 1、2、3、4 步"，而是先分析；写的时候可能直接从第二步、第三步开始，写着写着发现需要第一步了，再回头补上。真实开发就是这样写代码的。</p>
+  <div class="callout">
+    <span class="t">为什么"听得懂、写不出"</span>
+    很多人看完别的课，案例稍微复杂一点就无从下手。原因往往不是知识点没学会，而是<b>缺少编程思想</b>：学的时候跳过了"怎么分析"。这门课在很多地方会把分析过程完整地走一遍，跟着走比背代码重要。
+  </div>
+  <div class="extra">
+    <span class="t">上部和下部</span>
+    这份图文版对应的是<b>上部</b>（200 集）：从 CMD、JDK 讲到面向对象、常用 API、常见算法和集合进阶。上面提到的 IO、多线程、网络编程、手写 Tomcat 等内容在<b>下部</b>（B 站 BV1yW4y1Y7Ms）。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P2</div>
+  <h2>人机交互：图形界面是怎么来的</h2>
+  <p>Java 是一种计算机语言，以后天天要和电脑打交道，所以先学怎么操作电脑。你可能会说：这还用学？想打开什么，鼠标双击不就行了。</p>
+  <p>可电视里的黑客，总是在一块黑屏幕上敲命令。Windows 里其实也有这样的黑屏幕，它叫 <b>CMD</b>。这一章学的就是用 CMD 操作电脑。先听一个小故事。</p>
+  <p>计算机刚出现的时候占地大、造价高、耗电多，基本只给军队和政府用。后来体积越做越小，出现了微型机，才走进普通家庭。早期给个人用的电脑<b>没有图形界面</b>，想打开一个文件夹，得在黑屏里输入命令。比较典型的是 1981 年 IBM 和微软推出的 <b>MS-DOS</b>，全程敲命令，没点计算机功底根本玩不转。</p>
+  <p>那么，<b>第一个图形界面的操作系统是谁做的？</b>不是微软，也不是苹果，而是一家叫<b>施乐（Xerox）</b>的公司。1981 年 4 月 27 日，施乐推出了 <b>Xerox Star</b>：可以同时开几个窗口干不同的事，可以建文件夹给东西归类，用的时候双击打开。今天的图形界面，基本就是它的样子。</p>
+  <p>这项技术让两位大佬相爱相杀。乔布斯看到了图形界面的前景，推出了 <b>Apple Lisa</b>；比尔·盖茨随后推出了 <b>Windows 1.0</b>。乔布斯当面指责盖茨抄袭，盖茨的回答成了名言，大意是：我们都有一个叫施乐的有钱邻居，我闯进他家想偷东西，却发现你已经先下手了。意思就是：咱俩都是抄别人的，谁也别说谁。</p>
+
+  <div class="card">
+    <h3>点一点：从命令行到图形界面</h3>
+    <div class="tl" id="tl"></div>
+    <div class="tl-body" id="tl-body"></div>
+    <p class="hint">虚线框是视频里没讲、补充进来的节点</p>
+  </div>
+
+  <p>图形界面让电脑真正普及开来，但它也有代价：要额外加载很多图片，<b>占用更多内存，速度也没有命令行快</b>。所以顶尖的黑客大多用命令行，嫌图形界面又慢又不够灵活。Windows 也保留了命令行，就是 CMD：<b>在 Windows 里用命令行的方式操作电脑</b>，打开文件、打开文件夹、新建文件、新建文件夹，都可以。</p>
+
+  <figure>
+    <svg class="diagram" id="cli-gui" viewBox="0 0 640 200" role="img" aria-label="同一件事的两种做法：命令行敲两条命令，图形界面连点三次"></svg>
+    <figcaption>同一件事"打开 D 盘里的 QQ 文件夹"，两种做法</figcaption>
+  </figure>
+
+  <div class="extra">
+    <span class="t">几处时间线的细节</span>
+    施乐更早在 1973 年就做出了实验机 <b>Xerox Alto</b>，它已经有窗口、图标和鼠标，只是没有正式卖；1981 年的 Star 是第一台商用的图形界面电脑。Apple Lisa 是 1983 年 1 月发布的，Windows 1.0 是 1985 年 11 月。盖茨那句名言出自 1983 年，当时微软刚宣布要做 Windows，原话里"偷的东西"是一台<b>电视机</b>。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P3</div>
+  <h2>打开 CMD：Win + R，输入 cmd，回车</h2>
+  <p>关于 CMD 只要学两件事：<b>怎么打开它</b>，以及<b>常用命令有哪些</b>。打开分三步：</p>
+  <ol>
+    <li>按 <span class="kbd">Win</span> + <span class="kbd">R</span>（Win 键在键盘左下角，印着 Windows 图标）。屏幕左下角会弹出"运行"窗口。</li>
+    <li>在运行窗口里输入 <code>cmd</code>。</li>
+    <li>按回车（或点"确定"）。</li>
+  </ol>
+  <p>弹出来的黑色小窗口就是 CMD。窗口里光标前面有一串路径，比如 <code>C:\Users\moon&gt;</code>，意思是<b>现在正在操作哪个文件夹</b>。默认是 C 盘 → Users → <b>你的用户名</b>（老师的电脑叫 moon；如果你的叫 admin，就是 <code>C:\Users\admin</code>）。这就好比在图形界面里，我们默认是在桌面上操作的。</p>
+  <p>在"此电脑"（<span class="kbd">Win</span> + <span class="kbd">E</span>）里也能找到这个文件夹：C 盘里那个显示成"用户"的文件夹，地址栏一点就会变成 <code>C:\Users</code>，里面就有以你用户名命名的文件夹。</p>
+  <div class="callout">
+    <span class="t">一个小扩展</span>
+    Windows 的<b>桌面其实也是一个文件夹</b>，叫 <code>Desktop</code>，就在 <code>C:\Users\你的用户名\</code> 里面。以后看到某个文件的路径里有 Desktop，就说明它放在桌面上。
+  </div>
+  <div class="extra">
+    <span class="t">别的打开方式</span>
+    也可以点开始菜单直接输入 <code>cmd</code> 再回车，或者在资源管理器的地址栏里输入 <code>cmd</code> 回车，这样打开的 CMD 直接停在当前这个文件夹。Windows 11 默认用"终端"（Windows Terminal）来装 CMD，外观不一样，里面的命令完全相同。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P4</div>
+  <h2>8 个常用命令</h2>
+  <p>常用命令一共 8 个，前 4 个是最基本的"换盘、看、进、退"，后 4 个是加强版和收尾：</p>
+  <table class="tt" style="width:100%">
+    <thead><tr><th>命令</th><th>作用</th><th>图形界面里相当于</th></tr></thead>
+    <tbody>
+      <tr><td><code>盘符名:</code> 例如 <code>E:</code></td><td>切换到某个盘</td><td>在"此电脑"里双击 E 盘</td></tr>
+      <tr><td><code>dir</code></td><td>查看当前文件夹里的内容</td><td>看着窗口里的图标</td></tr>
+      <tr><td><code>cd 目录</code></td><td>进入一层文件夹</td><td>双击一个文件夹</td></tr>
+      <tr><td><code>cd ..</code></td><td>回到上一层</td><td>点"返回上一级"</td></tr>
+      <tr><td><code>cd 目录1\目录2</code></td><td>一次进入多层</td><td>在地址栏直接输入路径</td></tr>
+      <tr><td><code>cd \</code></td><td>一次退回到盘的根目录</td><td>点地址栏里的盘符</td></tr>
+      <tr><td><code>cls</code></td><td>清屏</td><td>—</td></tr>
+      <tr><td><code>exit</code></td><td>关闭 CMD 窗口</td><td>点右上角的 ×</td></tr>
+    </tbody>
+  </table>
+  <p>几个用法细节：</p>
+  <ul>
+    <li><b>盘符后面的冒号必须是英文冒号</b>。输成中文冒号会报错。</li>
+    <li>文件夹名太长不想打全？输入开头几个字母，按 <span class="kbd">Tab</span> 会自动补全。</li>
+    <li>Windows <b>不区分大小写</b>，<code>cd QQ</code> 和 <code>cd qq</code> 效果一样。</li>
+    <li>按住 <span class="kbd">Ctrl</span> 滚动鼠标滚轮，可以把 CMD 的字放大。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：一个模拟的 CMD 窗口</h3>
+    <p style="margin-top:0">这台模拟电脑和老师的差不多：用户名 moon，D 盘装了 QQ，E 盘有个 <code>base-code</code> 文件夹。点下面的命令会自动输入，也可以自己在窗口里敲（支持 <span class="kbd">Tab</span> 补全和 <span class="kbd">↑</span> 翻历史）。</p>
+    <div id="term1"></div>
+    <div class="chips" id="chips1">
+      <span>依次试试：</span>
+      <button>E:</button><button>dir</button><button>cd base-code</button><button>cd ..</button><button>cd base-code\day04-code</button><button>dir</button><button>cd \</button><button>cls</button><button>exit</button>
+    </div>
+  </div>
+
+  <p>进入 <code>base-code\day04-code</code> 之后再 <code>dir</code>，会看到一个现象：在"此电脑"里这个文件夹只有两样东西（<code>src</code> 和 <code>day04-code.iml</code>），CMD 却列出了四项。视频里把多出来的两项解释成"隐藏文件"，<span class="fix" title="dir 默认不显示隐藏文件，多出来的是 . 和 ..">其实不是</span>，见下面的补充。</p>
+
+  <div class="extra">
+    <span class="t">更正：dir 多出来的两项是什么</span>
+    多出来的那两项名字叫 <code>.</code> 和 <code>..</code>：<code>.</code> 代表<b>当前文件夹自己</b>，<code>..</code> 代表<b>上一级文件夹</b>。除了盘的根目录，每个文件夹里都有这两个"快捷方式"，<code>cd ..</code> 里的 <code>..</code> 就是它。<br>
+    <code>dir</code> 默认<b>不会</b>显示隐藏文件，要加上 <code>/a</code>（<code>dir /a</code>）才会全部列出来。在上面的模拟窗口里进到 <code>C:\Users\moon\Desktop</code> 对比一下 <code>dir</code> 和 <code>dir /a</code>：桌面文件夹里藏着一个系统文件 <code>desktop.ini</code>。
+  </div>
+  <div class="extra">
+    <span class="t">一个常见的坑：cd 不会换盘</span>
+    当前在 C 盘时输入 <code>cd D:\QQ</code>，提示符不会变，你还在 C 盘。CMD 只是悄悄记下"D 盘的当前目录是 QQ"，等你输入 <code>D:</code> 时才会直接到 <code>D:\QQ</code>。想一步跨盘进入，写 <code>cd /d D:\QQ</code>。模拟窗口里也可以试。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P5 上半</div>
+  <h2>练习：用 CMD 打开 QQ</h2>
+  <p>学会了命令，做个小练习：<b>用 CMD 打开电脑上的 QQ</b>。先分析：要打开 QQ，得先知道它在哪儿。打开"此电脑"找一找，老师的 QQ 装在 D 盘的 <code>QQ</code> 文件夹里，但这一层没有启动程序，再进 <code>Bin</code> 文件夹，里面的 <code>QQ.exe</code> 才是。所以完整路径是 <code>D:\QQ\Bin\QQ.exe</code>。</p>
+  <p>知道了位置，步骤就出来了：</p>
+  <ol>
+    <li>打开 CMD。默认在 <code>C:\Users\moon</code>，可 QQ 在 D 盘。</li>
+    <li>切换盘符：<code>D:</code>（英文冒号）。</li>
+    <li>进入 Bin：<code>cd QQ\Bin</code>（大小写无所谓）。</li>
+    <li>想打开谁，<b>直接写它的名字</b>：<code>QQ.exe</code>，回车，QQ 就启动了。</li>
+  </ol>
+  <p>每次都要换盘、再钻进好几层文件夹，太麻烦了。<b>能不能在任何目录下直接输入 <code>QQ.exe</code> 就打开它？</b>正常情况下不行：比如在 <code>C:\Users\moon</code> 里直接输入 <code>QQ.exe</code>，CMD 会报错，说它"不是内部或外部命令，也不是可运行的程序或批处理文件"，因为当前目录里根本没有 QQ。</p>
+  <p>解决的思路是：<b>把 QQ 所在的路径记在电脑的某个地方</b>。下次输入 QQ.exe 时，当前目录里没有，就去那个地方记下的路径里找。电脑里专门记这些路径的地方，叫<b>环境变量</b>。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P5 下半</div>
+  <h2>环境变量：告诉 CMD 去哪儿找</h2>
+  <p>输入一个程序名之后，CMD 按这个顺序找：</p>
+  <ol>
+    <li>先在<b>当前目录</b>里找；</li>
+    <li>没有，就去环境变量 <b>Path</b> 里记的路径，<b>从上往下一个一个</b>地找；</li>
+    <li>全找完都没有，才报错。</li>
+  </ol>
+  <p>所以只要把 <code>D:\QQ\Bin</code> 加进 Path，在哪个目录都能打开 QQ。配置步骤：</p>
+  <ol>
+    <li>打开系统设置页面：在"此电脑"上点右键 → <b>属性</b>（在桌面图标上右键，或打开此电脑后在空白处右键都行）。</li>
+    <li>点<b>高级系统设置</b>，在弹出窗口的"高级"选项卡里点<b>环境变量</b>。</li>
+    <li>窗口上半部分是<b>用户变量</b>，只对当前用户有效，电脑有多个用户时其他人用不了，所以别动它；找下半部分<b>系统变量</b>里的 <b>Path</b>，点<b>编辑</b>。</li>
+    <li>点<b>新建</b>，把 QQ.exe 所在的文件夹路径 <code>D:\QQ\Bin</code> 粘贴进去。</li>
+    <li>（可选）点<b>上移</b>把它挪到最上面：因为是从上往下找的，放在第一个能更快找到。</li>
+    <li>一路点<b>确定</b>。然后<b>重新打开一个 CMD 窗口</b>，原来那个窗口不会生效。</li>
+  </ol>
+
+  <div class="card">
+    <h3>动手：配置 Path，看 CMD 怎么找程序</h3>
+    <p style="margin-top:0">先在下面的窗口里直接输入 <code>QQ.exe</code>，看它报错、看右边记录的查找过程；再把 <code>D:\QQ\Bin</code> 加进 Path，<b>不重开窗口</b>再试一次；最后点"重新打开 CMD"再试。</p>
+    <div id="term2"></div>
+    <div class="chips" id="chips2"><span>试试：</span><button>QQ.exe</button><button>notepad</button><button>path</button><button>D:</button><button>cd QQ\Bin</button></div>
+    <div class="envbox">
+      <div class="panel">
+        <h4>系统变量 Path（"编辑环境变量"窗口）</h4>
+        <ul class="plist" id="sys-path"></ul>
+        <div class="btns" style="margin-top:8px">
+          <button class="btn sm" id="p-add">新建 D:\QQ\Bin</button>
+          <button class="btn sm" id="p-up">上移到最前</button>
+          <button class="btn sm" id="p-del">删除它</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h4>刚才那次查找</h4>
+        <ul class="plist" id="trace"><li class="note" style="color:var(--muted)">在左边窗口里运行一个程序名，这里会列出 CMD 依次查了哪些地方。</li></ul>
+        <div class="btns" style="margin-top:8px"><button class="btn sm primary" id="reopen">重新打开 CMD</button></div>
+        <div id="env-warn"></div>
+      </div>
+    </div>
+  </div>
+
+  <p>环境变量的作用一句话就能说清：<b>想在任意目录下都能打开某个软件，就把它所在的路径配置到 Path 里</b>。这一节看着和 Java 没关系，其实是在提前铺路：下一篇装完 JDK，要在任意目录下使用 <code>javac</code> 和 <code>java</code> 这两个命令，用的就是同一套方法。</p>
+
+  <div class="extra">
+    <span class="t">为什么要重新打开窗口</span>
+    每个程序启动时，会从系统那里<b>复制一份</b>环境变量带在身上。改了系统的 Path，已经打开的 CMD 手里还是旧的那份，所以必须关掉重开。模拟窗口里输入 <code>path</code> 可以看到"这个窗口自己的"Path。
+  </div>
+  <div class="extra">
+    <span class="t">两个小技巧</span>
+    <b>.exe 可以省略</b>：直接输入 <code>QQ</code> 也行。CMD 会自动试一遍 <code>.exe</code>、<code>.bat</code> 等可执行的扩展名（这个列表也在一个环境变量 <code>PATHEXT</code> 里）。<br>
+    <b>更快打开环境变量窗口</b>：点开始菜单，搜"环境变量"，选"编辑系统环境变量"，一步就到第 2 步的那个窗口。Windows 11 的设置界面改过几次，这条路一直有效。
+  </div>
+  <div class="extra">
+    <span class="t">用 Mac 的话</span>
+    macOS 对应 CMD 的是<b>终端</b>（Terminal），命令来自 Unix，名字不太一样：<code>dir</code> → <code>ls</code>（<code>ls -a</code> 显示隐藏文件），<code>cd</code> 用法相同但路径用正斜杠 <code>/</code>，<code>cd \</code> → <code>cd /</code>（回到整个磁盘的根），<code>cls</code> → <code>clear</code>，没有盘符的概念。Mac 上也有 <code>PATH</code> 环境变量，查找规则一样（但<b>不会</b>先找当前目录，要运行当前目录的程序得写 <code>./程序名</code>），一般在 <code>~/.zshrc</code> 里加一行 <code>export PATH="$PATH:/新路径"</code> 来配置。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>CMD</b></td><td>在 Windows 里用命令行操作电脑。打开：<span class="kbd">Win</span>+<span class="kbd">R</span> → <code>cmd</code> → 回车。默认在 <code>C:\Users\用户名</code></td></tr>
+      <tr><td><b>8 个命令</b></td><td><code>盘符:</code>　<code>dir</code>　<code>cd 目录</code>　<code>cd ..</code>　<code>cd 目录1\目录2</code>　<code>cd \</code>　<code>cls</code>　<code>exit</code></td></tr>
+      <tr><td><b>打开程序</b></td><td>直接写名字。先找当前目录，再按 Path 从上往下找</td></tr>
+      <tr><td><b>环境变量 Path</b></td><td>想在任意目录打开某个程序，就把它所在的文件夹加进系统变量 Path；改完要重开 CMD</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    CMD 里打开一个程序，就是"写出它的名字"；它找不到时，要么自己 <code>cd</code> 过去，要么把路径告诉 Path。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. 刚打开的 CMD 默认在哪个文件夹？想切到 E 盘的根目录该输入什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">默认在 <code>C:\Users\你的用户名</code>。切到 E 盘输入 <code>E:</code>（英文冒号）再回车。注意 <code>cd E:\</code> 不会换盘。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 现在在 <code>E:\</code>，要一步进入 <code>E:\base-code\day04-code</code>，然后一步退回 <code>E:\</code>，分别怎么写？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>cd base-code\day04-code</code>，然后 <code>cd \</code>。如果只想退一层，用 <code>cd ..</code>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 在 <code>C:\Users\moon</code> 里输入 <code>QQ.exe</code>，CMD 会去哪些地方找？按什么顺序？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">先找当前目录 <code>C:\Users\moon</code>；没有，再按系统变量 Path 里的路径从上往下逐个找；都没有才报"不是内部或外部命令"。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 把 QQ 的路径加进 Path 之后，在原来开着的 CMD 里输入 QQ.exe 还是报错，为什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">已经打开的 CMD 在启动时复制了一份旧的环境变量，看不到新改的 Path。关掉它，重新打开一个 CMD 再试。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 为什么配置时选"系统变量"里的 Path，而不是"用户变量"？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">用户变量只对当前登录的用户有效，电脑上有多个用户时，其他人用不了；系统变量对所有用户都有效。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a class="off"><small>← 上一篇</small>（这是第一篇）</a>
+    <a class="next off"><small>下一篇 →</small>P6–11 JDK 安装与第一个 HelloWorld</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P1–P5（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=1" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+/* ---------- 时间线 ---------- */
+(function () {
+  const T = [
+    ['1940s–60s', '大型机', '体积大、造价高、耗电多，主要给军队、政府和大机构用。操作靠打孔卡片和专业人员。'],
+    ['1973', 'Xerox Alto', '施乐帕洛阿尔托研究中心的实验机，已经有窗口、图标和鼠标，但没有正式出售。', true],
+    ['1981.4', 'Xerox Star', '施乐推出的第一台商用图形界面电脑：多窗口、文件夹、双击打开。今天图形界面的雏形。'],
+    ['1981.8', 'MS-DOS', 'IBM 个人电脑配的操作系统（由微软提供）。全程在黑屏里敲命令，没有任何图形界面。'],
+    ['1983.1', 'Apple Lisa', '乔布斯看到了图形界面的前景，苹果推出 Lisa。很贵，卖得不好，但开了头。'],
+    ['1985.11', 'Windows 1.0', '微软的第一版 Windows，还只是跑在 DOS 上的一层图形外壳。乔布斯指责盖茨抄袭，盖茨回了那句"施乐邻居"。'],
+    ['今天', 'CMD 还在', '图形界面普及了电脑，但更占内存、更慢。Windows 一直保留着命令行，就是 CMD。'],
+  ];
+  const box = $('#tl'), body = $('#tl-body');
+  T.forEach(([y, n, d, ex], i) => {
+    const b = document.createElement('button');
+    b.className = ex ? 'ex' : '';
+    b.innerHTML = `<small>${y}</small>${n}`;
+    b.onclick = () => { $$('#tl button').forEach(x => x.classList.remove('sel')); b.classList.add('sel'); body.innerHTML = `<b>${y} · ${n}</b>　${d}`; };
+    box.appendChild(b);
+    if (i === 2) b.click();
+  });
+})();
+
+/* ---------- 命令行 vs 图形界面 示意 ---------- */
+(function () {
+  const svg = $('#cli-gui');
+  // 左：命令行
+  el('rect', { x: 10, y: 20, width: 290, height: 160, rx: 10, class: 'cli-a' }, svg);
+  const L = ['C:\\Users\\moon>D:', '', 'D:\\>cd QQ', '', 'D:\\QQ>_'];
+  L.forEach((s, i) => { const t = txt(svg, 24, 50 + i * 22, s, i === 4 ? 'cli-g' : 'cli-t'); });
+  txt(svg, 155, 196, '命令行：敲 2 条命令', 't-sub mid');
+  // 右：图形界面
+  el('rect', { x: 340, y: 20, width: 290, height: 160, rx: 10, class: 'gui-desk' }, svg);
+  [[356, 40, '此电脑'], [356, 100, '回收站']].forEach(([x, y, s]) => { el('rect', { x, y, width: 30, height: 26, rx: 4, class: 'gui-ic' }, svg); txt(svg, x + 15, y + 40, s, 't-sub mid'); });
+  el('rect', { x: 420, y: 44, width: 196, height: 120, rx: 6, class: 'gui-win' }, svg);
+  el('rect', { x: 420, y: 44, width: 196, height: 18, rx: 6, class: 'gui-bar' }, svg);
+  txt(svg, 428, 57, 'D:\\QQ', 't-sub');
+  [[456, 80, 'Bin'], [530, 80, 'Misc']].forEach(([x, y, s]) => { el('rect', { x, y, width: 34, height: 26, rx: 3, class: 'gui-ic' }, svg); txt(svg, x + 17, y + 42, s, 't-sub mid'); });
+  el('path', { d: 'M520,132 l0,18 l5,-5 l4,9 l3,-1 l-4,-9 l7,0 z', style: 'fill:var(--ink)' }, svg);
+  txt(svg, 485, 196, '图形界面：此电脑 → D 盘 → QQ，双击 3 次', 't-sub mid');
+})();
+
+/* ---------- 模拟 CMD ---------- */
+const FS = {
+  'C:': { Users: { moon: { Desktop: { '笔记.txt': 1, 'desktop.ini': 'h' }, Documents: {}, Downloads: {} } }, Windows: { System32: { 'notepad.exe': 1, 'calc.exe': 1, 'cmd.exe': 1 }, 'explorer.exe': 1 } },
+  'D:': { QQ: { Bin: { 'QQ.exe': 1, 'QQApp.dll': 1 }, Misc: {} }, AA: {} },
+  'E:': { 'base-code': { 'day04-code': { src: {}, 'day04-code.iml': 1 }, 'day05-code': {} }, develop: {}, Download: {} },
+};
+const BASE_PATH = ['C:\\Windows\\System32', 'C:\\Windows', 'C:\\Windows\\System32\\Wbem'];
+const PATHEXT = ['.exe', '.bat', '.cmd'];
+
+function makeTerm(host, opts) {
+  const S = { open: true, hist: [], hi: 0 };
+  const box = document.createElement('div');
+  box.className = 'term';
+  host.appendChild(box);
+  let out, input;
+
+  const isDir = v => v && typeof v === 'object';
+  const find = (dir, name) => Object.keys(dir).find(k => k.toLowerCase() === name.toLowerCase());
+  const nodeAt = (drv, parts) => parts.reduce((d, p) => d && d[p], FS[drv]);
+  const show = (drv, parts) => drv + '\\' + parts.join('\\');
+  const prompt = () => show(S.drv, S.cwd[S.drv]) + '>';
+
+  function line(s, cls) {
+    const d = document.createElement('div');
+    d.className = 'ln' + (cls ? ' ' + cls : '');
+    d.textContent = s;
+    out.appendChild(d);
+  }
+  // 解析路径 → [盘, parts] 或 null
+  function resolve(p) {
+    let drv = S.drv, parts;
+    const m = p.match(/^([a-z]:)(.*)$/i);
+    if (m) { drv = m[1].toUpperCase(); p = m[2]; if (!FS[drv]) return null; parts = /^[\\/]/.test(p) ? [] : [...S.cwd[drv]]; }
+    else parts = /^[\\/]/.test(p) ? [] : [...S.cwd[drv]];
+    for (const seg of p.split(/[\\/]+/)) {
+      if (!seg || seg === '.') continue;
+      if (seg === '..') { parts.pop(); continue; }
+      const dir = nodeAt(drv, parts), k = find(dir, seg);
+      if (!k || !isDir(dir[k])) return null;
+      parts.push(k);
+    }
+    return [drv, parts];
+  }
+  function run(cmd) {
+    line(prompt() + cmd);
+    S.hist.push(cmd); S.hi = S.hist.length;
+    const c = cmd.trim();
+    if (!c) return;
+    let m;
+    if ((m = c.match(/^([a-z]):$/i))) {
+      const d = m[1].toUpperCase() + ':';
+      if (FS[d]) S.drv = d; else line('系统找不到指定的驱动器。', 'err');
+    } else if (c.match(/^[a-z]：$/i)) {
+      line(`'${c}' 不是内部或外部命令，也不是可运行的程序`, 'err'); line('或批处理文件。', 'err'); line('（冒号要用英文的 :）', 'note');
+    } else if ((m = c.match(/^dir(\s+\/a)?\s*$/i))) {
+      const dir = nodeAt(S.drv, S.cwd[S.drv]), all = !!m[1];
+      line(` ${show(S.drv, S.cwd[S.drv])} 的目录`); line('');
+      let nd = 0, nf = 0;
+      if (S.cwd[S.drv].length) { line('<DIR>          .'); line('<DIR>          ..'); nd += 2; }
+      for (const k of Object.keys(dir)) {
+        if (dir[k] === 'h' && !all) continue;
+        if (isDir(dir[k])) { line('<DIR>          ' + k); nd++; } else { line('               ' + k + (dir[k] === 'h' ? '   （隐藏）' : '')); nf++; }
+      }
+      line(`      ${nf} 个文件   ${nd} 个目录`);
+    } else if ((m = c.match(/^cd(\s+\/d)?(?:\s*(\.\.|\\)|\s+(.+))?$/i)) || (m = c.match(/^cd(\s+\/d)?\s*(\.\.[\\/.]*|\\)$/i))) {
+      const arg = (m[2] || m[3] || '').trim().replace(/^"|"$/g, '');
+      if (!arg) { line(show(S.drv, S.cwd[S.drv])); return; }
+      const r = resolve(arg);
+      if (!r) { line('系统找不到指定的路径。', 'err'); return; }
+      S.cwd[r[0]] = r[1];
+      if (r[0] !== S.drv) {
+        if (m[1]) S.drv = r[0];
+        else line(`（提示符没变：cd 只记下了 ${r[0]} 盘的当前目录。先输入 ${r[0]} 才会过去，或者用 cd /d）`, 'note');
+      }
+    } else if (/^cls$/i.test(c)) {
+      out.innerHTML = '';
+    } else if (/^exit$/i.test(c)) {
+      close();
+    } else if (/^(path|echo\s+%path%)$/i.test(c)) {
+      line('PATH=' + S.path.join(';'));
+    } else if (/^help$/i.test(c)) {
+      line('这个模拟窗口支持：盘符:  dir  dir /a  cd  cd ..  cd \\  cd /d  cls  exit  path，以及直接输入程序名。', 'note');
+    } else {
+      launch(c);
+    }
+  }
+  function launch(c) {
+    const name = c.split(/\s+/)[0];
+    const tries = /\.[a-z]+$/i.test(name) ? [name] : PATHEXT.map(e => name + e);
+    const places = [['当前目录', S.drv, S.cwd[S.drv]]].concat(S.path.map(p => { const r = p.match(/^([A-Z]:)\\?(.*)$/i); return ['Path', r[1].toUpperCase(), r[2] ? r[2].split('\\') : []]; }));
+    const trace = [];
+    let hit = null;
+    for (const [kind, drv, parts] of places) {
+      const dir = nodeAt(drv, parts.map((p, i) => p));
+      let k = null;
+      if (dir) for (const t of tries) { k = find(dir, t); if (k && !isDir(dir[k])) break; k = null; }
+      trace.push([kind, show(drv, parts), !!k]);
+      if (k) { hit = [show(drv, parts), k]; break; }
+    }
+    if (opts.onTrace) opts.onTrace(name, trace);
+    if (hit) {
+      const f = hit[1];
+      line(/\.exe$/i.test(f) ? `（已启动 ${hit[0].replace(/\\$/, '')}\\${f}）` : `（用默认程序打开了 ${f}）`, 'ok');
+    } else {
+      line(`'${name}' 不是内部或外部命令，也不是可运行的程序`, 'err');
+      line('或批处理文件。', 'err');
+    }
+  }
+  function close() {
+    S.open = false;
+    box.className = 'term closed';
+    box.innerHTML = opts.reopenHint || '窗口已关闭。按 Win+R → cmd 重新打开：<button class="btn sm" style="margin-left:8px">打开 CMD</button>';
+    const b = box.querySelector('button'); if (b) b.onclick = () => openWin();
+  }
+  function openWin() {
+    S.open = true; S.drv = 'C:'; S.cwd = { 'C:': ['Users', 'moon'], 'D:': [], 'E:': [] };
+    S.path = [...opts.getPath()];
+    box.className = 'term';
+    box.innerHTML = '';
+    out = document.createElement('div');
+    box.appendChild(out);
+    line('（模拟的 CMD 窗口，只支持本页讲到的命令，输入 help 查看）', 'note');
+    line('');
+    const row = document.createElement('div'); row.className = 'inrow';
+    const pr = document.createElement('span');
+    input = document.createElement('input');
+    input.setAttribute('aria-label', 'CMD 命令'); input.autocapitalize = 'off'; input.autocomplete = 'off'; input.spellcheck = false;
+    row.append(pr, input); box.appendChild(row);
+    const refresh = () => { pr.textContent = prompt(); box.scrollTop = box.scrollHeight; };
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { const v = input.value; input.value = ''; run(v); if (S.open) refresh(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (S.hi > 0) input.value = S.hist[--S.hi]; }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); S.hi = Math.min(S.hist.length, S.hi + 1); input.value = S.hist[S.hi] || ''; }
+      else if (e.key === 'Tab') {
+        e.preventDefault();
+        const m = input.value.match(/^(.*?)([^\s\\]*)$/), head = m[1], pre = m[2];
+        const sep = head.lastIndexOf(' ');
+        const pathPart = head.slice(sep + 1);
+        const r = pathPart ? resolve(pathPart) : [S.drv, S.cwd[S.drv]];
+        if (!r) return;
+        const dir = nodeAt(r[0], r[1]);
+        const k = Object.keys(dir).find(x => x.toLowerCase().startsWith(pre.toLowerCase()) && dir[x] !== 'h');
+        if (k) input.value = head + k;
+      }
+    });
+    box.onclick = () => { if (S.open && !String(getSelection())) input.focus({ preventScroll: true }); };
+    S.refresh = refresh;
+    refresh();
+  }
+  openWin();
+  return {
+    exec(cmd) { if (!S.open) openWin(); run(cmd); if (S.open) S.refresh(); },
+    reopen: openWin,
+    winPath: () => S.path,
+  };
+}
+
+/* 第 4 节的窗口 */
+(function () {
+  const t = makeTerm($('#term1'), { getPath: () => BASE_PATH });
+  $$('#chips1 button').forEach(b => b.onclick = () => t.exec(b.textContent));
+})();
+
+/* 第 6 节的窗口 + Path 编辑 */
+(function () {
+  const NEW = 'D:\\QQ\\Bin';
+  let sys = [...BASE_PATH];
+  let lastTrace = null;
+  const t = makeTerm($('#term2'), {
+    getPath: () => sys,
+    onTrace: (name, tr) => { lastTrace = [name, tr]; paint(); },
+  });
+  function paint() {
+    $('#sys-path').innerHTML = sys.map(p => `<li class="${p === NEW ? 'new' : ''}">${p}</li>`).join('');
+    $('#p-add').disabled = sys.includes(NEW);
+    $('#p-up').disabled = !sys.includes(NEW) || sys[0] === NEW;
+    $('#p-del').disabled = !sys.includes(NEW);
+    if (lastTrace) {
+      const [name, tr] = lastTrace;
+      $('#trace').innerHTML = `<li style="color:var(--muted)">找 ${name}：</li>` + tr.map(([k, p, ok]) => `<li class="${ok ? 'hit' : 'miss'}"><span class="mk">${ok ? '✓' : '✗'}</span>${k === '当前目录' ? '当前目录 ' : ''}${p}</li>`).join('') + (tr[tr.length - 1][2] ? '' : '<li style="color:var(--muted)">全找完了，报错</li>');
+    }
+    const same = JSON.stringify(sys) === JSON.stringify(t.winPath());
+    $('#env-warn').innerHTML = same ? '' : '<div class="warn">系统的 Path 已经改了，但这个 CMD 窗口打开时复制的是旧的那份。要<b>重新打开 CMD</b> 才会生效。</div>';
+  }
+  $('#p-add').onclick = () => { sys.push(NEW); paint(); };
+  $('#p-up').onclick = () => { sys = [NEW, ...sys.filter(p => p !== NEW)]; paint(); };
+  $('#p-del').onclick = () => { sys = sys.filter(p => p !== NEW); paint(); };
+  $('#reopen').onclick = () => { t.reopen(); paint(); };
+  $$('#chips2 button').forEach(b => b.onclick = () => { t.exec(b.textContent); paint(); });
+  paint();
+})();
+</script>
+</body>
+</html>

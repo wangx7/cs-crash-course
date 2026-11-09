@@ -1,0 +1,632 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P38 原码、反码、补码 · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.bits{font-family:var(--mono);letter-spacing:.05em;white-space:nowrap}
+.bits .sb{color:var(--bad);font-weight:700}
+.bits .hl{background:var(--on-soft);color:var(--on);font-weight:700;border-radius:3px}
+.bits .dim{opacity:.32;text-decoration:line-through}
+.bits .gap{display:inline-block;width:.45em}
+.ctrl{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:15px;margin:6px 0 4px}
+.ctrl select,.ctrl input{font:inherit;font-size:14px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+.ctrl input[type=number]{width:96px;font-family:var(--mono)}
+.seg-btns{display:inline-flex;background:var(--bg);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg-btns button{border:0;background:none;padding:4px 12px;border-radius:7px;cursor:pointer;font:inherit;font-size:14px;color:var(--muted)}
+.seg-btns button.sel{background:var(--panel);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.presets{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:8px 0}
+.presets button{font:inherit;font-size:13px;font-family:var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 10px;cursor:pointer}
+.presets button:hover{border-color:var(--accent);color:var(--accent)}
+.w-log{font-size:14px;margin-top:6px}
+.w-log div{padding:5px 10px;border-radius:8px;margin-top:4px;background:var(--bg)}
+.w-log div.ok{border-left:3px solid var(--ok)}
+.w-log div.bad{border-left:3px solid var(--bad)}
+.w-log div.start{border-left:3px solid var(--line);color:var(--muted)}
+.adder{display:grid;grid-template-columns:64px repeat(9,minmax(26px,38px));gap:4px;margin:14px 0 4px;font-family:var(--mono);justify-content:start}
+.adder div{text-align:center;padding:4px 0;border-radius:6px;font-size:16px}
+.adder .lab{text-align:right;padding-right:8px;font-family:inherit;font-size:13px;color:var(--muted)}
+.adder .c{font-size:12px;color:var(--on);min-height:22px}
+.adder .b{background:var(--bg)}
+.adder .r{background:var(--panel);border:1px solid var(--line);font-weight:700}
+.adder .cur{outline:2px solid var(--on)}
+.adder .ov{color:var(--muted);text-decoration:line-through}
+.adder .line{grid-column:2 / span 9;height:2px;background:var(--ink);padding:0;opacity:.7}
+.bit-row{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.bit-row button{width:40px;height:46px;font:700 20px var(--mono);border:2px solid var(--line);border-radius:9px;background:var(--panel);color:var(--muted);cursor:pointer}
+.bit-row button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.bit-row button.sign{border-color:var(--bad)}
+.bit-row button.sign.on{background:var(--bad);border-color:var(--bad)}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:6px}
+.three div{background:var(--bg);border-radius:10px;padding:8px 12px}
+.three small{display:block;font-size:12px;color:var(--muted)}
+.three b{font:700 22px var(--mono)}
+@media (max-width:560px){.three b{font-size:18px}}
+.rows{font-size:14px;margin-top:10px;overflow-x:auto}
+.rows table{border-collapse:collapse}
+.rows td{padding:4px 8px;white-space:nowrap;vertical-align:middle}
+.rows td.k{color:var(--muted);text-align:right;font-size:13px}
+.rows td.v{font-family:var(--mono);font-weight:700}
+.rows tr.res td{border-top:2px solid var(--ink)}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+</style>
+</head>
+<body data-ep="38" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=38" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">运算符 · 多学一招 · P38</div>
+  <h1>原码、反码、补码</h1>
+  <p class="en">Sign-magnitude, Ones' Complement &amp; Two's Complement</p>
+  <p class="lead">很多教程只给你三条计算公式：反码是"取反"，补码是"反码加一"。这一集反过来，从问题讲起：每一种表示法都是为了解决上一种的毛病才出现的。弄明白之后，byte 为什么是 −128 到 127、强转为什么会变成负数，就都能解释了。</p>
+  <div class="road">
+    <span>原码</span><i>→</i><span>负数越加越小</span><i>→</i><span>反码</span><i>→</i><span>跨零差 1</span><i>→</i><span>补码</span><i>→</i><span>类型转换</span><i>→</i><span>位运算</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 原码</a></li>
+    <li><a href="#ch2">2 · 原码算负数</a></li>
+    <li><a href="#ch3">3 · 反码</a></li>
+    <li><a href="#ch4">4 · 跨零差 1</a></li>
+    <li><a href="#ch5">5 · 补码</a></li>
+    <li><a href="#ch6">6 · 类型转换</a></li>
+    <li><a href="#ch7">7 · 位运算</a></li>
+    <li><a href="#ch8">8 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>原码：最直观的写法</h2>
+  <p><b>原码</b>就是把十进制数直接写成二进制，再规定<b>最左边一位是符号位</b>：0 表示正，1 表示负，剩下的位才是数值。</p>
+  <p>比如 56 写成二进制是 <span class="bits">0111000</span>，补齐一个字节、前面放上符号位 0，就是 <span class="bits"><span class="sb">0</span>0111000</span>；−56 只把符号位换成 1：<span class="bits"><span class="sb">1</span>0111000</span>。</p>
+  <p>先补两个单位。二进制里的一个 0 或一个 1 叫一个<b>比特</b>（bit，比特位）。一个比特能表示的东西太少，所以把 <b>8 个比特编成一组，叫一个字节</b>（byte），它是计算机里最小的存储单元。</p>
+  <p>那么一个字节的原码，最大能表示多少？符号位必须是 0，后面 7 位全是 1：<span class="bits"><span class="sb">0</span>1111111</span> = <b>+127</b>。最小呢？符号位是 1，数值位也要尽量大，全是 1：<span class="bits"><span class="sb">1</span>1111111</span> = <b>−127</b>。注意不是 <span class="bits"><span class="sb">1</span>0000000</span>：数值部分是 0，那它读出来还是 0，只是带了个负号。</p>
+  <div class="callout">
+    <span class="t">先记住一个疑问</span>
+    按原码算，一个字节能表示 −127 ~ +127。可 Java 里 byte 的范围明明是 <b>−128 ~ 127</b>，多出来的那个 −128 是哪来的？第 5 节揭晓。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>原码的毛病：负数越加越小</h2>
+  <p>用原码算正数完全没问题。从 <span class="bits">00000000</span> 开始，最右一位加 1，得到 1；再加 1，进位，得到 2；然后 3、4、5……和十进制里数数一模一样。</p>
+  <p>换成负数就出事了。<span class="bits"><span class="sb">1</span>0000000</span> 也表示 0（"负零"）。给它加 1，按二进制加法得到 <span class="bits"><span class="sb">1</span>0000001</span>，读出来是 <b>−1</b>，可 0 + 1 应该等于 1。再加 1 得到 <span class="bits"><span class="sb">1</span>0000010</span>，读出来是 −2，可 −1 + 1 应该是 0。越加越小。</p>
+  <p>放到数轴上就很好理解：二进制加法总是让<b>数值位变大</b>。数值位变大，对正数是往右走；可符号位是 1 的时候，数值位越大，这个数就越<b>往左</b>。我们想往正方向走一步，它实际往负方向走了一步，<b>方向正好反了</b>。</p>
+
+  <div class="card">
+    <h3>动手：在原码里一步步 +1</h3>
+    <div id="walk-yuan"></div>
+    <p class="hint">先从 "0（00000000）" 出发连点几次 +1，再换成从 "−0" 或 "−3" 出发对比</p>
+  </div>
+  <p>小结一下：<b>原码算正数没问题，算负数时，实际走的方向和我们想要的方向相反</b>。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>反码：把负数那一半倒过来</h2>
+  <p>既然负数那边的路是反着的，当年的设计者就想：<b>把这一半的路也倒过来</b>，不就顺了吗？这就是<b>反码</b>，它是为了解决原码不能算负数的问题出现的。规则分两种情况：</p>
+  <ul>
+    <li><b>正数</b>：反码和原码一样，不变。</li>
+    <li><b>负数</b>：在原码的基础上，<b>符号位不变，数值位取反</b>（0 变 1，1 变 0）。</li>
+  </ul>
+  <p>为什么正数不变？因为正数用原码算本来就对，没必要改；只有负数的方向反了，所以只把负数翻过来。</p>
+  <p>还是拿 −56 举例：原码 <span class="bits"><span class="sb">1</span>0111000</span>，符号位不动，后面 7 位取反，得到反码 <span class="bits"><span class="sb">1</span>1000111</span>。</p>
+  <p>现在用反码算 −56 + 1，正确答案应该是 −55。从最右一位加 1，连续进位三次，得到 <span class="bits">11001000</span>。−55 的反码是多少？55 的原码是 <span class="bits">00110111</span>，变负数是 <span class="bits">10110111</span>，再取反得 <span class="bits">11001000</span>，<b>一模一样</b>。再试 −4（<span class="bits">11111011</span>）：减 1 得 <span class="bits">11111010</span>，正是 −5；加 1 得 <span class="bits">11111100</span>，正是 −3。在负数范围里加减 1，反码都算对了。</p>
+
+  <div class="card">
+    <h3>动手：竖式加法</h3>
+    <div class="ctrl">
+      <span class="seg-btns" id="ad-enc"><button data-e="fan">用反码算</button><button data-e="bu">用补码算</button></span>
+    </div>
+    <div class="ctrl">
+      <input type="number" id="ad-a" value="-56" aria-label="第一个数"> <b>+</b> <input type="number" id="ad-b" value="1" aria-label="第二个数">
+      <button class="btn primary" id="ad-step">算下一位</button>
+      <button class="btn" id="ad-all">直接算完</button>
+    </div>
+    <div class="presets">视频里的例子：
+      <button data-p="fan,-56,1">−56+1</button><button data-p="fan,-4,1">−4+1</button><button data-p="fan,-5,2">−5+2</button><button data-p="fan,-5,6">−5+6</button><button data-p="fan,-4,7">−4+7</button><button data-p="bu,-4,2">补码 −4+2</button><button data-p="bu,-4,5">补码 −4+5</button>
+    </div>
+    <div class="adder" id="ad-grid"></div>
+    <div class="step-text" id="ad-msg"></div>
+    <p class="hint">从右往左一位一位地加；最高位再进出来的 1 超出了一个字节，直接丢掉</p>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>反码的毛病：一跨过 0 就差 1</h2>
+  <p>反码还没完。从 −4 开始一路加 1：−3、−2、−1，都对。−1 的反码是 <span class="bits">11111110</span>，再加 1 得 <span class="bits">11111111</span>，它是"负零"，读出来 0，也对。</p>
+  <p>可再加 1 呢？<span class="bits">11111111</span> 加 1，一路进位 8 次，超出一个字节的 1 丢掉，得到 <span class="bits">00000000</span>：还是 0！本该是 1，<b>少了 1</b>。</p>
+  <p>不是巧合。只要结果<b>跨过了 0</b>，就会差 1：</p>
+  <ul>
+    <li>−5 + 2：结果没跨零，得 −3，<b>对</b>。</li>
+    <li>−5 + 6：<span class="bits">11111010</span> + <span class="bits">00000110</span>，丢掉溢出的 1 得 <span class="bits">00000000</span> = 0，正确答案是 1，<b>差 1</b>。</li>
+    <li>−4 + 7：<span class="bits">11111011</span> + <span class="bits">00000111</span> 得 <span class="bits">00000010</span> = 2，正确答案是 3，<b>差 1</b>。</li>
+  </ul>
+  <p>上面的竖式加法里点 "−5+6" 和 "−4+7" 就能亲眼看到。原因在于反码里 <b>0 有两种写法</b>：<span class="bits">00000000</span>（+0）和 <span class="bits">11111111</span>（−0）。把加 1 想成往上跳一格，从负数跳到正数的路上，0 这一站要<b>跳两次</b>，所以跨过 0 的结果总比正确答案小 1。</p>
+
+  <div class="card">
+    <h3>动手：在反码里一步步 +1</h3>
+    <div id="walk-fan"></div>
+    <p class="hint">从 −3 出发连点 +1，注意经过 0 的那两步</p>
+  </div>
+
+  <div class="extra">
+    <span class="t">真实的反码机器是怎么做的</span>
+    视频里把溢出的 1 直接丢掉，所以跨零时差 1。历史上真用反码的计算机（比如 1960 年代的 CDC 6600、UNIVAC 1100 系列）用的是<b>循环进位</b>：最高位进出来的 1 不丢，而是加回到最低位。−5 + 6 先得到 <span class="bits">00000000</span>，再把进位加回来，就是 <span class="bits">00000001</span> = 1，结果是对的。<br>
+    所以反码真正的麻烦是：<b>两个零</b>（判断"是不是 0"要比较两种写法），以及<b>每次加法都可能要多加一轮进位</b>，电路更复杂、更慢。补码把这两个问题一次解决了，所以后来几乎所有计算机都改用补码。顺带一提，反码求和今天还活着：互联网 IP 包头的校验和就是用它算的。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>补码：错开一位，只留一个 0</h2>
+  <p>问题出在 0 要跳两次。那就<b>把多出来的那个 0 去掉</b>：让负数整体往左挪一格。原来表示 −0 的 <span class="bits">11111111</span> 改成表示 −1，原来表示 −1 的 <span class="bits">11111110</span> 改成表示 −2……每个负数都<b>错开一位</b>。这就是<b>补码</b>。</p>
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="ruler" viewBox="0 0 790 196" role="img" aria-label="反码与补码对照：补码错开一位"></svg></div>
+      <figcaption>图 1　同一串比特在反码、补码里分别读作几。从左往右每格都是 +1。反码有两个 0（红），补码只有一个（绿），负数全部错开了一位。</figcaption>
+    </figure>
+  </div>
+  <p>"错开一位"换成计算规则，就是：</p>
+  <ul>
+    <li><b>正数</b>：补码和原码、反码都一样。<b>正数的原码、反码、补码三者相同。</b></li>
+    <li><b>负数</b>：补码 = <b>反码 + 1</b>。这里的 +1 正是为了把多出来的那个 0 挤掉。</li>
+  </ul>
+  <p>举两个例子：</p>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt" style="width:100%">
+      <thead><tr><th>十进制</th><th>原码</th><th>反码（数值位取反）</th><th>补码（反码 + 1）</th></tr></thead>
+      <tbody>
+        <tr><td class="num">−1</td><td class="num">10000001</td><td class="num">11111110</td><td class="num">11111111</td></tr>
+        <tr><td class="num">−2</td><td class="num">10000010</td><td class="num">11111101</td><td class="num">11111110</td></tr>
+        <tr><td class="num">−4</td><td class="num">10000100</td><td class="num">11111011</td><td class="num">11111100</td></tr>
+        <tr><td class="num">−56</td><td class="num">10111000</td><td class="num">11000111</td><td class="num">11001000</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>验证一下。−4 + 2：<span class="bits">11111100</span> 加两次 1 得 <span class="bits">11111110</span>，正是 −2。再试跨零的 −4 + 5：<span class="bits">11111100</span> + <span class="bits">00000101</span>，丢掉溢出的 1，得 <span class="bits">00000001</span> = 1，<b>完全正确</b>。（在上面的竖式加法里切到"用补码算"，把 −5+6、−4+7 再算一遍。）</p>
+  <p>补码彻底解决了正负数混合计算的问题。正因为如此，<b>计算机里数字的存储和运算，全都是用补码进行的</b>。</p>
+
+  <div class="card">
+    <h3>动手：在补码里一步步 +1</h3>
+    <div id="walk-bu"></div>
+  </div>
+
+  <h3 style="margin-top:28px">多出来的 −128</h3>
+  <p>错开一位还有个副作用：负数整体挪了一格，最左边就<b>空出来一个位置</b>。−127 的补码是 <span class="bits">10000001</span>，它左边的 <span class="bits">10000000</span> 没人用了。于是规定：<b>一个字节里，<span class="bits">10000000</span> 表示 −128</b>。它只有补码，没有对应的原码和反码，但这不碍事，因为计算机本来就只用补码。</p>
+  <p>这就是第 1 节那个疑问的答案：<b>byte 的取值范围是 −128 ~ 127</b>，多出来的 −128 是补码"省"出来的。</p>
+
+  <div class="card">
+    <h3>动手：同一串比特，三种读法</h3>
+    <div class="bit-row" id="bx"></div>
+    <div class="three" id="bx-out"></div>
+    <div class="step-text" id="bx-note"></div>
+    <div class="presets">试试：<button data-b="10000000">10000000</button><button data-b="11111111">11111111</button><button data-b="00000000">00000000</button><button data-b="11001000">11001000</button><button data-b="01111111">01111111</button></div>
+    <p class="hint">点任意一位切换 0/1，红框是符号位</p>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>用补码解释：整数类型和类型转换</h2>
+  <p>Java 的整数有四种类型：<code>byte</code>、<code>short</code>、<code>int</code>、<code>long</code>，分别占 1、2、4、8 个字节，也就是 8、16、32、64 个比特。同一个数 10，在这四种类型里的区别只是<b>前面补了多少个 0</b>：</p>
+  <div class="card">
+    <figure>
+      <div class="scroll-x"><svg class="diagram" id="widths" viewBox="0 0 700 190" role="img" aria-label="10 在四种整数类型里的样子"></svg></div>
+      <figcaption>图 2　每个方块是一个字节。数值都在最后一个字节里，前面全是 0。</figcaption>
+    </figure>
+  </div>
+
+  <h3>隐式转换：小变大，前面补位</h3>
+  <code class="blk">byte a = 10;
+int b = a;      // 取值范围小的赋给大的，自动转换</code>
+  <p><code>a</code> 在内存里是一个字节 <span class="bits">00001010</span>。转成 int 要变成 4 个字节，做法是<b>在前面补位</b>，补到 32 位，数值不变。</p>
+  <div class="extra">
+    <span class="t">更正一个细节：补的不一定是 0</span>
+    视频说隐式转换就是"前面补 0"，这只对正数成立。准确的规则是<b>补符号位</b>（叫"符号扩展"）：正数补 0，负数补 1。比如 byte −1 是 <span class="bits">11111111</span>，转成 int 是 32 个 1，读出来还是 −1；要是补 0，就变成 255 了。下面的演示切到"自动 byte → int"，输入一个负数试试。
+  </div>
+
+  <h3>强制转换：大变小，砍掉前面</h3>
+  <code class="blk">int a = 300;
+byte b = (byte) a;   // b 是多少？</code>
+  <p>300 是正数，原反补相同，作为 int 占 32 位：<span class="bits">00000000 00000000 00000001 00101100</span>。强转成 byte，就是<b>把前面 3 个字节直接砍掉</b>，只留最后 8 位 <span class="bits">00101100</span>。注意，砍掉的部分里有一个 1，数值就变了：剩下的 <span class="bits">00101100</span> = <b>44</b>。</p>
+  <p>再看 <code>(byte) 200</code>。200 的最后一个字节是 <span class="bits">11001000</span>。砍完之后，最左边的 1 成了 byte 的<b>符号位</b>，而计算机是按补码来读的：<span class="bits">11001000</span> 作为补码是 <b>−56</b>。所以 <code>(byte) 200</code> 打印出来是 −56。</p>
+  <p class="muted" style="font-size:15px">验证这些数可以用 Windows 自带计算器的"程序员"模式：输入十进制看二进制，还能把字长在 QWORD / DWORD / WORD / BYTE（8 / 4 / 2 / 1 字节）之间切换，在 BYTE 下输入 11001000 就能看到 −56。</p>
+
+  <div class="card">
+    <h3>动手：类型转换在比特层面做了什么</h3>
+    <div class="ctrl"><span class="seg-btns" id="cv-mode"><button data-m="narrow">强转 int → byte</button><button data-m="widen">自动 byte → int</button></span></div>
+    <div class="ctrl"><span id="cv-lab">int 值：</span><input type="number" id="cv-v" value="300"></div>
+    <div class="presets" id="cv-pre"></div>
+    <div class="rows" id="cv-out"></div>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>用补码解释：位运算</h2>
+  <p>有了补码，几个直接操作比特的运算符也能看懂了。它们平时自己写得少，但读 JDK 源码时经常遇到，至少要能看懂别人在干什么。计算之前，都先把数字写成补码。</p>
+  <ul>
+    <li><b><code>&amp;</code> 按位与</b>：把 1 当 true、0 当 false，每一位单独算，<b>两位都是 1 结果才是 1</b>。<code>200 &amp; 10</code> = 8。</li>
+    <li><b><code>|</code> 按位或</b>：<b>只要有一位是 1，结果就是 1</b>。<code>200 | 10</code> = 202。用在数字上的 <code>&amp;</code> 和 <code>|</code> 没有短路，只能写一个符号。</li>
+    <li><b><code>&lt;&lt;</code> 左移</b>：所有位往左挪，挤出去的不要，<b>低位补 0</b>。<code>200 &lt;&lt; 2</code> = 800。规律：<b>左移一位相当于 ×2</b>。</li>
+    <li><b><code>&gt;&gt;</code> 右移</b>：往右挪，挤出去的不要，<b>高位补符号位</b>（原来是正数补 0，负数补 1）。<code>200 &gt;&gt; 2</code> = 50。规律：<b>右移一位相当于 ÷2</b>。</li>
+    <li><b><code>&gt;&gt;&gt;</code> 无符号右移</b>：和右移一样，只是高位<b>不管正负，一律补 0</b>。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：位运算</h3>
+    <div class="ctrl">
+      <input type="number" id="bo-a" value="200" aria-label="a">
+      <select id="bo-op" aria-label="运算符"><option>&amp;</option><option>|</option><option>&lt;&lt;</option><option>&gt;&gt;</option><option>&gt;&gt;&gt;</option></select>
+      <input type="number" id="bo-b" value="10" aria-label="b">
+    </div>
+    <div class="presets">
+      <button data-o="200,&amp;,10">200 &amp; 10</button><button data-o="200,|,10">200 | 10</button><button data-o="200,&lt;&lt;,2">200 &lt;&lt; 2</button><button data-o="200,&gt;&gt;,2">200 &gt;&gt; 2</button><button data-o="-200,&gt;&gt;,2">−200 &gt;&gt; 2</button><button data-o="-200,&gt;&gt;&gt;,2">−200 &gt;&gt;&gt; 2</button>
+    </div>
+    <div class="rows" id="bo-out"></div>
+    <p class="hint">橙色是移位时新补进来的位</p>
+  </div>
+
+  <div class="extra">
+    <span class="t">负数右移的两个坑</span>
+    ① <code>−200 &gt;&gt; 2</code> = −50，符号保住了；<code>−200 &gt;&gt;&gt; 2</code> 高位补 0，符号位变成 0，结果是一个很大的正数 1073741774。所以 <code>&gt;&gt;&gt;</code> 一般只在把 int 当成"一串比特"处理时用（比如算哈希值）。<br>
+    ② "右移一位 = ÷2"对负奇数不完全成立：<code>-7 &gt;&gt; 1</code> 是 −4（向下取整），而 <code>-7 / 2</code> 是 −3（向 0 取整）。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>本集小结</h2>
+  <div class="card" style="overflow-x:auto">
+    <table class="tt" style="width:100%">
+      <thead><tr><th></th><th>正数</th><th>负数</th><th>解决了什么</th><th>留下的问题</th></tr></thead>
+      <tbody>
+        <tr><td><b>原码</b></td><td>二进制，符号位 0</td><td>二进制，符号位 1</td><td>最直观</td><td>算负数方向相反</td></tr>
+        <tr><td><b>反码</b></td><td>同原码</td><td>符号位不变，数值位取反</td><td>负数之间能算对了</td><td>两个 0，跨零差 1</td></tr>
+        <tr><td><b>补码</b></td><td>同原码</td><td>反码 + 1</td><td>只有一个 0，正负混算都对，还多出 −128</td><td>（计算机实际使用的就是它）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    计算机里的整数都以<b>补码</b>存储和计算：正数的原码、反码、补码都一样，负数的补码 = 反码 + 1。这样一套加法电路就能算所有正负数，0 也只有一种写法。
+  </div>
+
+  <h3 style="margin-top:28px">合上页面，试着回答</h3>
+  <div class="card">
+    <div class="q">
+      <div class="qt">1. 为什么一个字节的取值范围是 −128 ~ 127，而不是 −127 ~ 127？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">原码、反码里 0 有两种写法，所以只能表示 −127 ~ 127。补码把负数整体错开一位，去掉了 −0，空出了 10000000 这个位置，规定它表示 −128。计算机用补码存储，所以 byte 是 −128 ~ 127。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 写出 −5 的原码、反码、补码（一个字节）。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">原码 10000101 → 反码（符号位不变、数值位取反）11111010 → 补码（反码 + 1）11111011。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. <code>byte b = (byte) 200;</code> 打印出来是多少？为什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">−56。200 作为 int 的最后一个字节是 11001000，强转砍掉前 3 个字节后，最左边的 1 变成了符号位。11001000 按补码读是 −56（取反加一得 00111000 = 56）。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 用反码计算 −5 + 6，为什么得到 0？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">反码里 0 有 00000000 和 11111111 两种写法。结果从负数跨到正数时，0 这一站被数了两次，所以比正确答案 1 少了 1。（真实的反码机器用循环进位，把溢出的 1 加回最低位来修正。）</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. int 类型的 <code>-8 &gt;&gt; 1</code> 和 <code>-8 &gt;&gt;&gt; 1</code> 分别是多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>-8 &gt;&gt; 1</code> = −4，高位补符号位 1，相当于 ÷2。<code>-8 &gt;&gt;&gt; 1</code> = 2147483644，高位补 0，符号位变成 0，变成一个很大的正数。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a class="off"><small>← 上一篇</small>P35–37 逻辑、短路与三元运算符</a>
+    <a class="next off"><small>下一篇 →</small>P39–42 顺序结构与 if</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P38「运算符-12-多学一招原码反码补码」（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=38" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+/* ---------- 编码工具 ---------- */
+const ENC = {
+  yuan: { name: '原码', dec: p => (p & 128) ? ((p & 127) ? -(p & 127) : '-0') : p, enc: v => v === '-0' ? 128 : (v < 0 ? 128 | -v : v) },
+  fan:  { name: '反码', dec: p => (p & 128) ? (p === 255 ? '-0' : -((~p) & 127)) : p, enc: v => v === '-0' ? 255 : (v < 0 ? 255 + v : v) },
+  bu:   { name: '补码', dec: p => (p & 128) ? p - 256 : p, enc: v => (v + 256) & 255 },
+};
+const toNum = v => v === '-0' ? 0 : v;
+const fmt = v => v === '-0' ? '−0' : (v < 0 ? '−' + (-v) : String(v));
+const b8 = p => p.toString(2).padStart(8, '0');
+const b32 = v => (v >>> 0).toString(2).padStart(32, '0');
+function bitsHTML(s, o = {}) {
+  let h = '';
+  for (let i = 0; i < s.length; i++) {
+    const c = [];
+    if (o.sign && i === 0) c.push('sb');
+    if (o.hl && o.hl(i)) c.push('hl');
+    if (o.dim && o.dim(i)) c.push('dim');
+    h += c.length ? `<span class="${c.join(' ')}">${s[i]}</span>` : s[i];
+    if (o.group && (i + 1) % 8 === 0 && i < s.length - 1) h += '<i class="gap"></i>';
+  }
+  return `<span class="bits">${h}</span>`;
+}
+const int32 = x => { x = parseInt(x, 10); if (isNaN(x)) x = 0; return Math.max(-2147483648, Math.min(2147483647, x)) | 0; };
+
+/* ---------- 一步步 +1（三个实例） ---------- */
+function makeWalker(id, enc, starts, def) {
+  const root = $('#' + id);
+  root.innerHTML = `<div class="ctrl">从 <select aria-label="起点"></select> 出发
+    <button class="btn primary">+1</button><button class="btn">重来</button></div>
+    <svg class="diagram" viewBox="0 0 680 112" role="img" aria-label="数轴"></svg><div class="w-log"></div>`;
+  const sel = $('select', root), [add, rst] = $$('button', root), svg = $('svg', root), log = $('.w-log', root);
+  starts.forEach((s, i) => { const o = document.createElement('option'); o.value = i; o.textContent = `${fmt(s)}（${b8(ENC[enc].enc(s))}）`; sel.appendChild(o); });
+  sel.value = def;
+  let pat, exp;
+  const X = v => 40 + (Math.max(-8, Math.min(8, v)) + 8) * 37.5;
+  function draw() {
+    svg.innerHTML = '';
+    el('line', { x1: 30, y1: 60, x2: 650, y2: 60, class: 's-thin' }, svg);
+    for (let v = -8; v <= 8; v++) {
+      el('line', { x1: X(v), y1: 55, x2: X(v), y2: 65, class: 's-thin' }, svg);
+      txt(svg, X(v), 84, fmt(v), 't-sub mid');
+    }
+    const d = ENC[enc].dec(pat), a = toNum(d);
+    const out = v => v < -8 || v > 8;
+    if (a === exp) {
+      el('circle', { cx: X(a), cy: 60, r: 9, style: 'fill:var(--ok)' }, svg);
+      txt(svg, X(a), 38, `实际 = 应该 = ${fmt(d)} ✓`, 't-main mid');
+    } else {
+      el('circle', { cx: X(exp), cy: 60, r: 9, style: 'fill:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:3 2' }, svg);
+      txt(svg, X(exp), 104, `应该 ${fmt(exp)}${out(exp) ? '（超出画面）' : ''}`, 't-sub mid t-acc');
+      el('circle', { cx: X(a), cy: 60, r: 9, style: 'fill:var(--bad)' }, svg);
+      txt(svg, X(a), 38, `实际 ${fmt(d)}${out(a) ? '（超出画面）' : ''}`, 't-main mid');
+    }
+  }
+  function reset() {
+    const s = starts[+sel.value];
+    pat = ENC[enc].enc(s); exp = toNum(s);
+    log.innerHTML = `<div class="start">起点 ${bitsHTML(b8(pat), { sign: true })}，在${ENC[enc].name}里读作 <b>${fmt(ENC[enc].dec(pat))}</b></div>`;
+    draw();
+  }
+  add.onclick = () => {
+    const old = pat; pat = (pat + 1) & 255; exp++;
+    let carry = 0; for (let i = 0; i < 8 && ((old >> i) & 1); i++) carry++;
+    const d = ENC[enc].dec(pat), ok = toNum(d) === exp;
+    const row = document.createElement('div');
+    row.className = ok ? 'ok' : 'bad';
+    row.innerHTML = `${bitsHTML(b8(old), { sign: true })} +1 → ${bitsHTML(b8(pat), { sign: true })}${carry ? `（进位 ${carry} 次${carry === 8 ? '，溢出的 1 丢掉' : ''}）` : ''}　读作 <b>${fmt(d)}</b>，应该是 ${fmt(exp)} ${ok ? '✓' : '✗'}`;
+    log.appendChild(row);
+    while (log.children.length > 7) log.children[1].remove();
+    draw();
+  };
+  rst.onclick = reset; sel.onchange = reset;
+  reset();
+}
+makeWalker('walk-yuan', 'yuan', [0, '-0', -3], 0);
+makeWalker('walk-fan', 'fan', [-3, -5, 0], 0);
+makeWalker('walk-bu', 'bu', [-3, -5, 0], 0);
+
+/* ---------- 竖式加法 ---------- */
+(function () {
+  let enc = 'fan', a, b, aP, bP, k, carry, res, msg;
+  const lim = () => enc === 'bu' ? [-128, 127] : [-127, 127];
+  function load() {
+    const [lo, hi] = lim();
+    a = Math.max(lo, Math.min(hi, int32($('#ad-a').value))); b = Math.max(lo, Math.min(hi, int32($('#ad-b').value)));
+    $('#ad-a').value = a; $('#ad-b').value = b;
+    aP = ENC[enc].enc(a); bP = ENC[enc].enc(b);
+    k = 0; carry = Array(9).fill(0); res = Array(9).fill(null);
+    msg = `${fmt(a)} 的${ENC[enc].name}是 ${b8(aP)}，${fmt(b)} 的${ENC[enc].name}是 ${b8(bP)}。点"算下一位"从最右边开始加。`;
+    $$('#ad-enc button').forEach(x => x.classList.toggle('sel', x.dataset.e === enc));
+    render();
+  }
+  function step() {
+    if (k > 8) return;
+    if (k < 8) {
+      const ai = (aP >> k) & 1, bi = (bP >> k) & 1, s = ai + bi + carry[k];
+      res[k] = s & 1; carry[k + 1] = s >> 1;
+      msg = `右数第 ${k + 1} 位：${ai} + ${bi}${carry[k] ? ' + 进位 1' : ''} = ${s}，写 ${s & 1}${s >> 1 ? '，向前进 1' : ''}`;
+      k++;
+      if (k === 8 && !carry[8]) { k = 9; finish(); }
+    } else { res[8] = 1; k = 9; finish(true); }
+    render();
+  }
+  function finish(ov) {
+    let r = 0; for (let i = 0; i < 8; i++) r |= res[i] << i;
+    const d = ENC[enc].dec(r), truth = a + b, [lo, hi] = lim();
+    let s = (ov ? '最高位又进出一个 1，超出了一个字节，<b>丢掉</b>。' : '') + `结果 ${b8(r)}，在${ENC[enc].name}里读作 <b>${fmt(d)}</b>；正确答案 ${fmt(truth)}。`;
+    if (truth < lo || truth > hi) s += ' 正确答案超出了一个字节的范围，这叫<b>溢出</b>，结果本来就不可能对。';
+    else if (toNum(d) === truth) s += ' <b style="color:var(--ok)">✓ 对了</b>' + (enc === 'bu' && (a < 0) !== (truth < 0) ? '，跨过 0 也没问题。' : '。');
+    else s += ` <b style="color:var(--bad)">✗ 差了 ${truth - toNum(d)}</b>：最高位进出来的 1 被丢掉了。反码里 0 有 00000000 和 11111111 两种写法，丢掉这个进位就等于少数了一格（真实的反码机器会把它加回最低位，见第 4 节的补充）。`;
+    msg = s;
+  }
+  function render() {
+    const g = [];
+    const col = i => 8 - i; // 位 i → 第几列（0 = 溢出列）
+    const cell = (cls, t, i) => `<div class="${cls}${i !== undefined && k < 9 && i === k ? ' cur' : ''}">${t}</div>`;
+    g.push('<div class="lab">进位</div>');
+    for (let c = 0; c <= 8; c++) { const i = 8 - c; g.push(cell('c', i >= 1 && carry[i] && k >= i ? '1' : '', i)); }
+    g.push(`<div class="lab">${fmt(a)}</div><div></div>`);
+    for (let i = 7; i >= 0; i--) g.push(cell('b', (aP >> i) & 1, i));
+    g.push(`<div class="lab">${fmt(b)}</div><div></div>`);
+    for (let i = 7; i >= 0; i--) g.push(cell('b', (bP >> i) & 1, i));
+    g.push('<div></div><div class="line"></div>');
+    g.push('<div class="lab">和</div>');
+    g.push(`<div class="r ov">${res[8] === 1 ? '1' : ''}</div>`);
+    for (let i = 7; i >= 0; i--) g.push(cell('r', res[i] === null ? '' : res[i], i));
+    $('#ad-grid').innerHTML = g.join('');
+    $('#ad-msg').innerHTML = msg;
+  }
+  $$('#ad-enc button').forEach(x => x.onclick = () => { enc = x.dataset.e; load(); });
+  $('#ad-a').onchange = load; $('#ad-b').onchange = load;
+  $('#ad-step').onclick = step;
+  $('#ad-all').onclick = () => { while (k <= 8) step(); };
+  $$('[data-p]').forEach(x => x.onclick = () => { const [e, p, q] = x.dataset.p.split(','); enc = e; $('#ad-a').value = p; $('#ad-b').value = q; load(); });
+  load();
+})();
+
+/* ---------- 反码 vs 补码：错开一位 ---------- */
+(function () {
+  const svg = $('#ruler');
+  const pats = [248, 249, 250, 251, 252, 253, 254, 255, 0, 1, 2, 3];
+  const X0 = 96, CW = 57;
+  txt(svg, X0, 18, '每往右一格 = 二进制 +1 →', 't-sub');
+  const rows = [['比特', 46], ['反码', 100], ['补码', 152]];
+  rows.forEach(([n, y]) => txt(svg, X0 - 12, y + 5, n, 't-main end'));
+  pats.forEach((p, i) => {
+    const x = X0 + i * CW, cx = x + CW / 2;
+    el('rect', { x: x + 2, y: 30, width: CW - 4, height: 32, rx: 5, class: 's-soft' }, svg);
+    txt(svg, cx, 43, b8(p).slice(0, 4), 't-mono mid');
+    txt(svg, cx, 57, b8(p).slice(4), 't-mono mid');
+    const f = ENC.fan.dec(p), bu = ENC.bu.dec(p);
+    const fz = toNum(f) === 0, bz = bu === 0;
+    el('rect', { x: x + 6, y: 84, width: CW - 12, height: 30, rx: 6, style: fz ? 'fill:var(--bad-soft);stroke:var(--bad);stroke-width:2' : 'fill:var(--panel);stroke:var(--line)' }, svg);
+    txt(svg, cx, 104, fmt(f), 't-main mid');
+    el('rect', { x: x + 6, y: 136, width: CW - 12, height: 30, rx: 6, style: bz ? 'fill:var(--ok-soft);stroke:var(--ok);stroke-width:2' : 'fill:var(--panel);stroke:var(--line)' }, svg);
+    txt(svg, cx, 156, fmt(bu), 't-main mid');
+  });
+  txt(svg, X0 + 7.5 * CW, 128, '两个 0', 't-sub mid t-on');
+  txt(svg, X0 + 8 * CW + CW / 2, 186, '只有一个 0', 't-sub mid');
+  txt(svg, X0 + 3.5 * CW, 186, '← 负数全部往左错开一位', 't-sub mid');
+})();
+
+/* ---------- 同一串比特，三种读法 ---------- */
+(function () {
+  let p = 0b11001000;
+  const row = $('#bx');
+  for (let i = 7; i >= 0; i--) {
+    const b = document.createElement('button');
+    b.dataset.i = i; if (i === 7) b.classList.add('sign');
+    b.setAttribute('aria-label', i === 7 ? '符号位' : `第 ${i} 位`);
+    b.onclick = () => { p ^= 1 << i; paint(); };
+    row.appendChild(b);
+  }
+  function paint() {
+    $$('#bx button').forEach(b => { const on = (p >> +b.dataset.i) & 1; b.textContent = on; b.classList.toggle('on', !!on); });
+    const v = ['yuan', 'fan', 'bu'].map(e => ENC[e].dec(p));
+    $('#bx-out').innerHTML = ['原码', '反码', '补码'].map((n, i) => `<div><small>按${n}读</small><b>${fmt(v[i])}</b></div>`).join('');
+    const notes = {
+      128: '10000000：原码里是 −0，反码里是 −127，补码里是 <b>−128</b>，就是补码"省"出来的那一个。',
+      255: '11111111：原码里是 −127，反码里是 −0，补码里是 −1。',
+      0: '00000000：三种都是 0。补码里 0 只有这一种写法。',
+      127: '01111111：正数三码相同，这是一个字节能表示的最大值 127。',
+    };
+    $('#bx-note').innerHTML = notes[p] || (p & 128 ? '符号位是 1：三种读法各不相同。计算机实际按<b>补码</b>读。' : '符号位是 0：正数的原码、反码、补码相同。');
+  }
+  $$('[data-b]').forEach(x => x.onclick = () => { p = parseInt(x.dataset.b, 2); paint(); });
+  paint();
+})();
+
+/* ---------- 四种整数类型 ---------- */
+(function () {
+  const svg = $('#widths');
+  const T = [['byte', 1], ['short', 2], ['int', 4], ['long', 8]];
+  T.forEach(([n, bytes], r) => {
+    const y = 14 + r * 44;
+    txt(svg, 70, y + 21, n, 't-main end');
+    for (let i = 0; i < bytes; i++) {
+      const x = 80 + (8 - bytes + i) * 74;
+      const last = i === bytes - 1;
+      el('rect', { x, y, width: 70, height: 30, rx: 5, class: last ? 's-on' : 's-soft' }, svg);
+      txt(svg, x + 35, y + 20, last ? '00001010' : '00000000', 't-mono mid');
+    }
+    txt(svg, 80 + (8 - bytes) * 74 - 8, y + 20, `${bytes * 8} 位`, 't-sub end');
+  });
+})();
+
+/* ---------- 类型转换 ---------- */
+(function () {
+  let mode = 'narrow';
+  const PRE = { narrow: [300, 200, 128, -1, 1000], widen: [10, 127, -1, -56, -128] };
+  function paint() {
+    $$('#cv-mode button').forEach(b => b.classList.toggle('sel', b.dataset.m === mode));
+    $('#cv-lab').textContent = mode === 'narrow' ? 'int 值：' : 'byte 值（−128 ~ 127）：';
+    $('#cv-pre').innerHTML = '试试：' + PRE[mode].map(v => `<button data-v="${v}">${fmt(v)}</button>`).join('');
+    $$('#cv-pre button').forEach(b => b.onclick = () => { $('#cv-v').value = b.dataset.v; paint(); });
+    let v = int32($('#cv-v').value);
+    if (mode === 'narrow') {
+      $('#cv-v').value = v;
+      const s = b32(v), r = (v << 24) >> 24;
+      $('#cv-out').innerHTML = `<table>
+        <tr><td class="k">int ${fmt(v)}</td><td>${bitsHTML(s, { group: true, sign: true, dim: i => i < 24 })}</td></tr>
+        <tr><td class="k">砍掉前 3 个字节</td><td>${bitsHTML(s.slice(24), { sign: true, hl: () => true })}</td></tr>
+        <tr class="res"><td class="k">(byte) 结果</td><td class="v">${fmt(r)}</td></tr></table>
+        <p class="muted" style="margin:6px 0 0">${r === v ? '数值在 byte 范围内，砍掉的全是符号位的副本，结果不变。' : (r < 0 && v >= 0 ? '剩下 8 位的最左边是 1，成了符号位，按补码读就变成了负数。' : '砍掉的部分里有有效数字，数值变了。')}</p>`;
+    } else {
+      v = Math.max(-128, Math.min(127, v)); $('#cv-v').value = v;
+      const s8 = b8(v & 255), s = b32(v);
+      $('#cv-out').innerHTML = `<table>
+        <tr><td class="k">byte ${fmt(v)}</td><td>${bitsHTML(s8, { sign: true })}</td></tr>
+        <tr><td class="k">前面补 24 个 ${v < 0 ? '1' : '0'}</td><td>${bitsHTML(s, { group: true, hl: i => i < 24 })}</td></tr>
+        <tr class="res"><td class="k">int 结果</td><td class="v">${fmt(v)}</td></tr></table>
+        <p class="muted" style="margin:6px 0 0">${v < 0 ? '负数补的是 1（符号扩展），所以读出来还是原来的值。' : '正数补 0，数值不变。'}</p>`;
+    }
+  }
+  $$('#cv-mode button').forEach(b => b.onclick = () => { mode = b.dataset.m; $('#cv-v').value = PRE[mode][0]; paint(); });
+  $('#cv-v').onchange = paint;
+  paint();
+})();
+
+/* ---------- 位运算 ---------- */
+(function () {
+  function paint() {
+    const a = int32($('#bo-a').value), b = int32($('#bo-b').value), op = $('#bo-op').value;
+    $('#bo-a').value = a; $('#bo-b').value = b;
+    const shift = op.includes('<') || op.includes('>');
+    const n = b & 31;
+    const r = { '&': a & b, '|': a | b, '<<': a << n, '>>': a >> n, '>>>': a >>> n }[op] | 0;
+    const rv = op === '>>>' ? (a >>> n) : r;
+    const hl = op === '<<' ? (i => i >= 32 - n) : (op.startsWith('>') ? (i => i < n) : null);
+    const rule = { '&': '两位都是 1 才得 1', '|': '有一位是 1 就得 1', '<<': '往左挪，低位补 0', '>>': `往右挪，高位补符号位 ${a < 0 ? 1 : 0}`, '>>>': '往右挪，高位一律补 0' }[op];
+    $('#bo-out').innerHTML = `<table>
+      <tr><td class="k">${fmt(a)}</td><td>${bitsHTML(b32(a), { group: true, sign: true })}</td></tr>
+      <tr><td class="k">${op.replace('<', '&lt;').replace(/>/g, '&gt;')}</td><td>${shift ? `移动 ${n} 位（${rule}）` : bitsHTML(b32(b), { group: true, sign: true }) + `　${fmt(b)}`}</td></tr>
+      <tr class="res"><td class="k">结果</td><td>${bitsHTML(b32(r), { group: true, sign: true, hl })}　<b class="bits">= ${fmt(rv)}</b></td></tr></table>
+      ${shift ? '' : `<p class="muted" style="margin:6px 0 0">${rule}。</p>`}`;
+  }
+  ['#bo-a', '#bo-b', '#bo-op'].forEach(s => $(s).onchange = paint);
+  $$('[data-o]').forEach(x => x.onclick = () => { const [a, o, b] = x.dataset.o.split(','); $('#bo-a').value = a; $('#bo-op').value = o; $('#bo-b').value = b; paint(); });
+  paint();
+})();
+</script>
+</body>
+</html>

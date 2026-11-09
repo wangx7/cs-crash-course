@@ -51,11 +51,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const done = $('#mark-read');
   if (done) {
     const n = +document.body.dataset.ep;
-    const read = new Set(ccStore.get('cc-read', []));
+    const key = document.body.dataset.store || 'cc-read';  // 别的课程用自己的 key，免得和速成课的集数撞
+    const read = new Set(ccStore.get(key, []));
     const paint = () => { done.textContent = read.has(n) ? '✓ 已读完这一集' : '读完了，打个卡'; done.classList.toggle('primary', !read.has(n)); };
     done.addEventListener('click', () => {
       read.has(n) ? read.delete(n) : read.add(n);
-      ccStore.set('cc-read', [...read].sort((a, b) => a - b));
+      ccStore.set(key, [...read].sort((a, b) => a - b));
       paint();
     });
     paint();
