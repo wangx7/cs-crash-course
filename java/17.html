@@ -1,0 +1,557 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P17–18 注释、关键字与字面量 · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+.kbd{display:inline-block;font:600 13px var(--mono);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:0 6px;background:var(--panel);line-height:1.5}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:0 0 8px}
+.chips button{font:13px inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 10px;cursor:pointer}
+.chips button:hover,.chips button.sel{border-color:var(--accent);color:var(--accent)}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.hl{color:var(--on);font-weight:700}
+.hx{background:var(--bad-soft);color:var(--bad);font-weight:700;border-bottom:2px solid var(--bad)}
+
+/* 注释实验 */
+.ed{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.ed-bar{padding:5px 10px;background:var(--bg);border-bottom:1px solid var(--line);font:12.5px var(--mono)}
+.ed-body{display:flex;font:14px/1.6 var(--mono);height:210px}
+.ed-gut{padding:8px 6px 8px 4px;text-align:right;color:var(--muted);background:var(--bg);user-select:none;min-width:2.2em;white-space:pre;overflow:hidden;border-right:1px solid var(--line)}
+.ed-gut b{color:var(--bad)}
+.ed-wrap{position:relative;flex:1;min-width:0}
+.ed-wrap pre,.ed-wrap textarea{position:absolute;inset:0;margin:0;padding:8px 10px;font:inherit;line-height:inherit;white-space:pre;overflow:auto;border:0;tab-size:4}
+.ed-wrap pre{pointer-events:none;color:var(--ink);background:none}
+.ed-wrap textarea{background:transparent;color:transparent;caret-color:var(--ink);resize:none;outline:0;-webkit-text-fill-color:transparent}
+.cm-out{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;margin-top:10px}
+@media (max-width:640px){.cm-out{grid-template-columns:1fr}}
+.cm-out h4{margin:0 0 4px;font-size:13px;color:var(--muted);font-weight:600}
+.cm-out pre{margin:0;padding:8px 12px;border-radius:10px;font:12.5px/1.6 var(--mono);white-space:pre-wrap;word-break:break-all;min-height:90px}
+.cm-cls{background:var(--bg)}
+.cm-run{background:#0f1115;color:#d7dae0}
+.cm-run .err{color:#ff8a8a}.cm-run .note{color:#7f8794}
+
+/* 找关键字 */
+.kw-code{font:14.5px/2 var(--mono);background:var(--bg);border-radius:10px;padding:8px 12px;white-space:pre;overflow-x:auto}
+.kw-code .w{cursor:pointer;border-radius:4px;padding:1px 2px;border:1px solid transparent}
+.kw-code .w:hover{border-color:var(--line)}
+.kw-code .w.pick{background:var(--accent-soft);border-color:var(--accent)}
+.kw-code.done .w.right{background:var(--ok-soft);border-color:var(--ok)}
+.kw-code.done .w.miss{border:1px dashed var(--ok)}
+.kw-code.done .w.wrong{background:var(--bad-soft);border-color:var(--bad);text-decoration:line-through}
+.kw-code.done .w.lit{border:1px dashed var(--on)}
+.kw-res{margin-top:8px;font-size:14.5px}
+.kwgrid{display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 2px}
+.kwgrid span{font:12.5px var(--mono);padding:1px 6px;border-radius:5px;background:var(--panel);border:1px solid var(--line)}
+.kwgrid span.got{border-color:var(--accent);color:var(--accent);font-weight:700}
+.kwgrid span.dead{color:var(--muted);text-decoration:line-through}
+
+/* 字面量分类 */
+.lq{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.lq .it{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel)}
+.lq .it code{font-size:16px;font-weight:700}
+.lq .opts{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+.lq .opts button{font:12.5px inherit;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:6px;padding:1px 7px;cursor:pointer}
+.lq .it.ok{border-color:var(--ok);background:var(--ok-soft)}
+.lq .it.no{border-color:var(--bad);background:var(--bad-soft)}
+.lq .it .why{font-size:13px;margin-top:6px;color:var(--ink)}
+.lq .opts button.on{border-color:var(--ok);color:var(--ok);font-weight:700}
+.lq .opts button.bad{border-color:var(--bad);color:var(--bad);text-decoration:line-through}
+.lq-score{font:700 14px var(--mono);margin-top:8px}
+
+/* 制表符 */
+.tab-in{display:grid;grid-template-columns:auto minmax(0,1fr) auto minmax(0,1fr);gap:6px 8px;align-items:center;font-size:14px;max-width:460px}
+.tab-in input{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:100%;box-sizing:border-box}
+.tab-out{margin-top:10px;background:#0f1115;border-radius:10px;padding:10px 12px;overflow-x:auto}
+.tab-grid{font:15px/1.7 var(--mono);color:#d7dae0;white-space:pre}
+.tab-grid .ru{color:#4f5763}
+.tab-grid .pad{background:rgba(234,138,12,.28);color:#ffb03a}
+.tab-grid .ru8{color:#ffb03a}
+.tab-note{font-size:13.5px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body data-ep="17" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=17" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">基础概念 · P17–P18</div>
+  <h1>注释、关键字与字面量</h1>
+  <p class="en">Comments, Keywords &amp; Literals</p>
+  <p class="lead">从这一篇开始学 Java 的基础语法。先学三个最基本的概念：写给人看、不参与运行的<b>注释</b>；被 Java 赋予特殊含义的<b>关键字</b>；以及各种数据在代码里该怎么写，也就是<b>字面量</b>。最后顺带弄明白 <code>\t</code> 制表符到底是怎么对齐的。</p>
+  <div class="road">
+    <span>注释</span><i>→</i><span>注释的两个细节</span><i>→</i><span>关键字与 class</span><i>→</i><span>六种字面量</span><i>→</i><span>null 与 \t</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 注释</a></li>
+    <li><a href="#ch2">2 · 注释的两个细节</a></li>
+    <li><a href="#ch3">3 · 关键字</a></li>
+    <li><a href="#ch4">4 · 字面量</a></li>
+    <li><a href="#ch5">5 · 制表符 \t</a></li>
+    <li><a href="#ch6">6 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P17 上半</div>
+  <h2>注释：写给人看的说明</h2>
+  <p>第二天的内容是 Java 的基础语法：注释、关键字、字面量、变量，最后再深入讲变量。先说注释。</p>
+  <p>HelloWorld 很简单，但课程越来越深，代码越来越难。刚写完时你知道它什么意思，过几天再看可能一脸懵。编程圈有个梗：<b>代码刚写完，只有我和上帝看得懂；一个星期后，只有上帝看得懂了</b>。每个程序员都有过这种经历。所以写代码时，一般会在代码上面写一些解释说明的文字，方便别人读，也方便自己以后读。这种文字就是注释。</p>
+  <p><b>定义</b>：注释是在程序指定位置添加的说明性信息，简单理解就是<b>对代码的解释说明</b>。一共三种：</p>
+  <table class="tt" style="width:100%">
+    <thead><tr><th>种类</th><th>格式</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td><b>单行注释</b></td><td><code>// 注释信息</code></td><td>最常用。只能写在一行里</td></tr>
+      <tr><td><b>多行注释</b></td><td><code>/* 注释信息 */</code></td><td>一行写不下时用。开头 <code>/*</code>，结尾 <code>*/</code>，中间可以写很多行</td></tr>
+      <tr><td><b>文档注释</b></td><td><code>/** 注释信息 */</code></td><td>暂时用不上，不用记</td></tr>
+    </tbody>
+  </table>
+  <p>为什么文档注释现在不用学？它的使用场景是：以后你厉害了，写的代码要给别人用，代码太多，别人不方便一行行读。这时可以用 Java 自带的 <b>javadoc</b> 工具，根据代码<b>自动生成一份说明文档</b>，文档注释里写的解释、作者、版本都会出现在文档里。别人用你的代码时看文档就行。可咱们现在什么段位？刚下载游戏、还没资格打排位，能写出并跑通 HelloWorld 就算青铜。用不到的知识点先不占脑细胞，等用到了再详细讲。</p>
+  <p>用 Notepad++ 打开 HelloWorld，给第 2、3 行加上注释：</p>
+  <code class="blk"><span class="hk">public class</span> HelloWorld {
+    <span class="hc">// 叫做 main 方法，表示程序的主入口</span>
+    <span class="hk">public static void</span> main(String[] args) {
+        <span class="hc">/* 叫做输出语句（打印语句）
+           会把小括号里面的内容进行输出打印 */</span>
+        System.out.println(<span class="hs">"HelloWorld"</span>);
+    }
+}</code>
+  <ul>
+    <li><b>main 方法</b>是程序的<b>主入口</b>：程序一运行，会自动去找 main 方法，从它里面的第一行代码开始从上往下逐行运行。格式是固定的，稍微记一下。</li>
+    <li><b>输出语句</b>（打印语句）：把小括号里的内容输出。</li>
+  </ul>
+  <p>注释内容一行写不下，有两个办法：在下一行开头再写一个 <code>//</code> 接着写；或者干脆改用多行注释 <code>/* … */</code>。加了注释再编译运行，结果和原来一模一样：注释对运行结果没有任何影响。</p>
+  <div class="extra">
+    <span class="t">文档注释长什么样</span>
+    先认个脸，以后会学：
+    <code class="blk" style="margin-top:6px"><span class="hc">/**
+ * 打印一句问候语。
+ * @author 阿伟
+ * @version 1.0
+ */</span></code>
+    写在类或方法上面，<code>@author</code>、<code>@version</code> 这些标记会被 javadoc 识别。你平时查的 Java 官方 API 文档，就是用 javadoc 从 JDK 源码里的文档注释生成的。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P17 上半</div>
+  <h2>注释的两个细节</h2>
+  <p><b>细节一：注释不参与编译，也不参与运行。</b>有同学会问：手一抖把代码注释掉了，HelloWorld 还会打印吗？对一个知识点不确定时，<b>写代码验证一下</b>。把输出语句那一行注释掉，编译没问题，运行也不报错，但<b>什么都没打印</b>。注释只存在于 .java 文件里，javac 编译出的 class 文件里根本没有注释，所以注释里写什么都不影响结果。正因为这样，可以用注释来<b>调试代码</b>（后面慢慢用）。不过注释一般只写和代码相关的内容。</p>
+  <p><b>细节二：注释不要嵌套。</b></p>
+  <ul>
+    <li>有人喜欢在单行注释后面再加一个 <code>//</code>，觉得前后是两段话。语法上没错，但没意义：分隔两段话用逗号、句号就行。</li>
+    <li>多行注释嵌套<b>会出错</b>。<code>/*</code> 会找<b>离它最近的</b> <code>*/</code> 作为结尾。外层的 <code>/*</code> 一路往后找，找到的是内层的 <code>*/</code>，于是到这里注释就结束了；后面那段只剩一个 <code>*/</code>，缺了开头，就报错。在 Notepad++ 里不用编译就能看出来：后半段的颜色变了。</li>
+  </ul>
+  <p>所以养成习惯：<b>不管单行还是多行注释，都不要嵌套</b>。</p>
+
+  <div class="card">
+    <h3>动手：注释实验台</h3>
+    <p style="margin-top:0">代码可以直接改，颜色会实时变化（灰色斜体 = 注释）。下面左边是"编译后 class 里还剩什么"（注释全都没了），右边是运行结果。点上面的按钮换成视频里的几种写法。</p>
+    <div class="chips" id="cm-pre"><button data-p="0">加了注释的 HelloWorld</button><button data-p="1">把输出语句注释掉</button><button data-p="2">单行注释套单行</button><button data-p="3">多行注释嵌套</button></div>
+    <div class="ed">
+      <div class="ed-bar">HelloWorld.java</div>
+      <div class="ed-body"><div class="ed-gut" id="cm-gut"></div><div class="ed-wrap"><pre id="cm-pre-hl" aria-hidden="true"></pre><textarea id="cm-ta" spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="代码编辑器"></textarea></div></div>
+    </div>
+    <div class="cm-out">
+      <div><h4>编译后 class 里有的（示意，去掉了注释）</h4><pre class="cm-cls" id="cm-cls"></pre></div>
+      <div><h4>javac + java 的结果</h4><pre class="cm-run" id="cm-run"></pre></div>
+    </div>
+    <p class="hint">class 文件实际上是字节码，这里把它"翻回"代码的样子，只为说明注释不会进去</p>
+  </div>
+
+  <div class="extra">
+    <span class="t">"用注释调试"是什么意思</span>
+    程序结果不对、又不知道是哪一行造成的，可以先把怀疑的几行注释掉再运行，看问题还在不在，一点点缩小范围。比删掉方便：取消注释就恢复了。以后用 IDEA，选中几行按 <span class="kbd">Ctrl</span>+<span class="kbd">/</span>（Mac 是 <span class="kbd">⌘</span>+<span class="kbd">/</span>）能一键加上或去掉单行注释。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P17 下半</div>
+  <h2>关键字：被 Java 赋予特定含义的单词</h2>
+  <p><b>关键字</b>就是被 Java 赋予了特定含义的英文单词。它有两个特点：</p>
+  <ol>
+    <li>字母<b>全部小写</b>；</li>
+    <li>常用的代码编辑器会给关键字<b>特殊的颜色</b>，很直观，比如 Notepad++ 会高亮显示。</li>
+  </ol>
+  <p>凭这两点，在代码里认出关键字很容易。试试看：</p>
+
+  <div class="card">
+    <h3>动手：找出代码里的关键字</h3>
+    <p style="margin-top:0">点你认为是关键字的单词（再点一次取消），选好了点"揭晓"。这里故意去掉了高亮，只能靠"全小写 + 有特殊含义"来判断。</p>
+    <div class="kw-code" id="kw-code"></div>
+    <div class="btns" style="margin-top:8px"><button class="btn primary" id="kw-go">揭晓</button><button class="btn" id="kw-reset">重来</button></div>
+    <div class="kw-res" id="kw-res"></div>
+  </div>
+
+  <p>Java 一共有 50 多个关键字，<b>不用背</b>。每个关键字都包含一个甚至多个知识点，现在背了也没用，课程往后都会一一学到。目前只要能认出代码里哪些是关键字就行。</p>
+  <p><b>第一个关键字：class。</b>它的作用是<b>创建（定义）一个类</b>。类是 Java 最基本的组成单元，就像人体的细胞：一个完整的人由大量细胞组成，一个完整的 Java 项目由成千上万个类组成。别怕，以后写项目时都会从零开始讲。</p>
+  <code class="blk"><span class="hk">public class</span> <span class="hl">HelloWorld</span> {   ← class 后面跟着的是<b>类名</b>
+    …                     ← 所有代码都写在类的<b>大括号</b>里
+}                         ← 大括号表示类的范围</code>
+
+  <div class="extra">
+    <span class="t">更正：true、false、null 严格说不是关键字</span>
+    视频后面（P18）写 <code>true</code>、<code>false</code> 时说它们高亮了，"表示它也是一个关键字"。按 Java 语言规范，<span class="fix" title="按 Java 语言规范，它们是字面量，只是同样不能拿来当名字">true、false、null 是字面量</span>（下一节就讲），不在关键字列表里，只是和关键字一样不能拿来当名字，编辑器也会给它们上色。反过来，<code>String</code>、<code>System</code> 首字母大写，<b>不是</b>关键字，是 Java 写好的类的名字，有的编辑器也会给它们上色。所以"高亮"只能作参考，"全小写"更可靠。
+  </div>
+  <div class="extra">
+    <span class="t">所有关键字一览（不用背，以后回来对照）</span>
+    JDK 17 一共 51 个保留关键字。蓝色是目前学过的，划掉的 <code>goto</code>、<code>const</code> 被保留了但从来没用过：
+    <div class="kwgrid" id="kw-all"></div>
+    另外还有 <code>var</code>、<code>record</code>、<code>yield</code>、<code>sealed</code>、<code>permits</code>、<code>module</code> 等十几个"上下文关键字"，只在特定位置才算关键字，后面遇到再说。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P18</div>
+  <h2>字面量：数据在代码里怎么写</h2>
+  <p>有的资料把字面量叫"常量"或"字面值"，叫常量不太准确，最准确的叫法是<b>字面量</b>。它告诉程序员：<b>数据在程序里的书写格式</b>。代码里要写的数据很多，比如年龄 18、名字"尼古拉斯阿伟"、身高 1.93。一般分 6 类，分三组来学：</p>
+  <table class="tt" style="width:100%">
+    <thead><tr><th>类型</th><th>写法</th><th>举例</th></tr></thead>
+    <tbody>
+      <tr><td><b>整数</b></td><td>直接写，不加任何符号</td><td><code>666</code>　<code>-88</code></td></tr>
+      <tr><td><b>小数</b></td><td>直接写，带小数点</td><td><code>13.14</code>　<code>-5.21</code></td></tr>
+      <tr><td><b>字符串</b></td><td>用<b>双引号</b>括起来，里面写什么、写多少都行，什么都不写也行</td><td><code>"HelloWorld"</code>　<code>"黑马程序员"</code></td></tr>
+      <tr><td><b>字符</b></td><td>用<b>单引号</b>括起来，里面<b>有且只能有一个</b>：数字、字母、汉字、标点都行</td><td><code>'A'</code>　<code>'0'</code>　<code>'我'</code></td></tr>
+      <tr><td><b>布尔</b></td><td>只有两个值</td><td><code>true</code>　<code>false</code></td></tr>
+      <tr><td><b>空</b></td><td>一个特殊的值，表示什么都没有</td><td><code>null</code></td></tr>
+    </tbody>
+  </table>
+  <p>考考你：<code>" "</code>（双引号里一个空格）、<code>""</code>（什么都没有）、<code>'abc'</code> 分别是什么类型？</p>
+  <ul>
+    <li>前两个都是<b>字符串</b>：凡是双引号括起来的，不管写什么、写多少，哪怕不写，都是字符串。</li>
+    <li><code>'abc'</code> 满足了"单引号"，但里面有三个，不满足"只能有一个"，所以<b>不是字符</b>，也不是任何一种字面量，是语法错误，写进代码会报错。</li>
+  </ul>
+  <p><b>布尔</b>值 <code>true</code> 表示正确、<code>false</code> 表示错误，在项目里用来表示判断的结果。比如用户登录，成功是 true、失败是 false，两种情况执行不同的代码。<b>空</b>值 <code>null</code> 先记住这个值，学面向对象时还会再讲。</p>
+
+  <p>在代码里写一遍。复制 HelloWorld.java，改名 <code>ValueDemo1.java</code>，<b>类名一定要改成和文件名一致</b>。小技巧：类名很长时对着写容易错，可以选中文件按 <span class="kbd">F2</span>（重命名），<span class="kbd">Ctrl</span>+<span class="kbd">C</span> 复制文件名，再粘到代码里。数据光写一个 <code>666</code> 不行，得对它做点什么，目前只会打印，所以都放进输出语句：</p>
+  <code class="blk"><span class="hk">public class</span> ValueDemo1 {
+    <span class="hk">public static void</span> main(String[] args) {
+        <span class="hc">// 目标：掌握常见的数据在代码中是如何书写的</span>
+        System.out.println(666);
+        System.out.println(-777);
+        System.out.println(1.93);
+        System.out.println(-3.71);
+        System.out.println(<span class="hs">"黑马程序员"</span>);
+        System.out.println(<span class="hs">"尼古拉斯阿伟"</span>);
+        System.out.println(<span class="hs">'男'</span>);
+        System.out.println(<span class="hs">'女'</span>);
+        System.out.println(<span class="hk">true</span>);
+        System.out.println(<span class="hk">false</span>);
+        System.out.println(<span class="hk">null</span>);      <span class="hc">// ← 编译报错！</span>
+    }
+}</code>
+  <p>性别这种只有一个字的内容，以后在项目里就可以用字符表示。编译时最后一行报错：<b><code>null</code> 不能直接打印</b>。真要打印出 null 这四个字母，只能写成字符串 <code>"null"</code>。（在 CMD 里按 <span class="kbd">↑</span> <span class="kbd">↓</span> 可以翻出刚才用过的命令，不用重新敲。）</p>
+
+  <div class="card">
+    <h3>动手：给字面量分类</h3>
+    <p style="margin-top:0">每个数据选一个类型，选错了会告诉你为什么。</p>
+    <div class="lq" id="lq"></div>
+    <div class="lq-score" id="lq-score"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">为什么 println(null) 会报错</span>
+    报错信息是 <code>错误: 对println的引用不明确</code>，后面说 <code>println(char[])</code> 和 <code>println(String)</code> 都匹配。<code>println</code> 其实有好几个"版本"，分别负责打印整数、小数、字符、字符串、字符数组……给它一个 null，编译器发现"字符串版"和"字符数组版"都能接收 null，不知道该选哪个，只好报错。等学了变量就知道：先把 null 存进一个字符串变量再打印，就会正常打印出 <code>null</code>。这里的"好几个版本"叫<b>方法重载</b>，后面会学。
+  </div>
+  <div class="extra">
+    <span class="t">字符和字符串不是一回事</span>
+    <code>'A'</code> 和 <code>"A"</code> 打印出来一样，但类型不同：字符是"一个字"，字符串是"一串字"（可以是 0 个、1 个或很多个）。所以 <code>''</code>（单引号里什么都没有）也是错的，编译器会说"空字符文字"；而 <code>""</code> 是合法的空字符串。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P18</div>
+  <h2>特殊字符：\t 制表符</h2>
+  <p>还有一些特殊的字符字面量，比如 <code>\t</code>、<code>\r</code>、<code>\n</code>，今天先说 <code>\t</code>，叫<b>制表符</b>。它可以用单引号括起来（<code>'\t'</code>，表示一个特殊字符），也可以写在双引号里。</p>
+  <p>很多人把制表符解释成"缩进""对齐""大空格"，老师说这些都不对。它的作用是：<b>打印时把前面字符串的长度补齐到 8 或 8 的倍数，最少补 1 个空格，最多补 8 个</b>。</p>
+  <ul>
+    <li><code>"abc" + '\t'</code>：前面长度 3，补 5 个空格到 8；</li>
+    <li>前面长度 4，就补 4 个。</li>
+    <li>它只看<b>前面</b>的字符串，和后面的多长没关系。</li>
+  </ul>
+  <p>有什么用？打印表格一样的数据时让它<b>对齐</b>。比如第一行打印 <code>name</code> 和 <code>age</code>，第二行打印 <code>Tom</code> 和 <code>23</code>，不加制表符会挤在一起，看着很难受；中间加上 <code>\t</code>，name 长度 4 补 4 个空格，Tom 长度 3 补 5 个空格，后面的 age 和 23 就对齐了。所以专业名词一般都有特殊含义，"制表符"就是"制作表格用的符号"。</p>
+  <code class="blk"><span class="hk">public class</span> ValueDemo2 {
+    <span class="hk">public static void</span> main(String[] args) {
+        <span class="hc">// 目标：熟悉制表符的基本用法</span>
+        System.out.println(<span class="hs">"name"</span> + <span class="hs">'\t'</span> + <span class="hs">"age"</span>);
+        System.out.println(<span class="hs">"Tom"</span> + <span class="hs">'\t'</span> + <span class="hs">"23"</span>);
+    }
+}</code>
+  <p>这里的 <code>+</code> 表示<b>字符串拼接</b>：把前后的内容拼成一个字符串再打印。</p>
+
+  <div class="card">
+    <h3>动手：看 \t 补了几个空格</h3>
+    <p style="margin-top:0">改改两行的内容，看橙色的补位怎么变。上面的刻度每 8 格一个分界（制表位）。试试把第一列写成 8 个字母，或者写上中文。</p>
+    <div class="tab-in">
+      <span>第 1 行</span><input id="t-a1" value="name" aria-label="第 1 行第 1 列"><span>\t</span><input id="t-b1" value="age" aria-label="第 1 行第 2 列">
+      <span>第 2 行</span><input id="t-a2" value="Tom" aria-label="第 2 行第 1 列"><span>\t</span><input id="t-b2" value="23" aria-label="第 2 行第 2 列">
+    </div>
+    <div class="btns" style="margin-top:8px"><button class="btn sm" id="t-tog">去掉 \t 看看</button></div>
+    <div class="tab-out"><div class="tab-grid" id="t-grid"></div></div>
+    <div class="tab-note" id="t-note"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">补充：\t 的"补齐"其实是屏幕干的</span>
+    严格地说，Java 打印的只是<b>一个</b>制表符字符（编号 9），并没有真的打印几个空格。是 CMD、终端这些显示程序看到它，把光标跳到下一个"制表位"。CMD 的制表位每 8 格一个，所以看起来是"补齐到 8 的倍数"。有的软件制表位是 4 格（比如很多代码编辑器），同样的输出会对齐到 4 的倍数。<br>
+    还有，<b>一个汉字在控制台里通常占 2 格</b>，所以"姓名"按显示宽度算是 4 而不是 2，上面的演示也是按显示宽度算的。第一列内容如果长短差太多（比如一个 3 格、一个 10 格），它们会落在不同的制表位上，照样对不齐。<br>
+    <code>\n</code> 是换行，<code>\r</code> 是回车（光标回到行首），这类以反斜杠开头的叫<b>转义字符</b>。想打印一个双引号写 <code>\"</code>，打印反斜杠本身写 <code>\\</code>。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>注释</b></td><td>对代码的解释说明。<code>//</code> 单行、<code>/* */</code> 多行、<code>/** */</code> 文档（暂不用）。不参与编译和运行，class 里没有注释；不要嵌套</td></tr>
+      <tr><td><b>关键字</b></td><td>被 Java 赋予特定含义的英文单词，全部小写，编辑器有高亮。<code>class</code> 用来定义类，后面跟类名，大括号是类的范围</td></tr>
+      <tr><td><b>字面量</b></td><td>数据的书写格式，6 类：整数、小数、字符串（双引号）、字符（单引号，有且只有一个）、布尔（true/false）、空（null）</td></tr>
+      <tr><td><b>两个特殊</b></td><td><code>null</code> 不能直接打印，要打印写成 <code>"null"</code>；<code>\t</code> 把前面的长度补齐到 8 的倍数，用来对齐表格数据</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    注释写给人看、编译时被扔掉；关键字是 Java 预留的小写单词；字面量决定数据怎么写：双引号是字符串，单引号里只能放一个字符。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. 把输出语句整行注释掉，编译会报错吗？运行结果是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不报错，运行也不报错，只是什么都不打印。注释不参与编译和运行，编译出的 class 文件里没有这行代码了。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 下面这段为什么会出错？<br><code>/* 外层 /* 内层 */ 外层后半段 */</code></div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">第一个 <code>/*</code> 会和离它最近的 <code>*/</code>（内层那个）配对，注释到那里就结束了。后面的"外层后半段 */"变成了代码，那个 <code>*/</code> 没有开头，所以报错。多行注释不能嵌套。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. <code>String</code>、<code>class</code>、<code>main</code>、<code>static</code>，哪些是关键字？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>class</code> 和 <code>static</code> 是关键字。<code>String</code> 首字母大写，是 Java 写好的类名；<code>main</code> 是方法名，都不是关键字。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>" "</code>、<code>""</code>、<code>'abc'</code>、<code>'男'</code> 分别是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">前两个都是字符串（双引号里写什么、写不写都是字符串）；<code>'abc'</code> 单引号里有三个，不是任何字面量，语法错误；<code>'男'</code> 是字符。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 在 CMD 里运行 <code>System.out.println("abcd" + '\t' + "x");</code>，abcd 和 x 之间有几个空格？换成 "abcdefgh" 呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">abcd 长度 4，补 4 个空格到 8。abcdefgh 长度正好是 8，已经是 8 的倍数，但 \t 至少要补 1 个，所以一口气补满 8 个，到 16。这就是"最多补 8 个"的情况。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="12.html"><small>← 上一篇</small>P12–16 Java 的来历、用途与跨平台</a>
+    <a class="next" href="19.html"><small>下一篇 →</small>P19–21 变量</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P17–P18（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=17" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- 注释实验台 ---------- */
+(function () {
+  const BASE = 'public class HelloWorld {\n    // 叫做 main 方法，表示程序的主入口\n    public static void main(String[] args) {\n        /* 叫做输出语句（打印语句）\n           会把小括号里面的内容进行输出打印 */\n        System.out.println("HelloWorld");\n    }\n}\n';
+  const PRE = [
+    BASE,
+    BASE.replace('        System.out', '        // System.out'),
+    BASE.replace('// 叫做 main 方法，表示程序的主入口', '// 叫做 main 方法 // 表示程序的主入口'),
+    BASE.replace('/* 叫做输出语句（打印语句）\n           会把小括号里面的内容进行输出打印 */', '/* 外层注释：叫做输出语句\n           /* 内层注释 */\n           外层注释的后半段 */'),
+  ];
+  const ta = $('#cm-ta'), pre = $('#cm-pre-hl'), gut = $('#cm-gut');
+  const KW = new Set(['public', 'class', 'static', 'void', 'true', 'false', 'null']);
+  // 扫描：返回 [{t:'code'|'cm'|'str'|'bad', s}]、错误列表
+  function scan(src) {
+    const seg = [], errs = [];
+    let i = 0, buf = '', line = 1;
+    const push = (t, s) => { if (s) seg.push({ t, s }); };
+    const flush = () => { push('code', buf); buf = ''; };
+    while (i < src.length) {
+      const c = src[i], n = src[i + 1];
+      if (c === '/' && n === '/') { flush(); let j = src.indexOf('\n', i); if (j < 0) j = src.length; push('cm', src.slice(i, j)); i = j; continue; }
+      if (c === '/' && n === '*') {
+        flush(); const j = src.indexOf('*/', i + 2), startLine = line;
+        const end = j < 0 ? src.length : j + 2, s = src.slice(i, end);
+        push('cm', s); line += (s.match(/\n/g) || []).length;
+        if (j < 0) errs.push([startLine, '未结束的注释']);
+        i = end; continue;
+      }
+      if (c === '*' && n === '/') { flush(); push('bad', '*/'); errs.push([line, '这里有一个找不到开头的 */']); i += 2; continue; }
+      if (c === '"') { flush(); let j = i + 1; while (j < src.length && src[j] !== '"' && src[j] !== '\n') { if (src[j] === '\\') j++; j++; } push('str', src.slice(i, j + 1)); i = j + 1; continue; }
+      if (c === '\n') line++;
+      buf += c; i++;
+    }
+    flush();
+    return { seg, errs };
+  }
+  function hlCode(s) { return esc(s).replace(/\b[a-z]+\b/g, w => KW.has(w) ? `<span class="hk">${w}</span>` : w); }
+  function paint() {
+    const src = ta.value, { seg, errs } = scan(src);
+    pre.innerHTML = seg.map(({ t, s }) => t === 'cm' ? `<span class="hc">${esc(s)}</span>` : t === 'str' ? `<span class="hs">${esc(s)}</span>` : t === 'bad' ? `<span class="hx">${esc(s)}</span>` : hlCode(s)).join('') + '\n ';
+    const bad = new Set(errs.map(e => e[0]));
+    gut.innerHTML = src.split('\n').map((_, i) => bad.has(i + 1) ? `<b>${i + 1}</b>` : String(i + 1)).join('\n') + '\n ';
+    // class 里剩下的
+    const kept = seg.filter(x => x.t !== 'cm').map(x => x.s).join('').split('\n').filter(l => l.trim()).join('\n');
+    $('#cm-cls').textContent = errs.length ? '（编译失败，没有生成 class 文件）' : kept;
+    // 运行
+    const run = $('#cm-run');
+    if (errs.length) {
+      run.innerHTML = errs.map(([l, m]) => `<span class="err">HelloWorld.java 第 ${l} 行：${esc(m)}</span>`).join('\n') + '\n<span class="note">编译失败。' + (errs.some(e => e[1].includes('*/')) ? '多行注释的 /* 和最近的 */ 配对，后面那段就成了代码。（真实的 javac 会在这里报出几条语法错误）' : '') + '</span>';
+    } else {
+      const code = seg.filter(x => x.t !== 'cm').map(x => x.s).join('');
+      const outs = [...code.matchAll(/System\.out\.println\(\s*"((?:[^"\\]|\\.)*)"\s*\)\s*;/g)].map(m => m[1]);
+      run.innerHTML = '<span class="note">&gt; javac HelloWorld.java\n&gt; java HelloWorld</span>\n' + (outs.length ? esc(outs.join('\n')) : '<span class="note">（没有任何输出：输出语句被注释掉了）</span>');
+    }
+    syncScroll();
+  }
+  function syncScroll() { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; gut.scrollTop = ta.scrollTop; }
+  ta.addEventListener('input', paint);
+  ta.addEventListener('scroll', syncScroll);
+  ta.addEventListener('keydown', e => { if (e.key === 'Tab') { e.preventDefault(); ta.setRangeText('    ', ta.selectionStart, ta.selectionEnd, 'end'); paint(); } });
+  $$('#cm-pre button').forEach(b => b.onclick = () => { ta.value = PRE[+b.dataset.p]; $$('#cm-pre button').forEach(x => x.classList.toggle('sel', x === b)); paint(); });
+  $('#cm-pre button').click();
+})();
+
+/* ---------- 找关键字 ---------- */
+(function () {
+  const CODE = 'public class LoginDemo {\n    // 用户是否登录成功\n    public static void main(String[] args) {\n        System.out.println(true);\n        System.out.println("hello");\n        System.out.println(null);\n    }\n}';
+  const KW = new Set(['public', 'class', 'static', 'void']);
+  const LIT = new Set(['true', 'false', 'null']);
+  const box = $('#kw-code');
+  // 只把代码部分的单词做成可点的；注释和字符串原样
+  box.innerHTML = CODE.split('\n').map(L => {
+    if (L.trim().startsWith('//')) return `<span class="hc">${esc(L)}</span>`;
+    return L.split(/("[^"]*")/).map(p => p.startsWith('"') ? esc(p) : esc(p).replace(/[A-Za-z_]\w*/g, w => `<span class="w" data-w="${w}">${w}</span>`)).join('');
+  }).join('\n');
+  const words = $$('.w', box);
+  words.forEach(w => w.onclick = () => { if (!box.classList.contains('done')) w.classList.toggle('pick'); });
+  $('#kw-go').onclick = () => {
+    box.classList.add('done');
+    let right = 0, wrong = 0, miss = 0, litPick = 0;
+    words.forEach(w => {
+      const k = w.dataset.w, p = w.classList.contains('pick');
+      if (KW.has(k)) { if (p) { w.classList.add('right'); right++; } else { w.classList.add('miss'); miss++; } }
+      else if (LIT.has(k)) { w.classList.add('lit'); if (p) litPick++; }
+      else if (p) { w.classList.add('wrong'); wrong++; }
+    });
+    $('#kw-res').innerHTML = `关键字是 <b>public、class、static、void</b>（绿框）。你选对 ${right} 个，漏了 ${miss} 个，误选 ${wrong} 个。<br>` +
+      '划掉的（如果有）：<code>String</code>、<code>System</code> 首字母大写，是类名；<code>main</code>、<code>args</code>、<code>out</code>、<code>println</code>、<code>LoginDemo</code> 都是名字，不是关键字。<br>' +
+      `橙色虚线的 <code>true</code>、<code>null</code> 全小写、也会高亮，视频把它们当关键字，但严格说它们是<b>字面量</b>（见下方更正）${litPick ? '，你选了也不算错' : ''}。`;
+  };
+  $('#kw-reset').onclick = () => { box.classList.remove('done'); words.forEach(w => w.className = 'w'); $('#kw-res').innerHTML = ''; };
+  // 关键字一览
+  const ALL = 'abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for goto if implements import instanceof int interface long native new package private protected public return short static strictfp super switch synchronized this throw throws transient try void volatile while _'.split(' ');
+  const GOT = new Set(['class', 'public', 'static', 'void']);
+  $('#kw-all').innerHTML = ALL.map(k => `<span class="${GOT.has(k) ? 'got' : k === 'goto' || k === 'const' ? 'dead' : ''}">${k}</span>`).join('');
+})();
+
+/* ---------- 字面量分类 ---------- */
+(function () {
+  const T = ['整数', '小数', '字符串', '字符', '布尔', '空', '语法错误'];
+  const Q = [
+    ['666', '整数', '整数直接写。'],
+    ['-5.21', '小数', '带小数点的就是小数，负数前面加负号。'],
+    ['"黑马程序员"', '字符串', '双引号括起来的就是字符串。'],
+    ["'A'", '字符', '单引号，里面正好一个。'],
+    ['" "', '字符串', '双引号里一个空格，依然是字符串。'],
+    ['""', '字符串', '双引号里什么都没有，是空字符串，合法。'],
+    ["'abc'", '语法错误', '单引号里只能有一个，三个就什么都不是了，会报错。'],
+    ["'男'", '字符', '汉字也可以是字符，只要只有一个。'],
+    ['true', '布尔', '布尔只有 true 和 false 两个值。'],
+    ['null', '空', '空类型唯一的值。'],
+    ['"null"', '字符串', '加了双引号就是普通的字符串，内容恰好是 n、u、l、l 四个字母。'],
+    ["'5'", '字符', '单引号里的数字是字符，不是整数。'],
+    ["''", '语法错误', '单引号里必须有一个，什么都没有不行（编译器说"空字符文字"）。'],
+    ['1.0', '小数', '只要有小数点就是小数，哪怕后面是 0。'],
+  ];
+  const box = $('#lq');
+  let done = 0, right = 0;
+  Q.forEach(([v, a, why]) => {
+    const it = document.createElement('div'); it.className = 'it';
+    it.innerHTML = `<code>${esc(v)}</code><div class="opts">${T.map(t => `<button>${t}</button>`).join('')}</div>`;
+    let answered = false;
+    $$('button', it).forEach(b => b.onclick = () => {
+      if (answered) return; answered = true; done++;
+      const ok = b.textContent === a; if (ok) right++;
+      it.classList.add(ok ? 'ok' : 'no');
+      $$('button', it).forEach(x => { if (x.textContent === a) x.classList.add('on'); else if (x === b) x.classList.add('bad'); });
+      it.insertAdjacentHTML('beforeend', `<div class="why">${ok ? '✓ ' : '✗ 是' + a + '。'}${why}</div>`);
+      $('#lq-score').textContent = `已答 ${done} / ${Q.length}，答对 ${right}`;
+    });
+    box.appendChild(it);
+  });
+  $('#lq-score').textContent = `已答 0 / ${Q.length}`;
+})();
+
+/* ---------- 制表符 ---------- */
+(function () {
+  const W = s => [...s].reduce((n, c) => n + (/[ᄀ-ᅟ⺀-꓏가-힣豈-﫿︰-﹏＀-｠￠-￦]/.test(c) ? 2 : 1), 0);
+  let useTab = true;
+  function paint() {
+    const rows = [[$('#t-a1').value, $('#t-b1').value], [$('#t-a2').value, $('#t-b2').value]];
+    let maxW = 0;
+    const lines = rows.map(([a, b]) => {
+      const wa = W(a), pad = useTab ? 8 - (wa % 8) : 0;
+      maxW = Math.max(maxW, wa + pad + W(b));
+      return { a, b, wa, pad };
+    });
+    const cols = Math.max(24, Math.ceil((maxW + 1) / 8) * 8);
+    let ruler = '';
+    for (let i = 0; i < cols; i++) ruler += (i % 8 === 0) ? '|' : '·';
+    const rulerHtml = ruler.split('').map((c, i) => c === '|' ? `<span class="ru8">|</span>` : `<span class="ru">${c}</span>`).join('');
+    const nums = Array.from({ length: cols / 8 }, (_, i) => String(i * 8).padEnd(8, ' ')).join('');
+    $('#t-grid').innerHTML = `<span class="ru">${nums}</span>\n${rulerHtml}\n` + lines.map(l => `${esc(l.a)}<span class="pad">${'·'.repeat(l.pad)}</span>${esc(l.b)}`).join('\n');
+    $('#t-note').innerHTML = useTab
+      ? lines.map((l, i) => `第 ${i + 1} 行：前面"${esc(l.a)}"宽度 ${l.wa}，\\t 补 ${l.pad} 格到 ${l.wa + l.pad}`).join('；') +
+        (lines[0].wa + lines[0].pad === lines[1].wa + lines[1].pad ? '。两行第二列对齐了 ✓' : '。两行落在不同的制表位上，没对齐 ✗')
+      : '没有 \\t，两列直接挤在一起。';
+    $('#t-tog').textContent = useTab ? '去掉 \\t 看看' : '加回 \\t';
+  }
+  ['#t-a1', '#t-b1', '#t-a2', '#t-b2'].forEach(s => $(s).addEventListener('input', paint));
+  $('#t-tog').onclick = () => { useTab = !useTab; paint(); };
+  paint();
+})();
+</script>
+</body>
+</html>

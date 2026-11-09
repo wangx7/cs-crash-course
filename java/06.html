@@ -1,0 +1,863 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P6–11 JDK 安装与第一个 HelloWorld · Java 入门图文版</title>
+<link rel="stylesheet" href="../cc.css">
+<style>
+.term{background:#0f1115;color:#d7dae0;border-radius:12px;padding:12px 14px;font:14px/1.6 var(--mono);height:240px;overflow-y:auto;cursor:text;border:1px solid #2a2f37}
+.term .ln{white-space:pre-wrap;word-break:break-all}
+.term .err{color:#ff8a8a}
+.term .note{color:#7f8794}
+.term .ok{color:#7ee2a0}
+.term .inrow{display:flex;white-space:pre}
+.term input{flex:1;min-width:40px;background:none;border:0;outline:0;color:inherit;font:inherit;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:10px 0 2px}
+.chips button{font:13px var(--mono);border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 10px;cursor:pointer}
+.chips button:hover{border-color:var(--accent);color:var(--accent)}
+.chips.bug button{font-family:inherit}
+.kbd{display:inline-block;font:600 13px var(--mono);border:1px solid var(--line);border-bottom-width:3px;border-radius:6px;padding:0 6px;background:var(--panel);line-height:1.5}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.btn.sm{font-size:13px;padding:4px 10px}
+
+/* 记事本 / Notepad++ 模拟编辑器 */
+.lab{display:grid;grid-template-columns:minmax(0,1fr) 175px;gap:10px;margin-bottom:10px}
+@media (max-width:640px){.lab{grid-template-columns:1fr}}
+.np{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel)}
+.np-bar{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--bg);border-bottom:1px solid var(--line);font-size:13px;flex-wrap:wrap}
+.np-title{flex:1;font-family:var(--mono);font-size:12.5px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.np-title.dirty{color:var(--on)}
+.np-body{display:flex;font:14px/1.6 var(--mono);height:150px}
+.np-gut{padding:8px 6px 8px 4px;text-align:right;color:var(--muted);background:var(--bg);user-select:none;min-width:2.4em;white-space:pre;overflow:hidden;border-right:1px solid var(--line)}
+.np-gut b{color:var(--bad)}
+.np.plain .np-gut{display:none}
+.np-wrap{position:relative;flex:1;min-width:0}
+.np-wrap pre,.np-wrap textarea{position:absolute;inset:0;margin:0;padding:8px 10px;font:inherit;line-height:inherit;white-space:pre;overflow:auto;border:0;tab-size:4;letter-spacing:0}
+.np-wrap pre{pointer-events:none;color:var(--ink);background:none}
+.np-wrap textarea{background:transparent;color:transparent;caret-color:var(--ink);resize:none;outline:0;-webkit-text-fill-color:transparent}
+.np-wrap textarea::selection{background:var(--accent-soft);-webkit-text-fill-color:transparent}
+.hk{color:var(--accent);font-weight:700}
+.ht{color:var(--wood);font-weight:700}
+.hs{color:var(--ok)}
+.np-mode{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.np-mode button{font:12px inherit;border:0;background:var(--panel);color:var(--muted);padding:2px 9px;cursor:pointer}
+.np-mode button.sel{background:var(--accent);color:#fff}
+.files{border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:13px;overflow:hidden}
+.files h4{margin:0;padding:6px 10px;background:var(--bg);border-bottom:1px solid var(--line);font-size:12.5px;font-weight:600;font-family:var(--mono)}
+.files ul{list-style:none;margin:0;padding:6px}
+.files li{padding:4px 6px;border-radius:6px;font-family:var(--mono);font-size:12.5px;word-break:break-all;cursor:default}
+.files li.cls{cursor:pointer;color:var(--accent)}
+.files li.cls:hover{background:var(--accent-soft)}
+.files li.fresh{animation:pop .8s}
+@keyframes pop{from{background:var(--ok-soft)}to{background:none}}
+.files .peek{margin:4px 6px 8px;padding:6px 8px;background:var(--bg);border-radius:6px;font:12px/1.5 var(--mono);word-break:break-all}
+
+/* JDK 目录 */
+.jdk{display:grid;grid-template-columns:180px minmax(0,1fr);gap:12px}
+@media (max-width:640px){.jdk{grid-template-columns:1fr}}
+.jdk ul{list-style:none;margin:0;padding:0}
+.jdk li button{width:100%;text-align:left;font:14px var(--mono);border:1px solid transparent;background:none;color:var(--ink);border-radius:8px;padding:5px 8px;cursor:pointer}
+.jdk li button::before{content:"📁 "}
+.jdk li button.sel{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.jdk li button.key{font-weight:700}
+.jdk .desc{background:var(--bg);border-radius:10px;padding:10px 14px;font-size:15px;min-height:110px}
+.jdk .desc .tools{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.jdk .desc .tools span{font:12.5px var(--mono);padding:1px 7px;border-radius:6px;background:var(--panel);border:1px solid var(--line)}
+.jdk .desc .tools span.hot{border-color:var(--on);background:var(--on-soft);font-weight:700}
+
+/* 环境变量 */
+.envbox{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;margin-top:12px}
+@media (max-width:640px){.envbox{grid-template-columns:1fr}}
+.envbox h4{margin:0 0 6px;font-size:14px}
+.envbox .panel{background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px}
+.plist{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:12.5px}
+.plist li{display:flex;gap:6px;align-items:flex-start;padding:3px 6px;border-radius:6px;margin:2px 0;word-break:break-all}
+.plist li span{flex:1}
+.plist li small{display:block;color:var(--muted)}
+.plist li small.bad{color:var(--bad)}
+.plist li.hit{background:var(--ok-soft)}
+.plist li.new{background:var(--accent-soft)}
+.plist li button{border:0;background:none;color:var(--muted);cursor:pointer;font-size:13px;padding:0 4px}
+.plist li button:hover{color:var(--bad)}
+.varrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:12.5px}
+.varrow input{font:12.5px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:170px}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:8px 12px;font:13px/1.6 var(--mono);min-height:100px;max-height:200px;overflow-y:auto;white-space:pre-wrap;word-break:break-all;margin-top:8px}
+.out .err{color:#ff8a8a}.out .note{color:#7f8794}.out .ok{color:#7ee2a0}
+
+/* 编码 */
+.enc-row{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;font-size:14px;margin:6px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.bytes{display:flex;flex-wrap:wrap;gap:4px;margin:10px 0;font:13px var(--mono)}
+.bytes span{padding:2px 6px;border-radius:5px;background:var(--bg);border:1px solid var(--line)}
+.bytes span.g1{border-color:var(--accent)}
+.enc-res{padding:8px 12px;border-radius:10px;font-size:15px}
+.enc-res.ok{background:var(--ok-soft)}
+.enc-res.bad{background:var(--bad-soft)}
+.enc-res.mid{background:var(--on-soft)}
+.enc-res code{font-size:15px}
+
+/* 编译示意图 */
+.pf-file{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.pf-cls{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5}
+.pf-scr{fill:#0f1115}
+.pf-arrow{stroke:var(--on);stroke-width:2.5;fill:none}
+.pf-head{fill:var(--on)}
+.pf-code{font:11.5px var(--mono);fill:var(--ink);white-space:pre}
+.pf-hex{font:11.5px var(--mono);fill:var(--accent)}
+.pf-out{font:13px var(--mono);fill:#7ee2a0}
+.pf-tool{font:700 14px var(--mono);fill:var(--on)}
+</style>
+</head>
+<body data-ep="6" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=6" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">入门 · P6–P11</div>
+  <h1>JDK 安装与第一个 HelloWorld</h1>
+  <p class="en">Installing the JDK &amp; Your First Java Program</p>
+  <p class="lead">上一篇学会了在 CMD 里敲命令，这一篇就用上它：装好写 Java 用的软件 JDK，用记事本写出三行代码，再用 <code>javac</code> 编译、<code>java</code> 运行，让屏幕打出 HelloWorld。然后看新手最常踩的两个坑，把环境变量配成专业的 <code>JAVA_HOME</code> 写法，最后换一个带行号和高亮的"高级记事本"。</p>
+  <div class="road">
+    <span>学习方法</span><i>→</i><span>下载安装 JDK</span><i>→</i><span>HelloWorld 三步</span><i>→</i><span>常见 bug</span><i>→</i><span>JAVA_HOME</span><i>→</i><span>Notepad++</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 学习方法</a></li>
+    <li><a href="#ch2">2 · 下载安装 JDK</a></li>
+    <li><a href="#ch3">3 · HelloWorld</a></li>
+    <li><a href="#ch4">4 · 常见小问题</a></li>
+    <li><a href="#ch5">5 · JAVA_HOME</a></li>
+    <li><a href="#ch6">6 · Notepad++</a></li>
+    <li><a href="#ch7">7 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P6</div>
+  <h2>先说学习方法：先求广度，再求深度</h2>
+  <p>零基础刚开始学，<b>不要追求知识点的深度，要追求广度</b>。一个知识点先学会怎么用，别往深里钻；把尽可能多的知识点综合用起来、锻炼思维，才是第一位的。深入的内容放到第二阶段再学。这也符合我们平时学东西的顺序，整门课就是按这个思路设计的。</p>
+  <p>第一阶段（基础）分几大块：<b>Java 基础语法</b>、Java 最核心的<b>面向对象</b>、<b>API</b>、<b>字符串</b>、<b>集合</b>，最后用学过的所有知识写一个综合案例<b>拼图小游戏</b>。写游戏不是目的，目的是练逻辑思维和综合运用的能力。</p>
+  <p>基础语法一共 7 个模块：前 6 个学基础内容，第 7 个结合斯坦福大学的练习题做大量综合练习。现在是第一个模块，顺序是：Java 是什么 → 写第一个小案例 → Java 的发展历史 → 为什么这么火 → JRE 和 JDK。</p>
+  <p><b>Java 是什么？</b>想让计算机按我们的指令做事，就得说它听得懂的语言，Java 就是一门非常火的计算机语言。视频给了几组截至 2021 年上半年的数据：全球编程语言排行榜上，没有哪门语言能一直霸榜，起起伏伏很正常，但 Java 基本一直在前三；国内市场占有率约 28%，排第一；BOSS 直聘、前程无忧、智联招聘的热门职位里也都有 Java。</p>
+  <div class="extra">
+    <span class="t">排行榜看个大概就好</span>
+    常见的排行榜（TIOBE、PYPL 等）算法各不相同，只能反映"讨论和搜索热度"，名次每年都在变，比如这几年 Python 的排名普遍在 Java 前面。但 Java 在企业后端、安卓和大数据领域的岗位一直很多，这一点没变。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P7</div>
+  <h2>下载并安装 JDK</h2>
+  <p>就像玩游戏得先下载安装，写 Java 代码也要先装一个软件：<b>JDK</b>。去官网 <code>www.oracle.com</code> 下载，<b>一定要选和自己操作系统对应的安装包</b>。安装是"傻瓜式"的，一路下一步，最多改一下安装路径。改路径时有两条建议：</p>
+  <ol>
+    <li><b>路径里不要有中文、空格和特殊符号</b>。这些软件是外国人写的，对中文支持不完美，路径带中文以后容易出问题。用英文单词加数字就好。</li>
+    <li><b>所有开发工具放在同一个文件夹里</b>，方便统一管理。老师把开发相关的软件都装在 <code>E:\develop</code> 下面，JDK 就装在 <code>E:\develop\jdk</code>。</li>
+  </ol>
+  <p>官网下载的路线：Products → Java → 右上角 Download Java。页面默认是最新版，当时是 2021 年 9 月刚发布的 <b>Java 17</b>，后面带 LTS，意思是"长期支持版"（后面的视频再细讲）。往下选 Windows，会看到三个下载项，老师选中间那个 <code>.exe</code> 安装包，说它最"干净"；第一个 zip 他说是"压缩包里装着安装包和一些说明文件"，<span class="fix" title="zip 里就是 JDK 本身，解压即用，没有安装程序">其实不是</span>。官网速度慢，课程资料里直接提供了安装包（资料里的是 JDK 11）。</p>
+  <div class="extra">
+    <span class="t">更正：三个下载项分别是什么</span>
+    Windows 下的三项一般是：<b>x64 Compressed Archive</b>（.zip）、<b>x64 Installer</b>（.exe）、<b>x64 MSI Installer</b>（.msi）。zip 里装的<b>就是 JDK 本身</b>，解压到哪儿就"装"在哪儿，不需要安装，也不会自动配置环境变量；exe 和 msi 都是安装程序，msi 更适合公司里批量部署。初学用 exe 最省事，老师的选择没问题。另外，Oracle 官网下载 JDK 17 及之后的版本一般不用登录；JDK 8、11 这些旧版才要求登录 Oracle 账号。
+  </div>
+  <p>装完打开 <code>E:\develop\jdk</code>，里面有一堆文件夹。点一点看它们是干什么的：</p>
+
+  <div class="card">
+    <h3>点一点：JDK 安装目录里有什么</h3>
+    <div class="jdk">
+      <ul id="jdk-list"></ul>
+      <div class="desc" id="jdk-desc"></div>
+    </div>
+  </div>
+
+  <p>六个文件夹里，真正要记住的只有 <b>bin</b>：各种工具都在里面，其中最重要的是 <code>javac</code> 和 <code>java</code>，下一节马上用到。以后要用哪个工具，就去 bin 里找。</p>
+
+  <div class="extra">
+    <span class="t">版本选哪个</span>
+    LTS（Long-Term Support）版本会得到很多年的更新和安全补丁，公司里基本只用 LTS。Java 从 2018 年起每半年发一个新版本；LTS 有 <b>8、11、17、21（2023）、25（2025）</b>，从 17 起每两年出一个。这门课用 17 讲，用 21 或 25 学完全没问题，课里的代码都能跑。
+  </div>
+  <div class="extra">
+    <span class="t">用 Mac 的话</span>
+    下载页选 macOS，<b>Apple 芯片（M 系列）选 ARM64，Intel 芯片选 x64</b>，下载 <code>.dmg</code> 双击安装，不用选路径。装好后在 <code>/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home</code>，同样有 bin、conf、lib 这些文件夹。打开终端输入 <code>java -version</code>，能看到版本号就说明装好了。免费的 OpenJDK 发行版（比如 Eclipse Temurin）也可以，用法一样。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P8</div>
+  <h2>第一个程序：HelloWorld</h2>
+  <p>不管学哪种语言（Java、C、Python……），写的第一个程序都是 HelloWorld，这是程序员圈约定俗成的规矩。老师开了个玩笑：程序员退休后练毛笔字，第一个字下意识写的也是 HelloWorld。步骤只有三步：</p>
+  <ol>
+    <li><b>用记事本编写程序</b>。代码只有三行，作用是把第三行双引号里的内容打印出来。</li>
+    <li><b>编译</b>文件。</li>
+    <li><b>运行</b>程序，就能看到 HelloWorld。</li>
+  </ol>
+  <p>双引号里写 ABC 就打印 ABC，写 123 就打印 123。只要先别写中文（会乱码，第 6 节讲怎么解决）。</p>
+  <p><b>"编译"是什么意思？</b>Java 代码不能直接在操作系统里运行，因为<span class="fix" title="class 文件是给 JVM（Java 虚拟机）看的，不是给操作系统看的">操作系统不认识它</span>。只能先把代码<b>翻译</b>成操作系统看得懂的东西再执行。所以"编译"就理解成"翻译"：翻译完会生成一个新文件，第三步运行的是这个新文件。</p>
+
+  <figure>
+    <svg class="diagram" id="pipeline" viewBox="0 0 660 190" role="img" aria-label="HelloWorld.java 经 javac 编译成 HelloWorld.class，再由 java 运行，屏幕输出 HelloWorld"></svg>
+    <figcaption>三步里的后两步：<code>javac</code> 翻译，<code>java</code> 运行翻译后的文件</figcaption>
+  </figure>
+
+  <p><b>第 1 步：写代码。</b>在代码文件夹里右键新建文本文档，起名 <code>HelloWorld</code>，<b>后缀名改成 <code>.java</code></b>。系统会提示"更改扩展名可能导致文件不可用"，选"是"：Java 代码所在的文件后缀必须是 java。看不到后缀名的话，打开"此电脑"→ 查看 → 勾上"文件扩展名"。然后右键 → 编辑，用 Windows 自带的记事本写：</p>
+  <code class="blk">public class HelloWorld {
+    public static void main(String[] args) {
+        System.out.println("HelloWorld");
+    }
+}</code>
+  <p>写的时候有个好习惯：<b>括号成对写</b>。很多人先写左括号，写完中间的代码再补右括号，这样很容易忘。应该左右括号一起敲出来，再把光标挪到中间回车，补中间的代码。写完 <span class="kbd">Ctrl</span>+<span class="kbd">S</span> 保存。怎么看有没有保存？<b>记事本标题最前面有个 <code>*</code> 就是没保存</b>，保存后它就消失了。</p>
+  <p><b>第 2、3 步：编译和运行。</b>用的工具就是上一节说的 bin 里的 <code>javac</code> 和 <code>java</code>，它们要在 CMD 里用：</p>
+  <code class="blk">F:                      ← 切换盘符：代码在 F 盘
+cd JavaSE\day01\代码     ← 进入代码所在的文件夹
+javac HelloWorld.java   ← 编译：带后缀
+java HelloWorld         ← 运行：不带后缀</code>
+  <ul>
+    <li><b>切换盘符、进文件夹</b>：CMD 默认在 <code>C:\Users\用户名</code>，可代码不在那儿。先找到代码。</li>
+    <li><b>javac</b> 是 JDK 提供的<b>编译工具</b>，把当前路径下的 <code>HelloWorld.java</code> 编译成 <code>HelloWorld.class</code>。没报错就说明语法没问题；写错了会列出一堆错误。生成的 class 文件也叫<b>字节码文件</b>，用记事本打开是一堆看不懂的东西，正常，它本来就不是给人看的。</li>
+    <li><b>java</b> 是 JDK 提供的<b>运行工具</b>，运行当前路径下的 <code>HelloWorld.class</code>，但<b>不写后缀</b>。口诀：<b>有 c 有后缀，没 c 没后缀</b>。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：记事本 + CMD，跑通 HelloWorld</h3>
+    <p style="margin-top:0">左边是记事本，右边是"代码"文件夹。改完代码记得 <b>保存</b>（标题前的 <code>*</code> 会消失），再在下面的 CMD 里编译、运行。试着改一下双引号里的内容，不保存直接编译，或者改完只运行不编译，看看会怎样。</p>
+    <div id="lab1"></div>
+  </div>
+
+  <p>有基础的同学可能会问：老师，你还没配环境变量，怎么就能直接用 <code>javac</code> 了？那是老版本教程的做法，新版 JDK 不太一样，第 5 节揭晓。</p>
+
+  <div class="extra">
+    <span class="t">更正：class 文件是给谁看的</span>
+    操作系统真正能直接执行的是 CPU 的机器码，而 <code>javac</code> 生成的 class 文件里是<b>字节码</b>，操作系统也不认识它。读懂字节码的是 <b>JVM（Java 虚拟机）</b>：<code>java HelloWorld</code> 这条命令先启动 JVM，再由 JVM 去读 class 文件，翻译成当前系统的机器码来执行。正因为中间多了 JVM 这一层，同一个 class 文件才能拿到 Windows、Mac、Linux 上都能跑，这就是后面 P15 要讲的"跨平台"。<br>
+    用记事本打开 class 文件，最前面 4 个字节永远是 <code>CA FE BA BE</code>（"咖啡宝贝"），JVM 靠它认出这是 class 文件。在上面的模拟器里编译后点一下 class 文件可以看到。
+  </div>
+  <div class="extra">
+    <span class="t">这三行大概在说什么（先混个脸熟）</span>
+    第 1 行定义了一个叫 <code>HelloWorld</code> 的<b>类</b>，Java 代码都写在类里；第 2 行是 <b>main 方法</b>，程序从这里开始执行，这一行目前照抄就行；第 3 行把括号里的内容打印出来并换行（<code>println</code> = print line）。后面讲到类和方法时会逐个解释。还有一条规则视频这里没提：<b><code>public class</code> 后面的类名必须和文件名一模一样</b>（包括大小写），否则编译报错。
+  </div>
+  <div class="extra">
+    <span class="t">新版本的小捷径</span>
+    从 JDK 11 开始，可以跳过 javac，直接 <code>java HelloWorld.java</code>：JVM 会在内存里先编译再运行，<b>不会</b>生成 class 文件。适合试一小段代码，但正经项目还是要先编译。模拟器里也能试。
+  </div>
+  <div class="extra">
+    <span class="t">用 Mac 的话</span>
+    Mac 自带的"文本编辑"默认存成富文本，写代码前要在菜单"格式"里选"制作纯文本"，否则 javac 读不了。更省心的是装一个代码编辑器（比如 VS Code）。编译运行在<b>终端</b>里进行，命令完全一样：<code>cd</code> 到代码文件夹，<code>javac HelloWorld.java</code>，<code>java HelloWorld</code>。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P9</div>
+  <h2>常见小问题：bug 从哪来，怎么改</h2>
+  <p>初学时出各种问题很正常，别慌、别怂，心态稳住慢慢解决，这是每个程序员的必经之路。代码出了问题，程序员一般说"出了个 <b>bug</b>"。bug 原意是小甲虫，为什么和程序出错扯上关系？传说早期计算机体积很大，有一天一只虫子钻了进去，导致计算机不能正常运行，工作人员排查时被问"出了什么问题"，回答就是"bug"。从此 bug 就表示程序里的问题。</p>
+  <p>面对 bug，要慢慢培养三种能力，都需要时间沉淀：</p>
+  <ul>
+    <li><b>识别</b> bug：多看老师写的代码，也多看自己写的代码；</li>
+    <li><b>分析</b> bug：多思考，多查资料；</li>
+    <li><b>独立解决</b> bug：每次解决完多总结，下次再遇到就能很快搞定。</li>
+  </ul>
+  <div class="extra">
+    <span class="t">补充：真实的 bug 故事</span>
+    1947 年 9 月 9 日，哈佛大学的 <b>Mark II</b> 计算机出故障，操作员在一个继电器里找到一只<b>飞蛾</b>，把它用胶带贴在工作日志上，旁边写着"First actual case of bug being found"（第一次真的找到了虫子）。这个故事因计算机先驱<b>格蕾丝·霍珀</b>（Grace Hopper）常讲而出名。不过"bug"指机器故障的说法更早就有了，19 世纪爱迪生就这么用过，所以日志里才会写"真的"找到了虫子。这页日志连同飞蛾现在保存在美国国家历史博物馆。
+  </div>
+  <p>HelloWorld 里最常见的两个问题：</p>
+  <ol>
+    <li><b>标点符号用了中文的</b>。代码里所有标点<b>必须是英文状态</b>的。中文分号 <code>；</code> 比英文分号 <code>;</code> 胖一圈，老师说"天朝的伙食好，标点符号也胖一点"。编译时会报"非法字符"，下面还有个 <code>^</code> 箭头指着出错的位置。</li>
+    <li><b>单词拼写/大小写错了</b>。该大写的地方一定要大写，比如 <code>System</code> 的 S。写成小写，报错会说第 3 行有问题，箭头指的地方<b>附近</b>就是错误所在。</li>
+  </ol>
+  <p>两个顺手的小技巧：</p>
+  <ul>
+    <li><b>输入法设置"中文时使用英文标点"</b>：老师用的搜狗输入法，右键 → 属性设置 → 常用 → 勾上它。以后在中文输入状态下打出来的也是英文标点，从根上避免第一个问题。</li>
+    <li><b>在文件夹地址栏输入 <code>cmd</code> 回车</b>：打开的 CMD 直接就在这个文件夹里，不用再切盘符、<code>cd</code> 一层层进去。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：埋个 bug，看 javac 怎么说</h3>
+    <p style="margin-top:0">点一个按钮，代码会被改成对应的错误写法并自动保存。然后点 <code>javac HelloWorld.java</code>，读读报错：第几行、箭头指在哪、说的是什么。最后两个比较特别：一个编译能过、运行才报错；另一个是类名和文件名对不上。</p>
+    <div class="chips bug" id="bugs">
+      <span>埋 bug：</span>
+      <button data-b="semi">中文分号</button><button data-b="quote">中文引号</button><button data-b="sys">system 小写</button><button data-b="pin">println 写成 printIn</button><button data-b="nosemi">漏写分号</button><button data-b="brace">少个右大括号</button><button data-b="cls">类名写错</button><button data-b="mian">main 写成 mian</button><button data-b="ok">改回正确代码</button>
+    </div>
+    <div id="lab2"></div>
+    <p class="hint">报错信息仿照 JDK 17 中文版的 javac，做了简化；模拟器只认识 HelloWorld 这种结构的代码</p>
+  </div>
+
+  <div class="extra">
+    <span class="t">读报错的小经验</span>
+    javac 报错的格式是 <code>文件名:行号: 错误: 描述</code>，下面一行是出错的代码，再下面的 <code>^</code> 指着它发现问题的位置。<b>先看第一条</b>：后面的错误常常是第一条引起的连锁反应，改掉第一条，其余的可能一起消失。另外，<code>println</code> 里那个字母是小写的 L（line），不是大写的 i，这是新手非常高频的一个错。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P10</div>
+  <h2>环境变量：JAVA_HOME 的专业配法</h2>
+  <p>上一篇讲过，配置 Path 环境变量是为了<b>在任意目录下都能打开指定的软件</b>。回想写 HelloWorld 的过程，有点怪：我们在 <code>F:\JavaSE\day01\代码</code> 里用了 <code>javac</code> 和 <code>java</code>，可这两个工具在 JDK 安装目录的 bin 里，代码文件夹里根本没有，为什么能用？</p>
+  <p>猜一下：是不是安装时 Java 帮我们把路径配进环境变量了？打开 Path 一看，在之前加的 QQ 路径上面，果然多了一条。把它复制到"此电脑"地址栏打开看看：Java 安装时把 <code>java</code>、<code>javac</code> 这几个命令做了一份"快捷方式"放进这个文件夹，再把这个文件夹配进了 Path。所以在任意目录都能用。</p>
+  <p>但是要注意：自动配置的<b>只有 4 个工具</b>：<code>java</code>、<code>javac</code>、<code>javaw</code>、<code>jshell</code>。要用 bin 里的其他工具还是不行，所以需要<b>自己手动配</b>。</p>
+  <p>手动配的最简单方式，是把 bin 的完整路径直接粘贴到 Path 的编辑框里，再上移到最上面。老师<b>不推荐</b>这样配 Java：Path 里有很多别的变量，直接在里面改，一不小心碰到别人的，系统里其他软件可能就打不开了。专业的做法分两步：</p>
+  <ol>
+    <li>在系统变量里<b>新建</b>一个变量，名字叫 <code>JAVA_HOME</code>，值是 JDK 的安装目录，比如 <code>E:\develop\jdk</code>，<b>注意不带 bin</b>。（这是老师的路径，你要写自己电脑上的真实路径。）</li>
+    <li>编辑 <b>Path</b> → 新建，写 <code>%JAVA_HOME%\bin</code>，再上移到最上面。两个百分号中间写变量名，意思是"引用 JAVA_HOME 的值"，和后面的 <code>\bin</code> 拼起来，就是完整的 <code>E:\develop\jdk\bin</code>。</li>
+  </ol>
+  <p>为什么要多此一举建一个 JAVA_HOME？因为以后要学的其他开发软件<b>也会依赖 JAVA_HOME</b>，现在一次配到位，以后就不用再配了。</p>
+
+  <div class="card">
+    <h3>动手：配 JAVA_HOME，看 Path 怎么展开</h3>
+    <p style="margin-top:0">开始时的 Path 和安装完 JDK 一样，第一条是 Java 自动配的。先试试 <code>jar --version</code>（bin 里的另一个工具），然后按老师的步骤：删掉自动配的那条 → 新建 JAVA_HOME → Path 里新建 <code>%JAVA_HOME%\bin</code>，再试一次。也可以故意把 JAVA_HOME 写成带 <code>\bin</code> 的，看看会发生什么。</p>
+    <div class="envbox">
+      <div class="panel">
+        <h4>系统变量</h4>
+        <div id="vars"></div>
+        <h4 style="margin-top:12px">Path（从上往下找）</h4>
+        <ul class="plist" id="env-path"></ul>
+        <div class="btns" style="margin-top:8px">
+          <button class="btn sm" id="add-ref">新建 %JAVA_HOME%\bin</button>
+          <button class="btn sm" id="add-full">新建完整路径 E:\develop\jdk\bin</button>
+          <button class="btn sm" id="env-reset">恢复初始</button>
+        </div>
+      </div>
+      <div class="panel">
+        <h4>在新打开的 CMD 里试试</h4>
+        <div class="chips" id="env-chips" style="margin-top:0"><button>javac -version</button><button>java -version</button><button>jar --version</button><button>javadoc --version</button></div>
+        <div class="out" id="env-out"><span class="note">点上面的命令运行。每次运行都相当于新开了一个 CMD，所以改完 Path 不用手动重开。</span></div>
+      </div>
+    </div>
+  </div>
+
+  <p>最后是一个小扩展：<b>部分</b> Win10 电脑有个 bug，重启之后配的环境变量失效了。如果你遇到了，就换一种配法：JAVA_HOME 照样配，但 Path 里<b>不引用</b> JAVA_HOME，直接写完整路径 <code>E:\develop\jdk\bin</code>。JAVA_HOME 还是要配，留给以后的其他软件用。</p>
+
+  <div class="extra">
+    <span class="t">"重启后失效"的一种已知原因</span>
+    Path 在注册表里有两种存法：一种会展开 <code>%变量%</code>，一种不会。某些软件或操作改写 Path 时把它存成了"不展开"的那种，<code>%JAVA_HOME%\bin</code> 就会被原样当作一个叫这个名字的文件夹去找，自然找不到。直接写完整路径就绕开了这个问题。上面的模拟器里，JAVA_HOME 没定义时 <code>%JAVA_HOME%\bin</code> 也是原样保留，效果类似。
+  </div>
+  <div class="extra">
+    <span class="t">用 Mac 的话</span>
+    Mac 上用 dmg 装完 JDK，<code>java</code>、<code>javac</code> 等命令马上就能用，不用配 Path（<code>/usr/bin</code> 里有对应的入口，会自动找到装好的 JDK）。需要 JAVA_HOME 时，在 <code>~/.zshrc</code> 里加一行，然后重开终端：
+    <code class="blk" style="margin-top:6px">export JAVA_HOME=$(/usr/libexec/java_home -v 17)</code>
+    <code>/usr/libexec/java_home -V</code>（大写 V）能列出电脑上装的所有 JDK。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P11</div>
+  <h2>高级记事本：Notepad++</h2>
+  <p>用 Windows 记事本写代码有点累：所有单词都是黑色的；报错说第 3 行出问题，还得一行一行数。现在代码少还好，要是 100 多行、告诉你第 78 行错了，难道也一行行数？能不能让有特殊含义的单词换个颜色、前面再显示行号？</p>
+  <p>可以，换个<b>高级记事本</b>就行。它的特点是：<b>前面有行号</b>，Java 里的<b>关键单词会高亮</b>。市面上有很多种：Java 程序员常用的 EditPlus、Notepad++，前端程序员常用的 Sublime。用法都差不多，学会一个就行，这里以 <b>Notepad++</b> 为例（课程资料里提供了安装包）。</p>
+  <ol>
+    <li><b>安装</b>：第一步选语言，选"中文（简体）"；之后一路下一步，只改安装路径。建议别装 C 盘，所有东西都装 C 盘电脑会变卡，统一放进开发软件的文件夹，老师装在 <code>E:\develop\notepad</code>。</li>
+    <li><b>设置（一定要做）</b>：设置 → 首选项 → 左边选"新建"，中间格式选 <b>Windows</b>，语言选 <b>Java</b>，右边编码选 <b>ANSI</b>（使用本地默认编码），关闭。不设置的话，代码里就不能写中文；设置完之后<b>新建的文件</b>才生效，以前建的不行。</li>
+    <li><b>用它写代码</b>：新建 <code>HelloWorld.java</code>，右键 → Edit with Notepad++。敲 <code>public</code>、<code>class</code> 时颜色马上就变了。这次双引号里可以写中文：<code>"你好老铁"</code>。</li>
+    <li><b>更快打开 CMD</b>：在 Notepad++ 顶部这个文件的标签上右键 → "打开所在文件夹（命令行）"，弹出的 CMD 已经在这个文件所在的路径。这是目前最快的方式。然后照常 <code>javac</code>、<code>java</code>，屏幕上就是"你好老铁"。</li>
+  </ol>
+
+  <div class="card">
+    <h3>动手：换成 Notepad++ 再写一遍</h3>
+    <p style="margin-top:0">这次编辑器带行号和高亮，代码里已经写好了中文。也可以点标题栏的"记事本 / Notepad++"来回切换对比。故意写错一处再编译，出错的行号会在左边标红，不用再数了。</p>
+    <div id="lab3"></div>
+  </div>
+
+  <p>那为什么要设成 ANSI？这关系到<b>编码</b>，视频说后面会细讲。下面这个补充先把原理讲清楚：</p>
+
+  <div class="card">
+    <h3>补充演示：编码对不上会怎样</h3>
+    <p style="margin-top:0">文件里存的其实是字节。编辑器按某种编码把"你好老铁"存成字节，javac 再按某种编码把字节读回文字。两边用的编码一样才对得上。</p>
+    <div class="enc-row"><span>编辑器把文件存成</span><span class="seg" id="enc-save"><button data-v="utf8">UTF-8</button><button data-v="gbk">ANSI（即 GBK）</button></span></div>
+    <div class="bytes" id="enc-bytes"></div>
+    <div class="enc-row"><span>javac 读文件时按</span><span class="seg" id="enc-read"><button data-v="gbk">GBK（JDK 17 及以前，中文 Windows）</button><button data-v="utf8">UTF-8（JDK 18 起；Mac / Linux）</button></span></div>
+    <div class="enc-res" id="enc-res"></div>
+  </div>
+
+  <div class="extra">
+    <span class="t">为什么是 ANSI，以及什么时候不该选它</span>
+    "ANSI"在简体中文 Windows 上指的就是 <b>GBK</b> 编码。JDK 17 及以前的 javac 在中文 Windows 上默认按 GBK 读源文件，而 Notepad++ 和新版 Windows 记事本默认存成 UTF-8，两边对不上就会乱码甚至编译失败，所以老师让 Notepad++ 改成 ANSI，和 javac 保持一致。<br>
+    <b>但从 JDK 18 开始，Java 的默认编码统一改成了 UTF-8</b>。如果你装的是 21、25 这些新版本，反而应该保持 UTF-8，选 ANSI 会让中文报错。不管哪个版本，都可以在编译时明确告诉 javac 文件的编码：<code>javac -encoding UTF-8 HelloWorld.java</code>。以后用 IDEA 写代码，它会帮你处理好这件事。
+  </div>
+  <div class="extra">
+    <span class="t">用 Mac 的话</span>
+    Notepad++ 只有 Windows 版。Mac 上可以用 VS Code、Sublime Text 或 CotEditor，都有行号和高亮。Mac 系统默认编码就是 UTF-8，编辑器也默认存 UTF-8，两边天然一致，不会遇到上面的乱码问题。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>JDK</b></td><td>写 Java 要装的软件。路径不要有中文、空格、特殊符号；开发工具放同一个文件夹。工具都在 <b>bin</b> 里</td></tr>
+      <tr><td><b>HelloWorld</b></td><td>记事本写代码（后缀 <code>.java</code>）→ <code>javac HelloWorld.java</code> 编译出 <code>.class</code> → <code>java HelloWorld</code> 运行。有 c 有后缀，没 c 没后缀</td></tr>
+      <tr><td><b>常见 bug</b></td><td>中文标点（报"非法字符"）、大小写写错（如 <code>system</code>）。看报错的行号和 <code>^</code></td></tr>
+      <tr><td><b>环境变量</b></td><td>安装时只自动配了 java、javac、javaw、jshell。专业配法：新建 <code>JAVA_HOME</code>（不带 bin），Path 里加 <code>%JAVA_HOME%\bin</code></td></tr>
+      <tr><td><b>Notepad++</b></td><td>有行号、有高亮。新建文件的编码设为 ANSI，才能在代码里写中文（JDK 17 + 中文 Windows 的情况）</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    Java 程序要先用 <code>javac</code> 把 .java 翻译成 .class，再用 <code>java</code> 运行 class；这两个工具都在 JDK 的 bin 里，能在任意目录使用，是因为 bin 被配进了 Path。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. 编译和运行 HelloWorld 分别用什么命令？哪个要写后缀，哪个不写？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">编译 <code>javac HelloWorld.java</code>（带 .java 后缀），运行 <code>java HelloWorld</code>（不带后缀）。口诀：有 c 有后缀，没 c 没后缀。写成 <code>java HelloWorld.class</code> 会报"找不到或无法加载主类"。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 改了双引号里的内容、也保存了，直接 <code>java HelloWorld</code>，打印出来的是新内容还是旧内容？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">旧内容。<code>java</code> 运行的是 class 文件，而 class 文件是上次 <code>javac</code> 时生成的。改了代码要先重新编译。（同理，没保存就编译，编译的也是硬盘上的旧版本。）</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 编译时报 <code>错误: 非法字符: '\uff1b'</code>，最可能是哪里错了？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">代码里用了中文分号 <code>；</code>（它的 Unicode 编码就是 FF1B）。把它改成英文分号 <code>;</code>。可以把输入法设为"中文时使用英文标点"来避免。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. JAVA_HOME 的值应该写到哪一层？Path 里该写什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">JAVA_HOME 写 JDK 的安装目录，<b>不带 bin</b>，例如 <code>E:\develop\jdk</code>；Path 里新建 <code>%JAVA_HOME%\bin</code>。如果 JAVA_HOME 带了 bin，展开后就成了 <code>…\bin\bin</code>，找不到工具。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 装完 JDK 什么都没配，<code>javac</code> 就能用了，为什么还要手动配环境变量？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">安装程序只自动配了 java、javac、javaw、jshell 四个工具的路径，bin 里其他工具（如 jar、javadoc）用不了；另外以后的很多开发软件要靠 JAVA_HOME 找到 JDK。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="01.html"><small>← 上一篇</small>P1–5 人机交互、CMD 与环境变量</a>
+    <a class="next" href="12.html"><small>下一篇 →</small>P12–16 Java 的来历、用途与跨平台</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P6–P11（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=6" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- JDK 目录 ---------- */
+(function () {
+  const D = [
+    ['bin', '存放各种<b>工具命令</b>。最重要的是 <code>javac</code>（编译）和 <code>java</code>（运行），以后要用哪个工具就到这里找。', ['javac', 'java', 'javaw', 'jshell', 'jar', 'javadoc', 'jdb', 'keytool', 'jconsole', '…']],
+    ['conf', '存放相关的<b>配置文件</b>。'],
+    ['include', '存放一些<b>平台特定的头文件</b>（给 C/C++ 和 Java 互相调用时用）。'],
+    ['jmods', '存放各种<b>模块</b>。'],
+    ['legal', '存放各个模块的<b>授权文档</b>。'],
+    ['lib', '存放工具的一些<b>补充 JAR 包</b>（library）。'],
+  ];
+  const ul = $('#jdk-list'), desc = $('#jdk-desc');
+  D.forEach(([n, d, tools], i) => {
+    const li = document.createElement('li'), b = document.createElement('button');
+    b.textContent = n; if (i === 0) b.classList.add('key');
+    b.onclick = () => {
+      $$('#jdk-list button').forEach(x => x.classList.remove('sel')); b.classList.add('sel');
+      desc.innerHTML = `<b style="font-family:var(--mono)">E:\\develop\\jdk\\${n}</b><br>${d}` + (tools ? `<div class="tools">${tools.map(t => `<span class="${t === 'javac' || t === 'java' ? 'hot' : ''}">${t}${t === '…' ? '' : '.exe'}</span>`).join('')}</div>` : '') + (i ? '<div style="color:var(--muted);font-size:13px;margin-top:8px">了解一下就行，重点只有 bin。</div>' : '');
+    };
+    li.appendChild(b); ul.appendChild(li);
+    if (i === 0) b.click();
+  });
+})();
+
+/* ---------- 编译流程示意 ---------- */
+(function () {
+  const svg = $('#pipeline');
+  const arrow = (x1, x2, y, label) => {
+    el('line', { x1, y1: y, x2: x2 - 8, y2: y, class: 'pf-arrow' }, svg);
+    el('path', { d: `M${x2},${y} l-10,-6 l0,12 z`, class: 'pf-head' }, svg);
+    txt(svg, (x1 + x2) / 2, y - 12, label, 'pf-tool mid');
+  };
+  el('rect', { x: 10, y: 30, width: 190, height: 120, rx: 8, class: 'pf-file' }, svg);
+  ['public class HelloWorld {', '  public static void', '   main(String[] args) {', '    System.out.println(', '       "HelloWorld");', '  }', '}'].forEach((s, i) => txt(svg, 20, 50 + i * 14, s, 'pf-code'));
+  txt(svg, 105, 172, 'HelloWorld.java · 人看得懂', 't-sub mid');
+  arrow(206, 262, 90, 'javac');
+  el('rect', { x: 266, y: 30, width: 170, height: 120, rx: 8, class: 'pf-cls' }, svg);
+  ['CA FE BA BE 00 00', '00 3D 00 1D 0A 00', '02 00 03 07 00 04', '0C 00 05 00 06 01', '00 10 6A 61 76 61', '…'].forEach((s, i) => txt(svg, 280, 54 + i * 16, s, 'pf-hex'));
+  txt(svg, 351, 172, 'HelloWorld.class · 字节码', 't-sub mid');
+  arrow(442, 494, 90, 'java');
+  el('rect', { x: 498, y: 50, width: 152, height: 80, rx: 8, class: 'pf-scr' }, svg);
+  txt(svg, 510, 80, '> java HelloWorld', 'pf-code').setAttribute('style', 'fill:#d7dae0');
+  txt(svg, 510, 104, 'HelloWorld', 'pf-out');
+  txt(svg, 574, 172, '屏幕输出', 't-sub mid');
+})();
+
+/* ---------- 迷你 javac：只认 HelloWorld 这种结构 ---------- */
+const TPL = 'public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println("HelloWorld");\n    }\n}\n';
+function compileJava(src, file, opts = {}) {
+  const lines = src.split('\n');
+  const errs = [];
+  const E = (ln, col, msg, more) => errs.push({ ln, col, msg, more: more || [] });
+  const base = file.replace(/\.java$/i, '');
+  // 1) 字符串外的中文标点 / 全角符号
+  const BAD = /[\u3000-\u303f\uff00-\uffef\u2018-\u201f\u2026\u00b7]/;
+  const code = []; // 去掉字符串内容和 // 注释后的行，用来查结构
+  let open = 0, firstNeg = null;
+  lines.forEach((L, i) => {
+    let inStr = false, out = '';
+    for (let j = 0; j < L.length; j++) {
+      const c = L[j];
+      if (inStr) { if (c === '\\') { j++; out += '  '; continue; } if (c === '"') { inStr = false; out += c; } else out += ' '; continue; }
+      if (c === '"') { inStr = true; out += c; continue; }
+      if (c === '/' && L[j + 1] === '/') break;
+      if (BAD.test(c)) {
+        E(i + 1, j, `非法字符: '\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}'`);
+        if (c === '\uff1b') E(i + 1, j, "需要';'");
+      }
+      if (c === '{') open++;
+      if (c === '}') { open--; if (open < 0 && firstNeg == null) firstNeg = [i + 1, j]; }
+      out += c;
+    }
+    code.push(out);
+  });
+  if (errs.length) return { errs, lines };
+  // 2) 逐行认结构
+  let cls = null, mainName = null, unknown = null;
+  const prints = [];
+  const ind = L => L.length - L.trimStart().length;
+  for (let i = 0; i < lines.length; i++) {
+    const C = code[i].trim(), raw = lines[i], ln = i + 1;
+    if (!C || /^[{}\s]+$/.test(C)) continue;
+    let m;
+    if (/\bclass\b/.test(C)) {
+      m = C.match(/^(public\s+)?class\s+([A-Za-z_$][\w$]*)\s*\{?$/);
+      if (!m) { E(ln, ind(raw), '需要class、interface、enum或record'); continue; }
+      cls = m[2];
+      if (m[1] && cls !== base && !opts.source) E(ln, raw.indexOf('class'), `类 ${cls} 是公共的, 应在名为 ${cls}.java 的文件中声明`);
+    } else if (/\b(static|void)\b/.test(C)) {
+      m = C.match(/^public\s+static\s+void\s+([A-Za-z_$][\w$]*)\s*\(\s*([A-Za-z_$][\w$]*)\s*\[\s*\]\s*([A-Za-z_$][\w$]*)\s*\)\s*\{?$/);
+      if (!m) { unknown = unknown || ln; continue; }
+      mainName = m[1];
+      if (m[2] !== 'String') E(ln, raw.indexOf(m[2]), '找不到符号', ['  符号:   类 ' + m[2], '  位置: 类 ' + (cls || base)]);
+    } else if (/^\w+\s*\.\s*\w+\s*\.\s*\w+\s*\(/.test(C)) {
+      m = C.match(/^([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\.([A-Za-z_$][\w$]*)\s*\((.*)\)\s*(;?)$/);
+      const q = (raw.match(/"/g) || []).length - (raw.match(/\\"/g) || []).length;
+      if (q % 2) { E(ln, raw.indexOf('"'), '未结束的字符串文字'); continue; }
+      if (!m) { if (!/\)\s*;?$/.test(C)) E(ln, raw.trimEnd().length, "需要')'"); else unknown = unknown || ln; continue; }
+      const argRaw = raw.slice(raw.indexOf('(') + 1, raw.lastIndexOf(')')).trim();
+      let val;
+      const sm = argRaw.match(/^"((?:[^"\\]|\\.)*)"$/);
+      if (sm) val = sm[1].replace(/\\(.)/g, (_, c) => ({ n: '\n', t: '\t' }[c] ?? c));
+      else if (/^-?\d+(\.\d+)?$/.test(argRaw)) val = String(Number(argRaw));
+      else if (argRaw === '') val = '';
+      else { unknown = unknown || ln; continue; }
+      const dot1 = raw.indexOf('.'), dot2 = raw.indexOf('.', dot1 + 1);
+      if (m[1] !== 'System') { E(ln, dot1, `程序包${m[1]}不存在`); continue; }
+      if (m[2] !== 'out') { E(ln, dot1, '找不到符号', ['  符号:   变量 ' + m[2], '  位置: 类 System']); continue; }
+      if (m[3] !== 'println' && m[3] !== 'print') { E(ln, dot2, '找不到符号', ['  符号:   方法 ' + m[3] + (argRaw ? '(String)' : '()'), '  位置: 类型为PrintStream的变量 out']); continue; }
+      if (m[3] === 'print' && argRaw === '') { E(ln, dot2, '对于print(没有参数), 找不到合适的方法'); continue; }
+      if (!m[5]) E(ln, raw.lastIndexOf(')') + 1, "需要';'");
+      prints.push([val, m[3] === 'println']);
+    } else unknown = unknown || ln;
+  }
+  if (open > 0) {
+    let last = lines.length - 1; while (last > 0 && !lines[last].trim()) last--;
+    E(last + 1, lines[last].trimEnd().length - 1, '解析时已到达文件结尾');
+  } else if (firstNeg) E(firstNeg[0], firstNeg[1], '需要class、interface、enum或record');
+  if (!errs.length && unknown) return { unknown, lines };
+  if (!errs.length && !cls) return { unknown: 1, lines };
+  errs.sort((a, b) => a.ln - b.ln);
+  return { errs, lines, cls, mainName, prints };
+}
+function errText(file, res) {
+  const out = [];
+  for (const e of res.errs) {
+    out.push([`${file}:${e.ln}: 错误: ${e.msg}`, 'err']);
+    const L = res.lines[e.ln - 1] || '';
+    out.push([L, '']);
+    out.push([L.slice(0, Math.max(0, e.col)).replace(/[^\t]/g, ' ') + '^', '']);
+    e.more.forEach(s => out.push([s, '']));
+  }
+  out.push([`${res.errs.length} 个错误`, 'err']);
+  return out;
+}
+const MAIN_ERR = c => [['错误: 在类 ' + c + ' 中找不到 main 方法, 请将 main 方法定义为:', 'err'], ['   public static void main(String[] args)', 'err'], ['否则 JavaFX 应用程序类必须扩展javafx.application.Application', 'err']];
+
+/* ---------- 实验台：编辑器 + 文件夹 + CMD ---------- */
+function makeLab(host, cfg) {
+  const FILE = 'HelloWorld.java', DIR = 'F:\\JavaSE\\day01\\代码';
+  const S = { text: cfg.text || TPL, saved: cfg.text || TPL, mode: cfg.mode || 'notepad', klass: null, errLines: new Set(), hist: [], hi: 0 };
+  host.innerHTML = `
+    <div class="lab">
+      <div class="np">
+        <div class="np-bar"><span class="np-title"></span>
+          <span class="np-mode"><button data-m="notepad">记事本</button><button data-m="npp">Notepad++</button></span>
+          <button class="btn sm np-save">保存</button></div>
+        <div class="np-body"><div class="np-gut"></div><div class="np-wrap"><pre aria-hidden="true"></pre><textarea spellcheck="false" autocapitalize="off" autocomplete="off" aria-label="代码编辑器"></textarea></div></div>
+      </div>
+      <div class="files"><h4>代码</h4><ul></ul></div>
+    </div>
+    <div class="term"></div>
+    <div class="chips"><span>试试：</span>${(cfg.chips || ['javac HelloWorld.java', 'java HelloWorld', 'dir', 'java HelloWorld.class', 'javac HelloWorld', 'cls']).map(c => `<button>${c}</button>`).join('')}</div>`;
+  const np = $('.np', host), title = $('.np-title', host), gut = $('.np-gut', host), pre = $('pre', host), ta = $('textarea', host), files = $('.files ul', host), term = $('.term', host);
+  ta.value = S.text;
+
+  // 编辑器
+  const KW = /\b(public|class|static|void|private|int|new|return|if|else|for|while)\b/;
+  function hl(s) {
+    if (S.mode !== 'npp') return esc(s);
+    return s.split('\n').map(L => {
+      let o = '', i = 0;
+      while (i < L.length) {
+        if (L[i] === '"') { let j = i + 1; while (j < L.length && L[j] !== '"') { if (L[j] === '\\') j++; j++; } o += `<span class="hs">${esc(L.slice(i, j + 1))}</span>`; i = j + 1; continue; }
+        if (L[i] === '/' && L[i + 1] === '/') { o += `<span style="color:var(--muted)">${esc(L.slice(i))}</span>`; break; }
+        const m = L.slice(i).match(/^[A-Za-z_$][\w$]*/);
+        if (m) { const w = m[0]; o += KW.test(w) && w.match(KW)[0] === w ? `<span class="hk">${w}</span>` : (w === 'String' || w === 'System' ? `<span class="ht">${w}</span>` : w); i += w.length; continue; }
+        o += esc(L[i]); i++;
+      }
+      return o;
+    }).join('\n');
+  }
+  function paintEd() {
+    pre.innerHTML = hl(S.text) + '\n ';
+    const n = S.text.split('\n').length;
+    gut.innerHTML = Array.from({ length: n }, (_, i) => S.errLines.has(i + 1) ? `<b>${i + 1}</b>` : String(i + 1)).join('\n') + '\n ';
+    np.classList.toggle('plain', S.mode !== 'npp');
+    $$('.np-mode button', host).forEach(b => b.classList.toggle('sel', b.dataset.m === S.mode));
+    const dirty = S.text !== S.saved;
+    title.textContent = (dirty ? '*' : '') + (S.mode === 'npp' ? DIR + '\\' + FILE + ' - Notepad++' : FILE + ' - 记事本');
+    title.classList.toggle('dirty', dirty);
+    syncScroll();
+  }
+  function syncScroll() { pre.scrollTop = ta.scrollTop; pre.scrollLeft = ta.scrollLeft; gut.scrollTop = ta.scrollTop; }
+  ta.addEventListener('input', () => { S.text = ta.value; paintEd(); });
+  ta.addEventListener('scroll', syncScroll);
+  ta.addEventListener('keydown', e => {
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); save(); }
+    else if (e.key === 'Tab') { e.preventDefault(); const a = ta.selectionStart; ta.setRangeText('    ', a, ta.selectionEnd, 'end'); S.text = ta.value; paintEd(); }
+  });
+  function save() { S.saved = S.text; paintEd(); paintFiles(); }
+  $('.np-save', host).onclick = save;
+  $$('.np-mode button', host).forEach(b => b.onclick = () => { S.mode = b.dataset.m; paintEd(); });
+
+  // 文件夹
+  let peek = false, fresh = false;
+  function paintFiles() {
+    files.innerHTML = `<li>📄 ${FILE}</li>` + (S.klass ? `<li class="cls${fresh ? ' fresh' : ''}" title="点击用记事本打开">📄 ${S.klass.name}.class</li>` : '') +
+      (S.klass && peek ? `<li class="peek">CA FE BA BE 00 00 00 3D 00 1D 0A 00 02 00 03 07 …<br><span style="font-family:inherit;color:var(--muted)">人看不懂，正常。开头 CAFEBABE 是 class 文件的标志；第 8 个字节 3D = 61，代表 Java 17。</span></li>` : '');
+    fresh = false;
+    const c = $('.cls', files); if (c) c.onclick = () => { peek = !peek; paintFiles(); };
+  }
+
+  // CMD
+  let out;
+  function line(s, cls) { const d = document.createElement('div'); d.className = 'ln' + (cls ? ' ' + cls : ''); d.textContent = s; out.appendChild(d); }
+  const prompt = () => DIR + '>';
+  function setErr(res) { S.errLines = new Set(res && res.errs ? res.errs.map(e => e.ln) : res && res.unknown ? [res.unknown] : []); paintEd(); }
+  function runProgram(k, label) {
+    if (k.mainName !== 'main') { MAIN_ERR(k.name).forEach(([s, c]) => line(s, c)); return; }
+    let buf = '';
+    for (const [v, nl] of k.prints) buf += v + (nl ? '\n' : '');
+    buf.replace(/\n$/, '').split('\n').forEach(s => line(s)); // print 不换行时，真实 CMD 的提示符会接在同一行后面，这里简化
+    if (/[^\x00-\x7f]/.test(buf) && S.mode !== 'npp') line('（真实的中文 Windows + JDK 17 + 记事本里，这里可能乱码或编译报错，原因见第 6 节）', 'note');
+    if (label) line(label, 'note');
+  }
+  function run(cmd) {
+    line(prompt() + cmd);
+    S.hist.push(cmd); S.hi = S.hist.length;
+    const c = cmd.trim(); if (!c) return;
+    let m;
+    if (/^cls$/i.test(c)) { out.innerHTML = ''; return; }
+    if (/^dir$/i.test(c)) {
+      line(` ${DIR} 的目录`); line('');
+      line('<DIR>          .'); line('<DIR>          ..');
+      line(`         ${String(new Blob([S.saved]).size).padStart(4)} ${FILE}`);
+      if (S.klass) line(`          425 ${S.klass.name}.class`);
+      line(`      ${S.klass ? 2 : 1} 个文件   2 个目录`); return;
+    }
+    if (/^javac\s+-version$/i.test(c)) { line('javac 17.0.2'); return; }
+    if (/^java\s+-version$/i.test(c)) { line('java version "17.0.2" 2022-01-18 LTS'); line('Java(TM) SE Runtime Environment (build 17.0.2+8-LTS-86)'); line('Java HotSpot(TM) 64-Bit Server VM (build 17.0.2+8-LTS-86, mixed mode, sharing)'); return; }
+    if ((m = c.match(/^javac(?:\s+(\S+))?$/i))) {
+      const f = m[1];
+      if (!f) { line('用法: javac <options> <source files>', 'err'); line('（要写上要编译的文件名）', 'note'); return; }
+      if (!/\.java$/i.test(f)) { line(`错误: 仅当显式请求注释处理时才接受类名称 '${f}'`, 'err'); line('1 个错误', 'err'); line('（编译要带 .java 后缀：有 c 有后缀）', 'note'); return; }
+      if (f.toLowerCase() !== FILE.toLowerCase()) { line('错误: 找不到文件: ' + f, 'err'); line('用法: javac <options> <source files>', 'err'); return; }
+      const res = compileJava(S.saved, f);
+      setErr(res);
+      if (res.unknown) { line(`（模拟器：第 ${res.unknown} 行超出了这个模拟器能检查的范围，它只认识 HelloWorld 这种结构。真实的 javac 会给出具体错误。）`, 'note'); return; }
+      if (res.errs.length) { errText(f, res).forEach(([s, k]) => line(s, k)); }
+      else { S.klass = { name: res.cls, mainName: res.mainName, prints: res.prints, src: S.saved }; fresh = true; paintFiles(); }
+      if (S.text !== S.saved) line('（注意：记事本里还有没保存的修改。javac 编译的是硬盘上保存过的版本）', 'note');
+      return;
+    }
+    if ((m = c.match(/^java\s+(\S+)$/i))) {
+      const a = m[1];
+      if (/\.java$/i.test(a)) {
+        if (a.toLowerCase() !== FILE.toLowerCase()) { line('错误: 找不到文件: ' + a, 'err'); return; }
+        const res = compileJava(S.saved, a, { source: true });
+        setErr(res);
+        if (res.unknown) { line(`（模拟器：第 ${res.unknown} 行超出了这个模拟器能检查的范围）`, 'note'); return; }
+        if (res.errs.length) { errText(a, res).forEach(([s, k]) => line(s, k)); line('错误: 编译失败', 'err'); return; }
+        runProgram({ name: res.cls, mainName: res.mainName, prints: res.prints }, '（JDK 11 起的捷径：在内存里编译后直接运行，没有生成 class 文件）');
+        return;
+      }
+      const why = n => line('原因: java.lang.ClassNotFoundException: ' + n, 'err');
+      if (/\.class$/i.test(a)) { line('错误: 找不到或无法加载主类 ' + a, 'err'); why(a); line('（运行时不带后缀：没 c 没后缀）', 'note'); return; }
+      if (!S.klass || S.klass.name.toLowerCase() !== a.toLowerCase()) { line('错误: 找不到或无法加载主类 ' + a, 'err'); why(a); if (!S.klass) line('（文件夹里还没有 class 文件，先 javac 编译）', 'note'); return; }
+      if (S.klass.name !== a) { line('错误: 找不到或无法加载主类 ' + a, 'err'); line(`原因: java.lang.NoClassDefFoundError: ${a} (wrong name: ${S.klass.name})`, 'err'); line('（Windows 的文件名不分大小写，但 Java 的类名区分）', 'note'); return; }
+      runProgram(S.klass, S.klass.src !== S.saved ? '（运行的是上次编译出的 class。代码改过了，要先重新 javac）' : '');
+      return;
+    }
+    if (/^help$/i.test(c)) { line('这个模拟窗口支持：javac 文件名  java 类名  java -version  javac -version  dir  cls', 'note'); return; }
+    const n = c.split(/\s+/)[0];
+    line(`'${n}' 不是内部或外部命令，也不是可运行的程序`, 'err'); line('或批处理文件。', 'err');
+  }
+  function openWin() {
+    term.innerHTML = '';
+    out = document.createElement('div'); term.appendChild(out);
+    line('（模拟的 CMD 窗口，已经在代码文件夹里。输入 help 查看支持的命令）', 'note'); line('');
+    const row = document.createElement('div'); row.className = 'inrow';
+    const pr = document.createElement('span'); pr.textContent = prompt();
+    const input = document.createElement('input');
+    input.setAttribute('aria-label', 'CMD 命令'); input.autocapitalize = 'off'; input.autocomplete = 'off'; input.spellcheck = false;
+    row.append(pr, input); term.appendChild(row);
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { const v = input.value; input.value = ''; run(v); term.scrollTop = term.scrollHeight; }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); if (S.hi > 0) input.value = S.hist[--S.hi]; }
+      else if (e.key === 'ArrowDown') { e.preventDefault(); S.hi = Math.min(S.hist.length, S.hi + 1); input.value = S.hist[S.hi] || ''; }
+      else if (e.key === 'Tab') { e.preventDefault(); input.value = input.value.replace(/(\s)h\w*$/i, '$1HelloWorld.java'); }
+    });
+    term.onclick = () => { if (!String(getSelection())) input.focus({ preventScroll: true }); };
+  }
+  openWin(); paintEd(); paintFiles();
+  $$('.chips button', host).forEach(b => b.onclick = () => { run(b.textContent); term.scrollTop = term.scrollHeight; });
+  return {
+    setCode(t, note) { S.text = t; ta.value = t; S.saved = t; S.errLines = new Set(); paintEd(); paintFiles(); if (note) { line(note, 'note'); term.scrollTop = term.scrollHeight; } },
+  };
+}
+
+/* 第 3 节 */
+(function () { makeLab($('#lab1'), {}); })();
+
+/* 第 4 节：埋 bug */
+(function () {
+  const lab = makeLab($('#lab2'), { chips: ['javac HelloWorld.java', 'java HelloWorld', 'cls'] });
+  const B = {
+    semi: ['中文分号', t => t.replace('("HelloWorld");', '("HelloWorld")；')],
+    quote: ['中文引号', t => t.replace('"HelloWorld"', '“HelloWorld”')],
+    sys: ['system 小写', t => t.replace('System.', 'system.')],
+    pin: ['println 写成 printIn', t => t.replace('println', 'printIn')],
+    nosemi: ['漏写分号', t => t.replace('("HelloWorld");', '("HelloWorld")')],
+    brace: ['少个右大括号', t => t.replace(/\}\n$/, '')],
+    cls: ['类名写错', t => t.replace('class HelloWorld', 'class Helloworld')],
+    mian: ['main 写成 mian', t => t.replace('main', 'mian')],
+    ok: ['改回正确代码', t => t],
+  };
+  $$('#bugs button').forEach(b => b.onclick = () => {
+    const [name, f] = B[b.dataset.b];
+    lab.setCode(f(TPL), b.dataset.b === 'ok' ? '（代码已改回正确的版本并保存）' : `（已埋入 bug：${name}，并保存。现在编译试试）`);
+  });
+})();
+
+/* 第 6 节：Notepad++ */
+(function () {
+  makeLab($('#lab3'), { mode: 'npp', text: TPL.replace('"HelloWorld"', '"你好老铁"'), chips: ['javac HelloWorld.java', 'java HelloWorld', 'cls'] });
+})();
+
+/* ---------- 第 5 节：JAVA_HOME ---------- */
+(function () {
+  const JP = 'C:\\Program Files\\Common Files\\Oracle\\Java\\javapath';
+  const JBIN = 'E:\\develop\\jdk\\bin';
+  const DIRS = {
+    [JP.toLowerCase()]: ['java', 'javac', 'javaw', 'jshell'],
+    [JBIN.toLowerCase()]: ['java', 'javac', 'javaw', 'jshell', 'jar', 'javadoc', 'jdb', 'keytool', 'jconsole'],
+    'c:\\windows\\system32': ['cmd', 'notepad', 'calc'], 'c:\\windows': ['explorer'], 'd:\\qq\\bin': ['QQ'],
+  };
+  const INIT = [JP, 'C:\\Windows\\system32', 'C:\\Windows', 'D:\\QQ\\Bin'];
+  let path, home, lastHit, added;
+  const reset = () => { path = [...INIT]; home = null; lastHit = -1; added = null; };
+  reset();
+  const expand = p => p.replace(/%([^%]+)%/g, (m, k) => (k.toLowerCase() === 'java_home' && home != null ? home : m));
+  const norm = p => p.replace(/\\+$/, '').toLowerCase();
+  function paint() {
+    $('#vars').innerHTML = home == null
+      ? `<div class="varrow">JAVA_HOME = <input id="home-in" value="E:\\develop\\jdk" aria-label="JAVA_HOME 的值"><button class="btn sm" id="home-add">新建</button></div>`
+      : `<div class="varrow"><b>JAVA_HOME</b> = ${esc(home)} <button class="btn sm" id="home-del">删除</button></div>` +
+        (/\\bin\\?$/i.test(home) ? '<div style="color:var(--bad);font-size:12.5px;margin-top:4px">值里带了 bin，引用时会拼成 …\\bin\\bin</div>' : '');
+    $('#env-path').innerHTML = path.map((p, i) => {
+      const ex = expand(p), has = /%/.test(p), ok = !!DIRS[norm(ex)];
+      let sub = '';
+      if (has) sub = ex === p ? '<small class="bad">→ 没有叫 JAVA_HOME 的变量，原样保留，找不到任何文件夹</small>' : `<small class="${ok ? '' : 'bad'}">→ ${esc(ex)}${ok ? '' : '（这个文件夹不存在）'}</small>`;
+      else if (i === path.indexOf(JP) && p === JP) sub = '<small>Java 安装时自动加的，里面只有 java、javac、javaw、jshell</small>';
+      return `<li class="${i === lastHit ? 'hit' : p === added ? 'new' : ''}"><span>${esc(p)}${sub}</span><button data-i="${i}" title="删除这一条" aria-label="删除这一条">✕</button></li>`;
+    }).join('');
+    $$('#env-path button').forEach(b => b.onclick = () => { path.splice(+b.dataset.i, 1); lastHit = -1; paint(); });
+    const a = $('#home-add'); if (a) a.onclick = () => { home = $('#home-in').value.trim() || 'E:\\develop\\jdk'; paint(); };
+    const d = $('#home-del'); if (d) d.onclick = () => { home = null; paint(); };
+    $('#add-ref').disabled = path.includes('%JAVA_HOME%\\bin');
+    $('#add-full').disabled = path.includes(JBIN);
+  }
+  $('#add-ref').onclick = () => { added = '%JAVA_HOME%\\bin'; path.unshift(added); lastHit = -1; paint(); };
+  $('#add-full').onclick = () => { added = JBIN; path.unshift(added); lastHit = -1; paint(); };
+  $('#env-reset').onclick = () => { reset(); $('#env-out').innerHTML = ''; paint(); };
+  const OUT = {
+    javac: ['javac 17.0.2'], jar: ['jar 17.0.2'], javadoc: ['javadoc 17.0.2'],
+    java: ['java version "17.0.2" 2022-01-18 LTS', 'Java(TM) SE Runtime Environment (build 17.0.2+8-LTS-86)', 'Java HotSpot(TM) 64-Bit Server VM (build 17.0.2+8-LTS-86, mixed mode, sharing)'],
+  };
+  $$('#env-chips button').forEach(b => b.onclick = () => {
+    const cmd = b.textContent, name = cmd.split(' ')[0], box = $('#env-out');
+    let h = `<div>C:\\Users\\moon&gt;${esc(cmd)}</div>`;
+    lastHit = path.findIndex(p => (DIRS[norm(expand(p))] || []).includes(name));
+    if (lastHit < 0) h += `<div class="err">'${name}' 不是内部或外部命令，也不是可运行的程序\n或批处理文件。</div>`;
+    else h += OUT[name].map(s => `<div>${esc(s)}</div>`).join('') + `<div class="note">（在 Path 第 ${lastHit + 1} 条 ${esc(expand(path[lastHit]))} 里找到 ${name}.exe）</div>`;
+    if (box.querySelector('.note') && !box.querySelector('div')) box.innerHTML = '';
+    box.insertAdjacentHTML('beforeend', h + '<div>&nbsp;</div>');
+    box.scrollTop = box.scrollHeight;
+    paint();
+  });
+  paint();
+})();
+
+/* ---------- 第 6 节：编码 ---------- */
+(function () {
+  const S = '你好老铁';
+  const BYTES = { utf8: [...new TextEncoder().encode(S)], gbk: [0xc4, 0xe3, 0xba, 0xc3, 0xc0, 0xcf, 0xcc, 0xfa] };
+  const NAME = { utf8: 'UTF-8', gbk: 'GBK' };
+  let save = 'utf8', read = 'gbk';
+  function paint() {
+    $$('#enc-save button').forEach(b => b.classList.toggle('sel', b.dataset.v === save));
+    $$('#enc-read button').forEach(b => b.classList.toggle('sel', b.dataset.v === read));
+    const per = save === 'utf8' ? 3 : 2;
+    $('#enc-bytes').innerHTML = BYTES[save].map((x, i) => `<span class="${Math.floor(i / per) % 2 ? '' : 'g1'}">${x.toString(16).toUpperCase().padStart(2, '0')}</span>`).join('') +
+      `<span style="border:0;background:none;color:var(--muted);font-family:inherit">← "${S}" 存成 ${NAME[save]}：每个汉字 ${per} 个字节，共 ${BYTES[save].length} 个</span>`;
+    let dec;
+    try { dec = new TextDecoder(read === 'gbk' ? 'gbk' : 'utf-8').decode(new Uint8Array(BYTES[save])); } catch (e) { dec = null; }
+    const r = $('#enc-res');
+    if (save === read) { r.className = 'enc-res ok'; r.innerHTML = `✓ 两边都是 ${NAME[save]}，读回来还是 <code>${S}</code>。编译运行，屏幕上就是"${S}"。`; }
+    else if (dec == null || dec.includes('\ufffd')) { r.className = 'enc-res bad'; r.innerHTML = `✗ 有些字节按 ${NAME[read]} 根本解释不了，javac 直接报错：<code>错误: 编码 ${NAME[read]} 的不可映射字符</code>，编译失败。`; }
+    else { r.className = 'enc-res mid'; r.innerHTML = `⚠ 字节按 ${NAME[read]} 能凑出字来，但凑出的是 <code>${esc(dec)}</code>。编译能通过，运行时屏幕上打出的就是这串<b>乱码</b>。`; }
+  }
+  $$('#enc-save button').forEach(b => b.onclick = () => { save = b.dataset.v; paint(); });
+  $$('#enc-read button').forEach(b => b.onclick = () => { read = b.dataset.v; paint(); });
+  paint();
+})();
+</script>
+</body>
+</html>
