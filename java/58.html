@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P58–62 数组四练与内存图 · Java 入门图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:200px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;max-height:220px;overflow-y:auto;white-space:pre-wrap}
+.out .note{color:#7f8794}
+.msg{font-size:14px;margin-top:8px}
+label{font-size:14px;display:inline-flex;align-items:center;gap:4px}
+
+/* 数组格子 */
+.arr{display:flex;margin:14px 0 4px;overflow-x:auto;padding:22px 2px 2px;position:relative}
+.arr .cell{min-width:52px;text-align:center;flex:none;position:relative}
+.arr .v{border:2px solid var(--line);border-left-width:1px;border-right-width:1px;height:40px;display:flex;align-items:center;justify-content:center;font:600 15px var(--mono);background:var(--panel);transition:background .25s}
+.arr .cell:first-child .v{border-left-width:2px;border-radius:8px 0 0 8px}
+.arr .cell:last-child .v{border-right-width:2px;border-radius:0 8px 8px 0}
+.arr .ix{font:12px var(--mono);color:var(--muted);margin-top:3px}
+.arr .cell.hi .v{background:var(--on-soft);border-color:var(--on)}
+.arr .cell.ok .v{background:var(--ok-soft);border-color:var(--ok)}
+.arr .cell.low .v{background:var(--accent-soft)}
+.arr .cell.dim .v{opacity:.45}
+.arr .ptr{position:absolute;top:-21px;left:0;right:0;font:700 12px var(--mono);color:var(--bad)}
+.stat{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;font:13.5px var(--mono)}
+.stat span{border:1px solid var(--line);border-radius:8px;padding:3px 10px;background:var(--panel)}
+.stat span.chg{border-color:var(--on);background:var(--on-soft)}
+
+/* 擂台 */
+.ring{display:flex;align-items:flex-end;gap:10px;margin-top:10px;min-height:120px}
+.ring .f{width:46px;text-align:center;font:12px var(--mono);color:var(--muted)}
+.ring .f .bar{background:var(--line);border-radius:6px 6px 0 0;margin:0 auto 4px;width:30px;transition:background .3s}
+.ring .f.champ .bar{background:var(--ok)}
+.ring .f.chal .bar{background:var(--on)}
+.ring .f.champ{color:var(--ok);font-weight:700}
+.ring .f .crown{height:18px;font-size:14px}
+
+/* 杯子 */
+.cups{display:flex;gap:18px;align-items:flex-end;margin-top:8px}
+.cup{text-align:center;font:13px var(--mono)}
+.cup .glass{width:62px;height:72px;border:2px solid var(--line);border-top:none;border-radius:0 0 12px 12px;display:flex;align-items:flex-end;justify-content:center;overflow:hidden}
+.cup .liq{width:100%;height:70%;display:flex;align-items:center;justify-content:center;font:700 15px var(--mono);color:#fff;transition:background .3s}
+
+/* 直方图 */
+.hgram{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;align-items:end;height:130px;margin-top:8px}
+.hgram div{background:var(--accent);border-radius:4px 4px 0 0;position:relative}
+.hgram div span{position:absolute;top:-17px;left:0;right:0;text-align:center;font:11px var(--mono);color:var(--muted)}
+.hgram-ax{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;font:11px var(--mono);color:var(--muted);text-align:center;margin-top:3px}
+.hline{position:relative}
+.hline::after{content:"";position:absolute;left:0;right:0;border-top:1.5px dashed var(--bad);bottom:var(--avg)}
+
+/* 内存图 */
+.mem-code{font:13px/1.75 var(--mono);background:var(--bg);border-radius:10px;padding:6px 0;overflow-x:auto}
+.mem-code div{padding:0 12px;white-space:pre}
+.mem-code div.cur{background:var(--on-soft)}
+.mem-wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:44px;margin-top:10px}
+.mem-col h4{margin:0 0 6px;font-size:13px;color:var(--muted);text-align:center}
+.mem-col .area{border:1.5px solid var(--line);border-radius:12px;min-height:150px;padding:10px;background:var(--panel)}
+.frame{border:1.5px solid var(--accent);border-radius:8px;padding:6px 8px}
+.frame .fn{font:700 12px var(--mono);color:var(--accent);margin-bottom:4px}
+.var{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:center;margin:5px 0;font:13px var(--mono)}
+.var .nm{color:var(--muted);font-size:12px}
+.var .vv{border:1.5px solid var(--line);border-radius:6px;padding:2px 8px;background:var(--bg);text-align:center;min-height:24px}
+.var.new .vv{border-color:var(--on);background:var(--on-soft)}
+.hobj{margin-bottom:12px}
+.hobj .ad{font:11px var(--mono);color:var(--muted);margin-bottom:2px}
+.hobj .cells{display:inline-flex}
+.hobj .c{min-width:40px;text-align:center}
+.hobj .c .x{border:1.5px solid var(--line);height:30px;display:flex;align-items:center;justify-content:center;font:600 14px var(--mono);background:var(--bg)}
+.hobj .c:first-child .x{border-radius:6px 0 0 6px}
+.hobj .c:last-child .x{border-radius:0 6px 6px 0}
+.hobj .c .i{font:10px var(--mono);color:var(--muted)}
+.hobj .c.hi .x{background:var(--on-soft);border-color:var(--on)}
+.hobj.new .cells{outline:2px solid var(--on);border-radius:6px}
+.mem-svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.mem-svg path{fill:none;stroke:var(--accent);stroke-width:1.8}
+@media (max-width:600px){.mem-wrap{gap:28px}.hobj .c{min-width:32px}}
+
+.regions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin:10px 0}
+@media (max-width:600px){.regions{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.regions div{border:1.5px solid var(--line);border-radius:10px;padding:8px;font-size:13px;background:var(--panel)}
+.regions div b{display:block;font-size:14px;margin-bottom:2px}
+.regions div.key{border-color:var(--accent);background:var(--accent-soft)}
+</style>
+</head>
+<body data-ep="58" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=58" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">数组 · P58–P62</div>
+  <h1>数组四练与内存图</h1>
+  <p class="en">Max, Sum &amp; Average, Swap, Shuffle — and How Arrays Live in Memory</p>
+  <p class="lead">会定义、获取、遍历、修改数组之后，用四个常见操作来练手：<b>求最值</b>（比武擂台）、<b>求和与平均数</b>（随机数）、<b>交换数据</b>（头尾对调）、<b>打乱数据</b>（随机索引）。最后画一画<b>数组的内存图</b>：栈和堆、new 出来的东西在哪，以及两个变量指向同一个数组时会发生什么。</p>
+  <div class="road">
+    <span>求最值</span><i>→</i><span>求和、平均数、统计</span><i>→</i><span>交换数据</span><i>→</i><span>打乱数据</span><i>→</i><span>Java 内存分配</span><i>→</i><span>数组内存图</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 求最值</a></li>
+    <li><a href="#ch2">2 · 求和、平均数、统计</a></li>
+    <li><a href="#ch3">3 · 交换数据</a></li>
+    <li><a href="#ch4">4 · 打乱数据</a></li>
+    <li><a href="#ch5">5 · Java 的内存分配</a></li>
+    <li><a href="#ch6">6 · 数组的内存图</a></li>
+    <li><a href="#ch7">7 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P58</div>
+  <h2>求最值：比武擂台</h2>
+  <p>数组的基本知识就四点：怎么定义、怎么获取元素、怎么遍历、怎么修改元素。接下来用它们做几个常见操作：求最值、求和、交换数据、打乱数据。</p>
+  <p><b>需求</b>：数组里有 33、5、22、44、55，找到最大值并打印。光讲代码太枯燥，给这五个数赋予意义：它们是<b>五个人的战斗力</b>。求最大值就是看谁最能打，那就准备一个<b>比武擂台</b>：</p>
+  <ul>
+    <li>定义变量 <code>max</code>，记录擂台上站着的人。一开始认为第一个人（小白人，战斗力 33）最能打，让他先站上擂台：<code>max = arr[0]</code>；</li>
+    <li>循环遍历数组，相当于让每个选手上台打一下：新上台的战斗力更高，max 就记录他；否则 max 不变。战斗力 5 的渣渣一下被打下台；紫衣服的 22 没几个回合也趴下了；小红人 44 一招佛山无影脚把小白人踢下去；最后上来的春丽（55）放了个大招把小红人也打下去；</li>
+    <li>循环结束，擂台上站着的就是最大值：55。</li>
+  </ul>
+  <code class="blk"><span class="hk">int</span>[] arr = {33, 5, 22, 44, 55};    <span class="hc">// 数据都知道，用静态初始化</span>
+<span class="hk">int</span> max = arr[0];                  <span class="hc">// 临时认为 0 索引的数据是最大的</span>
+<span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt; arr.length; i++) {
+    <span class="hk">if</span> (arr[i] &gt; max) {
+        max = arr[i];                 <span class="hc">// 找到更大的，max 记录最新的较大值</span>
+    }
+}
+System.out.println(max);            <span class="hc">// 55</span></code>
+  <p>视频最后讲了三个扩展问题：</p>
+  <ol>
+    <li><b>求最小值</b>：变量名改成 <code>min</code>，判断从 <code>&gt;</code> 改成 <code>&lt;</code>，就这两处。</li>
+    <li><b>max 的初始值为什么不能是 0？</b>如果数组里全是负数，比如 -33、-5、-22，max 从 0 开始，没有一个元素比 0 大，最后打印的最大值是 0，可数组里根本没有 0！所以 <b>max 的初始值一定要是数组中的值</b>。写 arr[1]、arr[2] 也行，只是习惯写 arr[0]，而且这样下面的循环还能优化：</li>
+    <li><b>循环一定从 0 开始吗？</b>不一定。i 为 0 时是拿 arr[0] 和 max 比，而 max 本来就是 arr[0]，等于自己跟自己比一下，对结果没影响，但多循环了一次。所以开始条件可以写 1，提高效率。</li>
+  </ol>
+
+  <div class="card">
+    <h3>动手：擂台赛</h3>
+    <div class="row"><span>战斗力</span><input class="inp" id="mx-arr" value="33, 5, 22, 44, 55" aria-label="数组元素"></div>
+    <div class="row">
+      <span class="seg" id="mx-mode"><button data-v="max">求最大值</button><button data-v="min">求最小值</button></span>
+      <label><input type="checkbox" id="mx-zero"> 初始值写 0（错误示范）</label>
+      <label><input type="checkbox" id="mx-i0"> 循环从 0 开始</label>
+    </div>
+    <div class="row"><button class="btn sm primary" id="mx-next">下一位上台</button><button class="btn sm" id="mx-all">打完</button><button class="btn sm" id="mx-re">重来</button><span class="chips" style="font-size:13px;color:var(--muted)">试试全是负数：<a href="#" id="mx-neg">-33, -5, -22, -44, -55</a></span></div>
+    <div class="ring" id="mx-ring"></div>
+    <div class="msg" id="mx-msg"></div>
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P59</div>
+  <h2>求和、平均数、统计比平均数小的个数</h2>
+  <p><b>需求</b>：生成 10 个 1~100 之间的随机数存入数组，① 求出所有数据的和；② 求所有数据的平均数；③ 统计有多少个数据比平均数小。</p>
+  <p><b>先准备数据</b>：定义数组用静态还是动态？定义时随机数还不知道，所以用<b>动态初始化</b> <code>new int[10]</code>。然后用 Random 生成 1~100 的随机数：<code>r.nextInt(100) + 1</code>（写 100 是 0~99，所以要再加 1）。要 10 个，就放进 <code>arr.fori</code> 循环，每循环一次生成一个新的随机数，用 <code>arr[i] = number</code> 存进去（i 就是索引）。存完想验证，<b>再写一个循环</b>遍历打印：一个循环只干一件事。每次运行结果都不一样。</p>
+  <code class="blk"><span class="hk">int</span>[] arr = <span class="hk">new int</span>[10];
+Random r = <span class="hk">new</span> Random();
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    <span class="hk">int</span> number = r.nextInt(100) + 1;   <span class="hc">// 每循环一次，生成一个新的随机数</span>
+    arr[i] = number;                   <span class="hc">// 添加到数组中</span>
+}
+
+<span class="hc">// ① 求和</span>
+<span class="hk">int</span> sum = 0;
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    sum = sum + arr[i];
+}
+System.out.println(<span class="hs">"数组中所有数据的和为："</span> + sum);
+
+<span class="hc">// ② 平均数 = 和 / 长度</span>
+<span class="hk">int</span> avg = sum / arr.length;
+System.out.println(<span class="hs">"数组中平均数为："</span> + avg);
+
+<span class="hc">// ③ 统计比平均数小的个数</span>
+<span class="hk">int</span> count = 0;
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    <span class="hk">if</span> (arr[i] &lt; avg) {
+        count++;
+    }
+}
+System.out.println(<span class="hs">"在数组中，一共有"</span> + count + <span class="hs">"个数据，比平均数小"</span>);
+
+<span class="hc">// 遍历数组，验证答案</span>
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    System.out.print(arr[i] + <span class="hs">" "</span>);    <span class="hc">// print 不换行，所有数据显示在同一行</span>
+}</code>
+  <p>平均数视频直接用整数（avg 是 Average 的缩写），用小数也没问题。最后验证时打印一个数据占一整行，看着累，这里有个小扩展：把 <code>println</code> 的 <b>ln 删掉</b>，打印时就<b>不换行</b>，后面拼一个空格隔开。视频里一次运行：和 505、平均数 50，数一数确实有 6 个比 50 小。</p>
+  <p>这道题的原题来自斯坦福大学，原题只有一句：生成 10 个 1~100 的随机数存入数组，统计有多少个数据比平均数小。一上来这么写很多同学思路会乱，所以老师把中间步骤拆成了问答的形式。思路捋清了，代码就简单了。</p>
+
+  <div class="card">
+    <h3>动手：生成 10 个随机数</h3>
+    <div class="row"><button class="btn sm primary" id="av-go">运行一次</button><label><input type="checkbox" id="av-dbl"> 平均数用 double</label></div>
+    <div class="arr" id="av-arr"></div>
+    <div class="out" id="av-out"></div>
+    <div class="msg" id="av-msg"></div>
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P60</div>
+  <h2>交换数据：头尾对调</h2>
+  <p><b>需求</b>：数组 {1, 2, 3, 4, 5}，交换后变成 {5, 4, 3, 2, 1}，相当于把元素首尾对调。这题比较难，拆成三个小问题，由浅入深。</p>
+  <p><b>小问题一：交换两个变量的值</b>。<code>int a = 10; int b = 20;</code> 有人写 <code>a = b; b = a;</code>，结果打印两个 20。为什么？<code>a = b</code> 把 b 的值赋给 a，a 原来的 10 被覆盖了，a、b 都是 20；接着 <code>b = a</code> 把 20 赋给 b，还是 20。</p>
+  <p>换个问题：A 杯装可乐，B 杯装雪碧，怎么对调？找一个第三方的 C 杯：可乐先倒进 C，雪碧倒进 A，再把 C 里的可乐倒进 B。变量也一样，用<b>第三方临时变量</b>：</p>
+  <code class="blk"><span class="hk">int</span> temp = a;   <span class="hc">// 把 a 的值赋给 temp，做个临时记录</span>
+a = b;            <span class="hc">// 把 b 的值赋给 a，a 原来的值被覆盖</span>
+b = temp;         <span class="hc">// temp 里是 a 原来的值，赋给 b</span></code>
+  <div class="card">
+    <h3>动手：倒饮料</h3>
+    <div class="row"><span class="seg" id="cp-m"><button data-v="0">a = b; b = a;</button><button data-v="1">用 temp 交换</button></span><button class="btn sm primary" id="cp-next">执行下一行</button><button class="btn sm" id="cp-re">重来</button></div>
+    <div class="cups" id="cp-cups"></div>
+    <div class="msg" id="cp-msg"></div>
+  </div>
+  <p><b>小问题二：交换数组的 0 索引和最大索引</b>。也是用第三方变量：<code>int temp = arr[0]; arr[0] = arr[4]; arr[4] = temp;</code>，遍历打印（删掉 ln、空格隔开）：5 2 3 4 1。</p>
+  <p><b>正式题目</b>：把刚才的交换反复循环。定义两个变量记录两个索引：<b>i</b> 记录最小索引 0，<b>j</b> 记录最大索引 4，交换它们指向的数据（1 和 5）；然后 <b>i++、j--</b>，再交换（2 和 4）……一直到 <b>i 等于 j，或者 i 跑到 j 的右边</b>，循环结束。</p>
+  <code class="blk"><span class="hk">int</span>[] arr = {1, 2, 3, 4, 5};
+<span class="hc">// 初始化语句里可以定义两个变量，用逗号隔开</span>
+<span class="hk">for</span> (<span class="hk">int</span> i = 0, j = arr.length - 1; i &lt; j; i++, j--) {
+    <span class="hk">int</span> temp = arr[i];      <span class="hc">// 交换变量 i 和变量 j 指向的元素</span>
+    arr[i] = arr[j];
+    arr[j] = temp;
+}</code>
+  <p>循环条件：i 在 j 左边时才继续，所以写 <code>i &lt; j</code>。课后自己写时不要直接写最后一题，按顺序先写交换两个变量，再写交换首尾两个元素，最后写全部交换。</p>
+  <div class="card">
+    <h3>动手：i 和 j 往中间走</h3>
+    <div class="row"><span>数组</span><input class="inp" id="sw-arr" value="1, 2, 3, 4, 5" aria-label="数组元素"><button class="btn sm primary" id="sw-next">下一步</button><button class="btn sm" id="sw-all">跑完</button><button class="btn sm" id="sw-re">重来</button></div>
+    <div class="arr" id="sw-a"></div>
+    <div class="msg" id="sw-msg"></div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P61</div>
+  <h2>打乱数据：和随机索引交换</h2>
+  <p><b>需求</b>：数组 {1, 2, 3, 4, 5}，随机打乱所有数据的顺序。刚开始很难入手，思路是：<b>从 0 索引开始遍历，拿当前元素和一个随机索引上的元素交换</b>。比如 0 索引的 1，随机索引是 2，就把 1 和 3 交换；然后 i++，拿 1 索引的元素和下一个随机索引交换……循环结束，数据就打乱了。</p>
+  <p><b>难点：怎么获取随机索引</b>？索引范围是 0~4，用 Random：<code>r.nextInt(5)</code>，包头不包尾，正好 0~4。多运行几次：0、3、0、1……每次都不一样。再改进一下，5 没有通用性，改成 <code>arr.length</code>，随便给一个数组都能拿到随机索引。</p>
+  <code class="blk"><span class="hk">int</span>[] arr = {1, 2, 3, 4, 5};
+Random r = <span class="hk">new</span> Random();
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    <span class="hk">int</span> randomIndex = r.nextInt(arr.length);   <span class="hc">// 生成一个随机索引</span>
+    <span class="hk">int</span> temp = arr[i];                          <span class="hc">// 和 i 指向的元素交换</span>
+    arr[i] = arr[randomIndex];
+    arr[randomIndex] = temp;
+}
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    System.out.print(arr[i] + <span class="hs">" "</span>);
+}</code>
+  <p>打乱了三次：4 5 3 2 1、2 1 4 3 5、5 3 1 4 2，每次都不一样。写完按 Ctrl+Alt+L 格式化代码。</p>
+  <div class="card">
+    <h3>动手：一步步打乱</h3>
+    <div class="row"><button class="btn sm primary" id="sh-next">下一步</button><button class="btn sm" id="sh-all">跑完</button><button class="btn sm" id="sh-re">重新开始</button></div>
+    <div class="arr" id="sh-a"></div>
+    <div class="msg" id="sh-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">这样打乱其实不太"公平"</span>
+    每一轮都从<b>全部</b>索引里随机挑，n 个数一共有 n<sup>n</sup> 种随机过程，而排列只有 n! 种。n = 3 时是 27 种过程对 6 种排列，27 不能被 6 整除，所以有的排列注定比别的更容易出现。正确的做法叫 <b>Fisher–Yates 洗牌</b>：第 i 轮只在 <b>i 和它后面</b>的索引里挑，<code>int randomIndex = i + r.nextInt(arr.length - i);</code>，这样每种排列的概率都一样。用 {1, 2, 3} 各洗 60000 次比一比（虚线是"完全公平"的位置）：
+    <div class="row" style="margin-top:8px"><span class="seg" id="fy-m"><button data-v="0">课上的写法</button><button data-v="1">Fisher–Yates</button></span><button class="btn sm" id="fy-go">再洗 60000 次</button></div>
+    <div class="hline" id="fy-wrap"><div class="hgram" id="fy-h"></div></div>
+    <div class="hgram-ax" id="fy-ax"></div>
+    <div class="msg" id="fy-msg" style="margin-top:4px"></div>
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P62</div>
+  <h2>Java 的内存分配</h2>
+  <p>数组的基本使用学完了。为了更好地理解数组到底怎么工作，扩展讲一讲<b>数组的内存图</b>。先看 Java 的内存分配：每款软件运行时都要占用一块内存，Java 也一样，虚拟机为了更好地利用这块空间，把它分成了五个部分：</p>
+  <div class="regions">
+    <div class="key"><b>栈</b>方法运行时使用的内存。程序的主入口 main 也是方法，开始执行时进栈，代码全部执行完就出栈</div>
+    <div class="key"><b>堆</b>存储对象或数组，<b>new 出来的都在堆里</b>，开辟的空间有地址值</div>
+    <div><b>方法区</b>存储可以运行的 class 文件：类要运行时，字节码文件会加载到这里</div>
+    <div><b>本地方法栈</b>虚拟机使用操作系统功能时用，和开发无关</div>
+    <div><b>寄存器</b>视频说<span class="fix" title="这里指 JVM 规范里的程序计数器（PC 寄存器），记录当前线程执行到哪条字节码指令，见下方更正框">交给 CPU 使用</span>，和开发无关</div>
+  </div>
+  <p>其中方法区要单独说一下：<span class="fix" title="严格说，方法区是 JVM 规范里的概念，一直都在；JDK 8 取消的是它在 HotSpot 里的旧实现"永久代"，改用元空间来实现">JDK 7 以前方法区和堆是连在一起的</span>，物理内存中也是连续的一块，这种设计不太好（后面讲虚拟机内存时详细说）；到了 JDK 8，取消了方法区，新增了<b>元空间</b>，和堆分开了，原来方法区的功能有的放进堆、有的放进元空间。为了方便理解，暂时还叫它方法区。现在只需要掌握前两个：<b>栈</b>和<b>堆</b>。</p>
+  <div class="extra">
+    <span class="t">更正：两处说法更准确的版本</span>
+    ① <b>方法区</b>是 Java 虚拟机规范里的一个概念，并没有被"取消"。JDK 7 及以前，HotSpot 虚拟机用<b>永久代</b>（放在堆旁边，归垃圾回收器管）来实现它；JDK 8 删掉的是永久代，改用放在本地内存里的<b>元空间</b>来实现方法区，原来存在永久代里的字符串常量池、静态变量在 JDK 7 就已经挪进了堆。② 第五块在规范里叫<b>程序计数器</b>（PC Register），作用是记录当前线程执行到了哪一条字节码，不是 CPU 自己的寄存器。这两块入门阶段确实不用管，知道名字就行。
+  </div>
+  <p><b>先看最简单的代码</b>：<code>int a = 10; int b = 10; int c = a + b; System.out.println(c);</code>。没有 new，不需要堆，只看栈：main 方法进栈，从第一行往下执行。<code>int a = 10</code> 就是在栈里开辟一块小空间，起名叫 a，限定只能存 int 整数，再把 10 放进去；b 同理；<code>int c = a + b</code> 先算出 20，再赋值给 c；打印时先找到 c 记录的值，再把 20 打印到控制台。下面的演示里第一段程序就是它。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P62</div>
+  <h2>数组的内存图</h2>
+  <p><b>一个数组</b>：<code>int[] arr = new int[2];</code> 有 new 了，栈和堆都要看。这行代码由左右两部分组成：</p>
+  <ul>
+    <li><b>等号左边</b>：在栈里定义一个变量 arr，类型 <code>int[]</code>，表示它可以记录 int 类型数组的<b>地址值</b>；</li>
+    <li><b>等号右边</b>：有 new，在堆里开辟一块空间，长度为 2，有 0、1 两个索引，元素是默认值 0。这块空间有地址值，通过中间的赋值运算符，把<b>地址值赋给左边的 arr</b>，arr 通过地址值就能找到堆里的这块空间。</li>
+  </ul>
+  <p>这就是<b>数组和变量的区别</b>：变量 a、b、c 里存的是真实的数据；而数组要存的数据可能很多很多，没法都放在 arr 这个变量里，所以 Java 把数据放在另一块空间，arr 只记录那块空间的地址值。所以打印 arr 看到的是地址值；<code>arr[0]</code> 是先通过 arr 找到堆里的空间，再通过 0 索引找到里面的数据。赋值 <code>arr[0] = 11</code> 也是先找到空间，再把 11 赋给 0 索引，原来的元素被覆盖。</p>
+  <p><b>两个数组</b>：再写 <code>int[] arr2 = {33, 44, 55};</code>。虽然没写 new，但这是简写，完整格式里还是有 new，所以同样在堆里开辟一块新空间，arr2 记录它的地址值。堆里有了两块空间，<b>互相独立，没有任何影响</b>。</p>
+  <p>两条重要规律：① <b>只要是 new 出来的，一定是在堆里开辟了一块小空间</b>，而且这块空间有地址值；② <b>new 了多次，堆里就有多块小空间</b>，每块空间都有各自的数据。</p>
+  <p><b>特殊情况：两个数组指向同一个空间</b>。先讲个小故事：老师有个朋友，小时候逢年过节喜欢和好基友把炮扔进厕所里，俗称"炸屎"。他爹再去上厕所，看到的是干净的厕所还是满地翔的厕所？当然是满地翔的，因为他们<b>共享同一个厕所</b>。来看代码：</p>
+  <code class="blk"><span class="hk">int</span>[] arr1 = {11, 22};
+<span class="hk">int</span>[] arr2 = arr1;          <span class="hc">// 没有 new！把 arr1 记录的地址值赋给 arr2</span>
+System.out.println(arr1[0]);  <span class="hc">// 11</span>
+System.out.println(arr2[0]);  <span class="hc">// 11</span>
+arr2[0] = 33;
+System.out.println(arr1[0]);  <span class="hc">// 33</span>
+System.out.println(arr2[0]);  <span class="hc">// 33</span></code>
+  <p>第二行等号右边没有 new，而是 arr1，表示把 arr1 记录的内容（地址值，比如 0x0011）赋值给 arr2。于是 arr1 和 arr2 指向<b>同一块空间</b>：arr1 是朋友，arr2 是朋友他爹，找的是同一个厕所。通过 arr2 把 0 索引改成 33，再通过 arr1 访问，看到的也是 33。结论：<b>当两个数组指向同一个小空间时，其中一个数组对小空间中的值发生了改变，其他数组再次访问的时候都是修改之后的结果</b>。</p>
+
+  <div class="card">
+    <h3>动手：逐行看栈和堆</h3>
+    <div class="row"><span class="seg" id="mm-p"><button data-v="0">变量（没有 new）</button><button data-v="1">一个数组、两个数组</button><button data-v="2">两个变量指向同一个数组</button></span></div>
+    <div class="row"><button class="btn sm primary" id="mm-next">执行下一行</button><button class="btn sm" id="mm-prev">上一步</button><button class="btn sm" id="mm-re">重来</button></div>
+    <div class="mem-code" id="mm-code"></div>
+    <div class="mem-wrap" id="mm-wrap">
+      <div class="mem-col"><h4>栈</h4><div class="area" id="mm-stack"></div></div>
+      <div class="mem-col"><h4>堆</h4><div class="area" id="mm-heap"></div></div>
+      <svg class="mem-svg" id="mm-svg"><defs><marker id="mah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent);stroke:none"/></marker></defs></svg>
+    </div>
+    <div class="out" id="mm-out"></div>
+    <div class="msg" id="mm-msg"></div>
+  </div>
+  <p>这部分稍微有点难，可以把视频二刷、三刷，掌握其中的规律就行。地址值 0x0011 只是示意，真实运行时打印的是 <code>[I@</code> 加一串十六进制数。</p>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>求最值</b></td><td><code>max = arr[0]</code>（初始值必须是数组里的值），从 1 开始遍历，更大就替换</td></tr>
+      <tr><td><b>随机数存入数组</b></td><td>动态初始化 + 循环 <code>arr[i] = r.nextInt(100) + 1</code>；一个循环只干一件事</td></tr>
+      <tr><td><b>print</b></td><td>去掉 ln 不换行，配合 <code>+ " "</code> 让数据显示在同一行</td></tr>
+      <tr><td><b>交换两个变量</b></td><td><code>temp = a; a = b; b = temp;</code></td></tr>
+      <tr><td><b>头尾对调</b></td><td><code>for (int i = 0, j = arr.length - 1; i &lt; j; i++, j--)</code> 里交换 arr[i]、arr[j]</td></tr>
+      <tr><td><b>打乱</b></td><td>遍历时和 <code>r.nextInt(arr.length)</code> 得到的随机索引交换</td></tr>
+      <tr><td><b>栈 / 堆</b></td><td>方法运行在栈里；new 出来的在堆里，有地址值；new 几次就有几块空间</td></tr>
+      <tr><td><b>共享空间</b></td><td><code>arr2 = arr1</code> 传的是地址值，两个变量改的是同一个数组</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    数组变量里存的不是数据，是堆里那块空间的地址；复制变量只是多了一个能找到同一块空间的人。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. 求最小值时 <code>int min = 0;</code>，数组是 {3, 8, 5}，结果是多少？错在哪？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">结果是 0，但数组里没有 0。初始值必须是数组中的值，写 <code>min = arr[0]</code>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. <code>int a = 1, b = 2; a = b; b = a;</code> 之后 a、b 各是多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">都是 2。第一句已经把 a 原来的 1 覆盖了，要用第三方变量 temp 先记下来。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 头尾对调时，数组长度是 6，循环会交换几次？长度是 5 呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">长度 6：3 次（0↔5、1↔4、2↔3）；长度 5：2 次，中间的 2 索引不用动，i 和 j 相遇就停。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>int[] a = {1, 2}; int[] b = {1, 2}; b[0] = 9;</code> 之后 a[0] 是多少？换成 <code>int[] b = a;</code> 呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">第一种 a[0] 还是 1：两次 new（简写也是 new），堆里两块独立空间。第二种 a[0] 变成 9：a、b 指向同一块空间。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 生成随机索引时，为什么写 <code>r.nextInt(arr.length)</code> 而不写 <code>r.nextInt(5)</code>？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">arr.length 有通用性：数组长度变了也不用改，范围永远是 0 ~ length − 1，正好是所有合法索引。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="54.html"><small>← 上一篇</small>P54–57 数组的定义、访问与遍历</a>
+    <a class="next off"><small>下一篇 →</small>P63–67 方法的定义与调用</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P58–P62（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=58" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const parseArr = s => { const a = s.split(/[,，\s]+/).filter(Boolean).map(Number); return a.length && a.length <= 12 && a.every(Number.isInteger) ? a : null; };
+function drawArr(box, vals, cls = {}, ptr = {}) {
+  box.innerHTML = vals.map((v, i) => `<div class="cell ${cls[i] || ''}">${ptr[i] ? `<div class="ptr">${ptr[i]}</div>` : ''}<div class="v">${esc(v)}</div><div class="ix">${i}</div></div>`).join('');
+}
+
+/* ---------- 擂台 ---------- */
+(function () {
+  let arr, steps, k;
+  function build() {
+    arr = parseArr($('#mx-arr').value);
+    if (!arr) { $('#mx-ring').innerHTML = ''; $('#mx-msg').textContent = '请填 1~12 个整数，用逗号隔开'; return; }
+    const isMax = $('#mx-mode .sel').dataset.v === 'max', zero = $('#mx-zero').checked, i0 = $('#mx-i0').checked || zero;
+    const nm = isMax ? 'max' : 'min';
+    let cur = zero ? 0 : arr[0], champ = zero ? -1 : 0;
+    steps = [{ champ, chal: null, cur, note: zero ? `int ${nm} = 0; 擂台上站的是一个不存在的"0 号选手"。` : `int ${nm} = arr[0]; 小白人（战斗力 ${arr[0]}）先站上擂台。` }];
+    for (let i = i0 ? 0 : 1; i < arr.length; i++) {
+      const win = isMax ? arr[i] > cur : arr[i] < cur;
+      const self = i === champ;
+      let note = `i = ${i}，arr[${i}] = ${arr[i]} 上台，和 ${nm} = ${cur} 比：${arr[i]} ${isMax ? '&gt;' : '&lt;'} ${cur} 为 ${win}。`;
+      if (self) note += ' 自己跟自己比了一下，白白多循环一次。';
+      else note += win ? ` 擂主换人，${nm} = ${arr[i]}。` : ' 被打下台，max 不变。'.replace('max', nm);
+      if (win) { cur = arr[i]; champ = i; }
+      steps.push({ champ, chal: i, cur, note });
+    }
+    const real = isMax ? Math.max(...arr) : Math.min(...arr);
+    steps.push({ champ, chal: null, cur, note: `循环结束，打印 ${nm}：<b>${cur}</b>。` + (cur !== real ? ` <span style="color:var(--bad)">错了！数组里根本没有 ${cur}，真正的${isMax ? '最大' : '最小'}值是 ${real}。初始值必须是数组中的值。</span>` : '') + ` 一共循环 ${steps.length - 1} 次。` });
+    k = 1; show();
+  }
+  function show() {
+    const s = steps[k - 1], lo = Math.min(0, ...arr), hi = Math.max(1, ...arr), span = hi - lo || 1;
+    $('#mx-ring').innerHTML = arr.map((v, i) => {
+      const h = 14 + Math.abs(v) / Math.max(Math.abs(lo), Math.abs(hi)) * 80;
+      return `<div class="f ${s.champ === i ? 'champ' : ''} ${s.chal === i && s.champ !== i ? 'chal' : ''}"><div class="crown">${s.champ === i ? '👑' : ''}</div><div class="bar" style="height:${h}px"></div>${v}<br>[${i}]</div>`;
+    }).join('') + (s.champ === -1 ? `<div class="f champ"><div class="crown">👑</div><div class="bar" style="height:6px;background:var(--bad)"></div>0<br>?</div>` : '');
+    $('#mx-msg').innerHTML = s.note;
+    $('#mx-next').disabled = k >= steps.length;
+  }
+  $$('#mx-mode button').forEach(b => b.onclick = () => { $$('#mx-mode button').forEach(x => x.classList.toggle('sel', x === b)); build(); });
+  $$('#mx-mode button')[0].classList.add('sel');
+  ['#mx-zero', '#mx-i0'].forEach(s => $(s).addEventListener('change', build));
+  $('#mx-arr').addEventListener('input', build);
+  $('#mx-neg').onclick = e => { e.preventDefault(); $('#mx-arr').value = '-33, -5, -22, -44, -55'; build(); };
+  $('#mx-next').onclick = () => { if (k < steps.length) { k++; show(); } };
+  $('#mx-all').onclick = () => { k = steps.length; show(); };
+  $('#mx-re').onclick = build;
+  build();
+})();
+
+/* ---------- 求和平均数 ---------- */
+(function () {
+  function go() {
+    const arr = Array.from({ length: 10 }, () => Math.floor(Math.random() * 100) + 1);
+    const sum = arr.reduce((a, b) => a + b, 0), dbl = $('#av-dbl').checked;
+    const avg = dbl ? sum / arr.length : Math.trunc(sum / arr.length);
+    const cls = {}; let count = 0;
+    arr.forEach((v, i) => { if (v < avg) { cls[i] = 'low'; count++; } });
+    drawArr($('#av-arr'), arr, cls);
+    $('#av-out').innerHTML = `数组中所有数据的和为：${sum}\n数组中平均数为：${avg}\n在数组中，一共有${count}个数据，比平均数小\n${arr.join(' ')} `;
+    $('#av-msg').innerHTML = `蓝底的是比平均数 ${avg} 小的数，数一数：${count} 个。` + (dbl ? '' : ` 整数相除只保留整数部分：${sum} / 10 = ${avg}（真实平均数 ${sum / 10}）。`);
+  }
+  $('#av-go').onclick = go; $('#av-dbl').addEventListener('change', go);
+  go();
+})();
+
+/* ---------- 倒饮料 ---------- */
+(function () {
+  const COL = { '可乐': '#6b3a1e', '雪碧': '#2fa36b' };
+  const PROG = [
+    [['a = b;', s => { s.a = s.b; }, 'b 的值赋给 a，a 原来的可乐被覆盖了。'], ['b = a;', s => { s.b = s.a; }, 'a 的值赋给 b，可 a 现在已经是雪碧了。结果两杯都是雪碧，可乐没了。']],
+    [['int temp = a;', s => { s.temp = s.a; }, '先把可乐倒进第三方的 temp 杯，临时记录。'], ['a = b;', s => { s.a = s.b; }, '雪碧倒进 a 杯（a 原来的可乐已经在 temp 里存着了）。'], ['b = temp;', s => { s.b = s.temp; }, 'temp 里是 a 原来的可乐，倒进 b 杯。交换成功！']],
+  ];
+  let m = 0, k = 0, s;
+  function reset() { s = { a: '可乐', b: '雪碧', temp: null }; k = 0; $$('#cp-m button').forEach(b => b.classList.toggle('sel', +b.dataset.v === m)); paint('int a = 可乐; int b = 雪碧;（假装饮料是 int）'); }
+  function cup(n, v) { return `<div class="cup"><div class="glass"><div class="liq" style="background:${v ? COL[v] : 'transparent'};height:${v ? 70 : 0}%">${v || ''}</div></div>${n}</div>`; }
+  function paint(msg) {
+    $('#cp-cups').innerHTML = cup('a', s.a) + cup('b', s.b) + (m === 1 ? cup('temp', s.temp) : '');
+    $('#cp-msg').innerHTML = (k ? `<code>${PROG[m][k - 1][0]}</code> ` : '') + msg;
+    $('#cp-next').disabled = k >= PROG[m].length;
+  }
+  $('#cp-next').onclick = () => { const [c, f, n] = PROG[m][k]; f(s); k++; paint(n); };
+  $$('#cp-m button').forEach(b => b.onclick = () => { m = +b.dataset.v; reset(); });
+  $('#cp-re').onclick = reset;
+  reset();
+})();
+
+/* ---------- 头尾对调 ---------- */
+(function () {
+  let arr, i, j, done, n;
+  function reset() {
+    const a = parseArr($('#sw-arr').value);
+    if (!a) { $('#sw-a').innerHTML = ''; $('#sw-msg').textContent = '请填 1~12 个整数'; return; }
+    arr = a; i = 0; j = arr.length - 1; done = false; n = 0;
+    paint(`i = 0（最小索引），j = ${j}（最大索引）。`);
+  }
+  function paint(msg) {
+    const ptr = {}, cls = {};
+    if (!done) { if (i === j) ptr[i] = 'i j'; else { ptr[i] = 'i'; ptr[j] = 'j'; } cls[i] = cls[j] = 'hi'; }
+    drawArr($('#sw-a'), arr, cls, ptr);
+    $('#sw-msg').innerHTML = msg;
+    $('#sw-next').disabled = done;
+  }
+  function step() {
+    if (done) return;
+    if (!(i < j)) { done = true; paint(`判断 i &lt; j → ${i} &lt; ${j} 为 false（${i === j ? 'i 和 j 相遇了' : 'i 跑到了 j 的右边'}），循环结束。一共交换了 ${n} 次，结果：${arr.join(' ')}`); return; }
+    const t = arr[i]; arr[i] = arr[j]; arr[j] = t; n++;
+    const msg = `交换 arr[${i}] 和 arr[${j}]：${arr[j]} ↔ ${arr[i]}。然后 i++、j--。`;
+    i++; j--; paint(msg);
+  }
+  $('#sw-next').onclick = step;
+  $('#sw-all').onclick = () => { while (!done) step(); };
+  $('#sw-re').onclick = reset;
+  $('#sw-arr').addEventListener('input', reset);
+  reset();
+})();
+
+/* ---------- 打乱 ---------- */
+(function () {
+  let arr, i, last;
+  function reset() { arr = [1, 2, 3, 4, 5]; i = 0; last = null; paint('int[] arr = {1, 2, 3, 4, 5};'); }
+  function paint(msg) {
+    const cls = {}, ptr = {};
+    if (last) { cls[last[0]] = 'hi'; cls[last[1]] = 'ok'; ptr[last[0]] = last[0] === last[1] ? 'i=rand' : 'i'; if (last[0] !== last[1]) ptr[last[1]] = 'rand'; }
+    drawArr($('#sh-a'), arr, cls, ptr);
+    $('#sh-msg').innerHTML = msg;
+    $('#sh-next').disabled = i >= arr.length;
+  }
+  function step() {
+    if (i >= arr.length) return;
+    const r = Math.floor(Math.random() * arr.length), a = arr[i], b = arr[r];
+    arr[i] = b; arr[r] = a; last = [i, r];
+    const msg = `i = ${i}，randomIndex = r.nextInt(5) = <b>${r}</b>。` + (i === r ? '随机到了自己，和自己交换，等于没动。' : `交换 arr[${i}]（${a}）和 arr[${r}]（${b}）。`) + (i === arr.length - 1 ? ` 循环结束：${arr.join(' ')}` : '');
+    i++; paint(msg);
+  }
+  $('#sh-next').onclick = step;
+  $('#sh-all').onclick = () => { while (i < arr.length) step(); };
+  $('#sh-re').onclick = reset;
+  reset();
+})();
+
+/* ---------- Fisher–Yates 对比 ---------- */
+(function () {
+  const PERMS = ['123', '132', '213', '231', '312', '321'];
+  let m = 0;
+  function run() {
+    $$('#fy-m button').forEach(b => b.classList.toggle('sel', +b.dataset.v === m));
+    const N = 60000, cnt = Object.fromEntries(PERMS.map(p => [p, 0]));
+    for (let t = 0; t < N; t++) {
+      const a = [1, 2, 3];
+      for (let i = 0; i < 3; i++) {
+        const r = m === 0 ? Math.floor(Math.random() * 3) : i + Math.floor(Math.random() * (3 - i));
+        const x = a[i]; a[i] = a[r]; a[r] = x;
+      }
+      cnt[a.join('')]++;
+    }
+    const top = Math.max(...Object.values(cnt), N / 6) * 1.1;
+    $('#fy-h').innerHTML = PERMS.map(p => `<div style="height:${cnt[p] / top * 100}%"><span>${(cnt[p] / N * 100).toFixed(1)}%</span></div>`).join('');
+    $('#fy-wrap').style.setProperty('--avg', (N / 6 / top * 130) + 'px');
+    $('#fy-ax').innerHTML = PERMS.map(p => `<span>${p.split('').join(' ')}</span>`).join('');
+    $('#fy-msg').innerHTML = m === 0 ? '课上的写法：1 3 2、2 1 3、2 3 1 明显更多（理论上是 5/27 ≈ 18.5%），其余三种只有 4/27 ≈ 14.8%。' : 'Fisher–Yates：六种排列都在 16.7% 左右，只剩随机波动。';
+  }
+  $$('#fy-m button').forEach(b => b.onclick = () => { m = +b.dataset.v; run(); });
+  $('#fy-go').onclick = run;
+  run();
+})();
+
+/* ---------- 内存图 ---------- */
+(function () {
+  // 每一行：[代码, 执行函数(state) → {msg, out?}]
+  const P = [
+    [
+      ['int a = 10;', s => { s.st.push({ n: 'a', t: 'int', v: 10 }); return '在栈里开辟一块小空间，起名 a，限定只能存 int，把 10 放进去。'; }],
+      ['int b = 10;', s => { s.st.push({ n: 'b', t: 'int', v: 10 }); return '同样的动作再来一次：变量 b，存 10。'; }],
+      ['int c = a + b;', s => { s.st.push({ n: 'c', t: 'int', v: 20 }); return '先算 a + b 得到 20，再赋值给变量 c。'; }],
+      ['System.out.println(c);', s => { s.out.push('20'); s.hiV = 'c'; return '先找到 c 记录的值，再把 20 打印到控制台。变量里存的都是真实的数据。整个过程没有 new，堆一直是空的。'; }],
+    ],
+    [
+      ['int[] arr = new int[2];', s => { s.hp.push({ ad: '0x0011', v: [0, 0] }); s.st.push({ n: 'arr', t: 'int[]', ref: '0x0011' }); s.newH = '0x0011'; return '左边：栈里定义变量 arr，能记录 int 数组的地址值。右边：new 在堆里开辟长度为 2 的空间，元素是默认值 0，再把地址值 0x0011 赋给 arr。'; }],
+      ['System.out.println(arr);', s => { s.out.push('[I@0x0011   (示意)'); s.hiV = 'arr'; return 'arr 里记录的是地址值，所以打印出来的是地址值。'; }],
+      ['System.out.println(arr[0]);', s => { s.out.push('0'); s.hiC = ['0x0011', 0]; return '先通过 arr 找到堆里的空间，再通过 0 索引找到数据：0。'; }],
+      ['System.out.println(arr[1]);', s => { s.out.push('0'); s.hiC = ['0x0011', 1]; return '同理，1 索引上也是默认值 0。'; }],
+      ['arr[0] = 11;', s => { s.hp[0].v[0] = 11; s.hiC = ['0x0011', 0]; return '先通过 arr 找到空间，再把 11 赋给 0 索引，原来的 0 被覆盖。'; }],
+      ['arr[1] = 22;', s => { s.hp[0].v[1] = 22; s.hiC = ['0x0011', 1]; return '22 赋给 1 索引。'; }],
+      ['System.out.println(arr[0]);', s => { s.out.push('11'); s.hiC = ['0x0011', 0]; return '再次获取，拿到的是修改之后的 11。'; }],
+      ['System.out.println(arr[1]);', s => { s.out.push('22'); s.hiC = ['0x0011', 1]; return '22。'; }],
+      ['int[] arr2 = {33, 44, 55};', s => { s.hp.push({ ad: '0x0022', v: [33, 44, 55] }); s.st.push({ n: 'arr2', t: 'int[]', ref: '0x0022' }); s.newH = '0x0022'; return '简写格式完整写法里也有 new，所以堆里又开辟了一块新空间，地址值 0x0022 赋给 arr2。两块空间互相独立。'; }],
+      ['System.out.println(arr2);', s => { s.out.push('[I@0x0022   (示意)'); s.hiV = 'arr2'; return '打印的是第二个数组的地址值。'; }],
+      ['System.out.println(arr2[0]);', s => { s.out.push('33'); s.hiC = ['0x0022', 0]; return '通过 arr2 找到第二块空间，0 索引是 33。'; }],
+      ['System.out.println(arr2[1]);', s => { s.out.push('44'); s.hiC = ['0x0022', 1]; return '44。'; }],
+      ['System.out.println(arr2[2]);', s => { s.out.push('55'); s.hiC = ['0x0022', 2]; return '55。new 了两次，堆里就有两块小空间，各存各的数据。'; }],
+    ],
+    [
+      ['int[] arr1 = {11, 22};', s => { s.hp.push({ ad: '0x0011', v: [11, 22] }); s.st.push({ n: 'arr1', t: 'int[]', ref: '0x0011' }); s.newH = '0x0011'; return '堆里开辟一块空间存 11、22，地址值 0x0011 赋给 arr1。'; }],
+      ['int[] arr2 = arr1;', s => { s.st.push({ n: 'arr2', t: 'int[]', ref: '0x0011' }); return '右边没有 new！只是把 arr1 记录的地址值 0x0011 赋给 arr2。现在两个变量指向同一块空间：朋友和他爹共享同一个厕所。'; }],
+      ['System.out.println(arr1[0]);', s => { s.out.push('11'); s.hiC = ['0x0011', 0]; return '通过 arr1 找到 0x0011，0 索引是 11。'; }],
+      ['System.out.println(arr2[0]);', s => { s.out.push('11'); s.hiC = ['0x0011', 0]; return 'arr2 记录的也是 0x0011，找到的是同一块空间，也是 11。'; }],
+      ['arr2[0] = 33;', s => { s.hp[0].v[0] = 33; s.hiC = ['0x0011', 0]; return '通过 arr2 找到 0x0011，把 0 索引改成 33。'; }],
+      ['System.out.println(arr1[0]);', s => { s.out.push('33'); s.hiC = ['0x0011', 0]; return '明明没动 arr1，打印出来却是 33：厕所已经被炸过了。'; }],
+      ['System.out.println(arr2[0]);', s => { s.out.push('33'); s.hiC = ['0x0011', 0]; return '33。两个数组指向同一个小空间时，一个改了，其他的再访问就是修改之后的结果。'; }],
+    ],
+  ];
+  let p = 0, k = 0;
+  function stateAt(n) {
+    const s = { st: [], hp: [], out: [] }; let msg = 'main 方法进栈，准备从第一行开始执行。';
+    for (let i = 0; i < n; i++) { s.hiV = s.hiC = s.newH = null; s.newV = null; const before = s.st.length; msg = P[p][i][1](s); if (s.st.length > before) s.newV = s.st[s.st.length - 1].n; }
+    return [s, msg];
+  }
+  function show() {
+    $$('#mm-p button').forEach(b => b.classList.toggle('sel', +b.dataset.v === p));
+    $('#mm-code').innerHTML = `<div>public static void main(String[] args) {</div>` + P[p].map((L, i) => `<div class="${i === k - 1 ? 'cur' : ''}">    ${esc(L[0])}</div>`).join('') + '<div>}</div>';
+    const [s, msg] = stateAt(k);
+    $('#mm-stack').innerHTML = `<div class="frame"><div class="fn">main 方法</div>` + (s.st.map(v => `<div class="var ${v.n === s.newV || v.n === s.hiV ? 'new' : ''}"><span class="nm">${v.t} ${v.n}</span><span class="vv" data-ref="${v.ref || ''}">${v.ref || v.v}</span></div>`).join('') || '<div class="nm" style="font-size:12px;color:var(--muted)">（还没有变量）</div>') + '</div>';
+    $('#mm-heap').innerHTML = s.hp.map(o => `<div class="hobj ${o.ad === s.newH ? 'new' : ''}" data-ad="${o.ad}"><div class="ad">地址值 ${o.ad}</div><div class="cells">${o.v.map((x, i) => `<div class="c ${s.hiC && s.hiC[0] === o.ad && s.hiC[1] === i ? 'hi' : ''}"><div class="x">${x}</div><div class="i">${i}</div></div>`).join('')}</div></div>`).join('') || '<div style="font-size:12px;color:var(--muted)">（空）</div>';
+    $('#mm-out').innerHTML = s.out.length ? s.out.join('\n') : '<span class="note">（控制台）</span>';
+    $('#mm-msg').innerHTML = msg;
+    $('#mm-next').disabled = k >= P[p].length; $('#mm-prev').disabled = k === 0;
+    arrows();
+  }
+  function arrows() {
+    const svg = $('#mm-svg'), W = $('#mm-wrap').getBoundingClientRect();
+    $$('path.ln', svg).forEach(x => x.remove());
+    $$('#mm-stack .vv[data-ref]').forEach(v => {
+      if (!v.dataset.ref) return;
+      const o = $(`#mm-heap .hobj[data-ad="${v.dataset.ref}"] .cells`); if (!o) return;
+      const a = v.getBoundingClientRect(), b = o.getBoundingClientRect();
+      const x1 = a.right - W.left, y1 = a.top + a.height / 2 - W.top, x2 = b.left - W.left - 2, y2 = b.top + 15 - W.top;
+      const pth = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pth.setAttribute('class', 'ln'); pth.setAttribute('marker-end', 'url(#mah)');
+      pth.setAttribute('d', `M${x1},${y1} C${x1 + 30},${y1} ${x2 - 30},${y2} ${x2},${y2}`);
+      svg.appendChild(pth);
+    });
+  }
+  $$('#mm-p button').forEach(b => b.onclick = () => { p = +b.dataset.v; k = 0; show(); });
+  $('#mm-next').onclick = () => { if (k < P[p].length) { k++; show(); } };
+  $('#mm-prev').onclick = () => { if (k > 0) { k--; show(); } };
+  $('#mm-re').onclick = () => { k = 0; show(); };
+  window.addEventListener('resize', arrows);
+  p = 1; show();
+})();
+</script>
+</body>
+</html>
