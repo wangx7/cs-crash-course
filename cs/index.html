@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>计算机科学速成课 · 图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.wrap{max-width:900px;margin:0 auto;padding:0 24px 80px}
+.bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 18px;font-size:14px;color:var(--muted)}
+.bar label{display:flex;align-items:center;gap:6px;cursor:pointer}
+.prog{flex:1;min-width:140px;height:6px;background:var(--line);border-radius:3px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+.eps{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.ep{display:grid;grid-template-columns:44px minmax(0,1fr) auto;align-items:center;gap:12px;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+.ep .n{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--muted);text-align:center}
+.ep.read .n{color:var(--ok)}
+.ep .zh{font-weight:600}
+.ep .en{font-size:13px;color:var(--muted)}
+.ep a.title{color:var(--ink);text-decoration:none}
+.ep a.title:hover .zh{color:var(--accent)}
+.ep .side{display:flex;align-items:center;gap:8px;font-size:12px;white-space:nowrap}
+.tag{padding:2px 8px;border-radius:999px;font-weight:600}
+.tag.done{background:var(--ok-soft);color:var(--ok)}
+.tag.wip{color:var(--muted);font-weight:400}
+.ep.wip{opacity:.6}
+.grp-h{font-size:20px;margin:40px 0 4px;scroll-margin-top:20px}
+.grp-note{font-size:14px;color:var(--muted);margin:0 0 14px}
+.side a{color:var(--muted)}
+@media (max-width:600px){
+  .wrap{padding:0 16px 60px}
+  .ep{grid-template-columns:32px minmax(0,1fr);padding:10px 12px}
+  .ep .side{grid-column:2;flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+<div class="topbar" style="max-width:900px">
+  <a href="../index.html">← 全部课程</a>
+  <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF" target="_blank" rel="noopener">原视频合集 ↗</a>
+</div>
+<header class="hero" style="max-width:900px">
+  <div class="eyebrow">CRASH COURSE COMPUTER SCIENCE · 图文版</div>
+  <h1>计算机科学速成课</h1>
+  <p class="lead">40 集，每集一篇：正文据中文字幕忠实整理，配手绘示意图，关键处可以动手点。不方便看视频的时候，读这个。原课程 2017 年 12 月完结，后面另有 7 集续集，讲 2017 年之后的新变化，最后一集往前看到 2036 年。</p></header>
+<div class="wrap">
+  <div class="bar">
+    <div class="prog"><i id="prog"></i></div>
+    <span id="count"></span>
+  </div>
+  <ol class="eps" id="eps"></ol>
+  <h2 class="grp-h" id="ext">续集 · 2017 年之后</h2>
+  <p class="grp-note">原课程之外的原创续写：沿着原来的几条主线，各接上"下一层"。没有对应视频。</p>
+  <ol class="eps" id="ext-eps"></ol>
+  <h2 class="grp-h" id="more">另一门课</h2>
+  <p class="grp-note">同样的图文 + 动手演示写法，换成编程入门。</p>
+  <ol class="eps">
+    <li class="ep">
+      <span class="n">☕</span>
+      <a class="title" href="../java/index.html"><div class="zh">Java 入门到起飞 · 图文版</div><div class="en">黑马程序员 Java 零基础视频教程（上部），200 集按话题整理成 71 篇</div></a>
+      <span class="side"><a href="https://www.bilibili.com/video/BV17F411T7Ao/" target="_blank" rel="noopener">视频↗</a></span>
+    </li>
+  </ol>
+  <div class="credit">
+    课程原作：<a href="https://www.youtube.com/playlist?list=PL8dPuuaLjXtNlUrzyH5r6jN9ulIgZBpdo" target="_blank" rel="noopener">Crash Course Computer Science</a>（PBS Digital Studios，CC BY-NC-SA 4.0）。
+    中文字幕：<a href="https://github.com/1c7/Crash-Course-Computer-Science-Chinese" target="_blank" rel="noopener">1c7 翻译组</a>。
+    视频：B 站 <a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF" target="_blank" rel="noopener">BV1ZQ4y1W7rF</a>（第 N 集是 P(N+1)）。<br>
+    图文版制作：Claude Opus 5.5（Anthropic）。作为原课程的衍生作品，本图文版同样以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 协议发布：可自由分享和改编，但需署名、不得商用、并以相同协议分享。第 41 集起的续集为原创内容，不是 Crash Course 官方作品，同样以该协议发布。
+  </div>
+</div>
+<script src="../assets/cc.js"></script>
+<script>
+const EPS = [
+  ['计算机早期历史', 'Early Computing'], ['电子计算机', 'Electronic Computing'], ['布尔逻辑和逻辑门', 'Boolean Logic & Logic Gates'],
+  ['二进制', 'Representing Numbers and Letters with Binary'], ['算术逻辑单元', 'How Computers Calculate - the ALU'], ['寄存器和内存', 'Registers and RAM'],
+  ['中央处理器', 'The Central Processing Unit (CPU)'], ['指令和程序', 'Instructions & Programs'], ['高级 CPU 设计', 'Advanced CPU Designs'],
+  ['早期的编程方式', 'Early Programming'], ['编程语言发展史', 'The First Programming Languages'], ['编程原理：语句和函数', 'Programming Basics: Statements & Functions'],
+  ['算法入门', 'Intro to Algorithms'], ['数据结构', 'Data Structures'], ['阿兰·图灵', 'Alan Turing'],
+  ['软件工程', 'Software Engineering'], ['集成电路与摩尔定律', "Integrated Circuits & Moore's Law"], ['操作系统', 'Operating Systems'],
+  ['内存与储存介质', 'Memory & Storage'], ['文件系统', 'Files & File Systems'], ['压缩', 'Compression'],
+  ['命令行界面', 'Keyboards & Command Line Interfaces'], ['屏幕与 2D 图形显示', 'Screens & 2D Graphics'], ['冷战和消费主义', 'The Cold War and Consumerism'],
+  ['个人计算机革命', 'The Personal Computer Revolution'], ['图形用户界面', 'Graphical User Interfaces'], ['3D 图形', '3D Graphics'],
+  ['计算机网络', 'Computer Networks'], ['互联网', 'The Internet'], ['万维网', 'The World Wide Web'],
+  ['计算机安全', 'Cybersecurity'], ['黑客与攻击', 'Hackers & Cyber Attacks'], ['加密', 'Cryptography'],
+  ['机器学习与人工智能', 'Machine Learning & Artificial Intelligence'], ['计算机视觉', 'Computer Vision'], ['自然语言处理', 'Natural Language Processing'],
+  ['机器人', 'Robots'], ['计算机心理学', 'Psychology of Computing'], ['教育科技', 'Educational Technology'],
+  ['奇点、天网与计算机的未来', 'The Singularity, Skynet, and the Future of Computing'],
+];
+// 续集：[中文标题, 英文标题]，从第 41 集排起
+const EXT = [
+  ['GPU 与并行计算', 'Parallel Computing & GPUs'], ['云计算', 'Cloud Computing'], ['Transformer 与大语言模型', 'Transformers & Large Language Models'],
+  ['生成式 AI 与智能体', 'Generative AI & Agents'], ['新的攻防', 'New Attacks, New Defenses'], ['2026，回看第 40 集', 'Looking Back from 2026'],
+  ['展望未来', 'Looking Ahead'],
+];
+// 已写好的续集（写完一集，往这里加一个编号）
+const EXT_READY = [41, 42, 43, 44, 45, 46, 47];
+const TOTAL = EPS.length + EXT.length;
+const pad = n => String(n).padStart(2, '0');
+const read = new Set(ccStore.get('cc-read', []));
+
+function item(n, zh, en, ready, side) {
+  const isRead = read.has(n);
+  const title = `<div class="zh">${zh}</div><div class="en">${en}</div>`;
+  return `<li class="ep${isRead ? ' read' : ''}${ready ? '' : ' wip'}">
+    <span class="n">${isRead ? '✓' : pad(n)}</span>
+    ${ready ? `<a class="title" href="${pad(n)}.html">${title}</a>` : `<div>${title}</div>`}
+    <span class="side">
+      ${isRead ? '<span class="tag done">已读</span>' : ''}
+      ${side}
+    </span>
+  </li>`;
+}
+function render() {
+  $('#eps').innerHTML = EPS.map(([zh, en], i) => item(i + 1, zh, en, true,
+    `<a href="https://www.bilibili.com/video/BV1ZQ4y1W7rF?p=${i + 2}" target="_blank" rel="noopener">视频↗</a>`)).join('');
+  $('#ext-eps').innerHTML = EXT.map(([zh, en], i) => {
+    const n = EPS.length + i + 1, ready = EXT_READY.includes(n);
+    return item(n, zh, en, ready, ready ? '' : '<span class="tag wip">撰写中</span>');
+  }).join('');
+  $('#count').textContent = `已读 ${read.size} / ${TOTAL}`;
+  $('#prog').style.width = `${read.size / TOTAL * 100}%`;
+}
+render();
+</script>
+</body>
+</html>

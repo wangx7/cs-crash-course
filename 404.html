@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>页面不存在</title>
+<script>
+// 站点改过目录结构：速成课从根目录搬到了 cs/，共享样式搬到了 assets/。
+// GitHub Pages 对不存在的路径都会返回这个页面，所以在这里把旧地址转到新地址。
+function ccNewPath(p) {
+  var m;
+  if ((m = p.match(/^(.*\/)dijkstra(\/.*)?$/)) && !/\/cs\/$/.test(m[1])) return m[1] + 'cs/dijkstra' + (m[2] || '/');
+  if ((m = p.match(/^(.*\/)(\d{2}\.html)$/)) && !/\/(cs|java|dijkstra)\/$/.test(m[1])) return m[1] + 'cs/' + m[2];
+  if ((m = p.match(/^(.*\/)(cc\.(css|js))$/)) && !/\/assets\/$/.test(m[1])) return m[1] + 'assets/' + m[2];
+  return null;
+}
+(function () {
+  var t = ccNewPath(location.pathname);
+  if (t) location.replace(t + location.search + location.hash);
+})();
+</script>
+<style>
+:root{--bg:#f6f4ef;--ink:#1d2127;--muted:#6a6f78;--accent:#2f6fde}
+@media (prefers-color-scheme:dark){:root{--bg:#121418;--ink:#e9e7e2;--muted:#9aa0a9;--accent:#6ea2ff}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 -apple-system,"PingFang SC","Microsoft YaHei",sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;box-sizing:border-box}
+main{max-width:420px;text-align:center}
+h1{font-size:22px;margin:0 0 8px}
+p{color:var(--muted);margin:0 0 16px}
+a{color:var(--accent)}
+</style>
+</head>
+<body>
+<main>
+  <h1>这个页面不存在</h1>
+  <p>可能是地址打错了，或者这篇还没写。</p>
+  <p><a id="home" href="/">回到全部课程</a></p>
+</main>
+<script>
+// 项目站点（xxx.github.io/仓库名/）的首页在第一级路径下
+(function () {
+  var seg = location.pathname.split('/')[1];
+  if (/github\.io$/.test(location.hostname) && seg) document.getElementById('home').href = '/' + seg + '/';
+})();
+</script>
+</body>
+</html>

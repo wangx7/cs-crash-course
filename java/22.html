@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>P22 计算机中的数据存储 · Java 入门图文版</title>
-<link rel="stylesheet" href="../cc.css">
+<link rel="stylesheet" href="../assets/cc.css">
 <style>
 .btn.sm{font-size:13px;padding:4px 10px}
 code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
@@ -204,7 +204,7 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
   <div class="extra">
     <span class="t">更正：电压的"门限"</span>
     电路判断 0 和 1 不是靠一条线，而是两个区间，中间留一段"缓冲带"防止误判。比如经典的 5 伏 TTL 电路：输入<b>高于约 2 伏</b>算 1，<b>低于约 0.8 伏</b>算 0。3.3 伏本身是现在很常见的一种芯片<b>工作电压</b>，不是 5 伏电路的分界线。不过视频想说的道理完全对：只区分"高"和"低"两种状态，最简单、最不容易出错。<br>
-    打孔纸带的约定也是各家不同，比较常见的是有孔表示 1。这些细节不影响结论。想看 0 和 1 怎样用电路做加法，可以看本站的 <a href="../03.html">速成课第 3 集"布尔逻辑与逻辑门"</a>。
+    打孔纸带的约定也是各家不同，比较常见的是有孔表示 1。这些细节不影响结论。想看 0 和 1 怎样用电路做加法，可以看本站的 <a href="../cs/03.html">速成课第 3 集"布尔逻辑与逻辑门"</a>。
   </div>
 </section>
 
@@ -252,7 +252,7 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
     <span class="t">为什么补成 8 位</span>
     计算机存储的基本单位是<b>字节</b>（byte），1 字节 = 8 个二进制位（bit）。99 只需要 7 位，存进一个字节时左边空着的那位就补 0，所以写成 01100011。8 位最大能表示 11111111 = 255，这个数第 6 节还会出现。<br>
     Mac 自带的"计算器"也有程序员模式：菜单"显示 → 程序员"，或按 <span class="kbd">⌘</span>+<span class="kbd">3</span>。<br>
-    本站的 <a href="../04.html">速成课第 4 集"二进制"</a>从另一个角度讲了同一件事（还有负数和小数怎么存），可以对照着看。
+    本站的 <a href="../cs/04.html">速成课第 4 集"二进制"</a>从另一个角度讲了同一件事（还有负数和小数怎么存），可以对照着看。
   </div>
 </section>
 
@@ -419,7 +419,7 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
 </main>
 </div>
 
-<script src="../cc.js"></script>
+<script src="../assets/cc.js"></script>
 <script>
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
