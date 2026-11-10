@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P47–48 while 与 do…while · Java 入门图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:96px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;white-space:pre-wrap}
+.out .note{color:#7f8794}
+.out .err{color:#ff7b72}
+.msg{font-size:14px;margin-top:8px}
+.big{font:700 20px var(--mono)}
+
+/* for / while 对照 */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:640px){.cmp{grid-template-columns:1fr}}
+.cmp pre{font:13.5px/1.75 var(--mono);background:var(--bg);border-radius:10px;padding:8px 12px;margin:0;overflow-x:auto}
+.cmp h4{margin:0 0 4px;font-size:14px}
+.c1{background:var(--accent-soft);border-radius:4px}
+.c2{background:var(--on-soft);border-radius:4px}
+.c3{background:var(--ok-soft);border-radius:4px}
+.c4{background:var(--bad-soft);border-radius:4px}
+
+/* 折纸 */
+.fold-wrap{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;margin-top:8px}
+@media (max-width:600px){.fold-wrap{grid-template-columns:1fr}}
+.fold-tbl{max-height:260px;overflow-y:auto;font:13px var(--mono)}
+.fold-tbl table{width:100%;border-collapse:collapse}
+.fold-tbl td,.fold-tbl th{padding:2px 8px;border-bottom:1px solid var(--line);text-align:right}
+.fold-tbl th{font:600 12px sans-serif;color:var(--muted);position:sticky;top:0;background:var(--panel)}
+.fold-tbl tr.last td{background:var(--ok-soft);font-weight:700}
+.fold-tbl td.ref{text-align:left;font-family:sans-serif;color:var(--muted)}
+.tower{position:relative;height:260px;border-left:1px solid var(--line);margin-left:8px}
+.tower .lv{position:absolute;left:0;right:0;border-top:1px dashed var(--line);font:11px sans-serif;color:var(--muted);padding-left:4px}
+.tower .bar{position:absolute;left:30%;width:28%;bottom:0;background:var(--accent);border-radius:3px 3px 0 0;transition:height .25s}
+.tower .peak{border-top:2px solid var(--bad);color:var(--bad)}
+
+/* 回文 / 商余 表格 */
+.trace{font:13.5px var(--mono);border-collapse:collapse;margin-top:8px;width:100%}
+.trace td,.trace th{padding:3px 10px;border-bottom:1px solid var(--line);text-align:right}
+.trace th{font:600 12px sans-serif;color:var(--muted)}
+.trace td:first-child,.trace th:first-child{text-align:left}
+.trace tr.cur td{background:var(--on-soft)}
+.trace .dg{color:var(--accent);font-weight:700}
+.blocks{display:flex;flex-wrap:wrap;gap:3px;margin-top:8px}
+.blocks span{height:16px;border-radius:3px;background:var(--accent);opacity:.85;font:10px var(--mono);color:#fff;display:flex;align-items:center;justify-content:center}
+.blocks span.gone{background:var(--line);opacity:.5;color:var(--muted)}
+.blocks span.rem{background:var(--ok)}
+</style>
+</head>
+<body data-ep="47" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=47" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">判断和循环 · P47–P48</div>
+  <h1>while 与 do…while</h1>
+  <p class="en">The while Loop, Two LeetCode Problems &amp; do…while</p>
+  <p class="lead">循环的另外两种格式。<b>while</b> 的运行规则和 for 一模一样，区别只在使用习惯：知道次数或范围用 for，<b>只知道结束条件</b>用 while。这一篇用 while 解三道题：折多少次纸能比珠穆朗玛峰还高、判断回文数、不用乘除求商和余数（后两道是力扣题）。最后简单认识一下几乎不用的 <b>do…while</b>。</p>
+  <div class="road">
+    <span>while 格式</span><i>→</i><span>for 和 while 的区别</span><i>→</i><span>折纸</span><i>→</i><span>回文数</span><i>→</i><span>求商和余数</span><i>→</i><span>do…while</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · while 的格式</a></li>
+    <li><a href="#ch2">2 · for 和 while 的区别</a></li>
+    <li><a href="#ch3">3 · 折纸的次数</a></li>
+    <li><a href="#ch4">4 · 回文数</a></li>
+    <li><a href="#ch5">5 · 求商和余数</a></li>
+    <li><a href="#ch6">6 · do…while</a></li>
+    <li><a href="#ch7">7 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P47</div>
+  <h2>while 循环的格式和执行流程</h2>
+  <p>while 的格式和 for 很像：写一个 <code>while</code> 关键字，然后把 for 的四个部分原样搬过来，只是换了位置：<b>初始化语句写在最上面</b>，小括号里<b>只写条件判断语句</b>，大括号里写循环体语句和条件控制语句。</p>
+  <div class="cmp">
+    <div><h4>for</h4><pre><span class="hk">for</span> (<span class="c1">初始化语句</span>; <span class="c2">条件判断语句</span>; <span class="c4">条件控制语句</span>) {
+    <span class="c3">循环体语句</span>;
+}</pre></div>
+    <div><h4>while</h4><pre><span class="c1">初始化语句</span>;
+<span class="hk">while</span> (<span class="c2">条件判断语句</span>) {
+    <span class="c3">循环体语句</span>;
+    <span class="c4">条件控制语句</span>;
+}</pre></div>
+  </div>
+  <p>执行流程和 for <b>一模一样</b>：先执行初始化语句；再执行小括号里的条件判断，为 true 就进大括号执行循环体和条件控制语句，然后回到上面再判断；为 false 循环结束，执行下面的其他语句。特点也一样：初始化语句只执行一次；判断为 true 循环继续，为 false 循环结束。</p>
+  <p><b>练习：用 while 打印 1~100</b>。开始条件是 1、结束条件是 100：</p>
+  <code class="blk"><span class="hk">int</span> i = 1;
+<span class="hk">while</span> (i &lt;= 100) {
+    System.out.println(i);
+    i++;
+}</code>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P47</div>
+  <h2>for 和 while 有什么区别，什么时候用哪个</h2>
+  <p>先说共同点：两者的<b>运行规则一模一样</b>。很多资料会说它们有一个唯一的小区别，在初始化语句上：</p>
+  <ul>
+    <li>for 循环里控制循环的变量，归属于 for 的语法结构，<b>循环结束后就不能再访问</b>了（变量从内存中消失）；</li>
+    <li>while 循环里控制循环的变量写在循环外面，不归属于它的语法结构，<b>循环结束后还能继续使用</b>。</li>
+  </ul>
+  <p>但这个说法并不绝对：for 也可以把初始化语句写到循环外面，小括号里那一栏空着不写（<code>for (; i &lt;= 100; i++)</code>），这时两种循环就没有任何区别了。所以从实际开发的角度说：</p>
+  <ul>
+    <li><b>语法上没有区别</b>：能用 for 的地方一定能用 while 改写，反过来也一样；</li>
+    <li><b>区别在使用习惯</b>：<b>for</b> 一般在<b>知道循环次数或循环范围</b>时用；<b>while</b> 在<b>不知道次数、也不知道范围，但知道循环的结束条件</b>时用。</li>
+  </ul>
+  <div class="extra">
+    <span class="t">for 的三栏都可以空</span>
+    不只是初始化，三栏都能省略，但两个分号必须留着：<code>for (;;) { }</code> 就是一个停不下来的循环，和 <code>while (true) { }</code> 一样。下一篇讲无限循环时会再见到它们。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P47</div>
+  <h2>练习：打印折纸的次数</h2>
+  <p>这是美国斯坦福大学的一道 Java 练习题。世界最高峰珠穆朗玛峰高 8844.43 米，也就是 <b>8844430 毫米</b>。假如有一张足够大的纸，厚度 0.1 毫米，请问折叠多少次，可以折成珠穆朗玛峰的高度？</p>
+  <p>别纠结"纸真能折那么多次吗"，这道题和折纸本身没关系，只是训练循环。要抓住核心：<b>代码里怎么体现"折叠"这个动作</b>？折一次，厚度变成原来的两倍：0.1 → 0.2 → 0.4 → 0.8……不停地折，只要厚度大于等于山峰的高度，循环就停止。</p>
+  <p><b>用 for 还是 while？</b>知不知道循环次数？不知道。知不知道循环范围？也不知道。但能知道<b>结束条件</b>：纸张厚度 &gt;= 山峰高度。所以用 while 更好。</p>
+  <p><b>步骤</b>：① 定义变量记录山峰的高度；② 定义变量记录纸张的初始厚度；③ 循环折叠纸张，只要厚度小于山峰高度，循环就继续，每次 <code>paper = paper * 2</code>（也可以写 <code>paper *= 2</code>）。题目还要统计折了几次，所以 ④ 再定义一个统计次数的变量，每折一次就 ++。</p>
+  <code class="blk"><span class="hk">double</span> height = 8844430;   <span class="hc">// 单位要和纸的厚度统一，都用毫米</span>
+<span class="hk">double</span> paper = 0.1;
+<span class="hk">int</span> count = 0;
+<span class="hc">// 不知道次数、不知道范围，只知道结束条件，用 while</span>
+<span class="hk">while</span> (paper &lt; height) {
+    paper = paper * 2;
+    count++;
+}
+System.out.println(count);    <span class="hc">// 27</span></code>
+  <p>结果是 <b>27 次</b>。觉得不可思议？视频里打开计算器从 0.1 开始一次次乘 2：折到第 26 次是 6710886.4 毫米，还不够；再折一次就超过珠峰了。别忘了每折一次，厚度都是原来的两倍。</p>
+
+  <div class="card">
+    <h3>动手：一次次折</h3>
+    <div class="row">
+      <button class="btn sm primary" id="fd-one">折一次</button>
+      <button class="btn sm" id="fd-run">一直折到超过珠峰</button>
+      <button class="btn sm" id="fd-reset">重来</button>
+      <span>count = <b class="big" id="fd-n">0</b></span>
+      <span>paper = <b id="fd-p" style="font-family:var(--mono)">0.1</b> mm</span>
+    </div>
+    <div class="fold-wrap">
+      <div class="fold-tbl"><table><thead><tr><th>count</th><th>paper（mm）</th><th style="text-align:left">差不多相当于</th></tr></thead><tbody id="fd-tb"></tbody></table></div>
+      <div class="tower" id="fd-tower" aria-label="厚度对比（对数刻度）"></div>
+    </div>
+    <div class="msg" id="fd-msg">右边的柱子用的是<b>对数刻度</b>：每往上一格，厚度就大 10 倍。否则前 20 次在图上根本看不见。</div>
+  </div>
+
+  <div class="extra">
+    <span class="t">珠峰的新高度</span>
+    2020 年中国和尼泊尔联合公布的珠峰新高度是 <b>8848.86 米</b>（视频用的 8844.43 米是 2005 年测的岩面高程）。把 height 换成 8848860，答案还是 27 次：2<sup>26</sup> × 0.1 ≈ 671 万毫米 &lt; 884 万毫米 ≤ 2<sup>27</sup> × 0.1 ≈ 1342 万毫米。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P48</div>
+  <h2>练习：回文数（力扣算法题）</h2>
+  <p>这是力扣（LeetCode）上的一道算法题，通过率大约 60%，能听懂并自己写出来，就超过了 40% 的程序员。<b>需求</b>：给你一个整数 x，如果是回文数打印 true，否则打印 false。<b>回文数</b>：从左往右读和从右往左读一样，比如 121 是，123 不是。</p>
+  <p>第一反应：把数字倒过来，和原来的数比一下。思路没错，<b>关键是怎么把数字倒过来</b>。</p>
+  <p><b>先试两位数</b>：x = 12。用以前学的公式拿到个位 <code>x % 10</code> = 2、十位 <code>x / 10 % 10</code> = 1。直接 2 + 1 得 3，倒个什么呀；要把个位乘 10 再加十位：2 × 10 + 1 = 21，倒过来了。可 x 是写死的 12，换成 123、1234、12345 就不行了，所以要用循环。</p>
+  <p><b>用 for 还是 while？</b>12345 要循环 5 次，换成 1234 就是 4 次，次数不确定，所以用 while。结束条件一时想不到可以先空着，先写循环体：</p>
+  <ol>
+    <li><b>从右往左获取每一位</b>：<code>int ge = x % 10;</code> 拿到最右边的一位；</li>
+    <li><b>去掉已经拿到的这一位</b>：<code>x = x / 10;</code>。1234 / 10，Java 里整数相除只能得到整数，结果是 123，相当于把右边的 4 去掉了，下一轮就会拿到 3；</li>
+    <li><b>拼接到结果的最右边</b>：在循环外定义 <code>int num = 0;</code>，循环里 <code>num = num * 10 + ge;</code>。</li>
+  </ol>
+  <p><b>结束条件</b>：1234 第一轮拿 4、x 变 123，第二轮拿 3、x 变 12，第三轮拿 2、x 变 1，最后一轮拿 1、x 变 <b>0</b>。不确定的话，可以先写 <code>while (true)</code> 在循环里打印 x 看看，确实最后变成 0。x 为 0 就没意义了，所以条件写 <code>x != 0</code>：x 里还有值就继续。打印 num，1234 变成 4321，12345 变成 54321。</p>
+  <p><b>最后一步：比较</b>。直接 <code>num == x</code>？试一下，12345 打印 false，看起来对；可换成 121 还是 false！把 x 打印出来一看：<b>x 已经变成 0 了</b>，因为循环里一直在修改 x 的值。所以要在循环前定义一个临时变量 <code>temp</code> 记录 x 原来的值，专门用于最后的比较：</p>
+  <code class="blk"><span class="hk">int</span> x = 12345;
+<span class="hk">int</span> temp = x;     <span class="hc">// 临时变量，记录 x 原来的值，用于最后比较</span>
+<span class="hk">int</span> num = 0;      <span class="hc">// 记录倒过来之后的结果</span>
+<span class="hk">while</span> (x != 0) {
+    <span class="hk">int</span> ge = x % 10;     <span class="hc">// 从右往左获取每一位</span>
+    x = x / 10;          <span class="hc">// 去掉刚拿到的那一位</span>
+    num = num * 10 + ge; <span class="hc">// 拼接到结果的最右边</span>
+}
+System.out.println(num == temp);</code>
+
+  <div class="card">
+    <h3>动手：把数字倒过来</h3>
+    <div class="row">
+      <span>int x =</span><input class="inp" id="pl-x" value="1234" aria-label="x 的值">
+      <button class="btn sm primary" id="pl-next">下一轮</button>
+      <button class="btn sm" id="pl-all">跑完</button>
+      <button class="btn sm" id="pl-reset">重来</button>
+    </div>
+    <table class="trace"><thead><tr><th>轮次</th><th>ge = x % 10</th><th>x = x / 10</th><th>num = num * 10 + ge</th></tr></thead><tbody id="pl-tb"></tbody></table>
+    <div class="out" id="pl-out"></div>
+    <div class="msg" id="pl-msg"></div>
+  </div>
+
+  <p>这道题的核心思路很简单：<b>把数字倒过来，和原来的数字比较</b>；难点在循环里怎么倒过来。思路顺了，题目就不难。</p>
+  <div class="extra">
+    <span class="t">力扣原题还多两个坑</span>
+    这道是力扣第 9 题。① <b>负数</b>：题目规定 -121 不是回文数（反过来读是 121-），但上面的代码会把 -121 倒成 -121，打印 true。最简单的办法是先判断 <code>x &lt; 0</code> 直接 false。（在上面的演示里输 -121 试试。）② <b>溢出</b>：int 最大 2147483647，像 1999999999 这种数倒过来是 9999999991，超出 int 范围，num 会算错。不过它本来就不是回文数，错的结果也不会等于 temp，所以这道题的答案碰巧不受影响；换成"把数字倒过来"这种题，就要用 long 或者提前判断了。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P48</div>
+  <h2>练习：求商和余数（力扣算法题）</h2>
+  <p><b>需求</b>：给定两个整数，被除数和除数（都是正数，且不超过 int 的范围）。将两数相除，要求<b>不使用乘法、除法和 % 运算符</b>，得到商和余数。</p>
+  <p>忘了哪个是被除数？不用给小学数学老师打电话：<b>被除数 ÷ 除数 = 商 …… 余数</b>。</p>
+  <p><b>思路</b>：不能用除法，就用减法。被除数 100、除数 10：100 − 10 = 90，90 还比 10 大，接着减，80、70、60……最后 10 − 10 = 0。0 比 10 小，不能再减了，这个 0 就是<b>余数</b>；一共减了多少次，就是<b>商</b>。</p>
+  <p>次数和范围都不知道，用 while。只要被除数 &gt;= 除数就一直循环，循环里用被除数减去除数，结果再赋值给被除数。循环结束后，被除数里剩下的就是余数。写到这里才发现还要商？<b>想到多少写多少，用到什么再回头补</b>，这才是正确的编程思维：在循环外补一个统计变量，每减一次就 ++，它就是商。</p>
+  <code class="blk"><span class="hk">int</span> dividend = 100;   <span class="hc">// 被除数</span>
+<span class="hk">int</span> divisor = 37;     <span class="hc">// 除数</span>
+<span class="hk">int</span> count = 0;        <span class="hc">// 统计相减了多少次</span>
+<span class="hk">while</span> (dividend &gt;= divisor) {
+    dividend = dividend - divisor;
+    count++;              <span class="hc">// 减一次，统计变量就自增一次</span>
+}
+System.out.println(<span class="hs">"余数为"</span> + dividend);   <span class="hc">// 余数为26</span>
+System.out.println(<span class="hs">"商为"</span> + count);        <span class="hc">// 商为2</span></code>
+  <p>验证：100 和 10，余数 0；10 和 3，余数 1、商 3；100 和 37，余数 26、商 2。都和实际一样。这些算法题以后在企业面试中也可能碰到，刚接触觉得难很正常，不要慌，慢慢分析几遍就好。</p>
+
+  <div class="card">
+    <h3>动手：一块一块减</h3>
+    <div class="row">
+      <span>被除数</span><input class="inp" id="dv-a" value="100" aria-label="被除数">
+      <span>除数</span><input class="inp" id="dv-b" value="37" aria-label="除数">
+      <button class="btn sm primary" id="dv-next">减一次</button>
+      <button class="btn sm" id="dv-all">减到不能减</button>
+      <button class="btn sm" id="dv-reset">重来</button>
+    </div>
+    <div class="blocks" id="dv-blk"></div>
+    <div class="row" style="margin-top:8px"><span>dividend = <b class="big" id="dv-d"></b></span><span>count = <b class="big" id="dv-c"></b></span></div>
+    <div class="msg" id="dv-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">真的去力扣提交会怎样</span>
+    这是力扣第 29 题"两数相除"的简化版。原题允许负数，而且被除数可以是 2147483647、除数是 1：一次一次减要循环二十多亿次，会超时。正式解法是把除数不断翻倍（用 <code>divisor + divisor</code>，不算乘法）去减，几十次就够了。现阶段先掌握"用减法和计数代替除法"的思路即可。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P48</div>
+  <h2>do…while：先执行，后判断</h2>
+  <p>循环的第三种格式，以后用得非常少，简单了解一下。</p>
+  <code class="blk">初始化语句;
+<span class="hk">do</span> {
+    循环体语句;
+    条件控制语句;
+} <span class="hk">while</span> (条件判断语句);</code>
+  <p>循环体和条件控制语句跑到了判断的<b>上面</b>。执行流程：先执行初始化语句；然后<b>不判断</b>，直接执行一次循环体和条件控制语句；最后才执行条件判断，true 就回到上面再来一轮，false 就结束。</p>
+  <p>所以 do…while 最大的特点是<b>先执行后判断</b>：就算条件第一次就是 false，循环体<b>至少也会执行一次</b>。而 for 和 while 第一次判断就是 false 的话，循环体一次机会都没有。</p>
+  <p>好比去饭店吃饭：for 和 while 是先摸摸兜里有没有钱，没钱就走；do…while 就很粗暴，不管怎样先吃一顿，吃完再看兜里有没有钱，没钱就走，有钱接着吃。</p>
+
+  <div class="card">
+    <h3>动手：第一次判断就是 false</h3>
+    <div class="row"><span>int i =</span><input class="inp" id="dw-i" value="10" style="width:60px" aria-label="i 的初始值"><span>条件：i &lt;= 5，循环体打印 i，然后 i++</span></div>
+    <div class="cmp" style="margin-top:6px">
+      <div><h4>while</h4><pre id="dw-w"></pre><div class="out" id="dw-wo"></div></div>
+      <div><h4>do…while</h4><pre id="dw-d"></pre><div class="out" id="dw-do"></div></div>
+    </div>
+    <div class="msg" id="dw-msg"></div>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>while 格式</b></td><td><code>初始化; while (判断) { 循环体; 条件控制; }</code>，流程和 for 一样</td></tr>
+      <tr><td><b>for 还是 while</b></td><td>语法上可以互相改写；知道次数或范围用 for，只知道结束条件用 while</td></tr>
+      <tr><td><b>折纸</b></td><td>"折叠"就是 <code>paper *= 2</code>；<code>while (paper &lt; height)</code> 加 count++，27 次</td></tr>
+      <tr><td><b>倒过来</b></td><td><code>ge = x % 10; x = x / 10; num = num * 10 + ge;</code>，直到 x 为 0</td></tr>
+      <tr><td><b>temp</b></td><td>循环会改掉 x，要比较原值就先用临时变量存一份</td></tr>
+      <tr><td><b>商和余数</b></td><td>不断减除数，减的次数是商，剩下的是余数</td></tr>
+      <tr><td><b>do…while</b></td><td>先执行后判断，循环体至少执行一次；几乎不用</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    for 和 while 能互相改写：知道次数用 for，只知道什么时候停用 while；do…while 先干一次再判断。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. 把 <code>for (int i = 1; i &lt;= 100; i++) { System.out.println(i); }</code> 改写成 while。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>int i = 1; while (i &lt;= 100) { System.out.println(i); i++; }</code></div>
+    </div>
+    <div class="q">
+      <div class="qt">2. "存款 1 万元，年利率 3%，多少年后翻倍"，用 for 还是 while？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">while。不知道要循环几年，只知道结束条件：钱 &gt;= 2 万。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 回文数的代码里，为什么不能直接写 <code>num == x</code>？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">循环里一直在执行 <code>x = x / 10</code>，循环结束时 x 已经是 0 了。要提前用 <code>temp</code> 记录原来的值，最后和 temp 比。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 用"不断相减"的方法算 17 ÷ 5，循环执行几次？最后 dividend 和 count 各是多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">3 次：17 → 12 → 7 → 2，2 &lt; 5 停止。dividend = 2（余数），count = 3（商）。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. <code>int i = 10; do { System.out.println(i); i++; } while (i &lt;= 5);</code> 打印什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">打印一次 10。do…while 先执行一次循环体，再判断 11 &lt;= 5 为 false，结束。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="45.html"><small>← 上一篇</small>P45–46 for 循环：累加与统计</a>
+    <a class="next" href="49.html"><small>下一篇 →</small>P49–53 跳转控制与循环综合练习</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P47–P48（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=47" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- 折纸 ---------- */
+(function () {
+  const H = 8844430;
+  const REF = [[0.1, '一张纸'], [1, '一张银行卡'], [10, '一枚硬币摞 5 个'], [100, '一本厚字典'], [1000, '一个小孩（1 米）'],
+    [10000, '三层楼'], [100000, '一栋 30 层大楼（100 米）'], [1e6, '一座小山（1 千米）'], [3e6, '一座雪山（几千米）'], [H, '珠穆朗玛峰']];
+  const like = mm => { let r = REF[0][1]; for (const [v, n] of REF) if (mm >= v * 0.8) r = n; return r; };
+  // 对数刻度：1e-1 .. 1e8
+  const LO = -1, HI = 7.3;
+  const pos = mm => Math.max(0, Math.min(100, (Math.log10(mm) - LO) / (HI - LO) * 100));
+  const tw = $('#fd-tower');
+  [[0.1, '0.1 mm'], [10, '1 cm'], [1000, '1 m'], [1e5, '100 m'], [1e6, '1 km']].forEach(([v, t]) => tw.insertAdjacentHTML('beforeend', `<div class="lv" style="bottom:${pos(v)}%">${t}</div>`));
+  tw.insertAdjacentHTML('beforeend', `<div class="lv peak" style="bottom:${pos(H)}%">珠峰</div><div class="bar" id="fd-bar"></div>`);
+  let paper, count, playing = false;
+  const fmt = p => p < 1000 ? (+p.toFixed(1)).toString() : p.toFixed(1).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  function reset() { playing = false; paper = 0.1; count = 0; $('#fd-tb').innerHTML = `<tr><td>0</td><td>0.1</td><td class="ref">一张纸</td></tr>`; paint(); }
+  function paint() {
+    $('#fd-n').textContent = count; $('#fd-p').textContent = fmt(paper);
+    $('#fd-bar').style.height = pos(paper) + '%';
+    const done = paper >= H;
+    $('#fd-one').disabled = done; $('#fd-run').disabled = done;
+    if (done) $('#fd-msg').innerHTML = `判断 paper &lt; height → ${fmt(paper)} &lt; 8,844,430 → <b>false</b>，循环结束。打印 count：<b>${count}</b>。`;
+  }
+  function one() {
+    if (paper >= H) return false;
+    paper *= 2; count++;
+    const last = paper >= H;
+    $('#fd-tb').insertAdjacentHTML('beforeend', `<tr class="${last ? 'last' : ''}"><td>${count}</td><td>${fmt(paper)}</td><td class="ref">${last ? '超过珠峰！' : like(paper)}</td></tr>`);
+    $('.fold-tbl').scrollTop = 1e6;
+    paint(); return true;
+  }
+  $('#fd-one').onclick = one;
+  $('#fd-reset').onclick = reset;
+  $('#fd-run').onclick = async () => { if (playing) return; playing = true; while (playing && one()) await sleep(220); playing = false; };
+  reset();
+})();
+
+/* ---------- 回文数 ---------- */
+(function () {
+  let rows = [], k = 0, x0 = 0;
+  function build() {
+    const raw = $('#pl-x').value.trim();
+    rows = []; k = 0;
+    if (!/^-?\d{1,10}$/.test(raw) || Math.abs(+raw) > 2147483647) { $('#pl-tb').innerHTML = ''; $('#pl-out').innerHTML = '<span class="note">请填 int 范围内的整数</span>'; $('#pl-msg').textContent = ''; return; }
+    x0 = +raw; let x = x0, num = 0, r = 0;
+    while (x !== 0 && r < 12) {
+      const ge = x % 10;           // JS 的 % 对负数和 Java 一样：结果符号跟被除数
+      x = Math.trunc(x / 10);
+      num = (num * 10 + ge) | 0;   // 模拟 int 溢出
+      rows.push({ ge, x, num }); r++;
+    }
+    paint();
+  }
+  function paint() {
+    $('#pl-tb').innerHTML = rows.slice(0, k).map((R, i) => `<tr class="${i === k - 1 ? 'cur' : ''}"><td>第 ${i + 1} 轮</td><td class="dg">${R.ge}</td><td>${R.x}</td><td>${R.num}</td></tr>`).join('')
+      || `<tr><td colspan="4" style="text-align:left;color:var(--muted)">temp = ${x0}，num = 0，点"下一轮"</td></tr>`;
+    const done = k >= rows.length;
+    $('#pl-next').disabled = done;
+    if (!done) { $('#pl-out').innerHTML = '<span class="note">（循环中）</span>'; $('#pl-msg').innerHTML = k ? `x 还不是 0（x = ${rows[k - 1].x}），继续循环。` : ''; return; }
+    const num = rows.length ? rows[rows.length - 1].num : 0;
+    $('#pl-out').innerHTML = `num  = ${num}\nx    = 0      <span class="note">// 已经被循环改成 0 了</span>\nnum == x    → ${num === 0}\nnum == temp → ${num === x0}`;
+    let m = `x 变成 0，判断 <code>x != 0</code> 为 false，循环结束。${x0} 倒过来是 ${num}，所以${num === x0 ? '<b>是</b>' : '<b>不是</b>'}回文数。`;
+    if (x0 < 0) m += ' 注意：按力扣的规定负数都不是回文数，这里打印 true 就是补充框里说的坑。';
+    const rev = Number(String(Math.abs(x0)).split('').reverse().join('')) * Math.sign(x0);
+    if (rev !== num) m += ` 倒过来本该是 ${rev}，超出了 int 范围（溢出），num 算错了。`;
+    $('#pl-msg').innerHTML = m;
+  }
+  $('#pl-x').addEventListener('input', build);
+  $('#pl-next').onclick = () => { if (k < rows.length) { k++; paint(); } };
+  $('#pl-all').onclick = () => { k = rows.length; paint(); };
+  $('#pl-reset').onclick = build;
+  build();
+})();
+
+/* ---------- 求商和余数 ---------- */
+(function () {
+  let a, b, d, c;
+  function build() {
+    a = parseInt($('#dv-a').value, 10); b = parseInt($('#dv-b').value, 10);
+    if (!(a > 0) || !(b > 0)) { $('#dv-blk').innerHTML = ''; $('#dv-msg').textContent = '题目规定两个数都是正数'; $('#dv-d').textContent = $('#dv-c').textContent = '—'; return; }
+    d = a; c = 0; paint();
+  }
+  function paint() {
+    const done = d < b;
+    const n = Math.ceil(a / b), blk = [];
+    if (n <= 120) {
+      for (let i = 0; i < n; i++) {
+        const w = i < Math.floor(a / b) ? b : a % b;
+        const cls = i < c ? 'gone' : (done ? 'rem' : '');
+        blk.push(`<span class="${cls}" style="width:${Math.max(14, Math.min(300, w * 300 / Math.max(a, b)))}px">${w}</span>`);
+      }
+      $('#dv-blk').innerHTML = blk.join('');
+    } else $('#dv-blk').innerHTML = `<span style="background:none;color:var(--muted);font-size:12px">（要减 ${Math.floor(a / b)} 次，块太多就不画了）</span>`;
+    $('#dv-d').textContent = d; $('#dv-c').textContent = c;
+    $('#dv-next').disabled = done; $('#dv-all').disabled = done;
+    $('#dv-msg').innerHTML = done
+      ? `判断 ${d} &gt;= ${b} 为 false，循环结束：<b>余数为 ${d}，商为 ${c}</b>。（核对：${b} × ${c} + ${d} = ${b * c + d}）`
+      : c ? `${d + b} − ${b} = ${d}，还 &gt;= ${b}，继续减。` : `判断 ${d} &gt;= ${b} 为 true，进入循环。灰色块是已经减掉的，最后剩下的绿色就是余数。`;
+  }
+  function one() { if (d >= b) { d -= b; c++; paint(); } }
+  $('#dv-next').onclick = one;
+  $('#dv-all').onclick = () => { if (d >= b) { c += Math.floor(d / b); d %= b; paint(); } };
+  $('#dv-reset').onclick = build;
+  ['#dv-a', '#dv-b'].forEach(s => $(s).addEventListener('input', build));
+  build();
+})();
+
+/* ---------- do…while ---------- */
+(function () {
+  function paint() {
+    const i0 = parseInt($('#dw-i').value, 10);
+    if (isNaN(i0)) return;
+    $('#dw-w').innerHTML = `<span class="hk">int</span> i = ${i0};\n<span class="hk">while</span> (i &lt;= 5) {\n    System.out.println(i);\n    i++;\n}`;
+    $('#dw-d').innerHTML = `<span class="hk">int</span> i = ${i0};\n<span class="hk">do</span> {\n    System.out.println(i);\n    i++;\n} <span class="hk">while</span> (i &lt;= 5);`;
+    const w = [], dd = [];
+    let i = i0; while (i <= 5 && w.length < 30) { w.push(i); i++; }
+    i = i0; do { dd.push(i); i++; } while (i <= 5 && dd.length < 30);
+    $('#dw-wo').innerHTML = w.length ? w.join('\n') : '<span class="note">（没有任何输出）</span>';
+    $('#dw-do').innerHTML = dd.join('\n');
+    $('#dw-msg').innerHTML = i0 > 5
+      ? `第一次判断 ${i0} &lt;= 5 就是 false：while 先判断，循环体一次都没执行；do…while 先吃一顿再看兜里，打印了一次 ${i0}，然后判断 ${i0 + 1} &lt;= 5 为 false 才结束。`
+      : `条件一开始是 true 时，两种循环的结果完全一样。把 i 改成大于 5 的数看看区别。`;
+  }
+  $('#dw-i').addEventListener('input', paint);
+  paint();
+})();
+</script>
+</body>
+</html>

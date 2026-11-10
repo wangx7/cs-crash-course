@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P45–46 for 循环：累加与统计 · Java 入门图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:64px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px;color:var(--muted);margin:6px 0}
+.chips button{font:13px inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:999px;padding:2px 10px;cursor:pointer}
+.chips button:hover,.chips button.sel{border-color:var(--accent);color:var(--accent)}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;max-height:220px;overflow-y:auto;white-space:pre-wrap}
+.out .note{color:#7f8794}
+.out .err{color:#ff7b72}
+
+/* for 单步 */
+.fs-wrap{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:12px;margin-top:8px}
+@media (max-width:720px){.fs-wrap{grid-template-columns:1fr}}
+.fs-code{font:13.5px/1.8 var(--mono);background:var(--bg);border-radius:10px;padding:6px 0;overflow-x:auto}
+.fs-code div{padding:0 10px;white-space:pre}
+.fs-code div.cur{background:var(--on-soft)}
+.fs-code span.p{border-radius:4px;padding:0 1px}
+.fs-code span.p.cur{background:var(--on-soft);outline:1.5px solid var(--on)}
+.fs-code span.p.cur.f{background:var(--bad-soft);outline-color:var(--bad)}
+.fs-note{font-size:14px;margin-top:8px;min-height:2.6em}
+.vars{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.vars .v{border:1px solid var(--line);border-radius:8px;padding:3px 10px;font:13px var(--mono);background:var(--panel)}
+.vars .v b{font-size:16px}
+.vars .v.chg{border-color:var(--on);background:var(--on-soft)}
+.fl{width:100%;max-width:300px;display:block;margin:0 auto}
+.fl .n rect{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.fl .n text{font:13px sans-serif;fill:var(--ink);text-anchor:middle;dominant-baseline:middle}
+.fl .n.act rect{fill:var(--on-soft);stroke:var(--on);stroke-width:2.5}
+.fl .n.act.f rect{fill:var(--bad-soft);stroke:var(--bad)}
+.fl path{fill:none;stroke:var(--muted);stroke-width:1.5}
+.fl .lb{font:11px sans-serif;fill:var(--muted)}
+
+/* 作用范围 */
+.sc-wrap{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:10px;margin-top:8px}
+@media (max-width:680px){.sc-wrap{grid-template-columns:1fr}}
+.sc-code{font:13.5px/1.7 var(--mono);background:var(--bg);border-radius:10px;padding:8px 12px;white-space:pre;overflow-x:auto;margin:0}
+.sc-code .hit{background:var(--accent-soft);border-radius:4px}
+.sc-code .bad{background:var(--bad-soft);border-radius:4px;text-decoration:wavy underline var(--bad)}
+
+/* 统计 */
+.grid-n{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.grid-n span{font:12px var(--mono);min-width:30px;text-align:center;padding:3px 0;border-radius:6px;background:var(--bg);color:var(--muted)}
+.grid-n span.m3{box-shadow:inset 0 -3px 0 var(--accent)}
+.grid-n span.m5{box-shadow:inset 0 3px 0 var(--on)}
+.grid-n span.m3.m5{box-shadow:inset 0 -3px 0 var(--accent),inset 0 3px 0 var(--on)}
+.grid-n span.hit{background:var(--ok-soft);color:var(--ink);font-weight:700;outline:1.5px solid var(--ok)}
+.big{font:700 20px var(--mono)}
+</style>
+</head>
+<body data-ep="45" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=45" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">判断和循环 · P45–P46</div>
+  <h1>for 循环：累加与统计</h1>
+  <p class="en">The for Loop, Accumulating Sums &amp; Counting</p>
+  <p class="lead">学完顺序和分支，进入第三种流程控制：<b>循环</b>，也就是重复地做某件事。这一篇先学最常用的 <b>for 循环</b>：格式、一轮一轮的执行流程，再用它写一串由易到难的练习：打印数字、断线重连、求和、偶数和、统计个数。中间会碰到两个以后天天用的思路，<b>累加思想</b>和<b>统计思想</b>，以及之前留下的坑：<b>变量的作用范围</b>。</p>
+  <div class="road">
+    <span>什么是循环</span><i>→</i><span>for 格式与流程</span><i>→</i><span>正着、倒着打印</span><i>→</i><span>断线重连</span><i>→</i><span>累加求和</span><i>→</i><span>变量作用范围</span><i>→</i><span>偶数和</span><i>→</i><span>统计个数</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 循环与 for 的格式</a></li>
+    <li><a href="#ch2">2 · 打印数字与断线重连</a></li>
+    <li><a href="#ch3">3 · 累加思想：求和</a></li>
+    <li><a href="#ch4">4 · 变量的作用范围</a></li>
+    <li><a href="#ch5">5 · 偶数和：循环里套 if</a></li>
+    <li><a href="#ch6">6 · 统计思想</a></li>
+    <li><a href="#ch7">7 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P45</div>
+  <h2>什么是循环，for 循环的格式和执行流程</h2>
+  <p>循环，顾名思义就是<b>重复地做某件事</b>，而且有明确的<b>开始和停止标记</b>。比如电风扇：按下 Open，叶子开始一直重复地转；按下 Stop，就停了。Open 是循环的开始标记，Stop 是停止标记。</p>
+  <p>Java 里的循环一共三种：<b>for</b>、<b>while</b>、<b>do…while</b>。前两个要重点掌握；do…while 简单了解就行，以后几乎不会用。先学 for：</p>
+  <code class="blk"><span class="hk">for</span> (初始化语句; 条件判断语句; 条件控制语句) {
+    循环体语句;   <span class="hc">// 要重复执行的代码</span>
+}</code>
+  <p>小括号里有三条语句，用<b>分号</b>隔开；大括号里是循环体。比如重复打印 10 次 HelloWorld：</p>
+  <code class="blk"><span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt;= 10; i++) {
+    System.out.println(<span class="hs">"HelloWorld"</span>);
+}</code>
+  <p>简单理解：用变量 <code>i</code> 控制循环的次数，从 1 开始、到 10 结束，每次循环 i 自增一次，一共 10 次。详细的执行流程是：</p>
+  <ol>
+    <li>执行<b>初始化语句</b>（<code>int i = 1</code>）；</li>
+    <li>执行<b>条件判断语句</b>（<code>i &lt;= 10</code>），看结果是 true 还是 false：false 就结束循环，去执行循环后面的代码；true 就进入大括号，</li>
+    <li>执行<b>循环体</b>（打印 HelloWorld）；</li>
+    <li>执行<b>条件控制语句</b>（<code>i++</code>）。到这里第一轮结束，<b>回到第 2 步</b>，从条件判断开始下一轮。</li>
+  </ol>
+  <p>一轮一轮这么执行下去，直到判断结果是 false，循环才结束。要记住两个核心：</p>
+  <ul>
+    <li><b>初始化语句只执行一次</b>，它是循环的开始；</li>
+    <li>判断为 true，说明还没到循环的末尾，循环继续；判断为 false，说明到末尾了，循环结束。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：for 循环单步执行</h3>
+    <p style="margin-top:0">选一个练习，一步一步点"下一步"，看程序此刻执行的是哪条语句、变量怎么变。本页后面的练习都在这里，可以学到哪一节就回来跑哪一个；开始、结束的数字也能改。</p>
+    <div class="chips" id="fs-pre"></div>
+    <div class="row">
+      <span>开始</span><input class="inp" id="fs-a" aria-label="开始数字">
+      <span>结束</span><input class="inp" id="fs-b" aria-label="结束数字">
+      <button class="btn sm primary" id="fs-next">下一步</button>
+      <button class="btn sm" id="fs-play">自动</button>
+      <button class="btn sm" id="fs-all">直接跑完</button>
+      <button class="btn sm" id="fs-reset">重来</button>
+    </div>
+    <div class="fs-wrap">
+      <div>
+        <div class="fs-code" id="fs-code"></div>
+        <div class="out" id="fs-out"></div>
+      </div>
+      <div>
+        <svg class="fl" viewBox="0 0 300 250" aria-label="for 循环流程图">
+          <defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--muted);stroke:none"/></marker></defs>
+          <g class="n" data-n="init"><rect x="45" y="6" width="150" height="32" rx="8"/><text x="120" y="22">① 初始化语句</text></g>
+          <g class="n" data-n="cond"><rect x="45" y="68" width="150" height="36" rx="18"/><text x="120" y="86">② 条件判断</text></g>
+          <g class="n" data-n="body"><rect x="45" y="138" width="150" height="32" rx="8"/><text x="120" y="154">③ 循环体</text></g>
+          <g class="n" data-n="upd"><rect x="45" y="204" width="150" height="32" rx="8"/><text x="120" y="220">④ 条件控制</text></g>
+          <g class="n" data-n="end"><rect x="225" y="68" width="70" height="36" rx="8"/><text x="260" y="86">结束</text></g>
+          <path d="M120,38 V66" marker-end="url(#ah)"/>
+          <path d="M120,104 V136" marker-end="url(#ah)"/>
+          <path d="M120,170 V202" marker-end="url(#ah)"/>
+          <path d="M45,220 H14 V86 H43" marker-end="url(#ah)"/>
+          <path d="M195,86 H223" marker-end="url(#ah)"/>
+          <text class="lb" x="126" y="124">true</text>
+          <text class="lb" x="198" y="80">false</text>
+          <text class="lb" x="8" y="150" transform="rotate(-90 8 150)" text-anchor="middle">下一轮</text>
+        </svg>
+        <div class="vars" id="fs-vars"></div>
+        <div class="fs-note" id="fs-note"></div>
+      </div>
+    </div>
+  </div>
+
+  <p><b>练习：打印 5 次 HelloWorld</b>。打印 5 次，就用变量 i 从 1 数到 5。写 for 的时候如果忘了三条语句，可以先在小括号里打两个分号，再一个一个补：第一个是初始化语句（循环的开始），中间是条件判断语句（判断变量有没有到循环的结束），第三个是条件控制语句（每次循环结束后变量怎么变，大多数时候 <code>i++</code> 就行）。写成 <code>int i = 1; i &lt;= 5; i++</code>。中间写成 <code>i &lt; 6</code> 也可以，同样是 1 到 5，只是 <code>&lt;= 5</code> 更好理解。</p>
+  <p>想打印 10 次、20 次、50 次？<b>只要改结束条件</b>。改成 10，循环就从 1 到 10，打印 10 次。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P45</div>
+  <h2>正着、倒着打印数字，断线重连</h2>
+  <p><b>练习：输出数字</b>。打印 1 2 3 4 5，再倒着打印 5 4 3 2 1。</p>
+  <p>写循环先想清楚：<b>从几开始，到几结束</b>。正着打印从 1 开始、到 5 结束，所以是 <code>int i = 1; i &lt;= 5; i++</code>。循环体打印谁？第一次循环 i 是 1（初始化时赋的值），第二次 i 已经 ++ 过一次，变成 2……i 在循环里的变化正好是 1、2、3、4、5，所以<b>直接打印 i</b> 就行。</p>
+  <p>倒着打印，开始条件变成 5、结束条件变成 1，由大变小，所以判断要写 <code>&gt;=</code>，条件控制也不能写 <code>i++</code>，要写 <code>i--</code>：</p>
+  <code class="blk"><span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt;= 5; i++) {    <span class="hc">// 正着：1 2 3 4 5</span>
+    System.out.println(i);
+}
+<span class="hk">for</span> (<span class="hk">int</span> i = 5; i &gt;= 1; i--) {    <span class="hc">// 倒着：5 4 3 2 1</span>
+    System.out.println(i);
+}</code>
+  <p><b>练习：断线重连</b>。实际开发中，需要重复执行的代码一般都用循环实现。比如玩游戏网不好时会断线重连，断线重连就是重复执行的；公司要求重连次数不能太多，最多 5 次。游戏和服务器还没学，重连的业务逻辑先用一句输出代替：</p>
+  <code class="blk"><span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt;= 5; i++) {
+    System.out.println(<span class="hs">"第"</span> + i + <span class="hs">"次执行断线重连的业务逻辑"</span>);
+}</code>
+  <p>本来只打印"执行断线重连的业务逻辑"，想看到当前是第几次，就把 i 拼进字符串：第一次循环 i 是 1，打印"第1次执行……"，然后 i++ 变成 2，打印"第2次执行……"，一共 5 次。以后写开发或综合练习时，<b>需要重复执行某段代码，就用循环</b>。</p>
+  <div class="extra">
+    <span class="t">IDEA 快速生成 for</span>
+    视频在第 5 节用了一个快捷方式：写循环次数再加 <code>.fori</code>，比如 <code>100.fori</code> 回车，生成 <code>for (int i = 0; i &lt; 100; i++)</code>，再把开始、结束条件改成需要的样子。同理 <code>100.forr</code> 生成倒着数的 <code>for (int i = 100; i &gt; 0; i--)</code>。直接打 <code>fori</code> 回车也能出一个空架子。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P46</div>
+  <h2>累加思想：求 1~5 的和</h2>
+  <p>前面的练习说白了只是打印语句，从这里开始加大难度。实际开发中，要获取一个范围里的数据时也会用到循环。<b>求 1~5 之间的和</b>，怎么做？</p>
+  <p>思路：先要能拿到 1、2、3、4、5 这五个数；再定义一个初始值为 0 的变量，把每个数依次累加进去：加 1 变成 1，加 2 变成 3，加 3 变成 6，加 4 变成 10，加 5 变成 15。15 正好是五个数的总和。这是 Java 程序里第一个比较重要的思想：<b>累加思想</b>。</p>
+  <ol>
+    <li>循环 1 到 5，得到里面的每一个数字（先在循环体里打印 i 看看，确实都拿到了）；</li>
+    <li>在循环<b>外面</b>定义变量 <code>sum</code>，专门用来累加；</li>
+    <li>循环里把拿到的数字累加进 sum：拿 sum 原来的值和当前数字相加，结果再赋值给 sum；</li>
+    <li>循环结束，就表示 1~5 都已经累加到 sum 里了，在循环<b>下面</b>打印 sum。</li>
+  </ol>
+  <code class="blk"><span class="hk">int</span> sum = 0;
+<span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt;= 5; i++) {
+    sum = sum + i;      <span class="hc">// 也可以简写成 sum += i;</span>
+}
+System.out.println(sum);   <span class="hc">// 15</span></code>
+  <p>第一次循环 i 是 1、sum 是 0，0 + 1 = 1 赋给 sum；第二次 i 是 2、sum 是 1，1 + 2 = 3 赋给 sum……就这样一个一个累加。<code>sum = sum + i</code> 可以用之前学的加等运算符简写成 <code>sum += i</code>。</p>
+  <p>要算 1~100 的和，只要把结束条件改成 <code>i &lt;= 100</code>，结果 5050。这个数是对的，很久以前数学家高斯就已经帮我们算过了。（在上面的单步执行里选"求和"，结束改成 100，点"直接跑完"试试。）</p>
+  <div class="extra">
+    <span class="t">高斯的算法</span>
+    1 + 100、2 + 99、3 + 98……每一对都是 101，一共 50 对，所以和是 101 × 50 = 5050，也就是公式 n(n+1)/2。循环的好处是不用想公式，换成"1~100 里 3 的倍数之和"这种不好套公式的题也照样能算。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P46</div>
+  <h2>扩展：sum 为什么不能定义在循环里面</h2>
+  <p>如果把累加的变量 sum 定义在循环的<b>里面</b>，代码还能正常运行吗？这就说到了学变量时留的一个坑：<b>变量的作用范围</b>。</p>
+  <p><b>变量只在所属的大括号中有效</b>。sum 定义在循环外面，它属于 main 方法的大括号，在整个 main 里都能用；定义在循环里面，就只在循环的大括号里有效，循环下面打印 sum 已经出了大括号，超出作用范围，直接报错。</p>
+  <p>那把输出语句也挪进循环里呢？能运行，但结果不对：打印出来的是 1、2、3、4、5，不是累加的结果。因为：<b>定义在循环里的变量只在本次循环中有效</b>，本次循环结束（碰到循环的右大括号），变量就从内存中消失；下一轮循环开始时，又会重新定义一个新的 sum，又是 0。第一轮 0 + 1 = 1，打印 1；第二轮重新定义 sum = 0，0 + 2 = 2，打印 2……</p>
+
+  <div class="card">
+    <h3>动手：sum 放在哪</h3>
+    <div class="row"><span class="seg" id="sc-tab"><button data-i="0">外面定义，外面打印</button><button data-i="1">里面定义，外面打印</button><button data-i="2">里面定义，里面打印</button></span></div>
+    <div class="sc-wrap"><pre class="sc-code" id="sc-code"></pre><div><div class="out" id="sc-out" style="margin-top:0"></div><div class="fs-note" id="sc-note"></div></div></div>
+  </div>
+
+  <p>这个过程有点绕，记结论就行：<b>累加求和的变量，定义在循环的外面</b>。这样不管循环 100 次还是多少次，用的都是同一个 sum，它不会在内存里反复消失又创建。</p>
+  <div class="extra">
+    <span class="t">循环变量 i 也一样</span>
+    <code>for (int i = 1; …)</code> 里定义的 i，作用范围也只是这个 for 循环，循环结束后在下面写 <code>System.out.println(i);</code> 同样会报错。所以两个 for 循环可以各自定义一个 i，互不冲突（第 2 节正着、倒着打印就是这么写的）。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P46</div>
+  <h2>求 1~100 的偶数和：循环和其他语句结合</h2>
+  <p>难度再加一丢丢。获取一个范围里的数据时，大多数情况不是要全部数据，而是要<b>符合要求</b>的数据，这就需要循环和其他语句结合使用。比如求 <b>1~100 之间的偶数和</b>。</p>
+  <ol>
+    <li>获取 1~100 之间的每一个数（用 <code>100.fori</code> 生成循环，开始改成 1、结束改成 <code>&lt;= 100</code>）；</li>
+    <li>累加求和，但不是直接加，要<b>先判断，再求和</b>：符合要求（偶数）的才加，奇数就不要了，直接 i++ 找下一个数。</li>
+  </ol>
+  <code class="blk"><span class="hk">int</span> sum = 0;
+<span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt;= 100; i++) {
+    <span class="hk">if</span> (i % 2 == 0) {     <span class="hc">// 对 2 取余为 0，就是偶数</span>
+        sum = sum + i;
+    }
+}
+System.out.println(sum);   <span class="hc">// 2550</span></code>
+  <p>结果 2550。这个练习的核心是：<b>循环里还可以写其他的语句</b>，比如 if。</p>
+  <div class="extra">
+    <span class="t">另一种写法</span>
+    偶数本来就是隔一个一个，也可以让 i 从 2 开始、每次加 2，不用判断：<code>for (int i = 2; i &lt;= 100; i += 2) { sum += i; }</code>。条件控制语句不一定是 <code>i++</code>，写成什么都可以，只要最后能让判断变成 false。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P46</div>
+  <h2>统计思想：既能被 3 整除又能被 5 整除的数有几个</h2>
+  <p><b>需求</b>：键盘录入两个数字，表示一个范围（比如 1 和 100）。统计这个范围中既能被 3 整除、又能被 5 整除的数字<b>有多少个</b>。还记得学自增运算符时说过的吗：以后要统计某样东西有多少个，就会用到自增。</p>
+  <p><b>分析</b>：</p>
+  <ol>
+    <li>键盘录入两个数字 <code>start</code>、<code>end</code>；</li>
+    <li>利用循环获取这个范围中的每一个数字：开始条件是 start，结束条件是 end（可以写 <code>end.fori</code> 再改）；先打印 i 看看，录入 10 和 15 时确实拿到了 10~15；</li>
+    <li>对每一个数字进行判断，统计有多少个满足要求。"能被 3 整除"就是 <code>i % 3 == 0</code>（余数为 0），"能被 5 整除"是 <code>i % 5 == 0</code>。题目说"<b>既能……又能……</b>"，两个条件要<b>同时</b>满足，用 <code>&amp;&amp;</code>；如果是只要满足其中一个，就用 <code>||</code>。写代码前一定要读懂题目。</li>
+  </ol>
+  <code class="blk">Scanner sc = <span class="hk">new</span> Scanner(System.in);
+System.out.println(<span class="hs">"请录入一个数字表示范围的开始"</span>);
+<span class="hk">int</span> start = sc.nextInt();
+System.out.println(<span class="hs">"请录入一个数字表示范围的结束"</span>);
+<span class="hk">int</span> end = sc.nextInt();
+
+<span class="hk">int</span> count = 0;            <span class="hc">// 统计变量</span>
+<span class="hk">for</span> (<span class="hk">int</span> i = start; i &lt;= end; i++) {
+    <span class="hk">if</span> (i % 3 == 0 &amp;&amp; i % 5 == 0) {
+        count++;          <span class="hc">// 有一个满足，就数一个</span>
+    }
+}
+System.out.println(count);</code>
+  <p>先在 if 里打印 i 验证：10~15 只有 15 满足（10、11、12、13、14 都不满足）；1~100 满足的是 15、30、45、60、75、90。但题目要的是<b>个数</b>，所以不打印了，在循环外面定义一个<b>统计变量</b> count，在合适的时候让它 ++。合适的位置就是判断的里面：有一个数字满足，count 就加一。循环结束时，范围里的数字都判断过了，再打印 count：10~15 是 1，1~100 是 6。</p>
+  <p>这就是<b>统计思想</b>：定义一个变量用来数数，在合适的时候让它自增一次。</p>
+
+  <div class="card">
+    <h3>动手：数一数</h3>
+    <div class="row">
+      <span>start</span><input class="inp" id="ct-a" value="1" aria-label="start">
+      <span>end</span><input class="inp" id="ct-b" value="100" aria-label="end">
+      <span>两个条件之间用</span><span class="seg" id="ct-op"><button data-v="and">&amp;&amp;（既…又…）</button><button data-v="or">||（满足一个就行）</button></span>
+    </div>
+    <div class="chips" style="margin:2px 0 0"><span>格子下边蓝线 = 能被 3 整除，上边绿线 = 能被 5 整除，高亮 = 让 count++ 的数</span></div>
+    <div class="grid-n" id="ct-grid"></div>
+    <div class="row" style="margin-top:10px"><span>count =</span><b class="big" id="ct-n"></b><span id="ct-msg" style="color:var(--muted)"></span></div>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>格式</b></td><td><code>for (初始化语句; 条件判断语句; 条件控制语句) { 循环体 }</code></td></tr>
+      <tr><td><b>流程</b></td><td>① 初始化（只执行一次）→ ② 判断：false 结束，true 往下 → ③ 循环体 → ④ 条件控制 → 回到 ②</td></tr>
+      <tr><td><b>写循环先想</b></td><td>从几开始、到几结束；倒着数用 <code>&gt;=</code> 和 <code>i--</code></td></tr>
+      <tr><td><b>累加思想</b></td><td>循环外定义 <code>sum = 0</code>，循环里 <code>sum += i</code>，循环后打印</td></tr>
+      <tr><td><b>统计思想</b></td><td>循环外定义 <code>count = 0</code>，满足条件时 <code>count++</code>，循环后打印</td></tr>
+      <tr><td><b>作用范围</b></td><td>变量只在所属的大括号中有效；循环里定义的变量每一轮都会重新创建</td></tr>
+      <tr><td><b>筛选</b></td><td>循环里可以写 if，只处理符合要求的数据；"既…又…"用 &amp;&amp;，"满足一个"用 ||</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    for 循环先初始化一次，然后"判断 → 循环体 → 条件控制"一轮一轮转，判断为 false 才停；求和、计数的变量都要定义在循环外面。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>for (int i = 1; i &lt;= 3; i++)</code> 里，初始化语句、条件判断语句、条件控制语句分别执行几次？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">初始化 1 次；判断 4 次（i 为 1、2、3 时 true，为 4 时 false 结束）；条件控制 3 次。循环体也是 3 次。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 倒着打印 10 到 1，for 的小括号怎么写？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>int i = 10; i &gt;= 1; i--</code></div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 把 <code>int sum = 0;</code> 写进循环里，同时在循环里打印 sum，求 1~5 的和会输出什么？为什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">输出 1 2 3 4 5。循环里定义的变量只在本次循环有效，每一轮都会重新定义一个 sum = 0，所以每次打印的都是 0 + i。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 统计 1~100 里能被 3 整除<b>或</b>能被 5 整除的数，条件怎么写？结果是多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans"><code>i % 3 == 0 || i % 5 == 0</code>，结果 47（3 的倍数 33 个 + 5 的倍数 20 个 − 两者都是的 6 个）。可以在第 6 节的演示里切到 || 验证。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 求 1~100 的偶数和，除了循环里用 if 判断，还有什么写法？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">让 i 从 2 开始、每次 <code>i += 2</code>，循环体直接 <code>sum += i</code>。结果都是 2550。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="43.html"><small>← 上一篇</small>P43–44 switch</a>
+    <a class="next" href="47.html"><small>下一篇 →</small>P47–48 while 与 do…while</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P45–P46（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=45" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- for 单步执行 ---------- */
+(function () {
+  // 每个练习：初值、终值、方向、循环前/后的代码、循环体（返回子步骤）
+  const P = [
+    { name: 'HelloWorld × 5', a: 1, b: 5, dir: 1, pre: [], post: [],
+      body: ['System.out.println("HelloWorld");'],
+      run: v => [{ l: 0, out: 'HelloWorld', note: '执行循环体：打印 HelloWorld' }] },
+    { name: '正着 1→5', a: 1, b: 5, dir: 1, pre: [], post: [],
+      body: ['System.out.println(i);'],
+      run: v => [{ l: 0, out: String(v.i), note: `执行循环体：打印 i，此时 i 是 ${v.i}` }] },
+    { name: '倒着 5→1', a: 5, b: 1, dir: -1, pre: [], post: [],
+      body: ['System.out.println(i);'],
+      run: v => [{ l: 0, out: String(v.i), note: `执行循环体：打印 i，此时 i 是 ${v.i}` }] },
+    { name: '断线重连', a: 1, b: 5, dir: 1, pre: [], post: [],
+      body: ['System.out.println("第" + i + "次执行断线重连的业务逻辑");'],
+      run: v => [{ l: 0, out: `第${v.i}次执行断线重连的业务逻辑`, note: `把 i（${v.i}）拼进字符串再打印` }] },
+    { name: '求和', a: 1, b: 5, dir: 1, pre: ['int sum = 0;'], post: ['System.out.println(sum);'], vars: { sum: 0 },
+      body: ['sum = sum + i;'],
+      run: v => { const o = v.sum; v.sum += v.i; return [{ l: 0, chg: 'sum', note: `sum = ${o} + ${v.i} = ${v.sum}` }]; },
+      postRun: v => [String(v.sum), `循环结束，sum 里已经是全部数字的和：${v.sum}`] },
+    { name: '偶数和', a: 1, b: 10, dir: 1, pre: ['int sum = 0;'], post: ['System.out.println(sum);'], vars: { sum: 0 },
+      body: ['if (i % 2 == 0) {', '    sum = sum + i;', '}'],
+      run: v => {
+        const r = v.i % 2, st = [{ l: 0, note: `判断 ${v.i} % 2 == 0 → 余数 ${r} → ${r === 0}` + (r === 0 ? '，是偶数，进 if' : '，奇数不要，跳过') }];
+        if (r === 0) { const o = v.sum; v.sum += v.i; st.push({ l: 1, chg: 'sum', note: `sum = ${o} + ${v.i} = ${v.sum}` }); }
+        return st;
+      },
+      postRun: v => [String(v.sum), `循环结束，偶数和是 ${v.sum}`] },
+    { name: '统计 3 和 5 的公倍数', a: 10, b: 15, dir: 1, pre: ['int count = 0;'], post: ['System.out.println(count);'], vars: { count: 0 },
+      body: ['if (i % 3 == 0 && i % 5 == 0) {', '    count++;', '}'],
+      run: v => {
+        const ok = v.i % 3 === 0 && v.i % 5 === 0, st = [{ l: 0, note: `${v.i} % 3 = ${v.i % 3}，${v.i} % 5 = ${v.i % 5} → ${ok}` + (ok ? '，满足，进 if' : '，不满足') }];
+        if (ok) { v.count++; st.push({ l: 1, chg: 'count', note: `count++ → count 变成 ${v.count}` }); }
+        return st;
+      },
+      postRun: v => [String(v.count), `循环结束，范围里满足要求的数一共 ${v.count} 个`] },
+  ];
+  let pi = 0, steps = [], k = 0, playing = false;
+  $('#fs-pre').innerHTML = '<span>练习：</span>' + P.map((p, i) => `<button data-i="${i}">${p.name}</button>`).join('');
+  $$('#fs-pre button').forEach(b => b.onclick = () => { pi = +b.dataset.i; $('#fs-a').value = P[pi].a; $('#fs-b').value = P[pi].b; build(); });
+  ['#fs-a', '#fs-b'].forEach(s => $(s).addEventListener('input', build));
+
+  function header(p, a, b) {
+    const c = p.dir > 0 ? `i &lt;= ${b}` : `i &gt;= ${b}`, u = p.dir > 0 ? 'i++' : 'i--';
+    return `<span class="hk">for</span> (<span class="p" data-p="init"><span class="hk">int</span> i = ${a}</span>; <span class="p" data-p="cond">${c}</span>; <span class="p" data-p="upd">${u}</span>) {`;
+  }
+  function build() {
+    playing = false; $('#fs-play').textContent = '自动';
+    $$('#fs-pre button').forEach(b => b.classList.toggle('sel', +b.dataset.i === pi));
+    const p = P[pi], a = parseInt($('#fs-a').value, 10), b = parseInt($('#fs-b').value, 10);
+    const lines = [];
+    p.pre.forEach(s => lines.push({ k: 'pre', h: esc(s) }));
+    lines.push({ k: 'head', h: isNaN(a) || isNaN(b) ? 'for (…) {' : header(p, a, b) });
+    p.body.forEach((s, i) => lines.push({ k: 'b' + i, h: '    ' + esc(s) }));
+    lines.push({ k: 'close', h: '}' });
+    p.post.forEach(s => lines.push({ k: 'post', h: esc(s) }));
+    $('#fs-code').innerHTML = lines.map(L => `<div data-k="${L.k}">${L.h}</div>`).join('');
+    steps = []; k = 0;
+    if (isNaN(a) || isNaN(b)) { $('#fs-note').textContent = '开始、结束请填整数'; return; }
+    if (Math.abs(b - a) > 500) { $('#fs-note').textContent = '范围太大了，演示里限制在 500 个数以内'; return; }
+    const v = { ...(p.vars || {}) };
+    const snap = (x) => steps.push({ ...x, v: { ...v } });
+    if (p.pre.length) snap({ line: 'pre', node: null, chg: Object.keys(v)[0], note: `循环开始前先定义 ${p.pre[0].replace(';', '')}，它在循环外面，整个 main 里都有效` });
+    v.i = a; snap({ line: 'head', part: 'init', node: 'init', chg: 'i', note: `① 初始化语句 int i = ${a}，只执行这一次` });
+    let round = 0;
+    while (true) {
+      const ok = p.dir > 0 ? v.i <= b : v.i >= b;
+      snap({ line: 'head', part: 'cond', node: 'cond', fail: !ok, note: `② 判断 ${p.dir > 0 ? `i <= ${b}` : `i >= ${b}`} → ${v.i} ${p.dir > 0 ? '<=' : '>='} ${b} → <b>${ok}</b>` + (ok ? `，进入第 ${round + 1} 轮循环体` : '，循环结束') });
+      if (!ok) break;
+      round++;
+      p.run(v).forEach(s => snap({ line: 'b' + s.l, node: 'body', out: s.out, chg: s.chg, note: '③ ' + s.note }));
+      const o = v.i; v.i += p.dir;
+      snap({ line: 'head', part: 'upd', node: 'upd', chg: 'i', note: `④ 条件控制 ${p.dir > 0 ? 'i++' : 'i--'}：i 从 ${o} 变成 ${v.i}，第 ${round} 轮结束，回到条件判断` });
+    }
+    delete v.i;
+    if (p.postRun) { const [out, note] = p.postRun(v); steps.push({ line: 'post', node: 'end', out, note, v: { ...v }, gone: true }); }
+    steps.push({ line: null, node: 'end', note: `程序结束。循环体一共执行了 ${round} 次，条件判断执行了 ${round + 1} 次。`, v: { ...v }, gone: true });
+    show();
+  }
+  function show() {
+    const cur = steps[k - 1];
+    $$('#fs-code div').forEach(d => d.classList.toggle('cur', !!cur && !cur.part && d.dataset.k === cur.line));
+    $$('#fs-code span.p').forEach(s => { const on = !!cur && cur.part === s.dataset.p; s.classList.toggle('cur', on); s.classList.toggle('f', on && !!cur.fail); });
+    $$('.fl .n').forEach(g => { const on = !!cur && cur.node === g.dataset.n; g.classList.toggle('act', on); g.classList.toggle('f', on && !!cur.fail); });
+    const outs = steps.slice(0, k).filter(s => s.out != null).map(s => esc(s.out));
+    $('#fs-out').innerHTML = outs.length ? outs.join('\n') : '<span class="note">（控制台输出会出现在这里）</span>';
+    $('#fs-out').scrollTop = 1e6;
+    const vv = cur ? cur.v : {};
+    $('#fs-vars').innerHTML = Object.entries(vv).map(([n, x]) => `<span class="v${cur && cur.chg === n ? ' chg' : ''}">${n} = <b>${x}</b></span>`).join('') + (cur && cur.gone ? '<span class="v" style="color:var(--muted)">i 已随循环结束消失</span>' : '');
+    $('#fs-note').innerHTML = cur ? cur.note : '点"下一步"开始执行。';
+    $('#fs-next').disabled = k >= steps.length;
+  }
+  $('#fs-next').onclick = () => { if (k < steps.length) { k++; show(); } };
+  $('#fs-all').onclick = () => { playing = false; $('#fs-play').textContent = '自动'; k = steps.length; show(); };
+  $('#fs-reset').onclick = build;
+  $('#fs-play').onclick = async () => {
+    if (playing) { playing = false; $('#fs-play').textContent = '自动'; return; }
+    if (k >= steps.length) k = 0;
+    playing = true; $('#fs-play').textContent = '暂停';
+    while (playing && k < steps.length) { k++; show(); await sleep(steps.length > 80 ? 120 : 650); }
+    playing = false; $('#fs-play').textContent = '自动';
+  };
+  $('#fs-a').value = P[0].a; $('#fs-b').value = P[0].b;
+  build();
+})();
+
+/* ---------- sum 放在哪 ---------- */
+(function () {
+  const H = '<span class="hit">', E = '</span>';
+  const C = [
+    `${H}int sum = 0;${E}
+for (int i = 1; i <= 5; i++) {
+    sum = sum + i;
+}
+System.out.println(sum);`,
+    `for (int i = 1; i <= 5; i++) {
+    ${H}int sum = 0;${E}
+    sum = sum + i;
+}
+System.out.println(<span class="bad">sum</span>);`,
+    `for (int i = 1; i <= 5; i++) {
+    ${H}int sum = 0;${E}
+    sum = sum + i;
+    System.out.println(sum);
+}`];
+  const OUT = ['15', '<span class="err">java: 找不到符号\n  符号:   变量 sum</span>', '1\n2\n3\n4\n5'];
+  const NOTE = [
+    'sum 属于 main 的大括号，5 轮循环用的是同一个 sum，一路累加到 15。',
+    'sum 只在循环的大括号里有效，循环下面已经超出作用范围，编译直接报错，IDEA 里会标红。',
+    '能运行，但每一轮循环都重新定义了一个 sum = 0，上一轮的结果随着循环的右大括号消失了，所以打印的只是 0 + i。'];
+  let t = 0;
+  $$('#sc-tab button').forEach(b => b.onclick = () => { t = +b.dataset.i; paint(); });
+  function paint() {
+    $$('#sc-tab button').forEach(b => b.classList.toggle('sel', +b.dataset.i === t));
+    $('#sc-code').innerHTML = C[t].replace(/<=/g, '&lt;=');
+    $('#sc-out').innerHTML = OUT[t];
+    $('#sc-note').textContent = NOTE[t];
+  }
+  paint();
+})();
+
+/* ---------- 数一数 ---------- */
+(function () {
+  let op = 'and';
+  $$('#ct-op button').forEach(b => b.onclick = () => { op = b.dataset.v; paint(); });
+  ['#ct-a', '#ct-b'].forEach(s => $(s).addEventListener('input', paint));
+  function paint() {
+    $$('#ct-op button').forEach(b => b.classList.toggle('sel', b.dataset.v === op));
+    const a = parseInt($('#ct-a').value, 10), b = parseInt($('#ct-b').value, 10);
+    if (isNaN(a) || isNaN(b)) { $('#ct-grid').innerHTML = ''; $('#ct-n').textContent = '—'; $('#ct-msg').textContent = '请填整数'; return; }
+    if (b - a > 400) { $('#ct-grid').innerHTML = ''; $('#ct-n').textContent = '—'; $('#ct-msg').textContent = '演示里范围限制在 400 个数以内'; return; }
+    let n = 0; const cells = [], hits = [];
+    for (let i = a; i <= b; i++) {
+      const m3 = i % 3 === 0, m5 = i % 5 === 0, ok = op === 'and' ? m3 && m5 : m3 || m5;
+      if (ok) { n++; hits.push(i); }
+      cells.push(`<span class="${m3 ? 'm3 ' : ''}${m5 ? 'm5 ' : ''}${ok ? 'hit' : ''}">${i}</span>`);
+    }
+    $('#ct-grid').innerHTML = cells.join('');
+    $('#ct-n').textContent = n;
+    $('#ct-msg').textContent = a > b ? 'start 比 end 大，循环一次都不执行' : (op === 'and' && hits.length && hits.length <= 12 ? '满足的数：' + hits.join('、') : '');
+  }
+  paint();
+})();
+</script>
+</body>
+</html>
