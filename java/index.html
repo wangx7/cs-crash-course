@@ -22,6 +22,9 @@
 .tag{padding:2px 8px;border-radius:999px;font-weight:600}
 .tag.done{background:var(--ok-soft);color:var(--ok)}
 .tag.wip{color:var(--muted);font-weight:400}
+.tag.drill,.tag.skim{font-size:12px;margin-left:8px;vertical-align:1px}
+.tag.drill{background:var(--on-soft);color:var(--on)}
+.tag.skim{background:var(--bg);color:var(--muted);border:1px solid var(--line);font-weight:400}
 .ep.wip{opacity:.6}
 .grp-h{font-size:20px;margin:40px 0 14px;scroll-margin-top:20px}
 .side a{color:var(--muted)}
@@ -41,6 +44,7 @@
   <div class="eyebrow">黑马程序员 · JAVA 零基础视频教程（上部）· 图文版</div>
   <h1>Java 入门到起飞</h1>
   <p class="lead">原课 200 集、约 75 小时。这里按话题把相邻的几集并成一篇，每篇读起来 20–40 分钟。正文是看完字幕后整理的笔记，讲解顺序和例子都来自原课；视频里不好讲清楚的地方，配了图和可以动手点的演示。</p>
+  <p class="lead" style="font-size:15px">篇目分三档：概念课<b>精讲</b>；练习课做成<b>题单</b>，给需求、提示和折叠起来的参考代码，先自己写再对照；和后端开发关系不大的内容只做<b>略读</b>，交代讲了什么、什么时候值得回来看。</p>
 </header>
 <div class="wrap">
   <div class="bar">
@@ -55,7 +59,9 @@
 </div>
 <script src="../assets/cc.js"></script>
 <script>
-// [起始集, 结束集, 标题]；文件名 = 起始集号（两位起补零），打卡也记起始集号
+// [起始集, 结束集, 标题, 档位]；文件名 = 起始集号（两位起补零），打卡也记起始集号
+// 档位：省略 = 精讲；'drill' = 题单（练习课：需求 + 提示 + 折叠的参考代码）；'skim' = 略读（只交代讲了什么、何时回来看）
+// P96 以后的档位是按分集标题初分的，写到那一篇、读完字幕后再定
 const UNITS = [
   ['入门', [
     [1, 5, '人机交互、CMD 与环境变量'],
@@ -100,22 +106,18 @@ const UNITS = [
     [81, 83, '类、对象与封装'],
     [84, 86, 'this、构造方法与 JavaBean'],
     [87, 90, '对象内存图'],
-    [91, 91, '综合训练：文字版格斗游戏'],
-    [92, 93, '对象数组练习'],
-    [94, 95, '复杂对象数组：增删改查'],
+    [91, 95, '格斗游戏与对象数组', 'drill'],
   ]],
   ['字符串', [
     [96, 99, 'API 文档、String 与比较'],
-    [100, 102, '字符串练习：登录、统计、反转'],
-    [103, 104, '金额转换与号码屏蔽'],
+    [100, 104, '字符串练习：登录、统计、反转、金额转换、号码屏蔽', 'drill'],
     [105, 106, 'StringBuilder 与 StringJoiner'],
     [107, 107, '字符串相关类的底层原理'],
-    [108, 110, '字符串较难练习'],
+    [108, 110, '字符串较难练习', 'drill'],
   ]],
   ['集合与学生管理系统', [
     [111, 115, 'ArrayList'],
-    [116, 118, '学生管理系统'],
-    [119, 120, '学生管理系统升级'],
+    [116, 120, '学生管理系统（含登录注册升级）', 'drill'],
   ]],
   ['面向对象进阶', [
     [121, 123, 'static'],
@@ -129,48 +131,46 @@ const UNITS = [
     [140, 143, '内部类'],
   ]],
   ['阶段项目：拼图小游戏', [
-    [144, 147, '界面搭建与添加图片'],
-    [148, 151, '事件、移动图片与判断胜利'],
-    [152, 154, '计步、菜单业务与打包'],
+    [144, 154, '拼图小游戏（Swing 界面）', 'skim'],
   ]],
   ['常用 API', [
-    [155, 156, 'Math'],
-    [157, 158, 'System 与 Runtime'],
+    [155, 158, 'Math、System 与 Runtime'],
     [159, 160, 'Object、克隆与 Objects'],
     [161, 162, 'BigInteger 与 BigDecimal'],
     [163, 165, '正则表达式'],
-    [166, 168, '爬虫与分组'],
+    [166, 168, '爬虫与分组', 'skim'],
     [169, 171, 'JDK7 时间类'],
     [172, 173, 'JDK8 时间类'],
     [174, 176, '包装类与综合练习'],
   ]],
   ['常见算法', [
-    [177, 178, '查找算法'],
-    [179, 181, '排序与递归'],
-    [182, 184, 'Arrays、Lambda 与五道经典算法题'],
+    [177, 181, '查找、排序与递归', 'skim'],
+    [182, 183, 'Arrays 与 Lambda 表达式'],
+    [184, 184, '五道经典算法题', 'drill'],
   ]],
   ['集合进阶', [
     [185, 187, 'Collection 与三种遍历'],
     [188, 189, 'List 与基础数据结构'],
-    [190, 191, 'ArrayList 与 LinkedList 源码'],
+    [190, 191, 'ArrayList 与 LinkedList 源码', 'skim'],
     [192, 193, '泛型'],
-    [194, 196, '二叉树、平衡二叉树与红黑树'],
+    [194, 196, '二叉树、平衡二叉树与红黑树', 'skim'],
     [197, 197, 'HashSet 与 LinkedHashSet'],
     [198, 200, 'TreeSet'],
   ]],
 ];
-const READY = [1, 6, 12, 17, 19, 22, 23, 26, 30, 32, 35, 38, 39, 43, 45, 47, 49, 54, 58, 63, 68, 71, 74, 77, 80, 81, 84, 87];
+const READY = [1, 6, 12, 17, 19, 22, 23, 26, 30, 32, 35, 38, 39, 43, 45, 47, 49, 54, 58, 63, 68, 71, 74, 77, 80, 81, 84, 87, 91];
 
+const TIER = { drill: '题单', skim: '略读' };
 const pad = n => String(n).padStart(2, '0');
 const read = new Set(ccStore.get('hm-java-read', []));
 const total = UNITS.reduce((s, [, us]) => s + us.length, 0);
 let html = '';
 for (const [grp, us] of UNITS) {
   html += `<h2 class="grp-h">${grp}</h2><ol class="eps">`;
-  for (const [a, b, zh] of us) {
+  for (const [a, b, zh, tier] of us) {
     const ready = READY.includes(a), isRead = read.has(a);
     const range = a === b ? `P${a}` : `P${a}–${b}`;
-    const title = `<div class="zh">${zh}</div><div class="en">${b - a + 1} 集视频</div>`;
+    const title = `<div class="zh">${zh}${tier ? `<span class="tag ${tier}">${TIER[tier]}</span>` : ''}</div><div class="en">${b - a + 1} 集视频</div>`;
     html += `<li class="ep${isRead ? ' read' : ''}${ready ? '' : ' wip'}">
       <span class="n">${isRead ? '✓ ' : ''}${range}</span>
       ${ready ? `<a class="title" href="${pad(a)}.html">${title}</a>` : `<div>${title}</div>`}

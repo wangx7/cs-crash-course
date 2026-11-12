@@ -15,7 +15,8 @@ ytdlp = os.path.join(here, "yt-dlp")  # 与 python 同一个 venv/bin
 titles = {p["page"]: p["part"] for p in json.load(open(pages_json))}
 MODEL = "mlx-community/whisper-large-v3-turbo"
 # 简体中文的提示词：引导输出简体、把常见术语写对。换课程时改成该课的术语。
-PROMPT = "以下是普通话的Java编程课程，讲解JDK、IDEA、变量、数据类型、byte、int、long、double、运算符、if、switch、for循环、while循环、数组、方法、面向对象、类、对象、String、StringBuilder、ArrayList、static、继承、多态。"
+# 也可以不改文件，用环境变量 WHISPER_PROMPT 传入。
+PROMPT = os.environ.get("WHISPER_PROMPT") or "以下是普通话的Java编程课程，讲解JDK、IDEA、变量、数据类型、byte、int、long、double、运算符、if、switch、for循环、while循环、数组、方法、面向对象、类、对象、String、StringBuilder、ArrayList、static、继承、多态。"
 
 import mlx_whisper  # noqa: E402
 

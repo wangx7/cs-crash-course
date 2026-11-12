@@ -1,0 +1,1028 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P91–95 题单：格斗游戏与对象数组 · Java 入门图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code{overflow-wrap:anywhere}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:13.5px;line-height:1.65;overflow-x:auto;overflow-wrap:normal}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;max-height:240px;overflow-y:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.out .note{color:#7f8794}
+.msg{font-size:14px;margin-top:8px;min-height:3em}
+.tscroll{overflow-x:auto}
+table.tt td{vertical-align:top;text-align:left}
+table.tt.c td{text-align:center}
+.legend .l-fold::before{background:var(--on)}
+
+/* 题单专用 */
+.task{border:1.5px solid var(--on);border-radius:12px;padding:12px 16px;margin:14px 0;background:var(--on-soft);font-size:15px}
+.task > .t{display:block;font-size:12px;font-weight:700;color:var(--on);letter-spacing:.06em;margin-bottom:4px}
+.task ol,.task ul{margin:6px 0 0;padding-left:22px}
+.lv{display:inline-block;font-size:12px;font-weight:700;border-radius:999px;padding:1px 9px;margin-left:8px;vertical-align:2px;white-space:nowrap}
+.lv.must{background:var(--on-soft);color:var(--on)}
+.lv.opt{background:var(--bg);color:var(--muted);border:1px solid var(--line)}
+.lv.new{background:var(--accent-soft);color:var(--accent)}
+details.fold{border:1px solid var(--line);border-radius:12px;background:var(--panel);margin:10px 0}
+details.fold > summary{cursor:pointer;padding:9px 14px;font-size:14px;font-weight:600;list-style:none;display:flex;gap:8px;align-items:center}
+details.fold > summary::-webkit-details-marker{display:none}
+details.fold > summary::before{content:"▸";color:var(--on);font-size:13px}
+details.fold[open] > summary::before{content:"▾"}
+details.fold > summary small{font-weight:400;color:var(--muted)}
+details.fold > .in{padding:0 14px 12px;font-size:14.5px}
+details.fold > .in > :first-child{margin-top:0}
+details.fold code.blk{background:var(--bg)}
+.plan th:first-child{white-space:nowrap}
+table.tt.plan td:first-child{text-align:center;width:52px}
+.plan input{width:17px;height:17px;accent-color:var(--ok)}
+.plan tr.done td{color:var(--muted)}
+.plan tr.done td:nth-child(2){text-decoration:line-through}
+
+/* 键盘录入实验台 */
+.sc-code{font:13.5px/1.9 var(--mono);background:var(--bg);border-radius:10px;padding:6px 12px;overflow-x:auto}
+.sc-code div{white-space:nowrap}
+.sc-code .cur{background:var(--on-soft);border-radius:6px;margin:0 -6px;padding:0 6px}
+.sc-code .r{color:var(--ok);font-weight:700;margin-left:10px}
+.sc-code .w{color:var(--on);margin-left:10px}
+.sc-code .e{color:var(--bad);font-weight:700;margin-left:10px}
+.buf{display:flex;flex-wrap:wrap;gap:3px;margin:8px 0 2px;min-height:34px}
+.buf span{min-width:22px;height:30px;padding:0 4px;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--line);border-radius:6px;font:14px var(--mono);background:var(--panel)}
+.buf span.u{opacity:.4;border-style:dashed}
+.buf span.left{border-color:var(--on);background:var(--on-soft)}
+.buf .emp{border:0;background:none;color:var(--muted);font:13px inherit}
+.sc-in{font:14px var(--mono);padding:5px 10px;border:1.5px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);min-width:0;flex:1 1 150px;max-width:260px}
+
+/* new 的位置 */
+.nw{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:14px;margin-top:10px}
+@media (max-width:640px){.nw{grid-template-columns:1fr}}
+.nw h4{margin:0 0 6px;font-size:13px;color:var(--muted)}
+.cells{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.cells div{border:1.5px solid var(--line);border-radius:8px;text-align:center;padding:4px 2px;font:14px var(--mono);background:var(--panel)}
+.cells div small{display:block;font:11px var(--mono);color:var(--muted)}
+.cells div.hi{border-color:var(--on);background:var(--on-soft)}
+.objs{display:flex;flex-wrap:wrap;gap:8px}
+.obj{border:1.5px solid var(--line);border-radius:8px;font:13px var(--mono);background:var(--panel);min-width:128px;overflow:hidden}
+.obj.hi{border-color:var(--on)}
+.obj .ad{font-size:11px;color:var(--muted);padding:2px 8px;border-bottom:1px solid var(--line);background:var(--bg)}
+.obj div.f{padding:2px 8px}
+</style>
+</head>
+<body data-ep="91" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=91" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">面向对象 · P91–P95 · 题单</div>
+  <h1>题单：格斗游戏与对象数组</h1>
+  <p class="en">Drill Sheet: A Text Fighting Game and Arrays of Objects</p>
+  <p class="lead">第九天是专题课，不学新的面向对象语法，用六道由易到难的练习把类、对象、封装、构造方法和数组串起来。练习课的价值在于自己写，所以这一篇做成<b>题单</b>：每道题给出需求和课上的分析思路，提示和参考代码都折叠着，先自己写，卡住了再一层层展开。练习中间穿插的两个新知识点（<b>printf 的占位符</b>、<b>键盘录入的两套体系</b>）照常细讲。</p>
+  <div class="road">
+    <span>格斗游戏</span><i>→</i><span>printf 与 %s</span><i>→</i><span>游戏升级</span><i>→</i><span>商品数组</span><i>→</i><span>键盘录入两套体系</span><i>→</i><span>汽车数组</span><i>→</i><span>平均值与统计</span><i>→</i><span>学生数组增删改</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，题目、思路和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+    <span class="l-fold">折叠块：提示和参考代码，先自己写再展开</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 怎么用这份题单</a></li>
+    <li><a href="#ch2">2 · 题 1　格斗游戏</a></li>
+    <li><a href="#ch3">3 · 新知识　printf 与 %s</a></li>
+    <li><a href="#ch4">4 · 题 2　格斗游戏升级</a></li>
+    <li><a href="#ch5">5 · 题 3　商品数组</a></li>
+    <li><a href="#ch6">6 · 新知识　键盘录入两套体系</a></li>
+    <li><a href="#ch7">7 · 题 4　汽车数组</a></li>
+    <li><a href="#ch8">8 · 题 5　平均值与统计</a></li>
+    <li><a href="#ch9">9 · 题 6　学生数组增删改</a></li>
+    <li><a href="#ch10">10 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · 导读</div>
+  <h2>怎么用这份题单</h2>
+  <p>今天写的题里，有的逻辑比较复杂。课上反复说的一句话是：<b>先把题目的逻辑捋顺了，再去编写代码</b>。拿到题没有思路，就用<b>读题拆解法</b>：把一道综合的题目拆成很多小块，每次只完成一小块。</p>
+  <ol>
+    <li>读"需求"，然后离开这一页，在 IDEA 里自己写；</li>
+    <li>卡住了，展开"提示"，一次只看一条；</li>
+    <li>写完了，或者实在写不出来，再展开"参考代码"对照，最后看"易错点"。</li>
+  </ol>
+  <div class="tscroll"><table class="tt plan" style="width:100%;min-width:520px">
+    <thead><tr><th>做完</th><th>题目</th><th>出处</th><th>练什么</th><th>建议</th></tr></thead>
+    <tbody>
+      <tr><td><input type="checkbox" data-t="1" aria-label="题 1 做完"></td><td><a href="#ch2">题 1　格斗游戏（基础版）</a></td><td>P91</td><td>this、谁调用谁、while (true)</td><td>必做</td></tr>
+      <tr><td><input type="checkbox" data-t="2" aria-label="题 2 做完"></td><td><a href="#ch4">题 2　格斗游戏（升级版）</a></td><td>P91</td><td>printf、在数组里随机、构造方法里调 set</td><td>选做：代码长，新东西不多</td></tr>
+      <tr><td><input type="checkbox" data-t="3" aria-label="题 3 做完"></td><td><a href="#ch5">题 3　商品数组</a></td><td>P92</td><td>对象数组的创建、存入、遍历</td><td>热身，熟了可以跳</td></tr>
+      <tr><td><input type="checkbox" data-t="4" aria-label="题 4 做完"></td><td><a href="#ch7">题 4　汽车数组</a></td><td>P92</td><td>键盘录入 + 对象数组，new 写在哪</td><td>必做</td></tr>
+      <tr><td><input type="checkbox" data-t="5" aria-label="题 5 做完"></td><td><a href="#ch8">题 5　平均值与统计</a></td><td>P93</td><td>累加思想、统计思想</td><td>必做（两小题）</td></tr>
+      <tr><td><input type="checkbox" data-t="6" aria-label="题 6 做完"></td><td><a href="#ch9">题 6　学生数组增删改</a></td><td>P94–95</td><td>业务复杂时怎么分析、怎么拆成方法</td><td>必做，本篇重点</td></tr>
+    </tbody>
+  </table></div>
+  <p style="font-size:13px;color:var(--muted)">"建议"一栏是整理者的判断，不是课上说的；课上的要求是每道都暂停视频自己练一遍。打的勾存在这台电脑的浏览器里。<span id="plan-n"></span></p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P91</div>
+  <h2>题 1　文字版格斗游戏（基础版）<span class="lv must">必做</span></h2>
+  <div class="task">
+    <span class="t">需求</span>
+    游戏里每个角色的姓名、血量都不一样，在选定人物（也就是创建对象）的时候，这些信息就应该被确定下来。现在有两个角色（课上是乔峰和鸠摩智，血量都是 100），模拟回合制游戏：你打我一下，我打你一下，每一下造成 1 ~ 20 点随机伤害。谁的血量先变成 0，就提示"某某 K.O 了某某"，游戏结束。
+  </div>
+  <div class="card" id="f1"><h3>先看看要做成什么样</h3>
+    <div class="row"><button class="btn sm primary go">运行一次</button><span class="cnt" style="font-size:13px;color:var(--muted)"></span></div>
+    <div class="out"><span class="note">（控制台）每次的伤害是随机的，多运行几次，两个人都可能赢</span></div>
+  </div>
+  <p>课上的分析只有两步，先想清楚再动手：</p>
+  <ul>
+    <li><b>先写一个 JavaBean 描述角色</b>：类名 Role，私有的成员变量 name 和 blood，空参构造、全参构造、每个成员变量的 get 和 set 方法；</li>
+    <li><b>角色有攻击的行为，要定义一个方法</b>。这里要思考的是<b>谁攻击谁</b>。测试类里肯定是先创建 r1、r2，然后拿 r1 去调用攻击的方法、把 r2 传进去：<code>r1.attack(r2);</code>。所以从语法上讲，攻击方向是<b>方法的调用者去攻击参数</b>。上一篇说过，<a href="87.html#ch6">this 表示方法的调用者</a>，那么方法里就是拿着 this 去打参数 role。</li>
+  </ul>
+  <details class="fold"><summary>提示 1　<small>attack 方法里要做哪几件事</small></summary><div class="in">
+    <ol>
+      <li>计算造成的伤害：1 ~ 20 随机，<code>r.nextInt(20) + 1</code>；</li>
+      <li>算出挨揍的人的剩余血量：先把原有的血量 get 出来，再减去伤害；</li>
+      <li>把剩余血量 set 回去，真正修改挨揍的人的血量；</li>
+      <li>打印这句话：打人的是 <code>this.getName()</code>，挨揍的是 <code>role.getName()</code>。</li>
+    </ol>
+  </div></details>
+  <details class="fold"><summary>提示 2　<small>测试类里的循环怎么写</small></summary><div class="in">
+    <p>不知道要打多少轮游戏才结束，所以用 <code>while (true)</code>。循环里 r1 先打 r2，打完马上判断 r2 的血量是不是 0，是就打印 K.O 并 break；然后 r2 还手，同样判断一次 r1。</p>
+  </div></details>
+  <details class="fold"><summary>参考代码　<small>Role 类、GameTest 测试类</small></summary><div class="in">
+<code class="blk"><span class="hk">import</span> java.util.Random;
+
+<span class="hk">public</span> <span class="hk">class</span> Role {
+    <span class="hk">private</span> String name;      <span class="hc">// 姓名</span>
+    <span class="hk">private</span> <span class="hk">int</span> blood;        <span class="hc">// 血量</span>
+
+    <span class="hc">// 空参构造、全参构造、get / set 方法：用 IDEA 生成，这里省略</span>
+
+    <span class="hc">// 攻击：方法的调用者（this）去打参数（role）</span>
+    <span class="hk">public</span> <span class="hk">void</span> attack(Role role) {
+        <span class="hc">// 计算造成的伤害，1 ~ 20 随机</span>
+        Random r = <span class="hk">new</span> Random();
+        <span class="hk">int</span> hurt = r.nextInt(20) + 1;
+
+        <span class="hc">// 挨揍的人的剩余血量；减成负数不合理，修正为 0</span>
+        <span class="hk">int</span> remainBlood = role.getBlood() - hurt;
+        remainBlood = remainBlood &lt; 0 ? 0 : remainBlood;
+
+        <span class="hc">// 修改挨揍的人的血量</span>
+        role.setBlood(remainBlood);
+
+        System.out.println(<span class="hk">this</span>.getName() + <span class="hs">"举起拳头，打了"</span> + role.getName() + <span class="hs">"一下，"</span>
+                + <span class="hs">"造成了"</span> + hurt + <span class="hs">"点伤害，"</span> + role.getName() + <span class="hs">"还剩下了"</span> + remainBlood + <span class="hs">"点血"</span>);
+    }
+}</code>
+<code class="blk"><span class="hk">public</span> <span class="hk">class</span> GameTest {
+    <span class="hk">public</span> <span class="hk">static</span> <span class="hk">void</span> main(String[] args) {
+        <span class="hc">// 1. 创建第一个角色</span>
+        Role r1 = <span class="hk">new</span> Role(<span class="hs">"乔峰"</span>, 100);
+        <span class="hc">// 2. 创建第二个角色</span>
+        Role r2 = <span class="hk">new</span> Role(<span class="hs">"鸠摩智"</span>, 100);
+
+        <span class="hc">// 3. 开始格斗：回合制，不知道要打多少轮，用 while (true)</span>
+        <span class="hk">while</span> (<span class="hk">true</span>) {
+            <span class="hc">// r1 攻击 r2</span>
+            r1.attack(r2);
+            <span class="hc">// 判断 r2 的剩余血量</span>
+            <span class="hk">if</span> (r2.getBlood() == 0) {
+                System.out.println(r1.getName() + <span class="hs">" K.O 了"</span> + r2.getName());
+                <span class="hk">break</span>;
+            }
+
+            <span class="hc">// r2 还手</span>
+            r2.attack(r1);
+            <span class="hk">if</span> (r1.getBlood() == 0) {
+                System.out.println(r2.getName() + <span class="hs">" K.O 了"</span> + r1.getName());
+                <span class="hk">break</span>;
+            }
+        }
+    }
+}</code>
+  </div></details>
+  <p><b>易错点</b>：剩余血量有可能是负数。比如最后只剩 5 点血，又挨了 20 点伤害，直接一减就成了负数，不合理。所以要验证一下：小于 0 就修正为 0，否则还是原来的值，课上用的是三元运算符 <code>remainBlood = remainBlood &lt; 0 ? 0 : remainBlood;</code>。</p>
+  <div class="extra">
+    <span class="t">为什么每打一下就要判断一次</span>
+    测试类里的判断写了两遍，r1 打完判断 r2，r2 打完判断 r1。如果偷懒合成一遍、等一轮打完再判断，就会出现血量已经是 0 的 r2 还能再还手打 r1 一下的情况。另外判断条件写的是 <code>== 0</code>，它依赖 attack 里"负数修正为 0"那一步；如果忘了修正，血量会直接从正数跳到负数，循环就停不下来了，写成 <code>&lt;= 0</code> 更保险。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P91</div>
+  <h2>新知识　printf 与 %s<span class="lv new">新知识点</span></h2>
+  <p>基础版的输出每次都是"谁举起拳头打了谁一下"，有点单调。升级版想打印带武功招式的句子，资料里给的句子长这样：<code>结果%s退了半步，毫发无损</code>。里面的 <b>%s</b> 是什么？这要用到一个新的输出语句 <code>System.out.printf</code>（在 IDEA 里敲 <code>souf</code> 可以生成）。它的参数分为两部分：</p>
+  <ul>
+    <li><b>第一部分参数</b>：要输出的内容，里面可以写 %s，把它理解成<b>占位</b>，先占一个坑；</li>
+    <li><b>第二部分参数</b>：填充的数据，拿去填前面占的坑。</li>
+  </ul>
+  <code class="blk">System.out.printf(<span class="hs">"你好啊%s"</span>, <span class="hs">"张三"</span>);              <span class="hc">// 你好啊张三</span>
+System.out.printf(<span class="hs">"%s你好啊%s"</span>, <span class="hs">"张三"</span>, <span class="hs">"李四"</span>);    <span class="hc">// 张三你好啊李四</span></code>
+  <p>两个细节：</p>
+  <ul>
+    <li><b>占了几个坑，后面就要拿几个数据去填</b>，按顺序对应：张三填第一个坑，李四填第二个坑。写了两个占位却只给一个数据，运行会报错；</li>
+    <li><b>printf 只输出，没有换行效果</b>。连着写两个 printf，两句话会显示在同一行。想换行，就在后面加一句 <code>System.out.println();</code>，小括号里什么都不写，表示只换行。</li>
+  </ul>
+  <div class="extra">
+    <span class="t">报的是什么错，还有哪些占位符</span>
+    两个 %s 只给一个数据，本机 JDK 8 实测：控制台先打印出 <code>张三你好啊</code>，然后报 <code>java.util.MissingFormatArgumentException: Format specifier '%s'</code>。它是运行时才报的，编译能通过。<br><br>
+    %s 之外常用的还有：<code>%d</code> 填整数，<code>%.2f</code> 填小数并保留两位，<code>%n</code> 表示换行（可以直接写在第一部分里，省掉后面那句 println）。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P91</div>
+  <h2>题 2　文字版格斗游戏（升级版）<span class="lv opt">选做</span></h2>
+  <div class="task">
+    <span class="t">需求</span>
+    在题 1 的基础上优化：
+    <ol>
+      <li>人物多两个属性：<b>性别</b>和<b>长相</b>。长相是随机的：男的从 boyfaces 数组里随机，女的从 girlfaces 数组里随机；</li>
+      <li>打斗过程换成武功招式：每次攻击从"攻击描述"数组里<b>随机</b>一条；"受伤描述"<b>不随机</b>，它是越来越严重的，要按挨揍的人的剩余血量来选（对应关系见下表）；</li>
+      <li>开打之前，先展示两个角色的信息。</li>
+    </ol>
+  </div>
+  <p>数据在课程资料里，粘贴到 Role 类里就行：</p>
+<code class="blk">String[] boyfaces = {<span class="hs">"风流俊雅"</span>, <span class="hs">"气宇轩昂"</span>, <span class="hs">"相貌英俊"</span>, <span class="hs">"五官端正"</span>, <span class="hs">"一塌糊涂"</span>, <span class="hs">"面目狰狞"</span>};
+String[] girlfaces = {<span class="hs">"眉清目秀"</span>, <span class="hs">"亭亭玉立"</span>, <span class="hs">"相貌平平"</span>, <span class="hs">"惨不忍睹"</span>};
+
+<span class="hc">// 攻击描述：第一个 %s 是打人的，第二个 %s 是挨揍的</span>
+String[] attacks_desc = {
+        <span class="hs">"%s使出了一招【背心钉】，转到对方的身后，一掌向%s背心的灵台穴拍去。"</span>,
+        <span class="hs">"%s使出了一招【游空探爪】，飞起身形自半空中抓向%s。"</span>,
+        <span class="hs">"%s运气于掌，一瞬间掌心变得通红，一式【掌心雷】，推向%s。"</span>,
+        <span class="hs">"%s阴手翻起阳手跟进，一招【没遮拦】，结结实实地捶向%s。"</span>
+};
+
+<span class="hc">// 受伤描述：从轻到重，一共 8 条，%s 是挨揍的</span>
+String[] injureds_desc = {
+        <span class="hs">"结果%s退了半步，毫发无损"</span>,
+        <span class="hs">"结果给%s造成一处瘀伤"</span>,
+        <span class="hs">"结果一击命中，%s痛得弯下腰"</span>,
+        <span class="hs">"结果%s闷哼了一声，连退了好几步"</span>,
+        <span class="hs">"结果%s脚下不稳，一跤摔倒在地"</span>,
+        <span class="hs">"结果%s脸色发白，半天站不起来"</span>,
+        <span class="hs">"结果%s吐出一口鲜血"</span>,
+        <span class="hs">"结果%s一声惨叫，像滩软泥般塌了下去"</span>
+};</code>
+  <p style="font-size:13px;color:var(--muted)">完整的数据在当天的课程资料里，字幕只念到其中几条。上面数组里，字幕没念到的几条（girlfaces 的前三个、受伤描述中间四条）是按同样的轻重顺序补写的，换成你自己编的也行，只要受伤描述是 8 条。</p>
+  <div class="tscroll"><table class="tt c" style="min-width:420px">
+    <thead><tr><th>挨揍的人的剩余血量</th><th>&gt; 90</th><th>80 ~ 90</th><th>70 ~ 80</th><th>60 ~ 70</th><th>40 ~ 60</th><th>20 ~ 40</th><th>10 ~ 20</th><th>其余</th></tr></thead>
+    <tbody><tr><td>用第几条受伤描述（索引）</td><td>0</td><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td></tr></tbody>
+  </table></div>
+  <div class="card" id="f2"><h3>升级版跑起来的样子</h3>
+    <div class="row"><button class="btn sm primary go">运行一次</button><span class="cnt" style="font-size:13px;color:var(--muted)"></span></div>
+    <div class="out"><span class="note">（控制台）</span></div>
+  </div>
+  <p>课上最后点出的两个难点：</p>
+  <ul>
+    <li><b>长相不是别人赋值的，而是随机的，要想明白在哪随机</b>：在 setFace 方法里随机，然后在构造方法里直接调用它；</li>
+    <li><b>attack 方法里的顺序</b>：先把攻击的描述打印出来，再计算伤害、修改挨揍的人的剩余血量，然后根据剩余血量进行不同的受伤描述。</li>
+  </ul>
+  <details class="fold"><summary>提示 1　<small>setFace 怎么写</small></summary><div class="in">
+    <p>把形参改成性别：<code>setFace(char gender)</code>。先判断 gender：是 '男' 就在 boyfaces 里随机，是 '女' 就在 girlfaces 里随机，都不是就给一个默认的长相（课上用的是"面目狰狞"）。随机的是<b>索引</b>：<code>r.nextInt(boyfaces.length)</code>，索引只是个数字，还要再通过索引把数组里的长相拿出来，赋给成员变量 face。构造方法的参数里只加 gender，不加 face，最后一行写 <code>setFace(gender);</code>。</p>
+  </div></details>
+  <details class="fold"><summary>提示 2　<small>attack 里怎么用 printf</small></summary><div class="in">
+    <p>随机一个索引，从 attacks_desc 里拿到招式（课上变量名叫 KungFu），它里面有两个 %s：第一个是打人的，填 <code>this.getName()</code>；第二个是挨揍的，填 <code>role.getName()</code>。受伤描述里只有一个 %s，填挨揍的人。</p>
+    <p>八个范围就是多个 else if。程序是从上往下挨个判断的，走到第二个判断时一定已经不大于 90 了，所以 <code>remainBlood &gt; 80</code> 后面的 <code>&amp;&amp; remainBlood &lt;= 90</code> 其实可以省略；课上为了提高代码的阅读性还是写上了。最后一种情况直接用 else 收尾。</p>
+  </div></details>
+  <details class="fold"><summary>提示 3　<small>运行出来所有字都挤在一行</small></summary><div class="in">
+    <p>课上第一次运行就是这样：打斗过程全在一行，K.O 也跟在最后。原因是 printf 没有换行效果。打印完攻击描述之后、打印完受伤描述之后，各加一句 <code>System.out.println();</code>。</p>
+  </div></details>
+  <details class="fold"><summary>参考代码　<small>升级版 Role 类</small></summary><div class="in">
+<code class="blk"><span class="hk">import</span> java.util.Random;
+
+<span class="hk">public</span> <span class="hk">class</span> Role {
+    <span class="hk">private</span> String name;      <span class="hc">// 姓名</span>
+    <span class="hk">private</span> <span class="hk">int</span> blood;        <span class="hc">// 血量</span>
+    <span class="hk">private</span> <span class="hk">char</span> gender;      <span class="hc">// 性别</span>
+    <span class="hk">private</span> String face;      <span class="hc">// 长相，随机</span>
+
+    <span class="hc">// 四个数组见上面的"数据"，这里省略</span>
+
+    <span class="hk">public</span> Role() {
+    }
+
+    <span class="hk">public</span> Role(String name, <span class="hk">int</span> blood, <span class="hk">char</span> gender) {
+        <span class="hk">this</span>.name = name;
+        <span class="hk">this</span>.blood = blood;
+        <span class="hk">this</span>.gender = gender;
+        <span class="hc">// 长相不是创建对象时给的，而是随机的：直接调用 setFace</span>
+        setFace(gender);
+    }
+
+    <span class="hc">// 空参构造、全参构造、get / set 方法：用 IDEA 生成，这里省略</span>
+
+    <span class="hc">// 根据性别，从不同的数组里随机一个长相</span>
+    <span class="hk">public</span> <span class="hk">void</span> setFace(<span class="hk">char</span> gender) {
+        Random r = <span class="hk">new</span> Random();
+        <span class="hk">if</span> (gender == <span class="hs">'男'</span>) {
+            <span class="hk">int</span> index = r.nextInt(boyfaces.length);     <span class="hc">// 随机的是索引</span>
+            <span class="hk">this</span>.face = boyfaces[index];                <span class="hc">// 再用索引拿到长相</span>
+        } <span class="hk">else</span> <span class="hk">if</span> (gender == <span class="hs">'女'</span>) {
+            <span class="hk">int</span> index = r.nextInt(girlfaces.length);
+            <span class="hk">this</span>.face = girlfaces[index];
+        } <span class="hk">else</span> {
+            <span class="hk">this</span>.face = <span class="hs">"面目狰狞"</span>;                      <span class="hc">// 不是男也不是女，给一个默认的</span>
+        }
+    }
+
+    <span class="hk">public</span> <span class="hk">void</span> attack(Role role) {
+        Random r = <span class="hk">new</span> Random();
+        <span class="hc">// 1. 随机一个招式并打印：this 填第一个坑，role 填第二个坑</span>
+        <span class="hk">int</span> index = r.nextInt(attacks_desc.length);
+        String KungFu = attacks_desc[index];
+        System.out.printf(KungFu, <span class="hk">this</span>.getName(), role.getName());
+        System.out.println();                           <span class="hc">// printf 不换行，手动换</span>
+
+        <span class="hc">// 2. 计算伤害、剩余血量，修改挨揍的人的血量（和基础版一样）</span>
+        <span class="hk">int</span> hurt = r.nextInt(20) + 1;
+        <span class="hk">int</span> remainBlood = role.getBlood() - hurt;
+        remainBlood = remainBlood &lt; 0 ? 0 : remainBlood;
+        role.setBlood(remainBlood);
+
+        <span class="hc">// 3. 受伤描述不随机：按剩余血量从轻到重选</span>
+        <span class="hk">if</span> (remainBlood &gt; 90) {
+            System.out.printf(injureds_desc[0], role.getName());
+        } <span class="hk">else</span> <span class="hk">if</span> (remainBlood &gt; 80 &amp;&amp; remainBlood &lt;= 90) {
+            System.out.printf(injureds_desc[1], role.getName());
+        } <span class="hk">else</span> <span class="hk">if</span> (remainBlood &gt; 70 &amp;&amp; remainBlood &lt;= 80) {
+            System.out.printf(injureds_desc[2], role.getName());
+        } <span class="hk">else</span> <span class="hk">if</span> (remainBlood &gt; 60 &amp;&amp; remainBlood &lt;= 70) {
+            System.out.printf(injureds_desc[3], role.getName());
+        } <span class="hk">else</span> <span class="hk">if</span> (remainBlood &gt; 40 &amp;&amp; remainBlood &lt;= 60) {
+            System.out.printf(injureds_desc[4], role.getName());
+        } <span class="hk">else</span> <span class="hk">if</span> (remainBlood &gt; 20 &amp;&amp; remainBlood &lt;= 40) {
+            System.out.printf(injureds_desc[5], role.getName());
+        } <span class="hk">else</span> <span class="hk">if</span> (remainBlood &gt; 10 &amp;&amp; remainBlood &lt;= 20) {
+            System.out.printf(injureds_desc[6], role.getName());
+        } <span class="hk">else</span> {
+            System.out.printf(injureds_desc[7], role.getName());
+        }
+        System.out.println();
+    }
+
+    <span class="hk">public</span> <span class="hk">void</span> showRoleInfo() {
+        System.out.println(<span class="hs">"姓名为："</span> + getName());
+        System.out.println(<span class="hs">"血量为："</span> + getBlood());
+        System.out.println(<span class="hs">"性别为："</span> + getGender());
+        System.out.println(<span class="hs">"长相为："</span> + getFace());
+    }
+}</code>
+    <p>测试类只改两处：创建对象时多传一个性别 <code>new Role("乔峰", 100, '男')</code>；循环前面加 <code>r1.showRoleInfo();</code> 和 <code>r2.showRoleInfo();</code>。</p>
+  </div></details>
+  <p>课上写完数了一下：Role 类 160 行，测试类 30 多行，加起来大约 200 行，难度还是有点大的。课后写的时候，一定先把游戏的过程想明白、逻辑捋顺了，再去写。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P92</div>
+  <h2>题 3　商品数组<span class="lv opt">热身</span></h2>
+  <div class="task">
+    <span class="t">需求</span>
+    定义数组存储 3 个商品对象。商品的属性：id、名字、价格、库存。创建三个商品对象，并把它们存入数组。
+  </div>
+  <p>用读题拆解法走一遍：数组里存的是商品对象，要创建对象就得先写一个类去描述商品，所以第一步是写 Goods 这个 JavaBean（id 有可能出现字母，用 String；价格用 double；库存用 int）。然后在测试类里：创建数组 → 创建三个商品对象 → 把商品添加到数组中 → 遍历验证。</p>
+  <details class="fold"><summary>提示　<small>动态初始化、形参顺序、i 和 arr[i]</small></summary><div class="in">
+    <ul>
+      <li>数组用<b>动态初始化</b> <code>new Goods[3]</code>：现在还不知道商品对象是什么，先把数组创建出来，有了对象再添加；</li>
+      <li>全参构造的参数顺序记不住，不用点开 Goods 类去对：光标点在小括号里按 <b>Ctrl + P</b>，会列出两行，一行是没有参数（空参构造），一行是全参构造的顺序；</li>
+      <li>遍历时 <b>i 表示索引，arr[i] 才表示元素</b>。先用一个变量把 arr[i] 接出来，再用它调 get 方法。这句话课上每道题都重复了一遍。</li>
+    </ul>
+  </div></details>
+  <details class="fold"><summary>参考代码　<small>GoodsTest</small></summary><div class="in">
+<code class="blk"><span class="hk">public</span> <span class="hk">class</span> GoodsTest {
+    <span class="hk">public</span> <span class="hk">static</span> <span class="hk">void</span> main(String[] args) {
+        <span class="hc">// 1. 创建一个数组：对象还没有，先用动态初始化</span>
+        Goods[] arr = <span class="hk">new</span> Goods[3];
+
+        <span class="hc">// 2. 创建三个商品对象</span>
+        Goods g1 = <span class="hk">new</span> Goods(<span class="hs">"001"</span>, <span class="hs">"华为P40"</span>, 5999.0, 100);
+        Goods g2 = <span class="hk">new</span> Goods(<span class="hs">"002"</span>, <span class="hs">"保温杯"</span>, 227.0, 50);
+        Goods g3 = <span class="hk">new</span> Goods(<span class="hs">"003"</span>, <span class="hs">"枸杞"</span>, 12.7, 70);
+
+        <span class="hc">// 3. 把商品添加到数组中</span>
+        arr[0] = g1;
+        arr[1] = g2;
+        arr[2] = g3;
+
+        <span class="hc">// 4. 遍历：i 是索引，arr[i] 才是元素</span>
+        <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+            Goods goods = arr[i];
+            System.out.println(goods.getId() + <span class="hs">", "</span> + goods.getName() + <span class="hs">", "</span> + goods.getPrice() + <span class="hs">", "</span> + goods.getCount());
+        }
+    }
+}</code>
+    <p>输出三行：<code>001, 华为P40, 5999.0, 100</code>、<code>002, 保温杯, 227.0, 50</code>、<code>003, 枸杞, 12.7, 70</code>。</p>
+  </div></details>
+  <div class="extra">
+    <span class="t">这几题用到的快捷键，Mac 上怎么按</span>
+    生成构造方法和 get / set：Alt + Insert → <b>⌘N</b>（选 构造函数、Getter 和 Setter，细节见<a href="84.html">上上篇</a>）；看形参顺序：Ctrl + P → <b>⌘P</b>（菜单里叫"形参信息"）；向下复制一行：Ctrl + D → <b>⌘D</b>；格式化代码：Ctrl + Alt + L → <b>⌥⌘L</b>。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P92</div>
+  <h2>新知识　键盘录入的两套体系<span class="lv new">新知识点</span></h2>
+  <p>下一题的数据要从键盘录入，先把键盘录入的其他方法和细节讲清楚。Scanner 接收数据的方法分成两套：</p>
+  <div class="tscroll"><table class="tt" style="width:100%;min-width:520px">
+    <thead><tr><th></th><th>方法</th><th>接收什么</th><th>什么时候停止接收</th></tr></thead>
+    <tbody>
+      <tr><td rowspan="3"><b>第一套</b></td><td><code>nextInt()</code></td><td>整数。录小数或字符串会报错</td><td rowspan="3">遇到<b>空格、制表符（Tab）、回车</b>就停止，这些符号后面的数据本次不会接收</td></tr>
+      <tr><td><code>nextDouble()</code></td><td>小数。录的是 10，接到的也是 10.0</td></tr>
+      <tr><td><code>next()</code></td><td>字符串。录的是 123，也当字符串接</td></tr>
+      <tr><td><b>第二套</b></td><td><code>nextLine()</code></td><td>字符串，一整行</td><td>空格、制表符都能接收，遇到<b>回车</b>才停止</td></tr>
+    </tbody>
+  </table></div>
+  <p>"后面的数据本次不会接收"不等于丢掉了，它们<b>还留在内存里</b>，会交给下一次键盘录入。课上的三个实验：</p>
+  <ul>
+    <li>连着两次 <code>nextInt()</code>，输入 <code>123 123</code> 再回车：第一次遇到空格就停，只接到 123；第二次<b>没有让你重新输</b>，直接把内存里剩下的 123 接走了。两次 <code>next()</code> 输入 <code>abc bcd</code> 也一样，分别接到 abc 和 bcd；</li>
+    <li>连着两次 <code>nextLine()</code>，输入 <code>abc bcd</code> 回车：第一次就把整行全部接走，然后停下来等你输入第二行；</li>
+    <li><b>混用</b>：先 <code>nextInt()</code> 再 <code>nextLine()</code>，输入 <code>123</code> 回车：字符串根本没让你输，程序就结束了。你看到自己输入的是 123，实际上还录了一个<b>回车</b>；nextInt 只把 123 接走，回车还在内存里，被下面的 nextLine 接走了，于是它接收不到数据。</li>
+  </ul>
+
+  <div class="card" id="sc"><h3>动手：看内存里剩下了什么</h3>
+    <div class="row"><span class="seg pp"></span></div>
+    <div class="sc-code"></div>
+    <div style="font-size:13px;color:var(--muted);margin-top:10px">内存里的数据（␣ 是空格，↵ 是回车；虚线格子已经被接走，橙色格子还留着）</div>
+    <div class="buf"></div>
+    <form class="row"><input class="sc-in" placeholder="在这里输入一行" autocomplete="off" aria-label="键盘录入"><button class="btn sm primary" type="submit">回车 ↵</button><button class="btn sm re" type="button">重来</button></form>
+    <div class="row fills" style="font-size:13px;color:var(--muted)"></div>
+    <div class="msg"></div>
+  </div>
+
+  <div class="callout key">
+    <span class="t">课上的建议</span>
+    两套体系不能混用：先用 nextInt 再用 nextLine，会导致 nextLine 接收不到数据，这种问题写在代码里可能很久都找不到原因。目前先用<b>第一套</b>；第二套等学完类型转换之后再用，那时不管数据带不带空格、制表符，都能接收进来。
+  </div>
+  <div class="extra">
+    <span class="t">"学完类型转换之后"是什么写法</span>
+    就是<b>全部用 nextLine()</b>，一次接一整行，要数字时再把字符串转成数字：<code>int num = Integer.parseInt(sc.nextLine());</code>（本机实测：先输 123 回车，再输 abc bcd 回车，两次都正常接到）。每次都把回车取走，内存里不会留东西，也就没有混用的问题。<br><br>
+    另外两个实测结果：第一套方法开始接收前会先<b>跳过开头的空白</b>，所以上一次留下的回车不影响下一个 nextInt 或 next；nextInt 遇到不是整数的内容（比如 abc、12.5），报的是 <code>java.util.InputMismatchException</code>。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节 · P92</div>
+  <h2>题 4　汽车数组（键盘录入）<span class="lv must">必做</span></h2>
+  <div class="task">
+    <span class="t">需求</span>
+    定义数组存储 3 部汽车对象。汽车的属性：品牌、价格、颜色。创建三个汽车对象，<b>数据通过键盘录入而来</b>，并把对象存入数组。
+  </div>
+  <details class="fold"><summary>提示　<small>用哪个方法录入、对象怎么创建</small></summary><div class="in">
+    <ul>
+      <li>品牌是字符串，用 <code>next()</code>；价格用 <code>nextInt()</code>（买车没见过几毛几分的，Car 类里价格直接用 int）；颜色也用 <code>next()</code>；</li>
+      <li>要录三辆车，用循环。创建对象时数据还不知道是什么，所以只能用<b>空参构造</b>创建，录一个数据就 set 一个；</li>
+      <li>三个属性都 set 完，只是把数据放进了汽车对象，汽车对象和数组之间还没有关系。别忘了最后 <code>arr[i] = c;</code>。</li>
+    </ul>
+  </div></details>
+  <details class="fold"><summary>参考代码　<small>CarTest</small></summary><div class="in">
+<code class="blk"><span class="hk">import</span> java.util.Scanner;
+
+<span class="hk">public</span> <span class="hk">class</span> CarTest {
+    <span class="hk">public</span> <span class="hk">static</span> <span class="hk">void</span> main(String[] args) {
+        <span class="hc">// 1. 创建一个数组用来存储 3 个汽车对象</span>
+        Car[] arr = <span class="hk">new</span> Car[3];
+
+        <span class="hc">// 2. 创建汽车对象，数据来自键盘录入</span>
+        Scanner sc = <span class="hk">new</span> Scanner(System.in);
+        <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+            <span class="hc">// 每一轮都创建一个新的汽车对象（一定要写在循环里面）</span>
+            Car c = <span class="hk">new</span> Car();
+
+            System.out.println(<span class="hs">"请输入汽车的品牌"</span>);
+            String brand = sc.next();
+            c.setBrand(brand);
+
+            System.out.println(<span class="hs">"请输入汽车的价格"</span>);
+            <span class="hk">int</span> price = sc.nextInt();
+            c.setPrice(price);
+
+            System.out.println(<span class="hs">"请输入汽车的颜色"</span>);
+            String color = sc.next();
+            c.setColor(color);
+
+            <span class="hc">// 数据有了，还要把汽车对象放进数组</span>
+            arr[i] = c;
+        }
+
+        <span class="hc">// 3. 遍历数组</span>
+        <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+            Car car = arr[i];
+            System.out.println(car.getBrand() + <span class="hs">", "</span> + car.getPrice() + <span class="hs">", "</span> + car.getColor());
+        }
+    }
+}</code>
+  </div></details>
+  <p><b>易错点</b>（课上说往期很多同学都这么写过）：把 <code>Car c = new Car();</code> 写到循环的<b>外面</b>。代码不报错，但运行之后，遍历打印出来的三行<b>全是第三辆车</b>，前两辆没了。</p>
+  <div class="card" id="nw"><h3>动手：new 写在循环里和循环外</h3>
+    <div class="row"><span class="seg pp"><button data-v="1">new 写在循环里（正确）</button><button data-v="0">new 写在循环外</button></span></div>
+    <div class="row"><button class="btn sm primary nx">执行下一轮循环</button><button class="btn sm re">重来</button><span class="cnt" style="font-size:13px;color:var(--muted)"></span></div>
+    <div class="nw">
+      <div><h4>数组 arr（存的是地址值）</h4><div class="cells"></div></div>
+      <div><h4>堆里的汽车对象</h4><div class="objs"></div></div>
+    </div>
+    <div class="out"></div>
+    <div class="msg"></div>
+  </div>
+  <p>原因用内存图一看就明白。写在外面，整个程序里<b>只有一辆车的对象</b>，假设地址是 001。第一轮循环把它的属性设成第一辆车的数据，把 001 存进 0 索引；第二轮并没有创建新的车，而是在原有的基础上把值<b>改</b>成第二辆车的数据，又把同一个 001 存进 1 索引；第三轮还是它。最后数组里三个位置存的都是 001，遍历时 0 索引找的是它，1 索引找的是它，2 索引找的还是它。写在循环里面，每一轮才是创建了一个新的汽车对象。</p>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节 · P93</div>
+  <h2>题 5　平均值与统计<span class="lv must">必做</span></h2>
+  <div class="task">
+    <span class="t">需求 5a</span>
+    定义数组存储 3 部手机对象。手机的属性：品牌、价格、颜色。要求计算出三部手机的<b>平均价格</b>。（课上的数据：小米 1999 白色、华为 4999 蓝色、魅族 3999 红色。）
+  </div>
+  <div class="task">
+    <span class="t">需求 5b</span>
+    定义数组存储 4 个女朋友的对象。属性：姓名、年龄、性别、爱好。
+    <ol>
+      <li>计算出四个女朋友的<b>平均年龄</b>；</li>
+      <li>统计年龄<b>比平均值低</b>的女朋友有几个，并把她们的所有信息打印出来。</li>
+    </ol>
+    （课上的数据：小诗诗 18 岁、小丹丹 19 岁、小惠惠 20 岁、小莉莉 21 岁。）
+  </div>
+  <details class="fold"><summary>提示　<small>累加思想、统计思想</small></summary><div class="in">
+    <ul>
+      <li>价格在手机对象里面，所以求平均值之前要先遍历数组、得到每一个手机对象。在循环上面定义变量 sum，循环里每拿到一个价格就累加进去（<b>累加思想</b>）。注意累加的不是对象本身，而是对象里 get 出来的价格或年龄；</li>
+      <li>循环结束，总和除以个数。个数不要写 3，写 <code>arr.length</code>：<b>数据能不写死，尽量不写死</b>。以后上面数组的长度变了，下面这行不用跟着改；</li>
+      <li>5b 的第二问，把数组再遍历一遍，拿每个人的年龄和平均值比较，小于就打印信息。统计有几个用<b>统计思想</b>：定义变量 count，满足要求时自增一次。</li>
+    </ul>
+  </div></details>
+  <details class="fold"><summary>参考代码　<small>核心部分（JavaBean 和创建对象同前几题）</small></summary><div class="in">
+    <p>5a 手机的平均价格：</p>
+<code class="blk"><span class="hc">// 累加思想：先求总和</span>
+<span class="hk">int</span> sum = 0;
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    Phone phone = arr[i];
+    sum = sum + phone.getPrice();
+}
+<span class="hc">// 再求平均值：个数不要写死成 3</span>
+<span class="hk">int</span> avg = sum / arr.length;
+System.out.println(avg);                    <span class="hc">// 3665</span>
+<span class="hk">double</span> avg2 = sum * 1.0 / arr.length;
+System.out.println(avg2);                   <span class="hc">// 3665.6666666666665</span></code>
+    <p>5b 女朋友的平均年龄与统计：</p>
+<code class="blk"><span class="hc">// 1. 求和，再求平均年龄</span>
+<span class="hk">int</span> sum = 0;
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    GirlFriend gf = arr[i];
+    sum = sum + gf.getAge();                <span class="hc">// 累加的是对象里的年龄</span>
+}
+<span class="hk">int</span> avg = sum / arr.length;
+
+<span class="hc">// 2. 再遍历一遍：比平均值低的，打印并计数</span>
+<span class="hk">int</span> count = 0;
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    GirlFriend gf = arr[i];
+    <span class="hk">if</span> (gf.getAge() &lt; avg) {
+        count++;
+        System.out.println(gf.getName() + <span class="hs">", "</span> + gf.getAge() + <span class="hs">", "</span> + gf.getGender() + <span class="hs">", "</span> + gf.getHobby());
+    }
+}
+System.out.println(count + <span class="hs">"个"</span>);</code>
+  </div></details>
+  <p>课上的结果：手机的平均价格是 <b>3665</b>。想要小数的话，以现在的知识只能把 sum 先乘以 1.0 变成小数再除，得到 <code>3665.6666666666665</code>，很长；小数直接参与计算，结果有可能不精确。想精确运算、保留两位小数、还要四舍五入，要用到后面学的 <b>BigDecimal</b>。5b 的平均年龄是 19，比平均值低的只有小诗诗 1 个。</p>
+  <div class="extra">
+    <span class="t">整数除法悄悄改了 5b 的答案</span>
+    四个人的年龄之和是 78，<code>78 / 4</code> 是整数除法，得 19；真实的平均值是 <b>19.5</b>。拿 19 去比，只有 18 岁的小诗诗比它低；按 19.5 算，19 岁的小丹丹也比平均值低，答案应该是 <b>2 个</b>。把平均值改成 <code>double avg = sum * 1.0 / arr.length;</code>，本机实测输出就变成两个人。平均值要参与后面的比较时，不要随手用 int。<br><br>
+    另外，如果只是想把 3665.666… <b>显示</b>成两位小数，上面学的 printf 就能做到：<code>System.out.printf("%.2f", avg2);</code> 实测打印 <code>3665.67</code>。它只改变显示出来的样子，变量里的值没有变；要让计算本身精确，还是得等 BigDecimal。
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="ch" id="ch9">
+  <div class="ch-num">第 9 节 · P94–P95</div>
+  <h2>题 6　学生数组的增删改<span class="lv must">必做 · 重点</span></h2>
+  <p>这是对象数组的最后一个练习，难度很大。讲它是为了分享：<b>业务比较复杂的时候，该如何思考、如何分析题目</b>。很多零基础的同学刚学完 Java 都有同一个特点：读不懂题目，一听就懂，一写就废。这不是学得不好，而是还不会分析题目。</p>
+  <div class="task">
+    <span class="t">需求</span>
+    定义一个长度为 3 的数组，数组里存储 1 ~ 3 名学生对象作为初始数据，学生对象的学号、姓名各不相同。学生的属性：学号、姓名、年龄。
+    <ul>
+      <li><b>要求 1</b>：再次添加一个学生对象，并在添加的时候进行学号的唯一性判断；</li>
+      <li><b>要求 2</b>：添加完毕之后，遍历所有学生信息；</li>
+      <li><b>要求 3</b>：通过 id 删除学生信息。如果存在，则删除；如果不存在，则提示删除失败；</li>
+      <li><b>要求 4</b>：删除完毕之后，遍历所有学生信息；</li>
+      <li><b>要求 5</b>：查询数组中 id 为 2 的学生，如果存在，则将他的年龄 +1 岁。</li>
+    </ul>
+    学号按道理应该用字符串（可能有字母，比如 heima001），但字符串怎么比较还没学，所以 id 先用 int，学完再改回来。课上的初始数据：1 张三 23、2 李四 24、3 王五 25；要添加的是 4 赵六 26。要求 1 ~ 2、3 ~ 4、5 课上分别写在三个测试类里，各自从同样的初始数据开始。
+  </div>
+  <h3>课上的分析：读题拆解，再局部细化</h3>
+  <p>题目的主体很容易：创建数组、创建学生对象、放进数组。难在要求 1，一句话里让我们做的事情太多了。拆：</p>
+  <ul>
+    <li><b>先一分为二</b>。左半句"再次添加一个学生对象"：那得先有一个学生对象 stu4。右半句"添加的时候进行唯一性判断"，继续细化；</li>
+    <li><b>添加有两种情况</b>。数组已经存满：只能创建一个新数组，长度是老数组的长度 + 1，把老数组里原来的数据拷贝过去，再把 stu4 添加进去。数组没有存满：直接添加；</li>
+    <li><b>唯一性判断写在添加的前面还是后面？</b>先想它的目的：让 id 不重复。判断完一定有两个结果：当前 id 已存在，就不用添加了；不存在，表示可用，才把学生对象添加进数组。所以唯一性判断是添加数据的<b>先决条件</b>，写在前面。</li>
+  </ul>
+  <p>自己写的时候，<b>先别忙着写代码，先把分析过程写成注释</b>：</p>
+  <code class="blk"><span class="hc">// 1. 创建一个长度为 3 的数组
+// 2. 创建学生对象
+// 3. 把学生对象添加到数组当中
+// 4. 再次创建一个学生对象
+// 5. 唯一性判断
+//    5.1 已存在：提示重复
+//    5.2 不存在：添加学生对象
+// 6. 添加学生对象
+//    6.1 老数组已经存满
+//    6.2 老数组没有存满</span></code>
+  <p>课上的要求是：看完讲解先别去看老师的代码，照着这份主体逻辑，试试能不能自己把代码写出来。</p>
+
+  <details class="fold"><summary>提示 1　<small>要抽取哪几个方法</small></summary><div class="in">
+    <p>每定义一个方法，还是问自己三个问题：我要干嘛？我干这件事需要什么才能完成？调用处是否需要继续使用方法的结果？</p>
+    <div class="tscroll"><table class="tt" style="width:100%;min-width:500px">
+      <thead><tr><th>方法</th><th>我要干嘛</th><th>需要什么（形参）</th><th>要不要返回</th></tr></thead>
+      <tbody>
+        <tr><td><code>contains</code></td><td>判断 id 在数组中是否存在</td><td>数组、id，两个都得告诉我</td><td>要。调用处根据结果走不同的逻辑；只有两种状态，boolean</td></tr>
+        <tr><td><code>getCount</code></td><td>判断数组中已经存了几个元素</td><td>数组</td><td>要，int</td></tr>
+        <tr><td><code>creatNewArr</code></td><td>创建长度 + 1 的新数组，把老数组的元素拷贝过去</td><td>老数组</td><td>要，把新数组返回，Student[]</td></tr>
+        <tr><td><code>printArr</code></td><td>遍历打印（存满和没存满两处都要遍历，代码重复）</td><td>数组</td><td>不用，void</td></tr>
+        <tr><td><code>getIndex</code></td><td>找到 id 在数组中的索引（要求 3、5 用）</td><td>数组、id</td><td>要，int；不存在返回 -1，因为没有 -1 索引</td></tr>
+      </tbody>
+    </table></div>
+  </div></details>
+  <details class="fold"><summary>提示 2　<small>contains 里的 return false 写在哪</small></summary><div class="in">
+    <p>循环里比较，相同就 <code>return true</code>。那什么时候返回 false？不能写在 else 里。假设数组里是 id 为 1、2、3 的三个学生，要查的是 3：i 等于 0 时拿到 1，和 3 不一样，如果这时候就返回 false 就错了，应该接着往后比。<b>数组里所有的都比完了还没有找到一样的，才能认为不存在</b>，所以 <code>return false</code> 写在循环的外面。getIndex 的 <code>return -1</code> 同理。</p>
+  </div></details>
+  <details class="fold"><summary>提示 3　<small>怎么知道存了几个、新学生该存到哪个索引</small></summary><div class="in">
+    <p>Student 类型的数组，没存东西的位置是默认初始化值 null。所以 getCount 就是数一数数组里有几个位置不是 null。</p>
+    <p>没存满时要直接添加，添加到哪个索引？不用重新计算。假设数组里是 stu1、stu2、null，getCount 得到 2。这个 2 表示已经有了两个元素，它还有一层隐含的意思：<b>下一次要添加数据，就添加到 2 索引的位置</b>。所以直接写 <code>arr[count] = stu4;</code>。存满的情况也一样，新数组前面拷贝了老元素，只有最后一个空着，还是 <code>newArr[count] = stu4;</code>。</p>
+  </div></details>
+  <details class="fold"><summary>提示 4　<small>删除和修改</small></summary><div class="in">
+    <p>两问都不能直接动手，因为不知道这个 id 在不在：先用 getIndex 找到 id 在数组中对应的索引，再对索引做判断，大于等于 0 表示存在，否则是 -1，不存在。两个分支先写简单的那个（一句提示就搞定）。</p>
+    <ul>
+      <li><b>删除</b>：把 index 索引上的元素直接置为 null，<code>arr[index] = null;</code>；</li>
+      <li><b>修改</b>：先通过索引把这个学生对象拿出来，get 出原来的年龄加 1，得到新的年龄；最后还要用 setAge <b>塞回去</b>，不塞回去，原来的年龄没有变化。</li>
+    </ul>
+  </div></details>
+  <details class="fold"><summary>参考代码 ①　<small>要求 1、2：添加和遍历</small></summary><div class="in">
+<code class="blk"><span class="hk">public</span> <span class="hk">static</span> <span class="hk">void</span> main(String[] args) {
+    <span class="hc">// 1. 创建一个数组用来存储学生对象</span>
+    Student[] arr = <span class="hk">new</span> Student[3];
+    <span class="hc">// 2. 创建学生对象，3. 添加到数组当中</span>
+    Student stu1 = <span class="hk">new</span> Student(1, <span class="hs">"张三"</span>, 23);
+    Student stu2 = <span class="hk">new</span> Student(2, <span class="hs">"李四"</span>, 24);
+    Student stu3 = <span class="hk">new</span> Student(3, <span class="hs">"王五"</span>, 25);
+    arr[0] = stu1;
+    arr[1] = stu2;
+    arr[2] = stu3;
+
+    <span class="hc">// 要求 1：再次添加一个学生对象，添加时进行学号的唯一性判断</span>
+    <span class="hc">// 4. 再创建一个学生对象</span>
+    Student stu4 = <span class="hk">new</span> Student(4, <span class="hs">"赵六"</span>, 26);
+
+    <span class="hc">// 5. 唯一性判断：是添加的先决条件，写在前面</span>
+    <span class="hk">boolean</span> flag = contains(arr, stu4.getId());
+    <span class="hk">if</span> (flag) {
+        <span class="hc">// 5.1 已存在：不用添加，提示重复</span>
+        System.out.println(<span class="hs">"当前id重复，请修改id后再进行添加"</span>);
+    } <span class="hk">else</span> {
+        <span class="hc">// 5.2 不存在：6. 添加学生对象</span>
+        <span class="hk">int</span> count = getCount(arr);
+        <span class="hk">if</span> (count == arr.length) {
+            <span class="hc">// 6.1 老数组已经存满：创建新数组，把老元素拷贝过去，再放新元素</span>
+            Student[] newArr = creatNewArr(arr);
+            newArr[count] = stu4;
+            <span class="hc">// 要求 2：遍历所有学生信息（遍历的是新数组）</span>
+            printArr(newArr);
+        } <span class="hk">else</span> {
+            <span class="hc">// 6.2 没有存满：count 既是已有元素的个数，也是下一个要存入的索引</span>
+            arr[count] = stu4;
+            printArr(arr);
+        }
+    }
+}</code>
+<code class="blk"><span class="hc">// 判断 id 在数组中是否存在</span>
+<span class="hk">public</span> <span class="hk">static</span> <span class="hk">boolean</span> contains(Student[] arr, <span class="hk">int</span> id) {
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+        Student stu = arr[i];
+        <span class="hk">if</span> (stu != <span class="hk">null</span>) {                      <span class="hc">// 数组没存满时，后面是 null</span>
+            <span class="hk">int</span> sid = stu.getId();
+            <span class="hk">if</span> (sid == id) {
+                <span class="hk">return</span> <span class="hk">true</span>;
+            }
+        }
+    }
+    <span class="hc">// 循环结束还没找到一样的，才能说不存在</span>
+    <span class="hk">return</span> <span class="hk">false</span>;
+}</code>
+<code class="blk"><span class="hc">// 统计数组中已经存了几个元素</span>
+<span class="hk">public</span> <span class="hk">static</span> <span class="hk">int</span> getCount(Student[] arr) {
+    <span class="hk">int</span> count = 0;
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+        <span class="hk">if</span> (arr[i] != <span class="hk">null</span>) {
+            count++;
+        }
+    }
+    <span class="hk">return</span> count;
+}</code>
+<code class="blk"><span class="hc">// 创建一个新数组，长度 = 老数组的长度 + 1，并把老数组的元素拷贝过去</span>
+<span class="hk">public</span> <span class="hk">static</span> Student[] creatNewArr(Student[] arr) {
+    Student[] newArr = <span class="hk">new</span> Student[arr.length + 1];
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+        newArr[i] = arr[i];
+    }
+    <span class="hk">return</span> newArr;
+}</code>
+<code class="blk"><span class="hc">// 遍历打印，跳过 null</span>
+<span class="hk">public</span> <span class="hk">static</span> <span class="hk">void</span> printArr(Student[] arr) {
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+        Student stu = arr[i];
+        <span class="hk">if</span> (stu != <span class="hk">null</span>) {
+            System.out.println(stu.getId() + <span class="hs">", "</span> + stu.getName() + <span class="hs">", "</span> + stu.getAge());
+        }
+    }
+}</code>
+  </div></details>
+  <details class="fold"><summary>参考代码 ②　<small>要求 3、4：删除</small></summary><div class="in">
+<code class="blk"><span class="hc">// 要求 3：通过 id 删除学生信息</span>
+<span class="hc">// 先找到 id 在数组中对应的索引</span>
+<span class="hk">int</span> index = getIndex(arr, 2);
+<span class="hk">if</span> (index &gt;= 0) {
+    <span class="hc">// 存在：把这个位置置为 null，就是删除</span>
+    arr[index] = <span class="hk">null</span>;
+    <span class="hc">// 要求 4：删除完毕，遍历所有学生信息</span>
+    printArr(arr);
+} <span class="hk">else</span> {
+    <span class="hc">// 不存在</span>
+    System.out.println(<span class="hs">"当前id不存在，删除失败"</span>);
+}</code>
+<code class="blk"><span class="hc">// 找到 id 在数组中的索引；不存在返回 -1</span>
+<span class="hk">public</span> <span class="hk">static</span> <span class="hk">int</span> getIndex(Student[] arr, <span class="hk">int</span> id) {
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+        Student stu = arr[i];
+        <span class="hk">if</span> (stu != <span class="hk">null</span>) {
+            <span class="hk">int</span> sid = stu.getId();
+            <span class="hk">if</span> (sid == id) {
+                <span class="hk">return</span> i;
+            }
+        }
+    }
+    <span class="hk">return</span> -1;
+}</code>
+  </div></details>
+  <details class="fold"><summary>参考代码 ③　<small>要求 5：修改</small></summary><div class="in">
+<code class="blk"><span class="hc">// 要求 5：查询 id 为 2 的学生，存在就把年龄 +1</span>
+<span class="hk">int</span> index = getIndex(arr, 2);
+<span class="hk">if</span> (index &gt;= 0) {
+    Student stu = arr[index];               <span class="hc">// 先把这个学生对象拿出来</span>
+    <span class="hk">int</span> newAge = stu.getAge() + 1;          <span class="hc">// 原来的年龄 + 1</span>
+    stu.setAge(newAge);                     <span class="hc">// 再塞回去</span>
+    printArr(arr);
+} <span class="hk">else</span> {
+    System.out.println(<span class="hs">"当前id不存在，修改失败"</span>);
+}</code>
+  </div></details>
+
+  <p><b>运行结果对一对</b>：初始存满三个，添加后打印四行（张三、李四、王五、赵六）；把初始数据删成两个再运行，数组不用扩容，打印三行；把 stu4 的 id 改成 1，提示"当前id重复"。删除 id 为 2 的，打印张三、王五；删除 id 为 4 的，提示删除失败。修改后李四变成 25 岁；查 id 为 4 的，提示修改失败。</p>
+  <p><b>易错点</b>：</p>
+  <ul>
+    <li><b>null 不能直接使用</b>。课上把初始数据删成两个之后，程序就报错了。读报错信息要从下往上看：先是 main 方法的某一行，那一行在调用方法，继续往上是 contains 方法里 <code>stu.getId()</code> 那一行。数组没装满，这里拿到的是 null，用 null 去调用方法就会报错。所以凡是遍历这个数组的地方，都要先做<b>非空判断</b>，不是 null 才往下做；</li>
+    <li><b>遍历的是哪个数组</b>。存满时 stu4 放进的是新数组，要遍历 newArr；没存满时放进的是老数组，遍历 arr。两处都要写，所以才抽成 printArr；</li>
+    <li><b>对 boolean 类型的变量做判断，不要写 ==</b>，直接把变量写在小括号里：<code>if (flag)</code>。写 == 很容易少写一个变成 =，那就不叫判断，叫赋值了。</li>
+  </ul>
+  <div class="extra">
+    <span class="t">把三问连起来跑，会发现两个坑</span>
+    课上三问分别写在三个测试类里，每次都从"三个学生"重新开始，所以没有遇到下面的情况。<br><br>
+    <b>① 先删除、再添加，会覆盖别人。</b>删掉 id 为 2 的李四之后，数组是 [张三, null, 王五]。这时再添加赵六：getCount 数出来是 2，没存满，执行 <code>arr[2] = stu4;</code>，<b>王五被覆盖了</b>（本机实测，最后打印的是张三、赵六）。"count 就是下一个要存入的索引"成立的前提，是元素从 0 索引开始挨着存、中间没有空位。改法有两种：添加时去找第一个是 null 的位置；或者删除时把后面的元素往前挪一格。<br><br>
+    <b>② 扩容之后，新数组只在 if 里看得见。</b>newArr 是在 if 的大括号里定义的，出了大括号就用不了，后面要接着删除、修改的话，拿到的还是没有赵六的老数组。更顺手的写法是 <code>arr = creatNewArr(arr);</code>，让 arr 直接指向新数组，后面统一用 arr，遍历也不用分两种情况写。<br><br>
+    这些麻烦事（存满了自动扩容、删除后自动挪位置）正是后面要学的集合 <b>ArrayList</b> 替你做掉的。
+  </div>
+</section>
+
+<!-- ============ 10 ============ -->
+<section class="ch" id="ch10">
+  <div class="ch-num">第 10 节</div>
+  <h2>小结</h2>
+  <div class="tscroll"><table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>谁攻击谁</b></td><td><code>r1.attack(r2)</code>：方法的调用者去攻击参数；方法里 this 是调用者，形参是挨揍的</td></tr>
+      <tr><td><b>printf</b></td><td>第一部分是内容，%s 占位；第二部分是填充的数据，按顺序对应；不换行，要换行加 <code>System.out.println();</code></td></tr>
+      <tr><td><b>在数组里随机</b></td><td>随机的是索引，再通过索引拿元素；随机的长相在 setFace 里生成，构造方法里调用</td></tr>
+      <tr><td><b>对象数组</b></td><td>先写 JavaBean → 动态初始化数组 → 创建对象 → 存入 → 遍历。i 是索引，arr[i] 才是元素（对象）</td></tr>
+      <tr><td><b>键盘录入</b></td><td>第一套 nextInt / nextDouble / next：遇到空格、制表符、回车停止，剩下的留在内存里。第二套 nextLine：遇到回车才停止。两套不混用，目前先用第一套</td></tr>
+      <tr><td><b>new 的位置</b></td><td>创建对象的代码要写在循环里面；写在外面，数组里存的全是同一个对象的地址</td></tr>
+      <tr><td><b>累加与统计</b></td><td>累加的是对象里 get 出来的值；个数用 arr.length，不写死</td></tr>
+      <tr><td><b>复杂题目</b></td><td>读题拆解、局部细化，先把步骤写成注释；重复或复杂的步骤抽成方法（三个问题）；遍历可能有 null 的数组先做非空判断</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    看懂了不算会，写出来才算。题目复杂就拆，拆到每一小块都知道怎么写为止；先写注释，再写代码。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>r1.attack(r2);</code> 执行时，attack 方法里的 this 和形参 role 分别是谁？谁的血量变了？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">this 是方法的调用者 r1，role 是传进来的 r2。方法里调用的是 role.setBlood(…)，所以是 r2（挨揍的人）的血量变了。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 连着写 <code>System.out.printf("%s打了%s", "A", "B");</code> 和 <code>System.out.printf("结果%s毫发无损", "B");</code>，输出是什么样？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">A 填第一个坑，B 填第二个坑。printf 没有换行效果，所以两句连在同一行：A打了B结果B毫发无损。想分成两行，中间加一句 System.out.println();。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 先 <code>sc.nextInt()</code> 再 <code>sc.nextLine()</code>，键盘输入 123 然后回车。nextLine 接到了什么？为什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">接到的是空的字符串，而且没有停下来让你输入。实际录入的是"123 + 回车"，nextInt 只把 123 接走，回车还留在内存里；nextLine 遇到回车就停止，一上来就碰到了这个回车。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 录入三辆车时把 <code>Car c = new Car();</code> 写在了 for 循环外面，遍历打印出来是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">三行都是第三辆车的数据。整个程序只有一个汽车对象，每一轮循环只是修改它的属性，再把同一个地址值存进数组；数组三个位置指向的是同一个对象，看到的都是最后一次修改的结果。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. contains 方法里，<code>return false;</code> 为什么不能写在循环里的 else 中？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">写在 else 里，只要第一个学生的 id 不一样就返回 false 了，后面的根本没比。要把数组里所有的都比完，还没找到一样的，才能说不存在，所以写在循环的外面。</div>
+    </div>
+    <div class="q">
+      <div class="qt">6. 数组是 [stu1, stu2, null]，getCount 返回几？这个数字还有一层什么意思？什么情况下这层意思不成立？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">返回 2：已经存了两个元素。它还表示下一次添加数据要存到 2 索引。前提是元素从 0 索引开始挨着存；如果中间有被删除后留下的 null（比如 [stu1, null, stu3]），count 是 2，但 2 索引上有人，直接存会把 stu3 覆盖掉（见题 6 的补充框）。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="87.html"><small>← 上一篇</small>P87–90 对象内存图</a>
+    <a class="next off"><small>下一篇 →</small>P96–99 API 文档、String 与比较</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P91–P95（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=91" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，题目、讲解思路和例子来自原课；参考代码按课上的讲解还原，并在本机 JDK 8 上运行过；交互演示与"补充"框由 Claude Fable 5.2 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+/* ---------- 0. 题单打勾 ---------- */
+(function () {
+  const KEY = 'hm-java-drill-91', boxes = $$('.plan input');
+  const done = new Set(ccStore.get(KEY, []));
+  function paint() {
+    boxes.forEach(b => { b.checked = done.has(+b.dataset.t); b.closest('tr').classList.toggle('done', b.checked); });
+    $('#plan-n').textContent = ` 已做完 ${done.size} / ${boxes.length} 题。`;
+  }
+  boxes.forEach(b => b.onchange = () => { b.checked ? done.add(+b.dataset.t) : done.delete(+b.dataset.t); ccStore.set(KEY, [...done].sort()); paint(); });
+  paint();
+})();
+
+/* ---------- 1 / 2. 格斗游戏：基础版、升级版 ---------- */
+const BOY = ['风流俊雅', '气宇轩昂', '相貌英俊', '五官端正', '一塌糊涂', '面目狰狞'];
+const ATK = ['%s使出了一招【背心钉】，转到对方的身后，一掌向%s背心的灵台穴拍去。', '%s使出了一招【游空探爪】，飞起身形自半空中抓向%s。', '%s运气于掌，一瞬间掌心变得通红，一式【掌心雷】，推向%s。', '%s阴手翻起阳手跟进，一招【没遮拦】，结结实实地捶向%s。'];
+const INJ = ['结果%s退了半步，毫发无损', '结果给%s造成一处瘀伤', '结果一击命中，%s痛得弯下腰', '结果%s闷哼了一声，连退了好几步', '结果%s脚下不稳，一跤摔倒在地', '结果%s脸色发白，半天站不起来', '结果%s吐出一口鲜血', '结果%s一声惨叫，像滩软泥般塌了下去'];
+function fightDemo(id, v2) {
+  const root = $('#' + id), out = $('.out', root);
+  const rnd = n => Math.floor(Math.random() * n);
+  $('.go', root).onclick = () => {
+    const L = [], A = { n: '乔峰', b: 100 }, B = { n: '鸠摩智', b: 100 };
+    let hits = 0;
+    if (v2) for (const r of [A, B]) L.push(`姓名为：${r.n}`, '血量为：100', '性别为：男', `长相为：${BOY[rnd(BOY.length)]}`);
+    const atk = (x, y) => {                       // x 是调用者 this，y 是参数 role
+      hits++;
+      if (v2) L.push(ATK[rnd(ATK.length)].replace('%s', x.n).replace('%s', y.n));
+      const hurt = rnd(20) + 1;
+      y.b = y.b - hurt < 0 ? 0 : y.b - hurt;
+      if (v2) {
+        const r = y.b, i = r > 90 ? 0 : r > 80 ? 1 : r > 70 ? 2 : r > 60 ? 3 : r > 40 ? 4 : r > 20 ? 5 : r > 10 ? 6 : 7;
+        L.push(INJ[i].replace('%s', y.n));
+      } else L.push(`${x.n}举起拳头，打了${y.n}一下，造成了${hurt}点伤害，${y.n}还剩下了${y.b}点血`);
+      if (y.b === 0) { L.push(`${x.n} K.O 了${y.n}`); return true; }
+      return false;
+    };
+    while (true) { if (atk(A, B)) break; if (atk(B, A)) break; }
+    out.textContent = L.join('\n'); out.scrollTop = 0;
+    $('.cnt', root).textContent = `这一局一共打了 ${hits} 下（往下滚动看结局）`;
+  };
+}
+fightDemo('f1', false);
+fightDemo('f2', true);
+
+/* ---------- 3. 键盘录入：内存里剩下了什么 ---------- */
+(function () {
+  const root = $('#sc'), q = s => $(s, root);
+  const PROGS = [
+    { name: '两次 nextInt()', calls: [['int num1 = sc.nextInt();', 'int'], ['int num2 = sc.nextInt();', 'int']], fills: ['123 123', '123'] },
+    { name: '两次 next()', calls: [['String str1 = sc.next();', 'tok'], ['String str2 = sc.next();', 'tok']], fills: ['abc bcd', 'abc'] },
+    { name: '两次 nextLine()', calls: [['String line1 = sc.nextLine();', 'line'], ['String line2 = sc.nextLine();', 'line']], fills: ['abc bcd', '123 789'] },
+    { name: '混用：nextInt() 再 nextLine()', calls: [['int num = sc.nextInt();', 'int'], ['String line = sc.nextLine();', 'line']], fills: ['123', '123 789'] },
+  ];
+  const DL = { ' ': '空格', '\t': '制表符', '\n': '回车' };
+  let p = 0, buf, pos, k, res, msg, err;
+  function reset() { buf = ''; pos = 0; k = 0; res = []; err = ''; msg = '程序停在第 1 句，等你输入。在下面的输入框里打一行字，点"回车"。'; show(); }
+  function run() {
+    const P = PROGS[p], said = [];
+    while (k < P.calls.length) {
+      const [, type] = P.calls[k], name = type === 'int' ? 'nextInt()' : type === 'tok' ? 'next()' : 'nextLine()';
+      if (type === 'line') {
+        const e = buf.indexOf('\n', pos);
+        if (e < 0) break;
+        const v = buf.slice(pos, e), fresh = pos === 0 || buf[pos - 1] === '\n';
+        said.push(v === '' && !fresh ? `<b>${name}</b> 一上来就碰到了上一次留下的回车：它接到的是一个空的字符串，而且根本没有停下来让你输入。`
+          : !fresh ? `<b>${name}</b> 没有停下来让你输入，直接把内存里剩下的 <code>${esc(v)}</code> 接走了（开头的空格也算），一直接到回车为止。`
+          : `<b>${name}</b> 把回车之前的一整行 <code>${esc(v)}</code> 都接走了，空格也照收，回车本身也被它取走。`);
+        res.push(JSON.stringify(v)); pos = e + 1; k++;
+      } else {
+        let a = pos; while (a < buf.length && /\s/.test(buf[a])) a++;
+        if (a >= buf.length) break;
+        let b = a; while (b < buf.length && !/\s/.test(buf[b])) b++;
+        const tok = buf.slice(a, b);
+        if (type === 'int' && !/^[+-]?\d{1,9}$/.test(tok)) { err = 'InputMismatchException'; said.push(`<b>${name}</b> 读到的是 <code>${esc(tok)}</code>，不是整数，程序报错 java.util.InputMismatchException。`); break; }
+        const rest = buf.slice(b);
+        said.push(`<b>${name}</b> ${a > pos ? '先跳过开头留着的' + (buf.slice(pos, a).includes('\n') ? '回车' : '空白') + '，' : ''}接到 <code>${esc(tok)}</code>，遇到${DL[buf[b]]}就停止。` + (rest.trim() ? `后面的 <code>${esc(rest.trim())}</code> 还留在内存里，会交给下一次键盘录入。` : rest ? '回车还留在内存里。' : ''));
+        res.push(type === 'int' ? tok : JSON.stringify(tok)); pos = b; k++;
+      }
+    }
+    if (!err) said.push(k >= P.calls.length ? '<b>程序结束。</b>' + (pos < buf.length && buf.slice(pos).trim() ? '内存里剩下的数据没有人接收了。' : '') : `程序停在第 ${k + 1} 句，等你输入。`);
+    msg = said.join('<br>');
+  }
+  function show() {
+    const P = PROGS[p], over = !!err || k >= P.calls.length;
+    q('.pp').innerHTML = PROGS.map((x, i) => `<button type="button" data-v="${i}" class="${i === p ? 'sel' : ''}">${x.name}</button>`).join('');
+    q('.sc-code').innerHTML = P.calls.map(([c], i) => `<div class="${i === k && !over ? 'cur' : ''}">${esc(c)}` +
+      (i < k ? `<span class="r">→ ${esc(res[i])}${res[i] === '""' ? '（空的）' : ''}</span>` : i === k ? (err ? `<span class="e">✗ ${err}</span>` : '<span class="w">⏸ 等待输入</span>') : '') + '</div>').join('');
+    q('.buf').innerHTML = buf ? [...buf].map((ch, i) => `<span class="${i < pos ? 'u' : 'left'}">${ch === ' ' ? '␣' : ch === '\n' ? '↵' : ch === '\t' ? '⇥' : esc(ch)}</span>`).join('') : '<span class="emp">（空）</span>';
+    q('.fills').innerHTML = '试试：' + P.fills.map(f => `<button type="button" class="btn sm" data-f="${esc(f)}">${esc(f)}</button>`).join('');
+    q('.msg').innerHTML = msg;
+    q('.sc-in').disabled = over; q('form [type=submit]').disabled = over;
+  }
+  function enter(v) { if (err || k >= PROGS[p].calls.length) return; buf += v + '\n'; run(); show(); }
+  q('form').onsubmit = e => { e.preventDefault(); const i = q('.sc-in'); enter(i.value); i.value = ''; i.focus(); };
+  q('.re').onclick = reset;
+  root.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.v !== undefined && b.parentNode.classList.contains('pp')) { p = +b.dataset.v; reset(); }
+    else if (b.dataset.f !== undefined) enter(b.dataset.f);
+  });
+  reset();
+})();
+
+/* ---------- 4. new 写在循环里还是循环外 ---------- */
+(function () {
+  const root = $('#nw'), q = s => $(s, root);
+  const DATA = [['别摸我', 3000, '蓝色'], ['宾利', 3000000, '红色'], ['老年代步车', 5000, '灰色']];
+  let inside = true, k = 0;
+  function show() {
+    $$('.pp button', root).forEach(b => b.classList.toggle('sel', (b.dataset.v === '1') === inside));
+    const objs = [], arr = [null, null, null];
+    if (!inside) objs.push({ ad: '001', f: ['null', 0, 'null'] });
+    for (let i = 0; i < k; i++) {
+      let o;
+      if (inside) { o = { ad: '00' + (i + 1), f: DATA[i] }; objs.push(o); } else { o = objs[0]; o.f = DATA[i]; }
+      arr[i] = o;
+    }
+    q('.cells').innerHTML = arr.map((o, i) => `<div class="${i === k - 1 ? 'hi' : ''}"><small>arr[${i}]</small>${o ? o.ad : 'null'}</div>`).join('');
+    q('.objs').innerHTML = objs.map((o, i) => `<div class="obj ${(inside ? i === k - 1 : k > 0) ? 'hi' : ''}"><div class="ad">地址值 ${o.ad}</div><div class="f">brand: ${o.f[0]}</div><div class="f">price: ${o.f[1]}</div><div class="f">color: ${o.f[2]}</div></div>`).join('') || '<span style="font-size:13px;color:var(--muted)">（还没有对象）</span>';
+    q('.cnt').textContent = `已执行 ${k} / 3 轮`;
+    q('.nx').disabled = k >= 3;
+    q('.out').innerHTML = k >= 3 ? '遍历数组：\n' + arr.map(o => `${o.f[0]}, ${o.f[1]}, ${o.f[2]}`).join('\n') : '<span class="note">（三轮循环执行完后，这里显示遍历打印的结果）</span>';
+    q('.msg').innerHTML = k === 0 ? (inside ? '数组刚创建，三个位置都是默认值 null。还没有任何汽车对象。' : '数组刚创建，三个位置都是 null。<b>循环开始之前就已经 new 了一个对象</b>，地址 001，整个程序只有这一个。')
+      : inside ? `第 ${k} 轮：<b>new 了一个新的对象</b>（地址 00${k}），把录入的"${DATA[k - 1][0]}"等数据 set 进去，再把它的地址存进 arr[${k - 1}]。` + (k === 3 ? '三个位置是三个不同的对象，遍历出来是三辆车。' : '')
+        : `第 ${k} 轮：没有创建新的对象，只是把 001 这个对象的属性<b>改成</b>了"${DATA[k - 1][0]}"的数据，然后又把 001 存进 arr[${k - 1}]。` + (k === 3 ? '三个位置存的都是 001，遍历三次看到的都是最后一次修改的结果：<b>三行全是第三辆车</b>。' : '');
+  }
+  $$('.pp button', root).forEach(b => b.onclick = () => { inside = b.dataset.v === '1'; k = 0; show(); });
+  q('.nx').onclick = () => { if (k < 3) { k++; show(); } };
+  q('.re').onclick = () => { k = 0; show(); };
+  show();
+})();
+</script>
+</body>
+</html>
