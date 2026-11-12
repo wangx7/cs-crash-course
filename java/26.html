@@ -191,7 +191,7 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
     <li>官网 <code>www.jetbrains.com/idea</code>（记不住就搜"idea"），点右上角 Download。</li>
     <li>两个版本：<b>旗舰版</b>（Ultimate）功能全，收费，可以免费试用 30 天；<b>社区版</b>（Community）完全免费，功能只有一部分。视频建议下旗舰版。</li>
     <li>一定要按自己的操作系统选（Windows / macOS / Linux）。Windows 下有 exe 和 zip 两种，视频说 zip 是"安装包加说明文件"，<span class="fix" title="zip 是免安装版，解压就能用">其实不是</span>，选 exe 安装包就行。</li>
-    <li>安装是傻瓜式的：安装路径改到之前放开发工具的文件夹，比如 <code>E:\develop\idea</code>；选项里只勾"创建桌面快捷方式"（64-bit launcher），其他不勾，Install。</li>
+    <li>安装是傻瓜式的：安装路径改到之前放开发工具的文件夹，比如 <code>E:\develop\idea</code>；选项里只勾"创建桌面快捷方式"（64-bit launcher），其他不勾，点安装。</li>
   </ul>
   <div class="extra">
     <span class="t">补充：版本和授权</span>
@@ -216,11 +216,11 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
   </table>
   <p>在 IDEA 里写代码，<b>必须把这四层都建出来</b>。约定：第一阶段的代码看作一个完整的<b>项目</b>（basic-code），每一天的代码是一个<b>模块</b>（今天第二天，叫 day02-code）。</p>
   <ol>
-    <li><b>首次启动</b>：问要不要导入设置，选 Do not import settings（第一次用，没什么可导的）；选免费试用 30 天，Continue。</li>
-    <li><b>新建项目</b>：New Project → 最下面的 <b>Empty Project</b>（空项目）→ 名字 <code>basic-code</code>，位置保持默认 → Finish，提示文件夹不存在要不要创建，Yes。</li>
-    <li><b>新建模块</b>：会自动弹出 Project Structure（没弹出就点 File → Project Structure）→ Modules → 中间上方的 <b>+</b> → New Module（Import Module 是导入，以后学）→ 选 Java → 名字 <code>day02-code</code>，路径保持默认 → Finish → Yes → OK。等右下角进度条读完。</li>
-    <li><b>新建包</b>：展开模块，右键 <b>src</b> → New → Package。包名不要乱写，习惯用<b>公司域名反写 + 包的作用</b>：黑马官网是 www.itheima.com，反过来去掉 www 就是 <code>com.itheima</code>，再加上作用 <code>demo1</code>，即 <code>com.itheima.demo1</code>。用 Open In → Explorer 看本地文件夹会发现这是<b>多级包</b>：com 里有 itheima，itheima 里有 demo1，多级包之间用点隔开。</li>
-    <li><b>新建类</b>：<b>右键点包</b> → New → Java Class，输入 HelloWorld，选 Class 回车。注意：右键点谁就是在谁里面新建；要是右键点 src，类就不在包里了。</li>
+    <li><b>首次启动</b>：问要不要导入设置，选“不导入设置”（第一次用，没什么可导的）；选免费试用 30 天，点“继续”。</li>
+    <li><b>新建项目</b>：新建项目 → 列表里的 <b>空项目</b> → 名称 <code>basic-code</code>，位置保持默认 → 创建（如果提示文件夹不存在要不要创建，选“是”）。</li>
+    <li><b>新建模块</b>：会自动弹出“项目结构”窗口（没弹出就点 文件 → 项目结构…）→ 模块 → 中间上方的 <b>+</b> → 新建模块（导入模块以后学）→ 选 Java → 名称 <code>day02-code</code>，位置保持默认 → 创建 → 确定。等右下角进度条读完。</li>
+    <li><b>新建包</b>：展开模块，右键 <b>src</b> → 新建 → 软件包。包名不要乱写，习惯用<b>公司域名反写 + 包的作用</b>：黑马官网是 www.itheima.com，反过来去掉 www 就是 <code>com.itheima</code>，再加上作用 <code>demo1</code>，即 <code>com.itheima.demo1</code>。右键 → 打开于 → 访达（Windows 上是“资源管理器”）看本地文件夹会发现这是<b>多级包</b>：com 里有 itheima，itheima 里有 demo1，多级包之间用点隔开。</li>
+    <li><b>新建类</b>：<b>右键点包</b> → 新建 → Java 类，输入 HelloWorld，选“类”回车。注意：右键点谁就是在谁里面新建；要是右键点 src，类就不在包里了。</li>
   </ol>
 
   <div class="card">
@@ -260,12 +260,12 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
     <div class="sc-con" id="lt-con" style="height:auto;min-height:60px;margin-top:8px"></div>
   </div>
 
-  <p>代码写完<b>不需要保存、不需要编译</b>，直接运行：右键空白处 → <b>Run 'HelloWorld.main()'</b>（也可以点代码左边的绿色小三角，老师觉得右键最保险）。下面弹出的窗口叫<b>控制台</b>，输出语句打印的内容都显示在这里。</p>
+  <p>代码写完<b>不需要保存、不需要编译</b>，直接运行：右键空白处 → <b>运行 'HelloWorld.main()'</b>（也可以点代码左边的绿色小三角，老师觉得右键最保险）。下面弹出的窗口叫<b>控制台</b>，输出语句打印的内容都显示在这里。</p>
 
   <div class="extra">
     <span class="t">补充：包名的规范、几个快捷键</span>
     包名<b>全部小写</b>，每一段都要符合标识符规则（不能数字开头、不能是关键字）。所以 <code>com.itheima.Demo1</code> 能用但不规范，<code>com.itheima.1demo</code> 直接报错。上面的演示会检查这些。<br>
-    运行快捷键：Windows <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">F10</span>，Mac <span class="kbd">⌃</span>+<span class="kbd">⇧</span>+<span class="kbd">R</span>。新版 IDEA 里输入 <code>main</code> 回车也能生成 main 方法。新建项目的窗口这几年改过几次样子，Empty Project 一般在左侧列表里。
+    运行快捷键：Windows <span class="kbd">Ctrl</span>+<span class="kbd">Shift</span>+<span class="kbd">F10</span>，Mac <span class="kbd">⌃</span>+<span class="kbd">⇧</span>+<span class="kbd">R</span>。新版 IDEA 里输入 <code>main</code> 回车也能生成 main 方法。新建项目的窗口这几年改过几次样子，“空项目”一般在左侧列表里。
   </div>
 </section>
 
@@ -280,7 +280,7 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
     <li><b>解答学习中的疑问</b>：相当于一个 24 小时在线的免费老师。比如问"很多知识点我能听懂，但无法独立写出代码，怎么办"，它给了多练习、理解代码、用调试工具等十条建议。</li>
     <li><b>刷算法题</b>：自带几百道算法题，可以选 Java 写；没思路时先看"思路提示"，还不会再看"代码提示"。</li>
   </ol>
-  <p>使用步骤：注册账号；在 IDEA 的 Settings → <b>Plugins</b> → Marketplace（插件市场）里搜索插件名，Install，重启 IDEA，登录后右侧会多出插件图标。</p>
+  <p>使用步骤：注册账号；在 IDEA 的 设置 → <b>插件</b> → Marketplace 选项卡（插件市场）里搜索插件名，点“安装”，重启 IDEA，登录后右侧会多出插件图标。</p>
   <div class="extra">
     <span class="t">补充：怎么用 AI 学编程才不亏</span>
     AI 插件的名字和功能变化很快，以 IDEA 插件市场里当时能搜到的为准；IDEA 自己也有官方的 AI Assistant。不管用哪个，对初学者有一条很重要：<b>别让 AI 替你写练习</b>。这门课反复强调"先分析需求再写代码"，你卡住的那一下，正是在练思维。比较好的顺序是：自己先想、先写；卡住了让 AI 给<b>思路提示</b>（不要代码）；还是不会，再看代码，看完关掉自己重写一遍。报错时先自己读一遍报错信息（第几行、什么异常），再去问 AI，慢慢就会自己看懂了。
@@ -291,22 +291,22 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
 <section class="ch" id="ch6">
   <div class="ch-num">第 6 节 · P29 中</div>
   <h2>IDEA 的几项设置</h2>
-  <p>默认的字体小、背景黑，看着不爽，可以改一改。这些是老师的习惯，可以跟着设，也可以保持默认。几乎所有设置都在 <b>File → Settings</b> 里。</p>
+  <p>默认的字体小、背景黑，看着不爽，可以改一改。这些是老师的习惯，可以跟着设，也可以保持默认。几乎所有设置都在 <b>文件 → 设置…</b> 里。</p>
   <table class="tt" style="width:100%">
     <thead><tr><th>设置</th><th>位置</th><th>老师的做法</th></tr></thead>
     <tbody>
-      <tr><td><b>主题</b></td><td>Appearance &amp; Behavior → Appearance → Theme</td><td>默认是黑色的 Darcula；上课时用 Windows 10 Light（白色），方便大家看</td></tr>
-      <tr><td><b>字体</b></td><td>Editor → Font</td><td>字体 Consolas（专门为程序员设计的），字号 18，行距默认。字号按自己喜欢调</td></tr>
-      <tr><td><b>注释颜色</b></td><td>Editor → Color Scheme → Language Defaults → Comments</td><td>默认是灰色斜体，看着难受。把单行注释（Line comment）和多行注释（Block comment）的斜体去掉，颜色改成深绿色。<b>什么颜色都行，千万别用红色</b>：IDEA 里只有代码出错才是红色</td></tr>
-      <tr><td><b>自动导包</b></td><td>Editor → General → Auto Import</td><td>勾上两个选项（Add unambiguous imports on the fly、Optimize imports on the fly）。以后写 Scanner，上面的 import 会自动加上</td></tr>
-      <tr><td><b>提示忽略大小写</b></td><td>Editor → General → Code Completion</td><td>去掉 Match case 的勾。这样写小写 <code>string</code> 也会提示大写的 String</td></tr>
-      <tr><td><b>背景图片</b></td><td>Appearance &amp; Behavior → Appearance → Background Image</td><td>视频说是"朋友"喜欢的设置：选一张图片，透明度设 20 左右，一边写代码一边看</td></tr>
+      <tr><td><b>主题</b></td><td>外观与行为 → 外观 → 主题</td><td>默认是黑色的 Darcula；上课时用 Windows 10 Light（白色），方便大家看</td></tr>
+      <tr><td><b>字体</b></td><td>编辑器 → 字体</td><td>字体 Consolas（专门为程序员设计的），字号 18，行距默认。字号按自己喜欢调</td></tr>
+      <tr><td><b>注释颜色</b></td><td>编辑器 → 配色方案 → 语言默认设置 → 注释</td><td>默认是灰色斜体，看着难受。把“行注释”和“块注释”的斜体去掉，颜色改成深绿色。<b>什么颜色都行，千万别用红色</b>：IDEA 里只有代码出错才是红色</td></tr>
+      <tr><td><b>自动导包</b></td><td>编辑器 → 常规 → 自动导入</td><td>勾上两个选项（“动态添加明确的 import”“动态优化 import”）。以后写 Scanner，上面的 import 会自动加上</td></tr>
+      <tr><td><b>提示忽略大小写</b></td><td>编辑器 → 常规 → 代码补全</td><td>去掉“区分大小写”的勾。这样写小写 <code>string</code> 也会提示大写的 String</td></tr>
+      <tr><td><b>背景图片</b></td><td>外观与行为 → 外观 → 背景图像…</td><td>视频说是"朋友"喜欢的设置：选一张图片，透明度设 20 左右，一边写代码一边看</td></tr>
     </tbody>
   </table>
   <p>课程资料里有这五项设置的截图，操作太快跟不上可以照着截图设。</p>
   <div class="extra">
     <span class="t">Mac 上的位置</span>
-    Mac 版 IDEA 的设置在菜单 <b>IntelliJ IDEA → Settings</b>（快捷键 <span class="kbd">⌘</span>+<span class="kbd">,</span>），不在 File 里，里面的结构一样。Mac 没有 Consolas 字体，可以用默认的 JetBrains Mono 或 Menlo。新版 IDEA 的默认浅色主题叫 Light（"Windows 10 Light"是老版本的名字）。
+    Mac 版 IDEA 的设置在菜单 <b>IntelliJ IDEA → 设置…</b>（快捷键 <span class="kbd">⌘</span>+<span class="kbd">,</span>），不在“文件”菜单里，里面的结构一样。Mac 没有 Consolas 字体，可以用默认的 JetBrains Mono 或 Menlo。"Windows 10 Light"是老版本的主题名，新版 IDEA 在主题下拉列表里选一个浅色主题即可。
   </div>
 </section>
 
@@ -317,17 +317,17 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
   <table class="tt" style="width:100%">
     <thead><tr><th>对象</th><th>操作</th><th>怎么做</th></tr></thead>
     <tbody>
-      <tr><td rowspan="3"><b>类</b></td><td>新建</td><td>想建在哪个包里，就<b>右键哪个包</b> → New → Java Class → 输入类名 → 回车</td></tr>
-      <tr><td>删除</td><td>右键类 → Delete → OK</td></tr>
-      <tr><td>改名</td><td><b>不能只改代码里的类名</b>（文件名和类名要一致）。右键类 → Refactor → Rename，或快捷键 <span class="kbd">Shift</span>+<span class="kbd">F6</span>，改完点 Refactor，文件名和类名一起改</td></tr>
-      <tr><td><b>模块</b></td><td>新建（目前只学这个）</td><td>File → Project Structure → Modules → <b>+</b> → New Module → Java → 起名（如 day03-code）→ Finish → Yes → OK。删除、修改、导入以后再学</td></tr>
-      <tr><td rowspan="2"><b>项目</b></td><td>关闭</td><td>File → Close Project，回到项目列表（IDEA 默认打开上次操作的项目）</td></tr>
-      <tr><td>新建</td><td>项目列表里 New Project → Empty Project → 起名（如 basic-code2）→ Finish。项目列表里点哪个就进入哪个。打开、修改项目以后再学</td></tr>
+      <tr><td rowspan="3"><b>类</b></td><td>新建</td><td>想建在哪个包里，就<b>右键哪个包</b> → 新建 → Java 类 → 输入类名 → 回车</td></tr>
+      <tr><td>删除</td><td>右键类 → 删除 → 确定</td></tr>
+      <tr><td>改名</td><td><b>不能只改代码里的类名</b>（文件名和类名要一致）。右键类 → 重构 → 重命名…，或快捷键 <span class="kbd">Shift</span>+<span class="kbd">F6</span>，改完点“重构”，文件名和类名一起改</td></tr>
+      <tr><td><b>模块</b></td><td>新建（目前只学这个）</td><td>文件 → 项目结构… → 模块 → <b>+</b> → 新建模块 → Java → 起名（如 day03-code）→ 创建 → 确定。删除、修改、导入以后再学</td></tr>
+      <tr><td rowspan="2"><b>项目</b></td><td>关闭</td><td>文件 → 关闭项目，回到项目列表（IDEA 默认打开上次操作的项目）</td></tr>
+      <tr><td>新建</td><td>项目列表里 新建项目 → 空项目 → 起名（如 basic-code2）→ 创建。项目列表里点哪个就进入哪个。打开、修改项目以后再学</td></tr>
     </tbody>
   </table>
   <div class="extra">
-    <span class="t">为什么改名要用 Rename</span>
-    Rename 不只是同时改文件名和类名，以后项目大了，别的类里所有用到这个类的地方也会一起改掉。手动改的话，漏掉一处就编译报错。Mac 上 F 键默认是调亮度音量的，Shift+F6 可能要加 <span class="kbd">fn</span>。
+    <span class="t">为什么改名要用“重命名”</span>
+    “重命名”不只是同时改文件名和类名，以后项目大了，别的类里所有用到这个类的地方也会一起改掉。手动改的话，漏掉一处就编译报错。Mac 上 F 键默认是调亮度音量的，Shift+F6 可能要加 <span class="kbd">fn</span>。
   </div>
 </section>
 
@@ -341,7 +341,7 @@ code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font
       <tr><td><b>多次录入</b></td><td>导包和创建对象只写一次，接收数据写多次，变量名不能重复</td></tr>
       <tr><td><b>IDEA</b></td><td>集成开发环境：编写、编译、运行、调试都在里面；自动保存、自动编译</td></tr>
       <tr><td><b>四层结构</b></td><td>项目 → 模块 → 包（文件夹，域名反写如 com.itheima.demo1）→ 类。右键点谁就在谁里面新建</td></tr>
-      <tr><td><b>快捷</b></td><td><code>psvm</code> 生成 main 方法，<code>sout</code> 生成输出语句；右键 → Run 运行；Shift+F6 重命名</td></tr>
+      <tr><td><b>快捷</b></td><td><code>psvm</code> 生成 main 方法，<code>sout</code> 生成输出语句；右键 → 运行；Shift+F6 重命名</td></tr>
     </tbody>
   </table>
 
@@ -558,7 +558,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;',
     const hasMain = /public\s+static\s+void\s+main\s*\(\s*String\s*\[\s*\]\s*\w+\s*\)/.test(src);
     const opens = (src.match(/\{/g) || []).length, closes = (src.match(/\}/g) || []).length;
     if (opens !== closes) { add('java: 解析时已到达文件结尾（大括号没有配对）', 'err'); return; }
-    if (!hasMain) { add('（类里还没有 main 方法，IDEA 不会显示 Run。先输入 psvm 回车）', 'note'); return; }
+    if (!hasMain) { add('（类里还没有 main 方法，IDEA 不会显示“运行”。先输入 psvm 回车）', 'note'); return; }
     const outs = [...src.matchAll(/System\.out\.println\(\s*(?:"((?:[^"\\]|\\.)*)"|(-?\d+(?:\.\d+)?))?\s*\)\s*;/g)].map(m => m[1] !== undefined ? m[1] : m[2] !== undefined ? m[2] : '');
     if (/System\.out\.println\(\s*[A-Za-z]/.test(src)) add('（模拟器只认得打印 "字符串" 或数字）', 'note');
     outs.forEach(s => add(s));

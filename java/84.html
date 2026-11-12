@@ -341,18 +341,18 @@ System.out.println(s.getAge());     <span class="hc">// 23</span></code>
   <h2>快捷键与插件：一秒生成</h2>
   <p>写熟了之后会发现，这样的代码写起来简直是体力活。IDEA 提供了快捷生成的方式，快捷键是 <kbd>Alt</kbd> + <kbd>Insert</kbd>（有的电脑按了没反应，就多按一个 Fn：<kbd>Alt</kbd> + <kbd>Fn</kbd> + <kbd>Insert</kbd>）。</p>
   <ul>
-    <li><b>生成空参构造</b>：Alt + Insert，选第一个 <b>Constructor</b>（构造方法）。弹窗默认选中了第一个属性，这时不能直接点 OK，否则生成的是只带这一个参数的构造；要点下面的 <b>Select None</b>，表示什么属性都不选；</li>
-    <li><b>生成全参构造</b>：Alt + Insert → Constructor，按住 Shift 再点最后一个属性把所有属性全选（或者按 <kbd>Ctrl</kbd> + <kbd>A</kbd>），点 OK；</li>
-    <li><b>生成 get / set</b>：Alt + Insert，注意选的不是 Getter、也不是 Setter，而是第四个 <b>Getter and Setter</b>，Ctrl + A 全选，点 OK。</li>
+    <li><b>生成空参构造</b>：Alt + Insert，选第一个 <b>构造函数</b>（就是构造方法）。弹窗默认选中了第一个属性，这时不能直接点“确定”，否则生成的是只带这一个参数的构造；要点下面的 <b>无选择</b>，表示什么属性都不选；</li>
+    <li><b>生成全参构造</b>：Alt + Insert → 构造函数，按住 Shift 再点最后一个属性把所有属性全选（或者按 <kbd>Ctrl</kbd> + <kbd>A</kbd>），点“确定”；</li>
+    <li><b>生成 get / set</b>：Alt + Insert，注意选的不是 Getter、也不是 Setter，而是第四个 <b>Getter 和 Setter</b>，Ctrl + A 全选，点“确定”。</li>
   </ul>
-  <p>这还不是最终方案。再分享一个插件 <b>PTG</b>，可以一秒生成标准 JavaBean。安装：电脑连上外网，点 File → Settings → Plugins，中间有两个选项卡，Marketplace 是下载页面，Installed 是已经安装的插件；在 Marketplace 的搜索框里输入 PTG，回车，点 Install，等进度条走完，点 OK。</p>
+  <p>这还不是最终方案。再分享一个插件 <b>PTG</b>，可以一秒生成标准 JavaBean。安装：电脑连上外网，点 文件 → 设置… → 插件，中间有两个选项卡，Marketplace 是下载页面，“已安装”是已经安装的插件；在 Marketplace 的搜索框里输入 PTG，回车，点“安装”，等进度条走完，点“确定”。</p>
   <p>使用：成员变量写好之后，在代码空白处点右键，选 <b>Ptg To JavaBean</b>。空参构造、全参构造、所有的 get / set 都自动生成了，连注释都有。它还会多生成一个 toString 方法，这个暂时还没学，先删掉就好。</p>
   <div class="extra">
     <span class="t">Mac 上的对应操作</span>
     <ul style="margin:4px 0 0;padding-left:18px">
-      <li>生成菜单（Generate）：<kbd>⌘</kbd> + <kbd>N</kbd>，或者 <kbd>Control</kbd> + <kbd>Enter</kbd>。Mac 键盘没有 Insert 键；也可以用菜单 Code → Generate…；</li>
-      <li>弹窗里全选：<kbd>⌘</kbd> + <kbd>A</kbd>；Select None 按钮和 Shift 连选的用法相同；</li>
-      <li>插件界面：菜单 IntelliJ IDEA → Settings…（<kbd>⌘</kbd> + <kbd>,</kbd>）→ Plugins。新一些的 IDEA 装完插件不一定要重启，点 OK 或 Apply 即可；</li>
+      <li>“生成”菜单：<kbd>⌘</kbd> + <kbd>N</kbd>，或者 <kbd>Control</kbd> + <kbd>Enter</kbd>。Mac 键盘没有 Insert 键；也可以用菜单 代码 → 生成…；</li>
+      <li>弹窗里全选：<kbd>⌘</kbd> + <kbd>A</kbd>；“无选择”按钮和 Shift 连选的用法相同；</li>
+      <li>插件界面：菜单 IntelliJ IDEA → 设置…（<kbd>⌘</kbd> + <kbd>,</kbd>）→ 插件。新一些的 IDEA 装完插件不一定要重启，点“确定”或“应用”即可；</li>
       <li>右键菜单里的 Ptg To JavaBean 位置不变。</li>
     </ul>
   </div>
@@ -372,7 +372,7 @@ System.out.println(s.getAge());     <span class="hc">// 23</span></code>
       <tr><td><b>空参 / 有参</b></td><td>一个构造都没写，系统送一个空参的；写了任何构造就不送了。可以重载；建议空参、全参都写上</td></tr>
       <tr><td><b>谁创建对象</b></td><td>new 关键字。调用构造方法只是创建对象的其中一步</td></tr>
       <tr><td><b>标准 JavaBean</b></td><td>类名见名知意；成员变量全部 private；空参 + 全参构造；每个成员变量一对 set / get；需要的其他行为</td></tr>
-      <tr><td><b>快捷生成</b></td><td>Alt + Insert（Mac：⌘N）→ Constructor / Getter and Setter；PTG 插件右键 Ptg To JavaBean</td></tr>
+      <tr><td><b>快捷生成</b></td><td>Alt + Insert（Mac：⌘N）→ 构造函数 / Getter 和 Setter；PTG 插件右键 Ptg To JavaBean</td></tr>
     </tbody>
   </table></div>
 
