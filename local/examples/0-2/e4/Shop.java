@@ -1,0 +1,11 @@
+public class Shop {
+    public static final int PAGE_SIZE = 10;
+
+    public static String greet() {
+        return "欢迎光临";
+    }
+
+    public static String price(int yuan) {
+        return "¥" + yuan;
+    }
+}

@@ -8,5 +8,8 @@ tools/bili-transcripts/venv/
 # 推广素材（公众号推文等），不发布到 Pages
 promo/
 
-# 写课用的本地资料（SpringBlade 源码、IDEA 中文语言包、已核对的参考文档、实测代码），不发布
-local/
+# 写课用的本地资料：别人的版权材料只放本地，换电脑用 bash local/setup.sh 重建
+local/springblade-3.7.1/
+local/idea-zh/
+local/refs/*.html
+local/refs/*.txt

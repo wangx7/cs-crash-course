@@ -1,0 +1,20 @@
+# 文件名	网址	用在哪
+jvms4	https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html	0.2 class 文件格式、版本号
+jvms5	https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-5.html	0.2 加载、链接、方法解析
+jvms25_4	https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html	0.2 Java 25 的版本号范围
+jls8	https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html	0.2 默认构造器
+jls12	https://docs.oracle.com/javase/specs/jls/se8/html/jls-12.html	执行过程（备用）
+jls13	https://docs.oracle.com/javase/specs/jls/se8/html/jls-13.html	0.2 常量内联、二进制兼容
+jls15	https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html	0.2 常量表达式
+java8tool	https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html	0.2 java 命令
+javac8tool	https://docs.oracle.com/javase/8/docs/technotes/tools/unix/javac.html	0.2 javac 命令
+jep182	https://openjdk.org/jeps/182	javac 淘汰旧 -source/-target 的策略（备用）
+jep247	https://openjdk.org/jeps/247	0.2 --release
+jep330	https://openjdk.org/jeps/330	0.2 直接运行单个源文件
+bootjar	https://docs.spring.io/spring-boot/docs/2.7.18/reference/html/executable-jar.html	0.2 Spring Boot 可执行 jar
+sweb	https://docs.spring.io/spring-framework/docs/5.3.x/reference/html/web.html	0.1/0.2 Spring MVC
+mcp	https://maven.apache.org/guides/mini/guide-java-target.html	0.2 Maven 指定 Java 版本
+mvn_dep	https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html	0.2 依赖调解
+superpom	https://maven.apache.org/ref/3.9.9/maven-model-builder/super-pom.html	0.2 target/classes
+ij_compile	https://www.jetbrains.com/help/idea/compiling-applications.html	0.2 IDEA 编译输出目录
+ij_sdk	https://www.jetbrains.com/help/idea/sdk.html	IDEA SDK（备用）
