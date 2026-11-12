@@ -614,6 +614,7 @@ const MiniJava = (function () {
     $('#bus-code').innerHTML = lines.map((L, i) => `<div class="${i === cur ? 'cur' : ''}">${esc(L)}</div>`).join('');
   }
   function reset() { st = -1; count = 0; $('#bus-step').innerHTML = '执行 <code>int count = 0;</code>：一开始车上没有乘客，count 记 0。'; $('#bus-next').disabled = false; $('#bus-next').textContent = '下一站'; paint(); }
+  $('#bus-reset').onclick = reset;
   $('#bus-next').onclick = () => {
     if (st >= 5) return;
     st++;
