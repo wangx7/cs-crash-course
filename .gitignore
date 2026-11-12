@@ -4,3 +4,6 @@ transcripts/**/ver.json
 transcripts/**/raw/
 transcripts/**/bad-ai/
 tools/bili-transcripts/venv/
+
+# 推广素材（公众号推文等），不发布到 Pages
+promo/

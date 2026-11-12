@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P84–86 this、构造方法与 JavaBean · Java 入门图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code{overflow-wrap:anywhere}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto;overflow-wrap:normal}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.inp{font:14px var(--mono);border:1.5px solid var(--line);border-radius:8px;padding:3px 8px;background:var(--bg);color:var(--ink);width:110px;max-width:100%}
+select.inp{width:auto}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;max-height:220px;overflow-y:auto;white-space:pre-wrap;overflow-wrap:anywhere}
+.out .note{color:#7f8794}
+.out .err{color:#ff8a8a}
+.msg{font-size:14px;margin-top:8px}
+.tt td{vertical-align:top}
+.tscroll{overflow-x:auto}
+.vs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:12px 0}
+@media (max-width:640px){.vs{grid-template-columns:1fr}}
+.vs .box{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--panel);font-size:14px;min-width:0}
+.vs .box h4{margin:0 0 6px;font-size:14px}
+.vs .box ul{margin:0;padding-left:18px}
+label.ck{display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+
+/* 代码里的高亮：谁被用到了 */
+code.blk .use{background:var(--on-soft);outline:1.5px solid var(--on);border-radius:4px;padding:0 2px}
+code.blk .mem{background:var(--accent-soft);outline:1.5px solid var(--accent);border-radius:4px;padding:0 2px}
+code.blk .dim{opacity:.4}
+
+/* 两个 name 盒子 */
+.boxes{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin:10px 0;font:13px var(--mono)}
+.boxes .bx{border:1.5px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--bg);text-align:center;min-width:120px}
+.boxes .bx small{display:block;font:11px var(--sans,inherit);color:var(--muted)}
+.boxes .bx b{font-size:15px}
+.boxes .bx.hit{border-color:var(--ok);background:var(--ok-soft)}
+.boxes .bx.miss{border-color:var(--bad);background:var(--bad-soft)}
+.boxes .ar{align-self:center;color:var(--muted)}
+
+/* JavaBean 生成器 */
+.flds{display:flex;flex-direction:column;gap:6px;margin:8px 0}
+.flds .fr{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:13px var(--mono)}
+.gen{max-height:420px;overflow:auto}
+.steps{counter-reset:s;list-style:none;padding:0;margin:12px 0;display:grid;gap:8px}
+.steps li{counter-increment:s;border:1.5px solid var(--line);border-radius:10px;padding:8px 12px 8px 42px;position:relative;background:var(--panel);font-size:14.5px}
+.steps li::before{content:counter(s);position:absolute;left:12px;top:8px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font:700 12px/20px var(--mono);text-align:center}
+kbd{font:12px var(--mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:5px;padding:0 5px;background:var(--panel)}
+</style>
+</head>
+<body data-ep="84" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=84" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">面向对象 · P84–P86</div>
+  <h1>this、构造方法与 JavaBean</h1>
+  <p class="en">The this Keyword, Constructors and the Standard JavaBean</p>
+  <p class="lead">上一篇的 set 方法里，形参起名叫 n、a、g，不够见名知意。把 n 改成 name 试试？一运行，名字变成了 null。这一篇从这个现象讲起：<b>就近原则</b>和 <b>this</b> 关键字；然后学<b>构造方法</b>，在创建对象的同时就把属性赋好；最后把这一章学的东西合在一起，写一个<b>标准的 JavaBean</b>，再学用快捷键和插件一键生成它。</p>
+  <div class="road">
+    <span>改个名字出了问题</span><i>→</i><span>就近原则</span><i>→</i><span>this</span><i>→</i><span>构造方法</span><i>→</i><span>空参与全参</span><i>→</i><span>标准 JavaBean</span><i>→</i><span>快捷生成</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 改个名字，变成了 null</a></li>
+    <li><a href="#ch2">2 · 就近原则与 this</a></li>
+    <li><a href="#ch3">3 · 用 this 改写 set 方法</a></li>
+    <li><a href="#ch4">4 · 构造方法</a></li>
+    <li><a href="#ch5">5 · 构造方法的注意点</a></li>
+    <li><a href="#ch6">6 · 标准的 JavaBean</a></li>
+    <li><a href="#ch7">7 · 快捷键与插件</a></li>
+    <li><a href="#ch8">8 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P84</div>
+  <h2>改个名字，结果变成了 null</h2>
+  <p><a href="81.html#ch7">上一篇</a>写的 GirlFriend 类：每个成员变量都加了 private，保证安全；又针对每个私有的成员变量提供了 get 和 set 方法，get 对外提供属性的值，set 用来赋值。但代码还有个小细节要改进：</p>
+  <code class="blk"><span class="hk">public void</span> setName(String n) {
+    name = n;
+}</code>
+  <p>以前说过起名字要见名知意，这里的 n 不合规矩。对姓名来说，哪个单词最合适？就是 name。可如果把形参写成 name，就和上面的成员变量 <code>private String name;</code> 重复了：</p>
+  <code class="blk"><span class="hk">public void</span> setName(String name) {
+    name = name;
+}</code>
+  <p>重名会不会有问题？改完运行测试类：<code>gf1.setName("小诗诗");</code> 之后，<code>gf1.getName()</code> 打印出来的是 <b>null</b>。setName 没有赋值成功。为什么？</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P84</div>
+  <h2>成员变量、局部变量与就近原则</h2>
+  <p>先认识两个专业名词：</p>
+  <div class="vs">
+    <div class="box"><h4>局部变量</h4>定义在<b>方法里面</b>的变量。</div>
+    <div class="box"><h4>成员变量</h4>定义在<b>方法的外面、类的里面</b>的变量。</div>
+  </div>
+  <p>看这段代码。成员变量 age 没有赋值，是默认初始化值 0；method 方法里又定义了一个局部变量 age，赋值 10。成员变量和局部变量重名了，输出 age，是 10，还是成员变量的值？</p>
+  <code class="blk"><span class="hk">public class</span> GirlFriend {
+    <span class="hk">private int</span> age;                       <span class="hc">// 成员变量，默认 0</span>
+
+    <span class="hk">public void</span> method() {
+        <span class="hk">int</span> age = 10;                      <span class="hc">// 局部变量</span>
+        System.out.println(age);           <span class="hc">// ？</span>
+    }
+}</code>
+  <p>这里涉及一个理论，叫<b>就近原则：谁离我近，我就用谁</b>。对输出语句来说，局部位置的 age 离它更近，所以打印的是 <b>10</b>。</p>
+  <p>如果就是想用成员位置的 age 呢？在前面加一个 <b>this.</b>：<code>System.out.println(this.age);</code> 它就不会用方法里的 age，而是直接使用成员位置的 age，打印 <b>0</b>。</p>
+  <p>还有一种情况：方法里那个局部变量不写了。此时局部位置没有 age，只能到成员位置去找。这种情况下前面的 this 可以省略不写，<code>age</code> 和 <code>this.age</code> 打印出来都是成员位置的 0。</p>
+
+  <div class="card" id="d1">
+    <h3>动手：这个 age 到底是哪个 age</h3>
+    <div class="row"><label class="ck"><input type="checkbox" id="d1-loc" checked> 方法里定义局部变量 <code>int age = 10;</code></label></div>
+    <div class="row"><span>输出语句里写</span><span class="seg" id="d1-s"><button data-v="0">age</button><button data-v="1">this.age</button></span></div>
+    <code class="blk" id="d1-code"></code>
+    <div class="out" id="d1-out"></div>
+    <div class="msg" id="d1-msg"></div>
+  </div>
+
+  <div class="callout">
+    <span class="t">两行代码的区别</span>
+    <code>System.out.println(age);</code> 前面没有 this：先到<b>局部位置</b>找 age，有就用它；局部位置没有，再到<b>成员位置</b>去找。<br>
+    <code>System.out.println(this.age);</code> 不会到局部位置找，<b>直接使用成员位置的 age</b>。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P84</div>
+  <h2>用 this 改写 set 方法</h2>
+  <p>知道了就近原则，第 1 节的现象就能解释了。<code>name = name;</code> 里两个 name 前面都没有 this，都触发就近原则，都是形参那个局部变量：它就是<b>自己赋值给了自己</b>，和成员变量没有任何关系，成员变量还是原来的默认初始化值 null。</p>
+  <p>正确的写法：</p>
+  <code class="blk"><span class="hk">public void</span> setName(String name) {
+    <span class="hk">this</span>.name = name;
+}</code>
+  <ul>
+    <li><b>等号右边</b>的 name 前面没有 this，触发就近原则，是形参这个局部变量。它记录的是测试类调用 setName 时传过来的数据"小诗诗"；</li>
+    <li><b>等号左边</b>的 this.name 是成员位置的 name。</li>
+  </ul>
+  <p>整句话就是：把传过来的"小诗诗"用局部变量 name 接收，再把它记录的值赋给成员位置的 name。age 和 gender 也照这样改：形参 a 改成 age、g 改成 gender，赋值的地方写 <code>this.age = age;</code>、<code>this.gender = gender;</code>。</p>
+  <code class="blk"><span class="hk">public void</span> setAge(<span class="hk">int</span> age) {
+    <span class="hk">if</span> (age &gt;= 18 &amp;&amp; age &lt;= 50) {
+        <span class="hk">this</span>.age = age;
+    } <span class="hk">else</span> {
+        System.out.println(<span class="hs">"非法参数"</span>);
+    }
+}
+
+<span class="hk">public void</span> setGender(String gender) {
+    <span class="hk">this</span>.gender = gender;
+}</code>
+
+  <div class="card" id="d2">
+    <h3>动手：三种写法的 setName</h3>
+    <div class="row"><span class="seg" id="d2-s"><button data-v="0">形参叫 n：name = n;</button><button data-v="1">name = name;</button><button data-v="2">this.name = name;</button></span></div>
+    <div class="row"><label>gf1.setName(" <input class="inp" id="d2-v" value="小诗诗" maxlength="12" aria-label="传给 setName 的名字"> ");</label><button class="btn sm primary" id="d2-go">运行</button></div>
+    <code class="blk" id="d2-code"></code>
+    <div class="boxes" id="d2-box"></div>
+    <div class="out" id="d2-out"></div>
+    <div class="msg" id="d2-msg"></div>
+  </div>
+
+  <div class="callout">
+    <span class="t">这一节的小结</span>
+    <b>就近原则</b>：谁离我近，我就用谁。<b>this 的作用</b>：区分成员变量和局部变量。至于 this 的本质、它在内存里是怎么回事，<a href="87.html#ch6">对象内存图那一篇</a>会补上，现在掌握这个最基本的作用就可以了。
+  </div>
+  <div class="extra">
+    <span class="t">IDEA 其实提醒过你</span>
+    写下 <code>name = name;</code> 时，IDEA 会给这一行标一个黄色警告：<code>Variable 'name' is assigned to itself</code>（变量赋值给了它自己）。它不是错误，编译运行都能过，所以容易被忽略。以后看到黄色波浪线，把鼠标移上去看一眼。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P85</div>
+  <h2>构造方法：创建对象的同时赋值</h2>
+  <p><b>构造方法</b>也叫构造器、构造函数，平时习惯叫构造方法。它的作用：<b>在创建对象的时候，给成员变量进行初始化</b>。"初始化"是专业说法，就是赋值的意思。以前创建对象时 <code>new Student()</code> 的小括号里什么都不写，其实调用的就是<b>空参的构造方法</b>。</p>
+  <p>格式：</p>
+  <code class="blk">修饰符 类名(参数) {
+    方法体;     <span class="hc">// 给成员变量赋值的代码</span>
+}</code>
+  <p>特点：</p>
+  <ul>
+    <li><b>方法名和类名完全一样</b>，大小写也要一致；</li>
+    <li>虽然叫方法，但<b>没有返回值类型，连 void 都不能写</b>；</li>
+    <li>没有具体的返回值，<span class="fix" title="准确地说：不能用 return 带回数据（return 值; 会报错），单独一句 return; 是允许的，见第 5 节的更正框">大括号里不能写 return，一旦写了代码就要报错</span>。</li>
+  </ul>
+  <p>Student 类里有 name 和 age 两个属性（都是 private，各有 get / set），可以写两个构造：</p>
+  <code class="blk"><span class="hk">public class</span> Student {
+    <span class="hk">private</span> String name;
+    <span class="hk">private int</span> age;
+
+    <span class="hc">// 空参构造：一般空着，什么都不写</span>
+    <span class="hk">public</span> Student() {
+    }
+
+    <span class="hc">// 带全部参数的构造：给所有成员变量赋值</span>
+    <span class="hk">public</span> Student(String name, <span class="hk">int</span> age) {
+        <span class="hk">this</span>.name = name;
+        <span class="hk">this</span>.age = age;
+    }
+
+    <span class="hc">// get / set 方法略</span>
+}</code>
+  <ul>
+    <li>用<b>空参构造</b>创建对象：成员变量都是默认初始化值。还想赋值，只能再调用 set 方法，这是一套体系；</li>
+    <li>用<b>有参构造</b>创建对象：创建的同时 name 和 age 就有值了，省得再去调用 set，代码更简单。</li>
+  </ul>
+  <code class="blk">Student s = <span class="hk">new</span> Student(<span class="hs">"张三"</span>, 23);
+System.out.println(s.getName());    <span class="hc">// 张三</span>
+System.out.println(s.getAge());     <span class="hc">// 23</span></code>
+  <p><b>它是怎么赋值的？</b>创建对象时，系统根据小括号里的参数去调用对应的构造。这里传了两个参数，一个字符串、一个整数，所以调用的是有参构造；"张三"和 23 被形参 name、age 接收，再赋给成员变量 name、age。之后用 get 方法就能拿到对象里的值。</p>
+  <p>还有两个细节：构造方法<b>不能自己手动调用</b>，是创建对象时由虚拟机自动调用的；而且<b>每创建一次对象，构造方法就被调用一次</b>，创建十个对象就调用十次。可以在空参构造里打印一句话来验证：</p>
+  <code class="blk"><span class="hk">public</span> Student() {
+    System.out.println(<span class="hs">"看看我执行了吗？"</span>);
+}</code>
+  <p>测试类里一写 <code>Student s = new Student();</code>，控制台就打印出了这句话，说明这行代码自动调用了空参构造。</p>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P85</div>
+  <h2>构造方法的注意点</h2>
+  <p>刚才有个疑问：以前的类里压根没写空参构造，<code>new Student()</code> 怎么没报错？</p>
+  <ol class="steps">
+    <li><b>构造方法的定义</b>：如果<b>一个构造方法都没有写</b>，系统会给出一个默认的无参构造方法（就是上面那个空着的 <code>public Student() { }</code>）。<b>如果自己定义了构造方法，系统就不再提供默认的无参构造</b>。比如类里只写了带参构造，测试类里再写 <code>new Student()</code> 就报错了：现在没有无参构造可调用。</li>
+    <li><b>构造方法的重载</b>：带参构造和无参构造，两者方法名相同、参数不同，可以同时存在，这就是构造方法的重载。</li>
+    <li><b>推荐的使用方式</b>：不管什么情况，<b>无参构造和带全部参数的构造，两个都手动写上</b>。不管用不用，都写。</li>
+  </ol>
+  <p>有同学会想：有参构造这么方便，以后只写它不就行了？想得对，说明思考了，但两种构造都有应用场景。有时候创建对象时并不知道属性值，比如属性值是键盘录入来的：只能先用空参构造把对象创建出来，等用户录入了，再用 <code>s.setName(...)</code> 赋值。另外实际开发中一个项目是很多人一起写的，你只用到了有参构造，怎么保证别人用不到无参的呢？</p>
+
+  <div class="card" id="d3">
+    <h3>动手：写了哪些构造，能怎么 new</h3>
+    <div class="row"><label class="ck"><input type="checkbox" id="d3-a"> 自己写了空参构造</label><label class="ck"><input type="checkbox" id="d3-b"> 自己写了带全部参数的构造</label></div>
+    <div class="row"><span>测试类里写</span><span class="seg" id="d3-s"><button data-v="0">new Student()</button><button data-v="1">new Student("张三", 23)</button></span></div>
+    <code class="blk" id="d3-code"></code>
+    <div class="out" id="d3-out"></div>
+    <div class="msg" id="d3-msg"></div>
+  </div>
+
+  <h3>构造方法不是用来"创建对象"的</h3>
+  <p>很多资料和书会说"构造方法的作用就是创建对象"，这句话是不对的。真正创建对象的是 <b>new</b> 关键字。虚拟机创建对象有很多步骤，调用构造方法只是其中一步，这一步的作用是给成员变量进行初始化。创建对象到底有哪些步骤，<a href="87.html#ch2">对象内存图</a>里会讲明白。</p>
+  <div class="callout">
+    <span class="t">这一节的小结</span>
+    <b>作用</b>：创建对象时由虚拟机自动调用，给成员变量进行初始化。<b>两种</b>：无参（空参）构造，成员变量都采用默认值；有参构造，创建对象的同时给属性赋值。<b>建议</b>：任何情况下都自己写上空参构造和带全部参数的构造。
+  </div>
+  <div class="extra">
+    <span class="t">更正：return 和 void 的两处说法</span>
+    <b>① "不能写 return"说得太宽了。</b>构造方法里不能写的是<b>带数据的</b> <code>return 值;</code>，JDK 8 的报错是 <code>错误: 不兼容的类型: 意外的返回值</code>。单独一句 <code>return;</code>（只表示方法到此结束）是允许的，实际跑过：<code>public Student() { System.out.println("看看我执行了吗？"); return; }</code> 能正常编译运行。幻灯片上的原话多半是"没有具体的返回值（不能由 return 带回结果数据）"，课上口头说简略了。<br><br>
+    <b>② "连 void 都不能写"：写了并不报错，后果更隐蔽。</b><code>public void Student() { }</code> 能通过编译，但它不再是构造方法，而是一个<b>恰好和类同名的普通成员方法</b>。于是这个类"一个构造方法都没写"，系统照样送一个默认的无参构造；你写在里面的初始化代码，new 的时候一行都不会执行。<br><br>
+    <b>③ 小结里"任何类默认自带无参构造，写不写都是有的"</b>这句也说过头了，准确的规则就是上面的第 1 条：只有一个构造都没写的时候才有；写了任何一个构造，默认的就没有了。课上紧接着的下一句也是这么说的。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P86</div>
+  <h2>标准的 JavaBean</h2>
+  <p>到这里，面向对象的基本语法学完了：封装里的 private、区分重名变量的 this、创建对象时赋值的构造方法……新概念很多，感觉好像听懂了又有点懵，这是正常的，后面会不断用到，慢慢沉淀。现在把它们合起来：一个<b>标准的 JavaBean</b> 到底怎么写？有四条规矩：</p>
+  <ol class="steps">
+    <li><b>类名</b>见名知意，驼峰命名。描述老师叫 Teacher，描述学生叫 Student。</li>
+    <li><b>成员变量</b>全部用 <b>private</b> 修饰，保证数据的安全。</li>
+    <li><b>构造方法</b>至少提供两个：<b>空参构造</b>、<b>带全部参数的构造</b>。</li>
+    <li><b>成员方法</b>：每一个私有的成员变量都提供对应的 <b>set 和 get</b>。如果还有其他行为（学生的学习、吃饭，老师的上课），题目有需求就写上，没有就不用写。</li>
+  </ol>
+
+  <h3>练习：用户类</h3>
+  <p><b>需求</b>：某网站的用户注册页面上要填用户名、密码、邮箱、性别、年龄。写一个标准的 JavaBean 来描述用户。</p>
+  <p><b>分析</b>：描述用户，类名叫 User；属性就是页面上那五项：用户名、密码、邮箱是字符串；性别只有男、女两个，可以用 char，也可以用 String；年龄是整数。构造写空参和全参两个；五个成员变量，get / set 一共要写十个。</p>
+  <p>老师的"君子约定"：下一节会教快捷键和一键生成的插件，但<b>刚开始练习请先不要用</b>，自己一个一个手打出来。标准 JavaBean 里细节很多，快捷键用熟了，这些细节就顾不到了；等能从头到尾写顺了，再用快捷键生成。</p>
+  <code class="blk"><span class="hk">public class</span> User {
+    <span class="hc">// 属性</span>
+    <span class="hk">private</span> String username;
+    <span class="hk">private</span> String password;
+    <span class="hk">private</span> String email;
+    <span class="hk">private</span> String gender;
+    <span class="hk">private int</span> age;
+
+    <span class="hc">// 空参</span>
+    <span class="hk">public</span> User() {
+    }
+
+    <span class="hc">// 带全部参数的构造</span>
+    <span class="hk">public</span> User(String username, String password, String email, String gender, <span class="hk">int</span> age) {
+        <span class="hk">this</span>.username = username;
+        <span class="hk">this</span>.password = password;
+        <span class="hk">this</span>.email = email;
+        <span class="hk">this</span>.gender = gender;
+        <span class="hk">this</span>.age = age;
+    }
+
+    <span class="hc">// get 和 set 方法</span>
+    <span class="hk">public void</span> setUsername(String username) {
+        <span class="hk">this</span>.username = username;
+    }
+
+    <span class="hk">public</span> String getUsername() {
+        <span class="hk">return</span> username;
+    }
+
+    <span class="hc">// password、email、gender、age 照同样的套路各写一对，一共十个方法</span>
+}</code>
+  <p style="font-size:13px;color:var(--muted)">gender 的类型，字幕里只说了"可以写 char，也可以写 String"，听不出最后敲的是哪个，这里用 String。</p>
+  <p><b>易错点</b>：全参构造的形参是把上面的属性复制粘贴下来的，大括号里五行赋值也是复制一行再改，改漏了就会出现 <code>this.password = username;</code> 这种把一个值赋给了别的属性的错误；每一行都别忘了 this.，否则就是<a href="#ch3">自己赋值给自己</a>。写的时候会觉得有点痛苦，但它是固定的套路，耐下性子写熟。</p>
+
+  <div class="card" id="d4">
+    <h3>动手：按四条规矩生成一个 JavaBean</h3>
+    <p style="font-size:14px;margin:0 0 6px">先自己在纸上或 IDEA 里写一遍，再用它核对。属性可以增删改，换成你自己想描述的事物。</p>
+    <div class="row"><label>类名 <input class="inp" id="d4-cls" value="User" maxlength="20"></label></div>
+    <div class="flds" id="d4-f"></div>
+    <div class="row"><button class="btn sm" id="d4-add">添加属性</button><button class="btn sm primary" id="d4-go">生成</button><button class="btn sm" id="d4-re">恢复成 User</button></div>
+    <div class="msg" id="d4-msg"></div>
+    <code class="blk gen" id="d4-code"></code>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节 · P86</div>
+  <h2>快捷键与插件：一秒生成</h2>
+  <p>写熟了之后会发现，这样的代码写起来简直是体力活。IDEA 提供了快捷生成的方式，快捷键是 <kbd>Alt</kbd> + <kbd>Insert</kbd>（有的电脑按了没反应，就多按一个 Fn：<kbd>Alt</kbd> + <kbd>Fn</kbd> + <kbd>Insert</kbd>）。</p>
+  <ul>
+    <li><b>生成空参构造</b>：Alt + Insert，选第一个 <b>Constructor</b>（构造方法）。弹窗默认选中了第一个属性，这时不能直接点 OK，否则生成的是只带这一个参数的构造；要点下面的 <b>Select None</b>，表示什么属性都不选；</li>
+    <li><b>生成全参构造</b>：Alt + Insert → Constructor，按住 Shift 再点最后一个属性把所有属性全选（或者按 <kbd>Ctrl</kbd> + <kbd>A</kbd>），点 OK；</li>
+    <li><b>生成 get / set</b>：Alt + Insert，注意选的不是 Getter、也不是 Setter，而是第四个 <b>Getter and Setter</b>，Ctrl + A 全选，点 OK。</li>
+  </ul>
+  <p>这还不是最终方案。再分享一个插件 <b>PTG</b>，可以一秒生成标准 JavaBean。安装：电脑连上外网，点 File → Settings → Plugins，中间有两个选项卡，Marketplace 是下载页面，Installed 是已经安装的插件；在 Marketplace 的搜索框里输入 PTG，回车，点 Install，等进度条走完，点 OK。</p>
+  <p>使用：成员变量写好之后，在代码空白处点右键，选 <b>Ptg To JavaBean</b>。空参构造、全参构造、所有的 get / set 都自动生成了，连注释都有。它还会多生成一个 toString 方法，这个暂时还没学，先删掉就好。</p>
+  <div class="extra">
+    <span class="t">Mac 上的对应操作</span>
+    <ul style="margin:4px 0 0;padding-left:18px">
+      <li>生成菜单（Generate）：<kbd>⌘</kbd> + <kbd>N</kbd>，或者 <kbd>Control</kbd> + <kbd>Enter</kbd>。Mac 键盘没有 Insert 键；也可以用菜单 Code → Generate…；</li>
+      <li>弹窗里全选：<kbd>⌘</kbd> + <kbd>A</kbd>；Select None 按钮和 Shift 连选的用法相同；</li>
+      <li>插件界面：菜单 IntelliJ IDEA → Settings…（<kbd>⌘</kbd> + <kbd>,</kbd>）→ Plugins。新一些的 IDEA 装完插件不一定要重启，点 OK 或 Apply 即可；</li>
+      <li>右键菜单里的 Ptg To JavaBean 位置不变。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>小结</h2>
+  <div class="tscroll"><table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>局部 / 成员变量</b></td><td>方法里面的是局部变量；类里面、方法外面的是成员变量</td></tr>
+      <tr><td><b>就近原则</b></td><td>谁离我近就用谁：先找局部位置，没有再找成员位置</td></tr>
+      <tr><td><b>this.变量</b></td><td>直接用成员位置的变量；用来区分重名的成员变量和局部变量</td></tr>
+      <tr><td><b>set 方法</b></td><td>形参和成员变量同名，写 <code>this.name = name;</code></td></tr>
+      <tr><td><b>构造方法</b></td><td>方法名与类名相同，没有返回值类型（不写 void）；创建对象时由虚拟机自动调用，给成员变量初始化</td></tr>
+      <tr><td><b>空参 / 有参</b></td><td>一个构造都没写，系统送一个空参的；写了任何构造就不送了。可以重载；建议空参、全参都写上</td></tr>
+      <tr><td><b>谁创建对象</b></td><td>new 关键字。调用构造方法只是创建对象的其中一步</td></tr>
+      <tr><td><b>标准 JavaBean</b></td><td>类名见名知意；成员变量全部 private；空参 + 全参构造；每个成员变量一对 set / get；需要的其他行为</td></tr>
+      <tr><td><b>快捷生成</b></td><td>Alt + Insert（Mac：⌘N）→ Constructor / Getter and Setter；PTG 插件右键 Ptg To JavaBean</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    没有 this 就近找，有 this 找成员；构造方法在 new 的时候把属性赋好；private 属性、空参全参两个构造、每个属性一对 set / get，凑齐了就是标准 JavaBean。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>public void setName(String name) { name = name; }</code>，调用 <code>setName("小诗诗")</code> 后 getName() 返回什么？为什么？怎么改？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">返回 null。两个 name 都没有 this，按就近原则都是形参，等于形参自己赋值给自己，成员变量没被动过，还是默认值 null。改成 <code>this.name = name;</code>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 成员变量 <code>int age;</code>（没赋值），方法里 <code>int age = 10;</code>，接着打印 <code>age</code> 和 <code>this.age</code>，分别是多少？把方法里的那行定义删掉呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">10 和 0：age 就近用局部变量，this.age 直接用成员变量（默认值 0）。删掉局部变量后，age 在局部位置找不到，到成员位置找，两个都是 0，此时 this 可以省略。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 构造方法在写法上和普通的成员方法有哪些不同？它什么时候执行？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">方法名必须和类名完全一样；没有返回值类型，连 void 都不写；不能用 return 带回数据。它不由我们手动调用，而是每次 new 创建对象时由虚拟机自动调用一次。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. Student 类里只写了 <code>public Student(String name, int age) { ... }</code>。测试类里 <code>new Student()</code> 能通过编译吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不能。自己定义了构造方法，系统就不再提供默认的无参构造，现在类里没有无参构造可调用。所以建议空参和全参两个构造都手动写上。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. "构造方法是用来创建对象的"，这句话对吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不对。创建对象的是 new 关键字；虚拟机创建对象有很多步，调用构造方法只是其中一步，它的作用是给成员变量进行初始化。</div>
+    </div>
+    <div class="q">
+      <div class="qt">6. 一个标准的 JavaBean 有 4 个成员变量，按规矩它至少有几个构造方法、几个成员方法？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">2 个构造方法（空参、带全部 4 个参数的）；8 个成员方法（每个成员变量一个 set、一个 get）。有其他行为的需求再另外加。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="81.html"><small>← 上一篇</small>P81–83 类、对象与封装</a>
+    <a class="next" href="87.html"><small>下一篇 →</small>P87–90 对象内存图</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P84–P86（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=84" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function segInit(sel, v, fn) {
+  const bs = $$(sel + ' button');
+  const set = x => { bs.forEach(b => b.classList.toggle('sel', b.dataset.v === String(x))); };
+  bs.forEach(b => b.onclick = () => { set(b.dataset.v); fn(b.dataset.v); });
+  set(v);
+  return set;
+}
+const K = s => `<span class="hk">${s}</span>`, C = s => `<span class="hc">${s}</span>`, S = s => `<span class="hs">${esc(s)}</span>`;
+
+/* ---------- 1. 就近原则 ---------- */
+(function () {
+  let th = 0;
+  function show() {
+    const loc = $('#d1-loc').checked, useLocal = loc && !th;
+    const mem = `<span class="${useLocal ? '' : 'mem'}">age</span>`, lc = `<span class="${useLocal ? 'use' : ''}">age</span>`;
+    $('#d1-code').innerHTML = `${K('public class')} GirlFriend {\n    ${K('private int')} ${mem};                  ${C('// 成员变量，默认 0')}\n\n    ${K('public void')} method() {\n` +
+      (loc ? `        ${K('int')} ${lc} = 10;                 ${C('// 局部变量')}\n` : '') +
+      `        System.out.println(<span class="${useLocal ? 'use' : 'mem'}">${th ? 'this.age' : 'age'}</span>);\n    }\n}`;
+    $('#d1-out').textContent = useLocal ? '10' : '0';
+    $('#d1-msg').innerHTML = useLocal ? '前面没有 this，触发就近原则：局部位置有 age，离得更近，用它。打印 <b>10</b>。'
+      : th ? (loc ? '有 this.，不到局部位置找，直接用成员位置的 age。打印 <b>0</b>。' : '有 this.，直接用成员位置的 age，打印 <b>0</b>。局部位置本来也没有 age，这里的 this 可以省略。')
+        : '没有 this，先到局部位置找：没有。再到成员位置找，找到了。打印 <b>0</b>。';
+  }
+  $('#d1-loc').onchange = show;
+  segInit('#d1-s', 0, v => { th = +v; show(); }); show();
+})();
+
+/* ---------- 2. setName 三种写法 ---------- */
+(function () {
+  let m = 1;
+  const body = ['name = n;', 'name = name;', 'this.name = name;'];
+  function code() {
+    const p = m === 0 ? 'n' : 'name';
+    $('#d2-code').innerHTML = `${K('private')} String name;\n\n${K('public void')} setName(String ${p}) {\n    ${m === 2 ? K('this') + '.name = name;' : body[m]}\n}`;
+  }
+  function idle() {
+    code();
+    $('#d2-box').innerHTML = `<span class="bx">成员变量 name<small>在对象里</small><b>null</b></span>`;
+    $('#d2-out').innerHTML = '<span class="note">（控制台：gf1.getName() 的结果）</span>'; $('#d2-msg').innerHTML = '';
+  }
+  function run() {
+    const v = $('#d2-v').value.replace(/["\\]/g, ''), p = m === 0 ? 'n' : 'name', ok = m !== 1;
+    code();
+    $('#d2-box').innerHTML = `<span class="bx">形参 ${p}<small>局部变量，接收实参</small><b>${esc(v)}</b></span><span class="ar">${ok ? '→ 赋给 →' : '↻ 赋给自己'}</span><span class="bx ${ok ? 'hit' : 'miss'}">成员变量 name<small>在对象里</small><b>${ok ? esc(v) : 'null'}</b></span>`;
+    $('#d2-out').textContent = ok ? v : 'null';
+    $('#d2-msg').innerHTML = [
+      '形参叫 n，方法里没有叫 name 的局部变量，等号左边的 name 到成员位置才找到：赋值成功。能用，只是 n 这个名字不见名知意。',
+      '两个 name 都没有 this，按就近原则都是形参 name。形参把自己的值赋给了自己，成员变量 name 没有人动，还是默认值 null。',
+      '右边的 name 就近是形参，记录着传过来的数据；左边 this.name 是成员变量。赋值成功，名字也见名知意。'][m];
+  }
+  $('#d2-go').onclick = run;
+  segInit('#d2-s', 1, v => { m = +v; idle(); }); idle();
+})();
+
+/* ---------- 3. 构造方法 ---------- */
+(function () {
+  let call = 0;
+  function show() {
+    const a = $('#d3-a').checked, b = $('#d3-b').checked;
+    let cls = `${K('public class')} Student {\n    ${K('private')} String name;\n    ${K('private int')} age;\n`;
+    if (!a && !b) cls += `\n    ${C('// 一个构造方法都没写')}\n`;
+    if (a) cls += `\n    ${K('public')} Student() {\n        System.out.println(${S('"看看我执行了吗？"')});\n    }\n`;
+    if (b) cls += `\n    ${K('public')} Student(String name, ${K('int')} age) {\n        ${K('this')}.name = name;\n        ${K('this')}.age = age;\n    }\n`;
+    cls += `\n    ${C('// get / set 略')}\n}\n\n${C('// 测试类')}\nStudent s = ${K('new')} Student(${call ? S('"张三"') + ', 23' : ''});\nSystem.out.println(s.getName());\nSystem.out.println(s.getAge());`;
+    $('#d3-code').innerHTML = cls;
+    let out, msg, err = false;
+    if (call === 0) {
+      if (a) { out = '看看我执行了吗？\nnull\n0'; msg = '调用的是你写的空参构造，里面那句打印执行了；它没有给成员变量赋值，所以 name、age 还是默认初始化值。'; }
+      else if (!b) { out = 'null\n0'; msg = '你一个构造都没写，系统给了一个默认的无参构造（里面是空的），所以能 new。name、age 是默认初始化值。'; }
+      else { err = true; out = '错误: 无法将类 Student中的构造器 Student应用到给定类型;\n  需要: String,int\n  找到: 没有参数\n  原因: 实际参数列表和形式参数列表长度不同'; msg = '你写了带参构造，系统就不再提供默认的无参构造了。类里现在没有无参构造，编译报错。把空参构造也勾上。'; }
+    } else {
+      if (b) { out = '张三\n23'; msg = '传了一个字符串、一个整数，系统据此调用带两个参数的构造："张三"、23 被形参接收，再赋给成员变量。' + (a ? '空参构造没有被调用，所以那句话没打印。' : ''); }
+      else { err = true; out = '错误: 无法将类 Student中的构造器 Student应用到给定类型;\n  需要: 没有参数\n  找到: String,int\n  原因: 实际参数列表和形式参数列表长度不同'; msg = '类里' + (a ? '只有空参构造' : '只有系统送的默认无参构造') + '，没有能接收 (String, int) 的构造方法，编译报错。把全参构造勾上。'; }
+    }
+    $('#d3-out').innerHTML = err ? `<span class="err">${esc(out)}</span>` : esc(out);
+    $('#d3-msg').innerHTML = msg;
+  }
+  $('#d3-a').onchange = show; $('#d3-b').onchange = show;
+  segInit('#d3-s', 0, v => { call = +v; show(); }); show();
+})();
+
+/* ---------- 4. JavaBean 生成器 ---------- */
+(function () {
+  const TYPES = ['String', 'int', 'double', 'char'];
+  const USER = [['String', 'username'], ['String', 'password'], ['String', 'email'], ['String', 'gender'], ['int', 'age']];
+  const KW = 'abstract assert boolean break byte case catch char class const continue default do double else enum extends final finally float for goto if implements import instanceof int interface long native new package private protected public return short static strictfp super switch synchronized this throw throws transient try void volatile while true false null'.split(' ');
+  let F = [];
+  function draw() {
+    $('#d4-f').innerHTML = F.map((f, i) => `<div class="fr" data-i="${i}"><span>private</span><select class="inp ty" aria-label="第 ${i + 1} 个属性的类型">${TYPES.map(t => `<option ${t === f[0] ? 'selected' : ''}>${t}</option>`).join('')}</select><input class="inp nm" value="${esc(f[1])}" maxlength="20" aria-label="第 ${i + 1} 个属性的名字"><span>;</span><button class="btn sm del" aria-label="删除这个属性">删</button></div>`).join('');
+    $('#d4-add').disabled = F.length >= 8;
+  }
+  function read() { $$('#d4-f .fr').forEach((r, i) => { F[i] = [$('.ty', r).value, $('.nm', r).value.trim()]; }); }
+  const cap = s => s[0].toUpperCase() + s.slice(1);
+  function gen() {
+    read();
+    const cls = $('#d4-cls').value.trim(), idOk = s => /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(s) && !KW.includes(s);
+    const msg = $('#d4-msg');
+    if (!idOk(cls)) { msg.innerHTML = '<b style="color:var(--bad)">类名不是合法的标识符。</b>'; return; }
+    const badN = F.find(f => !idOk(f[1]));
+    if (badN) { msg.innerHTML = `<b style="color:var(--bad)">属性名"${esc(badN[1])}"不是合法的标识符</b>（由字母、数字、下划线、$ 组成，不能数字开头，不能是关键字）。`; return; }
+    const names = F.map(f => f[1]);
+    if (new Set(names).size !== names.length) { msg.innerHTML = '<b style="color:var(--bad)">有两个属性重名了。</b>'; return; }
+    if (!F.length) { msg.innerHTML = '至少留一个属性。'; return; }
+    const ty = t => TYPES.indexOf(t) > 0 ? K(t) : t;
+    let c = `${K('public class')} ${cls} {\n`;
+    c += F.map(f => `    ${K('private')} ${ty(f[0])} ${f[1]};`).join('\n');
+    c += `\n\n    ${K('public')} ${cls}() {\n    }\n\n    ${K('public')} ${cls}(${F.map(f => `${ty(f[0])} ${f[1]}`).join(', ')}) {\n${F.map(f => `        ${K('this')}.${f[1]} = ${f[1]};`).join('\n')}\n    }\n`;
+    F.forEach(f => {
+      c += `\n    ${K('public')} ${ty(f[0])} get${cap(f[1])}() {\n        ${K('return')} ${f[1]};\n    }\n\n    ${K('public void')} set${cap(f[1])}(${ty(f[0])} ${f[1]}) {\n        ${K('this')}.${f[1]} = ${f[1]};\n    }\n`;
+    });
+    c += '}';
+    $('#d4-code').innerHTML = c;
+    msg.innerHTML = `${F.length} 个私有成员变量 → 2 个构造方法（空参 + 带 ${F.length} 个参数）+ ${F.length * 2} 个 get / set 方法。` + (/^[a-z]/.test(cls) ? ' 类名首字母建议大写。' : '');
+  }
+  $('#d4-f').onclick = e => { const b = e.target.closest('.del'); if (!b) return; read(); F.splice(+b.closest('.fr').dataset.i, 1); draw(); };
+  $('#d4-add').onclick = () => { read(); F.push(['String', 'attr' + (F.length + 1)]); draw(); };
+  $('#d4-go').onclick = gen;
+  $('#d4-re').onclick = () => { F = USER.map(x => x.slice()); $('#d4-cls').value = 'User'; draw(); gen(); };
+  F = USER.map(x => x.slice()); draw(); gen();
+})();
+</script>
+</body>
+</html>

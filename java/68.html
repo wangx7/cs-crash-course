@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P68–70 方法重载与练习 · Java 入门图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:210px}
+.inp.s{width:64px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;max-height:240px;overflow-y:auto;white-space:pre-wrap}
+.out .note{color:#7f8794}
+.out .err{color:#ff8f8f}
+.msg{font-size:14px;margin-top:8px}
+label{font-size:14px;display:inline-flex;align-items:center;gap:4px}
+.tt td{vertical-align:top}
+
+/* 起名的痛苦 */
+.names{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:10px;align-items:center;margin:12px 0}
+@media (max-width:640px){.names{grid-template-columns:1fr}.names .ar{transform:rotate(90deg);justify-self:center}}
+.names .box{border:1.5px solid var(--line);border-radius:12px;padding:8px 12px;background:var(--panel);font:13px/1.8 var(--mono);overflow-x:auto;white-space:nowrap}
+.names .box h4{margin:0 0 2px;font:13px var(--sans,inherit);color:var(--muted)}
+.names .box b{color:var(--bad)}
+.names .box.good b{color:var(--ok)}
+.names .ar{font-size:20px;color:var(--muted)}
+
+/* 判断题 */
+.jq{border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;margin:10px 0;background:var(--panel)}
+.jq code.blk{margin:0 0 6px}
+.jq .why{font-size:14px;margin-top:6px}
+.jq.right{border-color:var(--ok)}
+.jq.wrong{border-color:var(--bad)}
+.jq .jr{font-weight:700}
+
+/* 重载选择 */
+.ovl{display:grid;gap:6px;margin-top:8px}
+.ovl div{font:13.5px var(--mono);border:1.5px solid var(--line);border-radius:8px;padding:5px 10px;background:var(--panel);color:var(--muted);white-space:nowrap;overflow-x:auto}
+.ovl div.hit{border-color:var(--ok);background:var(--ok-soft);color:var(--ink);font-weight:700}
+
+/* 数组格子 */
+.arr{display:flex;margin:14px 0 4px;overflow-x:auto;padding:22px 2px 2px;position:relative}
+.arr .cell{min-width:46px;text-align:center;flex:none;position:relative}
+.arr .v{border:2px solid var(--line);border-left-width:1px;border-right-width:1px;height:38px;display:flex;align-items:center;justify-content:center;font:600 15px var(--mono);background:var(--panel);transition:background .25s}
+.arr .cell:first-child .v{border-left-width:2px;border-radius:8px 0 0 8px}
+.arr .cell:last-child .v{border-right-width:2px;border-radius:0 8px 8px 0}
+.arr .ix{font:12px var(--mono);color:var(--muted);margin-top:3px}
+.arr .cell.hi .v{background:var(--on-soft);border-color:var(--on)}
+.arr .cell.ok .v{background:var(--ok-soft);border-color:var(--ok)}
+.arr .cell.dim .v{opacity:.4}
+.arr .cell.emp .v{color:var(--muted);font-weight:400}
+.arr .ptr{position:absolute;top:-21px;left:0;right:0;font:700 12px var(--mono);color:var(--bad)}
+.arr-lab{font:12px var(--mono);color:var(--muted);margin-top:10px}
+.codebox{font:13px/1.75 var(--mono);background:var(--bg);border-radius:10px;padding:6px 0;overflow-x:auto;margin-top:8px}
+.codebox div{padding:0 12px;white-space:pre}
+.codebox div.cur{background:var(--on-soft)}
+</style>
+</head>
+<body data-ep="68" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=68" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">方法 · P68–P70</div>
+  <h1>方法重载与练习</h1>
+  <p class="en">Overloading, and Four Array Exercises Written as Methods</p>
+  <p class="lead">功能相同的方法，能不能都叫一个名字？能，这就是<b>方法的重载</b>：同一个类里，方法名相同、参数不同。学完重载，用方法把数组的老操作重写一遍，难度逐题增加：<b>遍历</b>（顺带认识三种输出语句）、<b>求最大值</b>、<b>判断是否存在</b>（return false 写在哪）、<b>拷贝数组</b>（伪造索引）。</p>
+  <div class="road">
+    <span>为什么要重载</span><i>→</i><span>判断是否构成重载</span><i>→</i><span>自己定义重载方法</span><i>→</i><span>遍历数组</span><i>→</i><span>求最大值</span><i>→</i><span>判断是否存在</span><i>→</i><span>拷贝数组</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 什么是方法的重载</a></li>
+    <li><a href="#ch2">2 · 判断是否构成重载</a></li>
+    <li><a href="#ch3">3 · 自己定义重载方法</a></li>
+    <li><a href="#ch4">4 · 练习：遍历数组</a></li>
+    <li><a href="#ch5">5 · 练习：求最大值</a></li>
+    <li><a href="#ch6">6 · 练习：判断是否存在</a></li>
+    <li><a href="#ch7">7 · 练习：拷贝数组</a></li>
+    <li><a href="#ch8">8 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P68</div>
+  <h2>什么是方法的重载</h2>
+  <p>先看一个小练习。定义方法求两个整数的和，方法名可以叫 sum2，两个形参；求三个整数的和，叫 sum3；求四个整数的和，叫 sum4。到这里有没有一丢丢不爽？如果没有，再加个需求：定义方法求<b>两个小数</b>的和。代码很简单，可方法名怎么取？会的单词在上面都用完了。就算查了字典，知道可以叫 sumTwoDecimals，也好难受。</p>
+  <p>这么多方法名字都不一样，定义的时候痛苦，使用的时候也痛苦：每次调用都得先查一查方法叫什么。所以 Java 做了一个规定：<b>这些功能相同的方法可以起同一个名字</b>，都叫 sum，但方法的形参不能一样。这就叫<b>方法的重载</b>。</p>
+  <div class="names">
+    <div class="box"><h4>不重载：一个功能四个名字</h4>
+      int <b>sum2</b>(int a, int b)<br>int <b>sum3</b>(int a, int b, int c)<br>int <b>sum4</b>(int a, int b, int c, int d)<br>double <b>sumTwoDecimals</b>(double a, double b)</div>
+    <div class="ar">→</div>
+    <div class="box good"><h4>重载：都叫 sum，靠参数区分</h4>
+      int <b>sum</b>(int a, int b)<br>int <b>sum</b>(int a, int b, int c)<br>int <b>sum</b>(int a, int b, int c, int d)<br>double <b>sum</b>(double a, double b)</div>
+  </div>
+  <p>完整的概念：在同一个类中，定义了多个<b>同名</b>的方法，这些同名的方法具有相同的功能，每个方法具有<b>不同的参数类型或参数个数</b>，这些同名的方法就构成了重载关系。精华版：</p>
+  <div class="callout key">
+    <span class="t">简单记</span>
+    同一个类中，方法名相同、参数不同的方法，就是重载。<b>与返回值无关</b>。
+  </div>
+  <p>判断两个方法是否构成重载，只看两点：① 是不是同一个类里名字相同的方法；② 它们的形参是不是不一样。<b>不看返回值</b>。其中"参数不同"有三种情况，有一个不同就行：</p>
+  <ul>
+    <li><b>个数不同</b>：一个方法两个参数，另一个三个参数；</li>
+    <li><b>类型不同</b>：一个是 int 类型，另一个是 double 类型；</li>
+    <li><b>顺序不同</b>：下一节单独看例子。</li>
+  </ul>
+  <p><b>虚拟机怎么区分这些同名的方法？</b>看一个案例：同一个类里有 <code>sum(int a, int b)</code> 和 <code>sum(int a, int b, int c)</code>，方法名相同、参数个数不同，构成重载。调用时 Java 虚拟机会<b>根据不同的参数来区分</b>：写 <code>sum(10, 20)</code>，传了两个实参，调用的就是两个形参的那个；写 <code>sum(10, 20, 30)</code>，就是三个形参的那个。这又印证了之前学的：调用方法时，实参和形参要一一对应。</p>
+  <div class="extra">
+    <span class="t">"区分"这件事发生在编译时</span>
+    视频说"虚拟机根据参数来区分"，意思没错，但更准确地说，选哪个方法是<b>编译器</b>（javac）在编译时就定下来的：它看调用处实参的个数和类型，挑出匹配的那个方法，把结果写进 class 文件，运行时虚拟机照着执行。所以 IDEA 不用运行就能知道你调的是哪一个（没被用到的方法名显示成灰色，下面第 3 节会用到这个特性）。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P68</div>
+  <h2>判断是否构成重载</h2>
+  <p>关于重载要掌握两个能力：一是能<b>判断</b>几个方法是否构成重载关系，二是能自己<b>定义</b>重载的方法。先练第一个。下面五组代码，每组想五秒钟（老师说没有弹幕的视频是不完整的，答案请打在弹幕里）：</p>
+
+  <div id="jq-box">
+    <div class="jq" data-ans="0">
+      <code class="blk"><span class="hk">public class</span> MethodDemo {
+    <span class="hk">public static void</span> fn(<span class="hk">int</span> a) { … }
+    <span class="hk">public static int</span> fn(<span class="hk">int</span> a) { … }
+}</code>
+      <div class="row"><button class="btn sm" data-v="1">构成重载</button><button class="btn sm" data-v="0">不构成</button><span class="jr"></span></div>
+      <div class="why" hidden>不构成。同一个类、方法名相同，但形参一模一样，只有返回值不同。重载不看返回值。</div>
+    </div>
+    <div class="jq" data-ans="1">
+      <code class="blk"><span class="hk">public class</span> MethodDemo {
+    <span class="hk">public static float</span> fn(<span class="hk">int</span> a) { … }
+    <span class="hk">public static int</span> fn(<span class="hk">int</span> a, <span class="hk">int</span> b) { … }
+}</code>
+      <div class="row"><button class="btn sm" data-v="1">构成重载</button><button class="btn sm" data-v="0">不构成</button><span class="jr"></span></div>
+      <div class="why" hidden>构成。同一个类、方法名相同；上面一个形参，下面两个形参，个数不同。</div>
+    </div>
+    <div class="jq" data-ans="0">
+      <code class="blk"><span class="hk">public class</span> MethodDemo01 {
+    <span class="hk">public static void</span> fn(<span class="hk">int</span> a) { … }
+}
+<span class="hk">public class</span> MethodDemo02 {
+    <span class="hk">public static int</span> fn(<span class="hk">double</span> a) { … }
+}</code>
+      <div class="row"><button class="btn sm" data-v="1">构成重载</button><button class="btn sm" data-v="0">不构成</button><span class="jr"></span></div>
+      <div class="why" hidden>不构成。两个 fn 不在同一个类里，不在一个类里的方法不构成重载关系。</div>
+    </div>
+    <div class="jq" data-ans="1">
+      <code class="blk"><span class="hk">public class</span> MethodDemo {
+    <span class="hk">public static void</span> fn(<span class="hk">int</span> a) { … }
+    <span class="hk">public static void</span> fn(<span class="hk">double</span> a) { … }
+}</code>
+      <div class="row"><button class="btn sm" data-v="1">构成重载</button><button class="btn sm" data-v="0">不构成</button><span class="jr"></span></div>
+      <div class="why" hidden>构成。同一个类、方法名相同；一个是 int，一个是 double，类型不同。</div>
+    </div>
+    <div class="jq" data-ans="1">
+      <code class="blk"><span class="hk">public class</span> MethodDemo {
+    <span class="hk">public static void</span> fn(<span class="hk">int</span> a, <span class="hk">double</span> b) { … }
+    <span class="hk">public static void</span> fn(<span class="hk">double</span> a, <span class="hk">int</span> b) { … }
+}</code>
+      <div class="row"><button class="btn sm" data-v="1">构成重载</button><button class="btn sm" data-v="0">不构成</button><span class="jr"></span></div>
+      <div class="why" hidden>构成。个数一样、类型也一样，但顺序不一样：上面是 int、double，下面是 double、int。这就叫顺序不同。</div>
+    </div>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">五组代码在幻灯片上，字幕里没有念出来，这里按老师对每一题的讲解还原，返回值类型是随手填的。</p>
+  <p>最后一组要多说一句：<b>类型的顺序不同可以构成重载，但不建议</b>。从实际开发的角度想，上面的方法和下面的方法有什么不一样？调用时把实参前后颠倒一下不就行了。所以以后几乎不会用这种方式重载。</p>
+  <div class="extra">
+    <span class="t">顺序不同的重载还会坑到自己</span>
+    有了 <code>fn(int, double)</code> 和 <code>fn(double, int)</code>，写 <code>fn(1, 2)</code> 会怎样？两个实参都是 int：把第二个提升成 double 能匹配上面那个，把第一个提升成 double 能匹配下面那个，两个都行、谁也不比谁更合适，编译器直接报错 <code>对 fn 的引用不明确</code>（reference to fn is ambiguous）。必须写成 <code>fn(1, 2.0)</code> 或 <code>fn(1.0, 2)</code> 才能编译。这是"不建议"的另一个实在的理由。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P68</div>
+  <h2>自己定义重载方法</h2>
+  <p><b>需求</b>：使用方法重载的思想，设计比较两个整数是否相同的方法，要兼容全部的整数类型（byte、short、int、long）。可以先暂停自己写一写，再对照。</p>
+  <p>要比较 byte、short、int、long，就设计四个方法，名字都叫 compare，形参分别是两个 byte、两个 short、两个 int、两个 long。写完第一个，复制三份改类型就行：</p>
+  <code class="blk"><span class="hk">public static void</span> compare(<span class="hk">byte</span> b1, <span class="hk">byte</span> b2) {
+    System.out.println(b1 == b2);
+}
+
+<span class="hk">public static void</span> compare(<span class="hk">short</span> s1, <span class="hk">short</span> s2) {
+    System.out.println(s1 == s2);
+}
+
+<span class="hk">public static void</span> compare(<span class="hk">int</span> i1, <span class="hk">int</span> i2) {
+    System.out.println(i1 == i2);
+}
+
+<span class="hk">public static void</span> compare(<span class="hk">long</span> n1, <span class="hk">long</span> n2) {     <span class="hc">// 不叫 l1：小写 l 和数字 1 长得太像</span>
+    System.out.println(n1 == n2);
+}</code>
+  <p>把相同功能的方法名写成一样的，好处有两个：<b>定义方法时</b>不用想那么多单词；<b>调用方法时</b>也不麻烦，相同功能的只要记一个方法名。</p>
+  <p><b>怎么调用？</b>在 main 里写 <code>compare(10, 20);</code>，调用的是 int 的那个。怎么知道？IDEA 有个特性：变量或方法没被用到，名字就是灰色的，此时另外三个 compare 都是灰的。还可以在四个方法里分别加一句打印 byte、short、int、long 来验证，运行后第一行打印的是 int。</p>
+  <p>想调用别的怎么办？只要保证<b>实参和形参一一对应</b>：</p>
+  <ul>
+    <li>整数默认是 int 类型，所以不能直接写 10 和 20；可以强转：<code>compare((byte) 10, (byte) 20);</code>，这时 byte 的方法名亮了，其余三个变灰；</li>
+    <li>以后用得更多的方式：先定义两个 byte 类型的变量 <code>byte b1 = 10; byte b2 = 20;</code>，调用时传变量 <code>compare(b1, b2);</code>。</li>
+  </ul>
+  <p>想调用 short、long 的也是同样的道理。</p>
+
+  <div class="card">
+    <h3>动手：这次调用的是哪个 compare</h3>
+    <div class="row"><span>main 里写</span><span class="seg" id="ov-c"></span></div>
+    <div class="row"><label><input type="checkbox" id="ov-only"> 假如只定义了 long 的那一个</label></div>
+    <div class="ovl" id="ov-list"></div>
+    <div class="out" id="ov-out"></div>
+    <div class="msg" id="ov-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">没有完全对应的方法时：找"最近"的</span>
+    演示里最后两个调用课上没讲。<code>compare(10, 20L)</code>：一个 int、一个 long，没有哪个方法的形参正好是 (int, long)。编译器会找"实参能自动提升上去"的方法：int 可以提升成 long，所以选中 long 的那个。同理，勾上"只定义了 long 的那一个"，<code>compare(10, 20)</code>、<code>compare(b1, b2)</code> 全都能调用成功，因为 byte、short、int 都能自动提升成 long。这么看，题目里的四个重载其实一个 long 版本就够用了；课上写四个，是为了练习"自己定义重载方法"。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P69</div>
+  <h2>练习：遍历数组</h2>
+  <p>方法该掌握的知识点学完了，接下来做四个练习：数组的遍历、求数组的最大值、判断是否存在、复制数组。每一题都在前一题的基础上加了难度，要一题一题做，不要跳。</p>
+  <p><b>需求</b>：设计一个方法用于数组遍历，要求遍历的结果在一行上，例如：<code>[11, 22, 33, 44, 55]</code>。</p>
+  <p>先在 main 里定义数组 <code>int[] arr = {11, 22, 33, 44, 55};</code>。以前是在 main 里直接遍历，现在专门定义一个方法，以后还想遍历就不用再写，直接调方法。定义方法，问自己三个问题：</p>
+  <ul>
+    <li><b>我要干嘛？</b>遍历数组。</li>
+    <li><b>需要什么才能完成？</b>你得把数组给我，不给我遍历个毛。所以形参是一个 int 类型的数组。</li>
+    <li><b>调用处是否需要继续使用结果？</b>题目没要求返回，说直接打印就行，所以不需要返回值。</li>
+  </ul>
+  <p>不太会写没关系，<b>想到多少先写多少，再根据打印结果去改</b>。先写最朴素的 <code>arr.fori</code> + <code>println(arr[i])</code>，调用 <code>printArr(arr);</code>：遍历是遍历了，可每个数占一行，和题目要求不一样。</p>
+  <p>正式改写之前，重新认识一下输出语句：</p>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><code>System.out.println("abc");</code></td><td>先打印 abc，再换行</td></tr>
+      <tr><td><code>System.out.print("abc");</code></td><td>只打印 abc，不换行。下面再打印 bcd，会接在 abc 后面。ln 就表示换行</td></tr>
+      <tr><td><code>System.out.println();</code></td><td>不打印任何数据，只做换行处理</td></tr>
+    </tbody>
+  </table>
+  <p>于是一步步改：① 把 ln 删掉，数据后面拼接 <code>", "</code>：在同一行了，可是开头没有左括号、结尾没有右括号，55 后面还多了一个逗号空格；② 循环开始前打印 <code>[</code>，循环结束后打印 <code>]</code>（用 println，顺便换行）；③ 循环里做判断：是最大索引 <code>arr.length - 1</code> 的数据就只打印数据，否则才拼上逗号空格。</p>
+  <code class="blk"><span class="hk">public static void</span> main(String[] args) {
+    <span class="hk">int</span>[] arr = {11, 22, 33, 44, 55};
+    printArr(arr);                       <span class="hc">// [11, 22, 33, 44, 55]</span>
+}
+
+<span class="hk">public static void</span> printArr(<span class="hk">int</span>[] arr) {
+    System.out.print(<span class="hs">"["</span>);
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+        <span class="hk">if</span> (i == arr.length - 1) {
+            System.out.print(arr[i]);          <span class="hc">// 最后一个：只打印数据</span>
+        } <span class="hk">else</span> {
+            System.out.print(arr[i] + <span class="hs">", "</span>);   <span class="hc">// 前面的：数据 + 逗号空格</span>
+        }
+    }
+    System.out.println(<span class="hs">"]"</span>);
+}</code>
+  <p>运行结果和题目要求相比：不能说有点类似，只能说完全一样。</p>
+
+  <div class="card">
+    <h3>动手：一版一版改出来</h3>
+    <div class="row"><span>数组</span><input class="inp" id="pa-arr" value="11, 22, 33, 44, 55" aria-label="数组元素"></div>
+    <div class="row"><span class="seg" id="pa-v"><button data-v="0">① println(arr[i])</button><button data-v="1">② print(arr[i] + ", ")</button><button data-v="2">③ 加上 [ 和 ]</button><button data-v="3">④ 最后一个不加逗号</button></span></div>
+    <div class="codebox" id="pa-code"></div>
+    <div class="out" id="pa-out"></div>
+    <div class="msg" id="pa-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">JDK 里有现成的</span>
+    这个格式不是随便定的：<code>java.util.Arrays.toString(arr)</code> 返回的字符串正是 <code>[11, 22, 33, 44, 55]</code>，写 <code>System.out.println(Arrays.toString(arr));</code> 一行就能打印（课程后面讲 Arrays 工具类时会正式介绍）。先自己写一遍 printArr，以后就知道它里面大概干了什么。试试把上面的数组清空：④ 打印的是 <code>[]</code>，和 Arrays.toString 对空数组的结果也一致。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P69</div>
+  <h2>练习：求数组的最大值</h2>
+  <p><b>需求</b>：设计一个方法求数组的最大值，并将最大值<b>返回</b>。</p>
+  <p>三个问题：我要干嘛？求最大值。需要什么？你要把数组给我，没有数组我求个毛。要不要返回？题目明确说了返回。所以返回值类型是 int，形参是数组：</p>
+  <code class="blk"><span class="hk">public static void</span> main(String[] args) {
+    <span class="hk">int</span>[] arr = {1, 5, 7, 3, 8, 10};
+    <span class="hk">int</span> max = getMax(arr);               <span class="hc">// 写完 getMax(arr) 按 Ctrl+Alt+V 自动生成左边</span>
+    System.out.println(max);             <span class="hc">// 10</span>
+}
+
+<span class="hk">public static int</span> getMax(<span class="hk">int</span>[] arr) {
+    <span class="hk">int</span> max = arr[0];                    <span class="hc">// 参照物：不能写 0，必须是数组里的数据</span>
+    <span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt; arr.length; i++) {  <span class="hc">// 从 1 开始，少循环一次</span>
+        <span class="hk">if</span> (arr[i] &gt; max) {
+            max = arr[i];
+        }
+    }
+    <span class="hk">return</span> max;
+}</code>
+  <p>方法体就是 <a href="58.html#ch1">数组那章的擂台法</a>，两个细节再强调一遍：max 的初始值不能写 0（数组里全是负数就错了），要用数组里的数据，一般用 0 索引；循环从 0 开始也没错，只是第一次是自己跟自己比，多此一举，从 1 开始能少循环一次。</p>
+  <p style="font-size:13px;color:var(--muted)">数组里的数据视频说"可以随便写"，字幕里只知道运行结果是 10，这里的 {1, 5, 7, 3, 8, 10} 是随手填的。</p>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P69</div>
+  <h2>练习：判断是否存在</h2>
+  <p><b>需求</b>：定义一个方法，判断数组中的某一个数是否存在，将结果返回给调用处。</p>
+  <p>三个问题：我要干嘛？判断数字在数组中是否存在。需要什么？数组，还有要查的那个数字，所以<b>两个形参</b>。要不要返回？题目明确要返回；返回什么？把查询的结果告诉调用处：true 表示存在，false 表示不存在，所以返回值类型是 <b>boolean</b>。方法名叫 contains（是否包含）。</p>
+  <p>方法体：遍历数组，拿到每个数据和要查找的数字比，找到一样的，直接 <code>return true</code>。那什么时候 return false？有人说简单，else 里 return false 呗。推导一下对不对：数组是 {1, 5, 8, 12, 56, 89, 34, 67}，查 89。第一次循环拿到 1，和 89 不一样，判断为假，直接 return false，说不存在。这肯定不对。</p>
+  <p><b>什么时候才能断定 89 不存在？</b>数组里所有的数据全部比较完毕之后。所以 <code>return false</code> 不能写在 if 下面，要写在<b>循环的外面</b>：循环结束，表示所有数据都比过了，还没有一样的，才返回 false。</p>
+  <code class="blk"><span class="hk">public static void</span> main(String[] args) {
+    <span class="hk">int</span>[] arr = {1, 5, 8, 12, 56, 89, 34, 67};
+    <span class="hk">boolean</span> flag = contains(arr, 89);
+    System.out.println(flag);            <span class="hc">// true；换成 189 就是 false</span>
+}
+
+<span class="hk">public static boolean</span> contains(<span class="hk">int</span>[] arr, <span class="hk">int</span> number) {
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+        <span class="hk">if</span> (arr[i] == number) {
+            <span class="hk">return true</span>;                 <span class="hc">// 找到了：方法直接结束</span>
+        }
+    }
+    <span class="hk">return false</span>;                        <span class="hc">// 全部比完还没找到，才能断定不存在</span>
+}</code>
+  <p>还有个小问题：找到之后为什么不写 break？借机回顾一下 <b>return 和 break 的区别</b>：</p>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>return</b></td><td>和循环没什么关系，和<b>方法</b>有关：① 结束方法；② 返回结果。方法执行到 return，整个方法全部结束，里面的循环也随之结束</td></tr>
+      <tr><td><b>break</b></td><td>和方法没什么关系，和<b>循环、switch</b> 有关：结束循环或者 switch</td></tr>
+    </tbody>
+  </table>
+  <p>打个比方（只是假设）：有一天地球寿命到了，爆炸了，地球上有个人才 20 岁，寿命还没到，他还能活吗？地球都炸了还活什么。整个方法都结束了，方法里其他的代码也随之结束。所以这里写 return 表示：找到了，方法直接结束，把 true 返回给调用者，后面的代码不再执行；如果写的是 break，方法没结束，只是把 for 循环结束，跳到循环下面接着走。</p>
+
+  <div class="card">
+    <h3>动手：return false 放在哪</h3>
+    <div class="row"><span>数组</span><input class="inp" id="ct-arr" value="1, 5, 8, 12, 56, 89, 34, 67" aria-label="数组元素"><span>查</span><input class="inp s" id="ct-num" value="89" aria-label="要查的数字"></div>
+    <div class="row"><span class="seg" id="ct-m"><button data-v="0">正确：循环外 return false</button><button data-v="1">错误：else 里 return false</button><button data-v="2">把 return true 换成 break</button></span></div>
+    <div class="row"><button class="btn sm primary" id="ct-next">下一步</button><button class="btn sm" id="ct-all">跑完</button><button class="btn sm" id="ct-re">重来</button></div>
+    <div class="codebox" id="ct-code"></div>
+    <div class="arr" id="ct-a"></div>
+    <div class="msg" id="ct-msg"></div>
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节 · P70</div>
+  <h2>练习：拷贝数组</h2>
+  <p><b>需求</b>：定义一个方法 <code>copyOfRange(int[] arr, int from, int to)</code>，功能：将数组 arr 中从索引 from（包含 from）开始，到索引 to 结束（<b>不包含 to</b>）的元素复制到新数组中，将新数组返回。</p>
+  <p>这题比前面难一点。<b>先别忙着写代码，先分析</b>。很多同学看到稍微复杂的题就没思路，就是因为之前学习时忽略了分析的过程。以后工作中也一样，分析占的时间往往比写代码更多。</p>
+  <p>假设原始数组长度是 9，存着 1~9，索引 0~8。现在要把 3 索引到 7 索引之间的数据拷贝到新数组：from 是 3，to 是 7，不包含 to，所以真正要拿的是 3、4、5、6 索引上的数据：4、5、6、7。新数组的长度应该是 4，正好是 7 - 3。</p>
+  <p>开始写。方法名、形参题目都给了，返回值类型暂时不知道，先空着。方法体分三步：</p>
+  <ol>
+    <li><b>定义新数组</b>。静态初始化还是动态初始化？静态是知道所有元素的时候用，现在压根不知道要存什么，用<b>动态</b>；动态要知道存几个，可以算出来：<code>new int[to - from]</code>。</li>
+    <li><b>把原数组 from 到 to 的元素拷贝过去</b>。循环的起始不是 0 了，从 from 开始，到 to 结束，不包含 to，所以条件是 <code>i &lt; to</code>。赋值语句右边是 <code>arr[i]</code>，左边 <code>newArr[?]</code> 的方括号里写什么？<b>不能写 i</b>：i 的范围是 3 到 6，可 newArr 的长度才 4，压根没有这些索引。新数组的索引应该从 0 开始依次增长，而现在没有一个变量能表示这个变化范围。没有，就定义一个：<code>int index = 0;</code>，用一次，加加一次。这叫<b>伪造索引的思想</b>：代码里没有变量能表示当前索引的变化范围，就伪造一个。</li>
+    <li><b>把新数组返回</b>：<code>return newArr;</code>。返回的是数组，所以返回值类型不能写 int（那表示返回一个整数），要写 <code>int[]</code>。调用处也要拿一个数组去接收。</li>
+  </ol>
+  <code class="blk"><span class="hk">public static void</span> main(String[] args) {
+    <span class="hk">int</span>[] arr = {1, 2, 3, 4, 5, 6, 7, 8, 9};        <span class="hc">// 1. 定义原始数组</span>
+    <span class="hk">int</span>[] copyArr = copyOfRange(arr, 3, 7);        <span class="hc">// 2. 调用方法拷贝数据</span>
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; copyArr.length; i++) {     <span class="hc">// 3. 遍历 copyArr</span>
+        System.out.print(copyArr[i] + <span class="hs">" "</span>);        <span class="hc">// 4 5 6 7</span>
+    }
+}
+
+<span class="hk">public static int</span>[] copyOfRange(<span class="hk">int</span>[] arr, <span class="hk">int</span> from, <span class="hk">int</span> to) {
+    <span class="hk">int</span>[] newArr = <span class="hk">new int</span>[to - from];             <span class="hc">// 1. 定义新数组</span>
+    <span class="hk">int</span> index = 0;                                 <span class="hc">// 伪造索引的思想</span>
+    <span class="hk">for</span> (<span class="hk">int</span> i = from; i &lt; to; i++) {             <span class="hc">// 2. 拷贝 [from, to) 上的元素</span>
+        newArr[index] = arr[i];
+        index++;
+    }
+    <span class="hk">return</span> newArr;                                 <span class="hc">// 3. 把新数组返回</span>
+}</code>
+  <p>运行结果 4 5 6 7，和分析的一模一样。课后练习时不要忙着写代码，先把分析的过程想明白，思路清楚了再动手。</p>
+
+  <div class="card">
+    <h3>动手：拷贝 [from, to)</h3>
+    <div class="row"><label>from <input type="range" id="cp-from" min="0" max="9" value="3"> <b id="cp-fv">3</b></label><label>to <input type="range" id="cp-to" min="0" max="9" value="7"> <b id="cp-tv">7</b></label><label><input type="checkbox" id="cp-bad"> 写成 newArr[i]（错误示范）</label></div>
+    <div class="row"><button class="btn sm primary" id="cp-next">下一步</button><button class="btn sm" id="cp-all">跑完</button><button class="btn sm" id="cp-re">重来</button></div>
+    <div class="arr-lab">arr（原始数组）</div>
+    <div class="arr" id="cp-a"></div>
+    <div class="arr-lab" id="cp-nl">newArr</div>
+    <div class="arr" id="cp-n"></div>
+    <div class="msg" id="cp-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">这个方法也是照着 JDK 写的</span>
+    <code>java.util.Arrays.copyOfRange(arr, from, to)</code> 是 JDK 自带的方法，名字、参数、"包含 from、不包含 to"（包头不包尾）的规则都和这道题一样。Java 里凡是用一对索引表示范围的地方，几乎都是包头不包尾，比如之前的 <code>r.nextInt(10)</code> 是 0~9，以后字符串的 <code>substring(3, 7)</code> 也是。好处就是分析里用到的那一条：<b>长度 = to − from</b>，不用加一减一。<br>
+    两个版本的差别在边界：把上面的 from 拖到比 to 大，课上的写法会在 <code>new int[to - from]</code> 处抛 <code>NegativeArraySizeException</code>（JDK 的版本抛 IllegalArgumentException）；to 超过 arr 的长度，课上的写法会索引越界，而 JDK 的版本会用 0 把新数组后面补齐。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>重载</b></td><td>同一个类中，方法名相同、参数不同（个数 / 类型 / 顺序）；与返回值无关</td></tr>
+      <tr><td><b>怎么区分</b></td><td>调用时根据实参的个数和类型，对应到形参匹配的那个方法</td></tr>
+      <tr><td><b>整数默认 int</b></td><td>想调 byte 版本：强转，或先定义 byte 变量再传变量</td></tr>
+      <tr><td><b>三种输出</b></td><td><code>println(x)</code> 打印并换行；<code>print(x)</code> 只打印；<code>println()</code> 只换行</td></tr>
+      <tr><td><b>printArr</b></td><td>先 <code>[</code>，中间的数据拼 <code>", "</code>、最后一个不拼，最后 <code>]</code></td></tr>
+      <tr><td><b>contains</b></td><td>找到就 <code>return true</code>；<code>return false</code> 写在循环外面</td></tr>
+      <tr><td><b>return / break</b></td><td>return 结束方法（循环也跟着结束）；break 只结束循环或 switch</td></tr>
+      <tr><td><b>copyOfRange</b></td><td>新数组长度 <code>to - from</code>；i 从 from 到 to；新数组用伪造的 index；返回值类型 <code>int[]</code></td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    重载让同一个功能只用记一个名字；写方法先分析：干什么、要什么、调用处还用不用结果，想清楚了代码就是抄思路。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>int sum(int a, int b)</code> 和 <code>double sum(int a, int b)</code> 写在同一个类里，构成重载吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不构成，而且会编译报错（方法重复定义）。重载只看方法名和形参，不看返回值；这两个方法形参完全一样。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 有 byte、short、int、long 四个版本的 compare，<code>compare(10, 20)</code> 调用哪个？怎么调用 byte 的版本？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">int 的版本，整数默认是 int 类型。调 byte 版本：<code>compare((byte) 10, (byte) 20)</code>，或者先定义 <code>byte b1 = 10, b2 = 20;</code> 再 <code>compare(b1, b2)</code>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. <code>System.out.print("a"); System.out.println(); System.out.println("b");</code> 的输出是几行？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">两行：第一行 a，第二行 b。print 不换行，空的 println 只换行。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. contains 方法里，把 <code>return false</code> 写进 if 的 else 里，查 {1, 5, 8} 里有没有 8，结果是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">false。第一次循环拿 1 和 8 比，不相等，直接走 else 返回 false，方法结束，后面的 5、8 根本没比。只有全部比完才能断定不存在，所以 return false 要写在循环外。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. <code>copyOfRange(arr, 2, 5)</code>，arr 是 {1, 2, 3, 4, 5, 6, 7, 8, 9}，新数组长度是多少、内容是什么？为什么不能写 <code>newArr[i] = arr[i]</code>？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">长度 5 - 2 = 3，内容是 2、3、4 索引上的 3、4、5。i 从 2 走到 4，而 newArr 只有 0、1、2 三个索引，i 到 3 时就越界了；而且就算不越界，数据也没有从 0 索引开始放。所以要伪造一个从 0 开始的 index。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="63.html"><small>← 上一篇</small>P63–67 方法的定义与调用</a>
+    <a class="next" href="71.html"><small>下一篇 →</small>P71–73 方法的内存与值传递</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P68–P70（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=68" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const parseArr = (s, min = 1) => { const a = s.split(/[,，\s]+/).filter(Boolean).map(Number); return a.length >= min && a.length <= 12 && a.every(Number.isInteger) ? a : null; };
+function drawArr(box, vals, cls = {}, ptr = {}) {
+  box.innerHTML = vals.map((v, i) => `<div class="cell ${cls[i] || ''}">${ptr[i] ? `<div class="ptr">${ptr[i]}</div>` : ''}<div class="v">${esc(v)}</div><div class="ix">${i}</div></div>`).join('');
+}
+function segInit(sel, v, fn) {
+  const bs = $$(sel + ' button');
+  const set = val => { bs.forEach(b => b.classList.toggle('sel', b.dataset.v === String(val))); };
+  bs.forEach(b => b.onclick = () => { set(b.dataset.v); fn(b.dataset.v); });
+  set(v);
+  return set;
+}
+
+/* ---------- 判断是否构成重载 ---------- */
+(function () {
+  $$('#jq-box .jq').forEach(q => {
+    $$('button', q).forEach(b => b.onclick = () => {
+      const ok = b.dataset.v === q.dataset.ans;
+      q.classList.toggle('right', ok); q.classList.toggle('wrong', !ok);
+      $('.jr', q).textContent = ok ? '✓ 答对了' : '✗ 答错了';
+      $('.jr', q).style.color = ok ? 'var(--ok)' : 'var(--bad)';
+      $('.why', q).hidden = false;
+    });
+  });
+})();
+
+/* ---------- 调用的是哪个 compare ---------- */
+(function () {
+  const TYPES = ['byte', 'short', 'int', 'long'];
+  // [显示的代码, 两个实参的类型, 说明]
+  const C = [
+    ['compare(10, 20);', ['int', 'int'], '整数字面量默认是 int 类型，两个实参都是 int。'],
+    ['compare((byte) 10, (byte) 20);', ['byte', 'byte'], '强转之后两个实参都是 byte。'],
+    ['byte b1 = 10; byte b2 = 20; compare(b1, b2);', ['byte', 'byte'], '传的是两个 byte 类型的变量。以后这种方式用得更多。'],
+    ['short s1 = 10; short s2 = 20; compare(s1, s2);', ['short', 'short'], '两个 short 变量。'],
+    ['compare(10L, 20L);', ['long', 'long'], '数字后面加 L 是 long 类型的字面量。'],
+    ['compare(10, 20L);', ['int', 'long'], '一个 int、一个 long（课上没讲，见下面的补充框）。'],
+  ];
+  let c = 0;
+  $('#ov-c').innerHTML = C.map((x, i) => `<button data-v="${i}">${esc(x[0])}</button>`).join('');
+  function show() {
+    const only = $('#ov-only').checked, [code, at, why] = C[c];
+    const cand = only ? ['long'] : TYPES;
+    // 选第一个"两个实参都能自动提升上去"的版本（按 byte < short < int < long）
+    const need = Math.max(TYPES.indexOf(at[0]), TYPES.indexOf(at[1]));
+    const hit = cand.find(t => TYPES.indexOf(t) >= need);
+    $('#ov-list').innerHTML = cand.map(t => `<div class="${t === hit ? 'hit' : ''}">public static void compare(${t} ${t[0] === 'l' ? 'n' : t[0]}1, ${t} ${t[0] === 'l' ? 'n' : t[0]}2)${t === hit ? '   ← 调用的是它' : ''}</div>`).join('');
+    $('#ov-out').textContent = hit + '\nfalse';
+    const exact = at[0] === at[1] && at[0] === hit;
+    $('#ov-msg').innerHTML = why + (exact ? ` 实参和形参一一对应，调用 <b>${hit}</b> 的版本，其余${only ? '' : '三个'}在 IDEA 里是灰色的。` : ` 没有形参正好是 (${at.join(', ')}) 的方法，实参自动提升成 ${hit}，调用 <b>${hit}</b> 的版本。`) + ' 控制台第一行是方法里打印的类型名，第二行是 10 == 20 的结果。';
+  }
+  segInit('#ov-c', 0, v => { c = +v; show(); });
+  $('#ov-only').addEventListener('change', show);
+  show();
+})();
+
+/* ---------- printArr 四个版本 ---------- */
+(function () {
+  let v = 0;
+  const CODE = [
+    ['for (int i = 0; i < arr.length; i++) {', '    System.out.println(arr[i]);', '}'],
+    ['for (int i = 0; i < arr.length; i++) {', '    System.out.print(arr[i] + ", ");', '}'],
+    ['System.out.print("[");', 'for (int i = 0; i < arr.length; i++) {', '    System.out.print(arr[i] + ", ");', '}', 'System.out.println("]");'],
+    ['System.out.print("[");', 'for (int i = 0; i < arr.length; i++) {', '    if (i == arr.length - 1) {', '        System.out.print(arr[i]);', '    } else {', '        System.out.print(arr[i] + ", ");', '    }', '}', 'System.out.println("]");'],
+  ];
+  const MSG = [
+    '遍历是遍历了，但每个数占一行，和题目要求的不一样。根据这个结果再去改。',
+    '删掉 ln 就不换行，数据在同一行了。可是开头没有 [，结尾没有 ]，最后一个数后面还多了一个逗号空格。',
+    '循环前打印 [，循环后打印 ] 并换行。只剩最后一个数后面多出来的 ", "。',
+    '循环里判断：是最大索引就只打印数据，否则才拼逗号空格。和题目要求完全一样。',
+  ];
+  function show() {
+    const a = parseArr($('#pa-arr').value, 0);
+    $('#pa-code').innerHTML = CODE[v].map(L => `<div>${esc(L)}</div>`).join('');
+    if (!a) { $('#pa-out').innerHTML = '<span class="note">请填整数，用逗号隔开（最多 12 个）</span>'; $('#pa-msg').textContent = ''; return; }
+    let o = '';
+    if (v === 0) o = a.join('\n');
+    else if (v === 1) o = a.map(x => x + ', ').join('');
+    else if (v === 2) o = '[' + a.map(x => x + ', ').join('') + ']';
+    else o = '[' + a.join(', ') + ']';
+    $('#pa-out').innerHTML = o === '' ? '<span class="note">（没有输出）</span>' : esc(o);
+    $('#pa-msg').textContent = MSG[v];
+  }
+  segInit('#pa-v', 0, x => { v = +x; show(); });
+  $('#pa-arr').addEventListener('input', show);
+  show();
+})();
+
+/* ---------- contains ---------- */
+(function () {
+  const CODE = [
+    ['for (int i = 0; i < arr.length; i++) {', '    if (arr[i] == number) {', '        return true;', '    }', '}', 'return false;'],
+    ['for (int i = 0; i < arr.length; i++) {', '    if (arr[i] == number) {', '        return true;', '    } else {', '        return false;', '    }', '}'],
+    ['for (int i = 0; i < arr.length; i++) {', '    if (arr[i] == number) {', '        break;', '    }', '}', 'return false;'],
+  ];
+  let m = 0, arr, num, i, done, line, res;
+  function reset() {
+    arr = parseArr($('#ct-arr').value); num = Number($('#ct-num').value);
+    if (!arr || !Number.isInteger(num) || $('#ct-num').value.trim() === '') { arr = null; $('#ct-a').innerHTML = ''; $('#ct-code').innerHTML = ''; $('#ct-msg').textContent = '数组请填 1~12 个整数，要查的也填整数。'; $('#ct-next').disabled = true; return; }
+    i = 0; done = false; line = -1; res = null;
+    paint(`调用 contains(arr, ${num})，从 0 索引开始比。`);
+  }
+  function paint(msg, cur = null) {
+    $('#ct-code').innerHTML = CODE[m].map((L, k) => `<div class="${k === line ? 'cur' : ''}">${esc(L)}</div>`).join('');
+    const cls = {}, ptr = {};
+    arr.forEach((v, k) => { if (k < i && k !== cur) cls[k] = 'dim'; });
+    if (cur !== null) { cls[cur] = arr[cur] === num ? 'ok' : 'hi'; ptr[cur] = 'i'; }
+    drawArr($('#ct-a'), arr, cls, ptr);
+    $('#ct-msg').innerHTML = msg;
+    $('#ct-next').disabled = done;
+  }
+  function finish(val, why) {
+    done = true; res = val;
+    const real = arr.includes(num);
+    return why + ` 方法返回 <b>${val}</b>。` + (val !== real ? ` <span style="color:var(--bad)">错了！${num} 明明${real ? '在' : '不在'}数组里。</span>` : '');
+  }
+  function step() {
+    if (!arr || done) return;
+    if (i >= arr.length) { line = 5; paint(finish(false, '循环结束：所有数据都比完了，没有一样的。')); return; }
+    const k = i, eq = arr[k] === num; i++;
+    if (eq) {
+      line = 2;
+      if (m === 2) { i = arr.length; done = true; res = false; line = 5; paint(`i = ${k}，arr[${k}] = ${arr[k]}，和 ${num} 相等，执行 break：<b>方法没有结束</b>，只是跳出 for 循环，接着走循环下面的 return false。 方法返回 <b>false</b>。<span style="color:var(--bad)">错了！明明找到了。</span>`, k); return; }
+      paint(finish(true, `i = ${k}，arr[${k}] = ${arr[k]}，和 ${num} 相等，执行 return true：整个方法结束，后面的 ${arr.length - 1 - k} 个数据不用再比。`), k);
+    } else if (m === 1) {
+      line = 4;
+      paint(finish(false, `i = ${k}，arr[${k}] = ${arr[k]}，和 ${num} 不相等，走 else 执行 return false：才比了第 ${k + 1} 个就下结论，后面的数据都没看。`), k);
+    } else { line = 1; paint(`i = ${k}，arr[${k}] = ${arr[k]}，和 ${num} 不相等，继续循环。`, k); }
+  }
+  segInit('#ct-m', 0, v => { m = +v; reset(); });
+  $('#ct-next').onclick = step;
+  $('#ct-all').onclick = () => { while (arr && !done) step(); };
+  $('#ct-re').onclick = reset;
+  $('#ct-arr').addEventListener('input', reset); $('#ct-num').addEventListener('input', reset);
+  reset();
+})();
+
+/* ---------- copyOfRange ---------- */
+(function () {
+  const ARR = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+  let from, to, bad, i, index, na, done, err;
+  function reset() {
+    from = +$('#cp-from').value; to = +$('#cp-to').value; bad = $('#cp-bad').checked;
+    $('#cp-fv').textContent = from; $('#cp-tv').textContent = to;
+    i = from; index = 0; done = false; err = false;
+    if (to - from < 0) { na = []; done = err = true; paint(`<span style="color:var(--bad)">new int[to - from] → new int[${to - from}]：长度是负数，抛出 NegativeArraySizeException。</span>from 不能比 to 大。`); return; }
+    na = Array(to - from).fill(0);
+    paint(`int[] newArr = new int[to - from]; → 长度 ${to} - ${from} = ${to - from}，动态初始化，元素都是默认值 0。int index = 0;`);
+  }
+  function paint(msg, ci = null, cn = null) {
+    const cls = {}, ptr = {};
+    ARR.forEach((v, k) => { if (k < from || k >= to) cls[k] = 'dim'; });
+    if (ci !== null) { cls[ci] = 'hi'; ptr[ci] = 'i'; }
+    drawArr($('#cp-a'), ARR, cls, ptr);
+    const ncls = {}, nptr = {};
+    na.forEach((v, k) => { if (!done && k >= index && cn !== k) ncls[k] = 'emp'; });
+    if (cn !== null && cn < na.length) { ncls[cn] = 'ok'; nptr[cn] = bad ? 'i' : 'index'; }
+    drawArr($('#cp-n'), na, ncls, nptr);
+    $('#cp-nl').textContent = `newArr（长度 ${na.length}）` + (na.length ? '' : '：空数组');
+    $('#cp-msg').innerHTML = msg;
+    $('#cp-next').disabled = done;
+  }
+  function step() {
+    if (done) return;
+    if (i >= to) { done = true; paint(`i = ${i}，判断 i &lt; to → ${i} &lt; ${to} 为 false，循环结束。return newArr：<b>${na.join(' ') || '（空）'}</b>`); return; }
+    const k = i;
+    if (k >= ARR.length) { done = err = true; paint(`<span style="color:var(--bad)">i = ${k}，arr[${k}] 不存在：ArrayIndexOutOfBoundsException。</span>to 最大只能是 arr.length（${ARR.length}）。`); return; }
+    if (bad) {
+      if (k >= na.length) { done = err = true; paint(`<span style="color:var(--bad)">newArr[${k}] = arr[${k}]：newArr 的长度才 ${na.length}，没有 ${k} 索引，抛出 ArrayIndexOutOfBoundsException。</span>所以方括号里不能写 i，要伪造一个从 0 开始的 index。`, k); return; }
+      na[k] = ARR[k]; i++; index = k + 1;
+      paint(`newArr[${k}] = arr[${k}]（${ARR[k]}）。` + (from === 0 ? 'from 是 0 的时候 i 恰好也从 0 开始，看不出问题；把 from 调大试试。' : `数据被放到了 ${k} 索引，而不是从 0 索引开始放，前面的位置空着。`), k, k); return;
+    }
+    na[index] = ARR[k];
+    const msg = `newArr[index] = arr[i] → newArr[${index}] = arr[${k}]（${ARR[k]}）；然后 index++、i++。`;
+    const cn = index; index++; i++;
+    paint(msg, k, cn);
+  }
+  ['#cp-from', '#cp-to'].forEach(s => $(s).addEventListener('input', reset));
+  $('#cp-bad').addEventListener('change', reset);
+  $('#cp-next').onclick = step;
+  $('#cp-all').onclick = () => { while (!done) step(); };
+  $('#cp-re').onclick = reset;
+  reset();
+})();
+</script>
+</body>
+</html>

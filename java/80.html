@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P80 二维数组 · Java 入门图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:56px;text-align:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;max-height:220px;overflow-y:auto;white-space:pre-wrap}
+.out .note{color:#7f8794}
+.out .err{color:#ff8f8f}
+.msg{font-size:14px;margin-top:8px}
+label{font-size:14px;display:inline-flex;align-items:center;gap:4px}
+.tt td{vertical-align:top}
+.expr{font:15px var(--mono);background:var(--bg);border-radius:10px;padding:8px 12px;margin-top:8px;overflow-x:auto;white-space:pre}
+
+/* 二维数组的样子 */
+.d2{display:inline-grid;gap:6px;border:2px solid var(--accent);border-radius:12px;padding:8px 8px 8px 34px;position:relative;margin:10px 0;max-width:100%;overflow-x:auto}
+.d2 .r{display:flex;align-items:center;gap:0;position:relative;border:1.5px dashed transparent;border-radius:9px;padding:2px}
+.d2 .r::before{content:attr(data-i);position:absolute;left:-24px;font:12px var(--mono);color:var(--muted)}
+.d2 .r.hi{border-color:var(--on);background:var(--on-soft)}
+.d2 .c{min-width:44px;text-align:center}
+.d2 .c .x{border:1.5px solid var(--line);border-left-width:.75px;border-right-width:.75px;height:34px;display:flex;align-items:center;justify-content:center;font:600 15px var(--mono);background:var(--panel);padding:0 4px}
+.d2 .c:first-child .x{border-left-width:1.5px;border-radius:7px 0 0 7px}
+.d2 .c:last-child .x{border-right-width:1.5px;border-radius:0 7px 7px 0}
+.d2 .c .i{font:10px var(--mono);color:var(--muted)}
+.d2 .c.hi .x{background:var(--ok-soft);border-color:var(--ok)}
+.d2 .c.clk .x{cursor:pointer}
+.d2 .c.ten .x{background:var(--on-soft);border-color:var(--on)}
+.d2 .tag{font:12px var(--mono);color:var(--muted);margin-left:10px;white-space:nowrap}
+.codebox{font:13px/1.75 var(--mono);background:var(--bg);border-radius:10px;padding:6px 0;overflow-x:auto;margin-top:8px}
+.codebox div{padding:0 12px;white-space:pre}
+
+/* 营业额表 */
+.sales{display:grid;grid-template-columns:auto repeat(3,minmax(38px,64px)) auto;gap:6px 6px;align-items:center;font-size:14px;margin-top:8px;overflow-x:auto}
+.sales .h{font-size:12px;color:var(--muted);text-align:center}
+.sales .s{font:700 14px var(--mono);border:1.5px solid var(--ok);background:var(--ok-soft);border-radius:8px;padding:3px 10px;white-space:nowrap}
+.sales .inp{width:100%;min-width:0;box-sizing:border-box;padding:3px 2px}
+.sales .s{padding:3px 8px}
+main code:not(.blk){white-space:normal;overflow-wrap:anywhere}
+
+/* 内存图 */
+.mem-code{font:13px/1.75 var(--mono);background:var(--bg);border-radius:10px;padding:6px 0;overflow-x:auto}
+.mem-code div{padding:0 12px;white-space:pre}
+.mem-code div.cur{background:var(--on-soft)}
+main,.card{min-width:0}
+.mscroll{overflow-x:auto;margin-top:10px;max-width:100%}
+.mem-wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:40px;min-width:560px}
+.mem-col h4{margin:0 0 6px;font-size:13px;color:var(--muted);text-align:center}
+.mem-col .area{border:1.5px solid var(--line);border-radius:12px;min-height:210px;padding:10px;background:var(--panel)}
+.mem-col .area.stack{display:flex;flex-direction:column;justify-content:flex-end;gap:6px}
+.mem-col .area.heap{display:grid;grid-template-columns:auto 1fr;gap:10px 46px;align-content:start}
+.heap .hc0,.heap .hc1{display:flex;flex-direction:column;gap:12px}
+.frame{border:1.5px solid var(--accent);border-radius:8px;padding:6px 8px;background:var(--bg)}
+.frame.in{border-color:var(--on);background:var(--on-soft)}
+.frame .fn{font:700 12px var(--mono);color:var(--accent)}
+.var{display:grid;grid-template-columns:auto 1fr;gap:6px;align-items:center;margin:5px 0 0;font:13px var(--mono)}
+.var .nm{color:var(--muted);font-size:12px}
+.var .vv{border:1.5px solid var(--line);border-radius:6px;padding:2px 8px;background:var(--panel);text-align:center;min-height:24px}
+.var.new .vv{border-color:var(--on);background:var(--on-soft)}
+.empty{font-size:12px;color:var(--muted);text-align:center}
+.hobj .ad{font:11px var(--mono);color:var(--muted);margin-bottom:2px;white-space:nowrap}
+.hobj .cells{display:inline-flex}
+.hobj.vert .cells{flex-direction:column}
+.hobj .c{min-width:38px;text-align:center;display:flex;flex-direction:column}
+.hobj.vert .c{flex-direction:row;align-items:center;gap:5px}
+.hobj .c .x{border:1.5px solid var(--line);height:30px;display:flex;align-items:center;justify-content:center;font:600 14px var(--mono);background:var(--bg);padding:0 6px}
+.hobj.vert .c .x{min-width:64px;font-size:12.5px}
+.hobj:not(.vert) .c:first-child .x{border-radius:6px 0 0 6px}
+.hobj:not(.vert) .c:last-child .x{border-radius:0 6px 6px 0}
+.hobj.vert .c:first-child .x{border-radius:6px 6px 0 0}
+.hobj.vert .c:last-child .x{border-radius:0 0 6px 6px}
+.hobj .c .i{font:10px var(--mono);color:var(--muted)}
+.hobj .c.hi .x{background:var(--on-soft);border-color:var(--on)}
+.hobj.new .cells{outline:2px solid var(--on);border-radius:6px}
+.hobj.dead{opacity:.35}
+.mem-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.mem-svg path{fill:none;stroke:var(--accent);stroke-width:1.8}
+</style>
+</head>
+<body data-ep="80" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=80" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">综合练习 · P80</div>
+  <h1>二维数组</h1>
+  <p class="en">Two-Dimensional Arrays: Arrays of Arrays</p>
+  <p class="lead">数组里存的还是数组，最外层的大数组就是<b>二维数组</b>。需要把数据<b>分组管理</b>的时候用它。这一篇学它的两种初始化、怎么取元素、怎么用循环嵌套遍历，再画内存图看清"一个二维数组下面拖着几个一维数组"的结构，最后用它算一家商场四个季度的营业额。</p>
+  <div class="road">
+    <span>什么是二维数组</span><i>→</i><span>静态初始化</span><i>→</i><span>获取元素</span><i>→</i><span>遍历</span><i>→</i><span>动态初始化</span><i>→</i><span>内存图</span><i>→</i><span>季度营业额</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 什么是二维数组</a></li>
+    <li><a href="#ch2">2 · 静态初始化</a></li>
+    <li><a href="#ch3">3 · 获取元素</a></li>
+    <li><a href="#ch4">4 · 遍历</a></li>
+    <li><a href="#ch5">5 · 动态初始化</a></li>
+    <li><a href="#ch6">6 · 内存图</a></li>
+    <li><a href="#ch7">7 · 两种特殊写法</a></li>
+    <li><a href="#ch8">8 · 练习：季度营业额</a></li>
+    <li><a href="#ch9">9 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P80</div>
+  <h2>什么是二维数组</h2>
+  <p>很简单：<b>数组里面存的还是数组</b>，最外层的大数组就叫二维数组。之前学的数组叫一维数组，把多个一维数组放到一个大数组里方便管理，这个大数组就是二维数组。有没有三维、四维、五六七八九维数组？有，但几乎用不到，只考虑到二维就可以了。</p>
+  <p><b>什么时候用？</b>当我们需要把数据<b>分组管理</b>的时候。</p>
+  <ul>
+    <li>某商场每个季度的营业额（每季度三个月），要计算每个季度的总营业额和全年的总营业额。可以定义四个一维数组，单独存每个季度的营业额，再把四个一维数组放进一个二维数组里统一管理（本篇最后的练习）；</li>
+    <li>学完面向对象后要做的拼图小游戏：先把大图分成 15 张小图，每张小图对应一个数字；每一行的数字放进一个一维数组，再把四个一维数组放进二维数组统一管理。</li>
+  </ul>
+  <div class="d2" aria-hidden="true">
+    <div class="r" data-i="0"><div class="c"><div class="x">22</div></div><div class="c"><div class="x">66</div></div><div class="c"><div class="x">44</div></div><span class="tag">← 第一季度：一个一维数组</span></div>
+    <div class="r" data-i="1"><div class="c"><div class="x">77</div></div><div class="c"><div class="x">33</div></div><div class="c"><div class="x">88</div></div><span class="tag">← 第二季度</span></div>
+    <div class="r" data-i="2"><div class="c"><div class="x">25</div></div><div class="c"><div class="x">45</div></div><div class="c"><div class="x">65</div></div><span class="tag">← 第三季度</span></div>
+    <div class="r" data-i="3"><div class="c"><div class="x">11</div></div><div class="c"><div class="x">66</div></div><div class="c"><div class="x">99</div></div><span class="tag">← 第四季度</span></div>
+  </div>
+  <p style="font-size:13px;color:var(--muted)">蓝框是二维数组，里面的每一行是它的一个元素：一个一维数组。</p>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P80</div>
+  <h2>静态初始化</h2>
+  <p>二维数组和一维数组一样，有静态初始化和动态初始化两种方式。先看静态的：</p>
+  <code class="blk"><span class="hc">// 完整格式：数据类型[][] 数组名 = new 数据类型[][]{ {元素1, 元素2}, {元素1, 元素2} };</span>
+<span class="hk">int</span>[][] arr = <span class="hk">new int</span>[][]{{11, 22}, {33, 44}};
+
+<span class="hc">// 简化格式：省略 new 数据类型[][]，直接写大括号（一般用这个）</span>
+<span class="hk">int</span>[][] arr = {{11, 22}, {33, 44}};</code>
+  <p>上面的二维数组里存了两个一维数组：第一个装着 11、22，第二个装着 33、44。写一个方括号是一维数组，写两个方括号才是二维数组。最外面的大括号表示二维数组，它里面装的是一维数组，所以每个一维数组也要用大括号括起来，里面才是真正存储的元素；一维数组之间用逗号隔开。</p>
+  <p><b>方括号的位置</b>：和一维数组一样，方括号和数组名可以前后对调，<code>int[][] arr</code> 和 <code>int arr[][]</code> 都行，但习惯用前一种。为什么？看《阿里巴巴 Java 开发手册》编程规约里的一条<b>【强制】</b>：中括号是数组类型的一部分，数组定义应该是"数据类型[] 数组名"；"数据类型 数组名[]"是反例。以后自己定义数组，建议按这个约定来。</p>
+  <p>到 IDEA 里写（类名 TwoDimensionDemo1）。<b>一维数组的长度可以不一样</b>：</p>
+  <code class="blk"><span class="hk">int</span>[][] arr1 = <span class="hk">new int</span>[][]{{1, 2, 3}, {4, 5, 6, 7, 8}};
+<span class="hk">int</span>[][] arr2 = {{1, 2, 3}, {4, 5, 6, 7, 8}};
+
+<span class="hc">// 以后建议这样定义：把每一个一维数组单独写成一行</span>
+<span class="hk">int</span>[][] arr3 = {
+        {1, 2, 3},
+        {4, 5, 6, 7, 8}
+};</code>
+  <p>这个二维数组里有两个一维数组，第一个长度是 3，第二个长度是 5。全写在一行不利于阅读，所以一般把每个一维数组单独写一行。注意：每个一维数组其实是二维数组中的<b>元素</b>，所以它们之间要用逗号隔开，而<b>最后一个一维数组后面不加逗号</b>，就像一维数组里最后一个元素后面没有逗号一样。</p>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P80</div>
+  <h2>获取元素</h2>
+  <p>先猜：对上面的 arr3，<code>System.out.println(arr3[0]);</code> 打印出来是什么？运行一看，是 <code>[I@…</code> 这样一串眼熟的东西：<b>地址值</b>。左边的 <code>[</code> 表示它是一个数组，<code>I</code> 表示类型是 int，<code>@</code> 是固定格式，后面是真正的地址值。也就是说，<code>arr3[0]</code> 获取的是二维数组中的<b>第一个一维数组</b>。</p>
+  <p>想拿里面的元素，后面还要再加一个方括号：<code>arr3[0][0]</code>。可以把 <code>arr3[0]</code> 这个整体看作第一个一维数组，既然是数组，再获取它的 0 索引就行了，结果是 1。</p>
+  <p>再考一个：<code>arr3[i][j]</code> 要打印出 8，i 和 j 分别写几？8 在第二个一维数组的最后一个位置。二维数组的 0 索引是第一个一维数组，1 索引是第二个，所以 i 写 1；在这个一维数组里，8 在 4 索引，所以 j 写 4。</p>
+  <p>那 <code>arr3[2][0]</code> 呢？运行报错：<code>ArrayIndexOutOfBoundsException</code>，错误信息是 Index 2 out of bounds for length 2。二维数组里只有两个一维数组，长度是 2，只有 0 索引和 1 索引，没有 2 索引。</p>
+  <div class="callout key">
+    <span class="t">公式</span>
+    <code>arr[i][j]</code>：arr 是二维数组；<b>i</b> 是二维数组的索引，获取出来的是里面的一维数组；<b>j</b> 是一维数组中的索引，获取出来的才是真正的元素。
+  </div>
+
+  <div class="card">
+    <h3>动手：arr3[i][j] 取到的是谁</h3>
+    <div class="row"><span>i</span><span class="seg" id="ex-i"><button data-v="0">0</button><button data-v="1">1</button><button data-v="2">2</button></span><span>j</span><span class="seg" id="ex-j"><button data-v="-1">不写</button><button data-v="0">0</button><button data-v="1">1</button><button data-v="2">2</button><button data-v="3">3</button><button data-v="4">4</button><button data-v="5">5</button></span></div>
+    <div class="expr" id="ex-expr"></div>
+    <div class="d2" id="ex-d2"></div>
+    <div class="out" id="ex-out"></div>
+    <div class="msg" id="ex-msg"></div>
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P80</div>
+  <h2>遍历二维数组</h2>
+  <p>遍历就是把二维数组里所有的元素都打印出来。思想是：<b>先获取到一维数组，再遍历一维数组，获取到里面的每一个元素</b>。</p>
+  <ul>
+    <li><code>arr3.fori</code>：i 依次表示二维数组中的每一个索引，<code>arr3[i]</code> 就是二维数组中的每一个元素，也就是一维数组；</li>
+    <li>拿到一维数组还要再遍历它：<code>arr3[i].fori</code>，变量名改成 j，j 表示一维数组中的每一个索引；</li>
+    <li>打印 <code>arr3[i][j]</code>。</li>
+  </ul>
+  <p>提升难度：希望每个一维数组打印一行，元素之间用空格隔开。把 ln 删掉、拼一个空格，所有元素都跑到同一行了；再在<b>内循环结束之后</b>单独换行，就是想要的效果。</p>
+  <code class="blk"><span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr3.length; i++) {            <span class="hc">// 外循环：遍历二维数组，得到里面的每一个一维数组</span>
+    <span class="hk">for</span> (<span class="hk">int</span> j = 0; j &lt; arr3[i].length; j++) {     <span class="hc">// 内循环：遍历一维数组，得到里面的每一个元素</span>
+        System.out.print(arr3[i][j] + <span class="hs">" "</span>);
+    }
+    System.out.println();                           <span class="hc">// 内循环结束 = 一个一维数组遍历完毕，换行</span>
+}</code>
+  <p>还是那句话：写循环嵌套要清楚外循环是什么、内循环是什么。</p>
+
+  <div class="card">
+    <h3>动手：三版打印</h3>
+    <div class="row"><span class="seg" id="tr-v"><button data-v="0">① println(arr3[i][j])</button><button data-v="1">② print(arr3[i][j] + " ")</button><button data-v="2">③ 内循环后 println()</button></span></div>
+    <div class="codebox" id="tr-code"></div>
+    <div class="out" id="tr-out"></div>
+    <div class="msg" id="tr-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">两个 length 不是一回事</span>
+    <code>arr3.length</code> 是二维数组的长度，也就是里面有<b>几个一维数组</b>（2）；<code>arr3[i].length</code> 是第 i 个一维数组的长度（3 和 5）。内循环的条件必须写 <code>arr3[i].length</code>：这个例子里两行不一样长，如果写死成 3，第二行的 7、8 就漏掉了；写死成 5，第一行就会越界。另外，想快速看一眼二维数组的内容，可以用 <code>System.out.println(Arrays.deepToString(arr3));</code>，输出 <code>[[1, 2, 3], [4, 5, 6, 7, 8]]</code>。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P80</div>
+  <h2>动态初始化</h2>
+  <code class="blk"><span class="hc">// 数据类型[][] 数组名 = new 数据类型[m][n];</span>
+<span class="hc">// m：这个二维数组可以存放多少个一维数组（二维数组的长度）</span>
+<span class="hc">// n：每一个一维数组可以存放多少个元素（一维数组的长度）</span>
+<span class="hk">int</span>[][] arr = <span class="hk">new int</span>[3][5];
+
+arr[0][0] = 10;       <span class="hc">// 给二维数组赋值一个元素：把 10 赋给第一个一维数组的 0 索引</span></code>
+  <p>这里的 3 表示二维数组长度为 3，可以装三个一维数组；5 表示每个一维数组的长度都是 5，可以装 5 个 int 类型的元素。用上一节的循环嵌套遍历（为什么要有内循环？因为外循环拿不到元素，拿到的只是一维数组），打印结果：没有赋值的位置是默认初始化值 0，赋过值的位置是 10。</p>
+
+  <div class="card">
+    <h3>动手：new int[m][n]，点格子赋值</h3>
+    <div class="row"><span>int[][] arr = new int[</span><input class="inp" id="dy-m" type="number" min="1" max="5" value="3" aria-label="m"><span>][</span><input class="inp" id="dy-n" type="number" min="1" max="6" value="5" aria-label="n"><span>];</span><button class="btn sm" id="dy-re">清空</button></div>
+    <div class="d2" id="dy-d2"></div>
+    <div class="codebox" id="dy-code"></div>
+    <div class="out" id="dy-out"></div>
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P80</div>
+  <h2>二维数组的内存图</h2>
+  <p>学难一点的：二维数组在内存里到底长什么样。以 <code>int[][] arr = new int[2][3];</code> 为例：</p>
+  <ul>
+    <li>main 方法先进栈，执行第一行。等号左边只是在内存里定义了一个变量：arr 是变量名，<code>int[][]</code> 是数据类型，表示 arr 可以记录 int 类型<b>二维数组的地址值</b>；</li>
+    <li>等号右边有 new，在堆里给二维数组开辟一块小空间，假设地址值是 0x0011。它有 0、1 两个索引，此时装的是两个默认初始化值 <b>null</b>；</li>
+    <li>还没完：代码里还指定了一维数组的长度 3，所以内存里还会创建<b>两个长度为 3 的一维数组</b>（假设地址是 0x0022 和 0x0033），再把这两个地址值赋给二维数组的 0 索引和 1 索引；</li>
+    <li>最后把二维数组的地址值 0x0011 赋给左边的变量 arr，整个二维数组才创建完毕。</li>
+  </ul>
+  <p>所以整体结构可以这么理解：arr 记录的是二维数组，而二维数组的下面又<b>拖了两个一维数组</b>。</p>
+  <ul>
+    <li><code>arr[0]</code>：获取二维数组 0 索引的元素，它记录的是 0x0022，也就是第一个一维数组。所以打印 arr[0] 看到的是数组的地址值；</li>
+    <li><code>arr[0][1]</code>：先通过 arr[0] 拿到地址值 0x0022，找到第一个一维数组，再通过后面的 1 拿到它 1 索引上的元素：0。</li>
+  </ul>
+
+  <div class="card memdemo" id="m1"><h3>动手：逐行看二维数组的栈和堆</h3></div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节 · P80</div>
+  <h2>两种特殊情况的写法</h2>
+  <p>这两种写法<b>知道就可以，不需要掌握</b>。上面演示里的后两段程序就是它们。</p>
+  <p><b>特殊情况一：后面的方括号空着不写</b>。</p>
+  <code class="blk"><span class="hk">int</span>[][] arr = <span class="hk">new int</span>[2][];     <span class="hc">// 只创建二维数组，没有创建一维数组，里面是两个 null</span>
+<span class="hk">int</span>[] arr1 = {11, 22};
+<span class="hk">int</span>[] arr2 = {44, 55, 66};
+arr[0] = arr1;                   <span class="hc">// 手动把一维数组的地址值添加给二维数组</span>
+arr[1] = arr2;</code>
+  <p>前面的方括号写 2，表示二维数组的长度；后面的方括号空着，表示此时内存里只创建了二维数组，没有创建一维数组，二维数组里存的是 null。一维数组需要我们手动创建：假设 arr1、arr2 的地址值分别是 0x00aa、0x00bb，<code>arr[0] = arr1</code> 就是把 0x00aa 添加到 0 索引，<code>arr[1] = arr2</code> 把 0x00bb 添加到 1 索引。这样写比较麻烦，但也有好处：自己创建一维数组非常灵活，<b>想要多长就多长</b>，第一个长度是 2、第二个长度是 3 都行。而在第二个方括号里写了固定的数字时，Java 会自动创建一维数组，所有一维数组的长度都一样。</p>
+  <p><b>特殊情况二：标准方式创建之后，又换成新的一维数组</b>。</p>
+  <code class="blk"><span class="hk">int</span>[][] arr = <span class="hk">new int</span>[2][3];    <span class="hc">// 标准方式：自动创建了两个长度为 3 的一维数组</span>
+<span class="hk">int</span>[] arr1 = {11, 22};
+<span class="hk">int</span>[] arr2 = {44, 55, 66};
+arr[0] = arr1;                   <span class="hc">// 0 索引原来记录的 0x0022 被覆盖</span>
+arr[1] = arr2;                   <span class="hc">// 1 索引原来记录的 0x0033 被覆盖</span></code>
+  <p>把 arr1 记录的 0x00aa 赋给 arr 的 0 索引，原来的 0x0022 就被覆盖了；再把 0x00bb 赋给 1 索引，原来的 0x0033 也被覆盖。二维数组的 0 索引和 1 索引指向了两个新的数组，原来那两个一维数组没人用了，会变成<b>垃圾</b>，从内存中消失。</p>
+  <p>二维数组学的内容不少，需要掌握的只有四点：① 什么时候用（数据要分组管理时）；② 两种初始化方式；③ 怎么给元素赋值；④ 怎么遍历。</p>
+  <div class="extra">
+    <span class="t">null 是什么，碰到它会怎样</span>
+    null 是引用数据类型的默认初始化值，意思是"<b>还没有记录任何地址</b>"。二维数组的每个格子装的是一维数组的地址值，属于引用类型，所以默认是 null（一维 int 数组的格子装的是整数，默认才是 0）。在特殊情况一里，如果还没执行 <code>arr[0] = arr1;</code> 就去访问 <code>arr[0][0]</code>，Java 顺着 arr[0] 去找一维数组，却发现里面是 null，没有数组可找，程序会抛出 <code>NullPointerException</code>（空指针异常）。这是 Java 里最常见的异常之一，学了面向对象之后会经常遇到。
+  </div>
+</section>
+
+<!-- ============ 8 ============ -->
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节 · P80</div>
+  <h2>练习：季度营业额</h2>
+  <p><b>需求</b>：某商场每个季度的营业额如下（单位：万元）。第一季度：22、66、44；第二季度：77、33、88；第三季度：25、45、65；第四季度：11、66、99。要求计算出每个季度的总营业额和全年的总营业额。</p>
+  <p><b>分析</b>：要算每个季度的总营业额，得先把四个季度的数据存起来：四个一维数组；为了方便管理，再把它们放到一个二维数组里。</p>
+  <ul>
+    <li><b>创建二维数组</b>：动态还是静态？不知道要添加的数据用动态，现在数据都知道了，用<b>静态</b>。名字叫 yearArrArr（二维数组用两个 Arr），每个一维数组单独写一行；</li>
+    <li><b>定义方法求一个季度的营业额</b>：一个季度就是一个一维数组，所以形参是 <code>int[]</code>，返回求出来的总和；</li>
+    <li><b>遍历二维数组</b>，得到每个一维数组（<code>yearArrArr[i]</code>，起名 quarterArr），交给方法求和并打印。提示语里的季度是 <code>i + 1</code>；</li>
+    <li><b>全年</b>：在循环外面定义 yearSum，每得到一个季度的营业额，先打印，再累加进去；循环结束后打印。</li>
+  </ul>
+  <code class="blk"><span class="hk">public static void</span> main(String[] args) {
+    <span class="hc">// 1. 创建二维数组并存储数据</span>
+    <span class="hk">int</span>[][] yearArrArr = {
+            {22, 66, 44},
+            {77, 33, 88},
+            {25, 45, 65},
+            {11, 66, 99}
+    };
+
+    <span class="hk">int</span> yearSum = 0;                                    <span class="hc">// 全年的营业额</span>
+    <span class="hc">// 2. 遍历二维数组，得到每一个一维数组并求和</span>
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; yearArrArr.length; i++) {
+        <span class="hk">int</span>[] quarterArr = yearArrArr[i];               <span class="hc">// 二维数组的每一个元素，就是一维数组</span>
+        <span class="hk">int</span> sum = getSum(quarterArr);
+        System.out.println(<span class="hs">"第"</span> + (i + 1) + <span class="hs">"个季度的总营业额为："</span> + sum);
+        yearSum = yearSum + sum;
+    }
+    System.out.println(<span class="hs">"全年的总营业额为："</span> + yearSum);    <span class="hc">// 641</span>
+}
+
+<span class="hc">// 求一个季度（一个一维数组）的总营业额</span>
+<span class="hk">public static int</span> getSum(<span class="hk">int</span>[] arr) {
+    <span class="hk">int</span> sum = 0;
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+        sum = sum + arr[i];
+    }
+    <span class="hk">return</span> sum;
+}</code>
+  <p style="font-size:13px;color:var(--muted)">字幕里只念出了第二季度的 77、33、88 和最后的结果 641 万元；其余三个季度的数字取自这道题通行的版本，四个季度加起来正好是 641。</p>
+
+  <div class="card">
+    <h3>动手：改改数字</h3>
+    <div class="sales" id="sl"></div>
+    <div class="out" id="sl-out"></div>
+  </div>
+  <div class="extra">
+    <span class="t">这里的 getSum 和 P66 的 getSum</span>
+    <a href="63.html#ch5">学带返回值的方法时</a>也算过季度营业额，那时的方法是 <code>getSum(int num1, int num2, int num3)</code>，三个月写成三个形参，main 里要手写四次调用、四个变量。现在数据装进了二维数组，方法收一个一维数组，main 里一个循环就把四个季度都处理了；哪天一个季度变成四个月，或者要算八个季度，只改数据，代码一行不用动。这就是"把数据分组管理"带来的好处。
+  </div>
+</section>
+
+<!-- ============ 9 ============ -->
+<section class="ch" id="ch9">
+  <div class="ch-num">第 9 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>二维数组</b></td><td>数组里存的还是数组；需要把数据分组管理时用</td></tr>
+      <tr><td><b>静态初始化</b></td><td><code>int[][] arr = {{1, 2, 3}, {4, 5, 6, 7, 8}};</code>，每个一维数组建议单独写一行，长度可以不同</td></tr>
+      <tr><td><b>动态初始化</b></td><td><code>new int[m][n]</code>：m 个一维数组，每个长度 n，默认值 0</td></tr>
+      <tr><td><b>取元素</b></td><td><code>arr[i]</code> 是第 i 个一维数组（打印是地址值）；<code>arr[i][j]</code> 才是元素</td></tr>
+      <tr><td><b>遍历</b></td><td>外循环 <code>i &lt; arr.length</code> 得到一维数组，内循环 <code>j &lt; arr[i].length</code> 得到元素</td></tr>
+      <tr><td><b>内存</b></td><td>变量记录二维数组的地址；二维数组的格子里记录各个一维数组的地址</td></tr>
+      <tr><td><b>特殊写法</b></td><td><code>new int[2][]</code> 只建二维数组（格子是 null），一维数组自己建、自己放；放进新数组后旧的没人用就成了垃圾</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    二维数组就是"装着数组的数组"：第一个方括号挑出一个一维数组，第二个方括号才挑出元素。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. <code>int[][] arr = {{1, 2, 3}, {4, 5, 6, 7, 8}};</code>，<code>arr.length</code>、<code>arr[1].length</code>、<code>arr[1][2]</code> 分别是多少？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">2（有两个一维数组）、5（第二个一维数组的长度）、6（第二个一维数组的 2 索引）。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 对上面的数组，<code>System.out.println(arr[0]);</code> 打印的是什么？<code>arr[2][0]</code> 呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">arr[0] 是第一个一维数组，打印的是它的地址值（<code>[I@</code> 加一串十六进制数）。arr[2][0] 报 ArrayIndexOutOfBoundsException：二维数组长度是 2，没有 2 索引。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 遍历二维数组时想让每个一维数组占一行，换行的 <code>System.out.println();</code> 写在哪？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">写在内循环结束之后、外循环的循环体里。内循环结束表示一个一维数组遍历完了，这时换行。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>int[][] arr = new int[3][5];</code> 一共在堆里创建了几个数组？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">4 个：1 个长度为 3 的二维数组，加上 3 个长度为 5 的一维数组。二维数组的三个格子里分别记录三个一维数组的地址值。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. <code>new int[2][]</code> 和 <code>new int[2][3]</code> 有什么区别？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">前者只创建二维数组，两个格子都是 null，一维数组要自己创建再赋进去（长度可以各不相同）；后者由 Java 自动创建两个长度都是 3 的一维数组。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="77.html"><small>← 上一篇</small>P77–79 加密解密、抽奖、双色球</a>
+    <a class="next" href="81.html"><small>下一篇 →</small>P81–83 类、对象与封装</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P80（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=80" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function segInit(sel, v, fn) {
+  const bs = $$(sel + ' button');
+  const set = val => { bs.forEach(b => b.classList.toggle('sel', b.dataset.v === String(val))); };
+  bs.forEach(b => b.onclick = () => { set(b.dataset.v); fn(b.dataset.v); });
+  set(v);
+  return set;
+}
+const ARR3 = [[1, 2, 3], [4, 5, 6, 7, 8]];
+function drawD2(box, a, hiRow, hiCell, extra = () => '') {
+  box.innerHTML = a.map((r, i) => `<div class="r ${hiRow === i ? 'hi' : ''}" data-i="${i}">${r.map((v, j) => `<div class="c ${hiCell && hiCell[0] === i && hiCell[1] === j ? 'hi' : ''} ${extra(i, j, v)}" data-i="${i}" data-j="${j}"><div class="x">${v}</div><div class="i">${j}</div></div>`).join('')}</div>`).join('');
+}
+
+/* ---------- arr3[i][j] ---------- */
+(function () {
+  let i = 0, j = -1;
+  function show() {
+    $('#ex-expr').textContent = `System.out.println(arr3[${i}]${j >= 0 ? `[${j}]` : ''});`;
+    const out = $('#ex-out'), msg = $('#ex-msg');
+    if (i >= ARR3.length) {
+      drawD2($('#ex-d2'), ARR3, null, null);
+      out.innerHTML = `<span class="err">Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index ${i} out of bounds for length ${ARR3.length}</span>`;
+      msg.innerHTML = `二维数组里只有 ${ARR3.length} 个一维数组，只有 0 索引和 1 索引，没有 ${i} 索引。` + (j < 0 ? '' : ' 还没轮到看 j，就已经报错了。');
+    } else if (j < 0) {
+      drawD2($('#ex-d2'), ARR3, i, null);
+      out.textContent = i === 0 ? '[I@4eec7777' : '[I@3b07d329';
+      msg.innerHTML = `arr3[${i}] 获取的是二维数组中的第 ${i + 1} 个一维数组（黄色那一行），打印出来是它的地址值：<code>[</code> 表示数组，<code>I</code> 表示 int，<code>@</code> 后面是地址（每次运行都可能不同）。`;
+    } else if (j >= ARR3[i].length) {
+      drawD2($('#ex-d2'), ARR3, i, null);
+      out.innerHTML = `<span class="err">Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index ${j} out of bounds for length ${ARR3[i].length}</span>`;
+      msg.innerHTML = `arr3[${i}] 找到了第 ${i + 1} 个一维数组，但它的长度是 ${ARR3[i].length}，最大索引是 ${ARR3[i].length - 1}，没有 ${j} 索引。`;
+    } else {
+      drawD2($('#ex-d2'), ARR3, i, [i, j]);
+      out.textContent = ARR3[i][j];
+      msg.innerHTML = `先用 i = ${i} 找到第 ${i + 1} 个一维数组（黄色那一行），再用 j = ${j} 找到它 ${j} 索引上的元素：<b>${ARR3[i][j]}</b>。`;
+    }
+  }
+  segInit('#ex-i', 0, v => { i = +v; show(); });
+  segInit('#ex-j', -1, v => { j = +v; show(); });
+  show();
+})();
+
+/* ---------- 遍历三版 ---------- */
+(function () {
+  const CODE = [
+    ['for (int i = 0; i < arr3.length; i++) {', '    for (int j = 0; j < arr3[i].length; j++) {', '        System.out.println(arr3[i][j]);', '    }', '}'],
+    ['for (int i = 0; i < arr3.length; i++) {', '    for (int j = 0; j < arr3[i].length; j++) {', '        System.out.print(arr3[i][j] + " ");', '    }', '}'],
+    ['for (int i = 0; i < arr3.length; i++) {', '    for (int j = 0; j < arr3[i].length; j++) {', '        System.out.print(arr3[i][j] + " ");', '    }', '    System.out.println();', '}'],
+  ];
+  const OUT = [ARR3.flat().join('\n'), ARR3.flat().map(x => x + ' ').join(''), ARR3.map(r => r.map(x => x + ' ').join('')).join('\n')];
+  const MSG = ['每个元素都打印出来了，但一个元素占一行，看不出哪些是一组。', '删掉 ln、拼上空格：所有元素都在同一行了，还是看不出分组。', '内循环结束表示一个一维数组遍历完了，这时单独换行：每个一维数组占一行。'];
+  function show(v) { $('#tr-code').innerHTML = CODE[v].map(L => `<div>${esc(L)}</div>`).join(''); $('#tr-out').textContent = OUT[v]; $('#tr-msg').textContent = MSG[v]; }
+  segInit('#tr-v', 0, v => show(+v)); show(0);
+})();
+
+/* ---------- 动态初始化 ---------- */
+(function () {
+  let a, log;
+  function build() {
+    const m = Math.min(5, Math.max(1, Math.trunc(+$('#dy-m').value) || 1)), n = Math.min(6, Math.max(1, Math.trunc(+$('#dy-n').value) || 1));
+    a = Array.from({ length: m }, () => Array(n).fill(0)); log = []; paint(m, n);
+  }
+  function paint() {
+    const m = a.length, n = a[0].length;
+    drawD2($('#dy-d2'), a, null, null, (i, j, v) => 'clk' + (v ? ' ten' : ''));
+    $('#dy-code').innerHTML = [`int[][] arr = new int[${m}][${n}];   // ${m} 个一维数组，每个长度 ${n}`, ...log.map(x => `arr[${x[0]}][${x[1]}] = 10;`)].map(L => `<div>${esc(L)}</div>`).join('') + (log.length ? '' : '<div style="color:var(--muted)">// 点上面任意一个格子，给它赋值 10</div>');
+    $('#dy-out').textContent = a.map(r => r.map(x => x + ' ').join('')).join('\n');
+  }
+  $('#dy-d2').onclick = e => { const c = e.target.closest('.c'); if (!c) return; const i = +c.dataset.i, j = +c.dataset.j; if (a[i][j]) return; a[i][j] = 10; log.push([i, j]); if (log.length > 6) log.shift(); paint(); };
+  ['#dy-m', '#dy-n'].forEach(s => $(s).addEventListener('input', build));
+  $('#dy-re').onclick = build;
+  build();
+})();
+
+/* ---------- 内存图 ---------- */
+function memDemo(id, PROGS) {
+  const root = $('#' + id);
+  root.insertAdjacentHTML('beforeend', `
+    <div class="row"><span class="seg pp">${PROGS.map((P, i) => `<button data-v="${i}">${P.name}</button>`).join('')}</span></div>
+    <div class="row"><button class="btn sm primary nx">执行下一步</button><button class="btn sm pv">上一步</button><button class="btn sm re">重来</button></div>
+    <div class="mem-code"></div>
+    <div class="mscroll"><div class="mem-wrap">
+      <div class="mem-col"><h4>栈</h4><div class="area stack"></div></div>
+      <div class="mem-col"><h4>堆</h4><div class="area heap"><div class="hc0"></div><div class="hc1"></div></div></div>
+      <svg class="mem-svg"><defs><marker id="mah-${id}" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" style="fill:var(--accent);stroke:none"/></marker></defs></svg>
+    </div></div>
+    <div class="out"></div>
+    <div class="msg"></div>`);
+  const q = s => $(s, root);
+  let p = 0, k = 0;
+  const isRef = v => typeof v === 'string' && v.startsWith('0x');
+  function mk() {
+    const s = { fr: [], hp: [], out: [], hi: {} };
+    s.push = name => { s.fr.push({ name, vars: [] }); s.hi.fr = s.fr.length - 1; };
+    s.def = (n, t, v) => { s.fr[s.fr.length - 1].vars.push({ n, t, v }); s.hi.v = n; };
+    s.look = n => { s.hi.v = n; };
+    s.alloc = (ad, vals, col) => { s.hp.push({ ad, v: vals.slice(), col }); (s.hi.h = s.hi.h || []).push(ad); };
+    s.cell = (ad, i, val) => { const o = s.hp.find(o => o.ad === ad); if (val !== undefined) o.v[i] = val; (s.hi.c = s.hi.c || []).push(ad + ':' + i); };
+    s.kill = ad => { s.hp.find(o => o.ad === ad).dead = true; };
+    s.print = x => s.out.push(x);
+    return s;
+  }
+  function stateAt(n) {
+    const s = mk(); let msg = '程序还没开始运行。点"执行下一步"。';
+    for (let i = 0; i < n; i++) { s.hi = {}; msg = PROGS[p].steps[i][1](s); }
+    return [s, msg];
+  }
+  function show() {
+    const P = PROGS[p];
+    $$('.pp button', root).forEach(b => b.classList.toggle('sel', +b.dataset.v === p));
+    const cur = k ? P.steps[k - 1][0] : -1;
+    q('.mem-code').innerHTML = P.code.map((L, i) => `<div class="${i === cur ? 'cur' : ''}">${esc(L) || ' '}</div>`).join('');
+    const [s, msg] = stateAt(k);
+    q('.stack').innerHTML = s.fr.map((f, fi) => `<div class="frame ${s.hi.fr === fi ? 'in' : ''}"><div class="fn">${f.name} 方法</div>` +
+      f.vars.map(v => `<div class="var ${s.hi.v === v.n ? 'new' : ''}"><span class="nm">${v.t} ${v.n}</span><span class="vv" data-ref="${isRef(v.v) ? v.v : ''}">${v.v}</span></div>`).join('') + '</div>').join('') || '<div class="empty">（栈里没有方法）</div>';
+    const obj = o => `<div class="hobj ${o.col === 0 ? 'vert' : ''} ${(s.hi.h || []).includes(o.ad) ? 'new' : ''} ${o.dead ? 'dead' : ''}" data-ad="${o.ad}"><div class="ad">${o.ad}${o.col === 0 ? ' 二维数组' : ''}${o.dead ? '（垃圾）' : ''}</div><div class="cells">${o.v.map((x, i) => `<div class="c ${(s.hi.c || []).includes(o.ad + ':' + i) ? 'hi' : ''}"><div class="x" data-ref="${isRef(x) ? x : ''}">${x}</div><div class="i">${i}</div></div>`).join('')}</div></div>`;
+    q('.hc0').innerHTML = s.hp.filter(o => o.col === 0).map(obj).join('');
+    q('.hc1').innerHTML = s.hp.filter(o => o.col === 1).map(obj).join('');
+    q('.out').innerHTML = s.out.length ? esc(s.out.join('\n')) : '<span class="note">（控制台）</span>';
+    q('.msg').innerHTML = msg;
+    q('.nx').disabled = k >= P.steps.length; q('.pv').disabled = k === 0;
+    arrows();
+  }
+  function arrows() {
+    const svg = q('.mem-svg'), W = q('.mem-wrap').getBoundingClientRect();
+    $$('path.ln', svg).forEach(x => x.remove());
+    $$('[data-ref]', root).forEach(v => {
+      if (!v.dataset.ref) return;
+      const o = q(`.hobj[data-ad="${v.dataset.ref}"] .cells`); if (!o) return;
+      const a = v.getBoundingClientRect(), b = o.getBoundingClientRect();
+      const x1 = a.right - W.left, y1 = a.top + a.height / 2 - W.top, x2 = b.left - W.left - 2, y2 = b.top + 15 - W.top, dx = Math.min(40, Math.max(14, (x2 - x1) / 2));
+      const pth = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      pth.setAttribute('class', 'ln'); pth.setAttribute('marker-end', `url(#mah-${id})`);
+      pth.setAttribute('d', `M${x1},${y1} C${x1 + dx},${y1} ${x2 - dx},${y2} ${x2},${y2}`);
+      svg.appendChild(pth);
+    });
+  }
+  $$('.pp button', root).forEach(b => b.onclick = () => { p = +b.dataset.v; k = 0; show(); });
+  q('.nx').onclick = () => { if (k < PROGS[p].steps.length) { k++; show(); } };
+  q('.pv').onclick = () => { if (k > 0) { k--; show(); } };
+  q('.re').onclick = () => { k = 0; show(); };
+  window.addEventListener('resize', arrows);
+  show();
+}
+
+memDemo('m1', [
+  {
+    name: '标准：new int[2][3]',
+    code: ['public static void main(String[] args) {', '    int[][] arr = new int[2][3];', '    System.out.println(arr[0]);', '    System.out.println(arr[0][1]);', '}'],
+    steps: [
+      [0, s => { s.push('main'); return 'main 方法先进栈。'; }],
+      [1, s => { s.alloc('0x0011', ['null', 'null'], 0); return '等号右边有 new：在堆里给<b>二维数组</b>开辟一块空间，地址值 0x0011。它有 0、1 两个索引，现在装的是默认初始化值 null。'; }],
+      [1, s => { s.alloc('0x0022', [0, 0, 0], 1); s.alloc('0x0033', [0, 0, 0], 1); s.cell('0x0011', 0, '0x0022'); s.cell('0x0011', 1, '0x0033'); return '还没完：第二个方括号里指定了长度 3，所以再创建<b>两个长度为 3 的一维数组</b>（0x0022、0x0033），把它们的地址值赋给二维数组的 0 索引和 1 索引。'; }],
+      [1, s => { s.def('arr', 'int[][]', '0x0011'); return '最后把二维数组的地址值 0x0011 赋给左边的变量 arr。arr 记录的是二维数组，二维数组下面拖着两个一维数组。'; }],
+      [2, s => { s.cell('0x0011', 0); s.print('[I@0x0022   (示意)'); return 'arr[0]：二维数组 0 索引的元素，它记录的是 0x0022，也就是第一个一维数组。所以打印出来是地址值。'; }],
+      [3, s => { s.cell('0x0011', 0); s.cell('0x0022', 1); s.print('0'); return 'arr[0][1]：先通过 arr[0] 拿到 0x0022，找到第一个一维数组，再拿它 1 索引上的元素：0。'; }],
+    ],
+  },
+  {
+    name: '特殊一：new int[2][]',
+    code: ['public static void main(String[] args) {', '    int[][] arr = new int[2][];', '    int[] arr1 = {11, 22};', '    int[] arr2 = {44, 55, 66};', '    arr[0] = arr1;', '    arr[1] = arr2;', '}'],
+    steps: [
+      [0, s => { s.push('main'); return 'main 方法先进栈。'; }],
+      [1, s => { s.alloc('0x0011', ['null', 'null'], 0); s.def('arr', 'int[][]', '0x0011'); return '后面的方括号空着：堆里<b>只创建了二维数组</b>，没有创建一维数组，两个格子都是 null。'; }],
+      [2, s => { s.alloc('0x00aa', [11, 22], 1); s.def('arr1', 'int[]', '0x00aa'); return '手动创建第一个一维数组，长度 2，假设地址值是 0x00aa。'; }],
+      [3, s => { s.alloc('0x00bb', [44, 55, 66], 1); s.def('arr2', 'int[]', '0x00bb'); return '手动创建第二个一维数组，长度 3，地址值 0x00bb。长度想要多长就多长。'; }],
+      [4, s => { s.cell('0x0011', 0, '0x00aa'); return 'arr[0] = arr1：把 arr1 记录的 0x00aa 添加到二维数组的 0 索引。'; }],
+      [5, s => { s.cell('0x0011', 1, '0x00bb'); return 'arr[1] = arr2：把 0x00bb 添加到 1 索引。现在二维数组里是一短一长两个一维数组。'; }],
+    ],
+  },
+  {
+    name: '特殊二：先标准创建，再换掉',
+    code: ['public static void main(String[] args) {', '    int[][] arr = new int[2][3];', '    int[] arr1 = {11, 22};', '    int[] arr2 = {44, 55, 66};', '    arr[0] = arr1;', '    arr[1] = arr2;', '}'],
+    steps: [
+      [0, s => { s.push('main'); return 'main 方法先进栈。'; }],
+      [1, s => { s.alloc('0x0011', ['0x0022', '0x0033'], 0); s.alloc('0x0022', [0, 0, 0], 1); s.alloc('0x0033', [0, 0, 0], 1); s.def('arr', 'int[][]', '0x0011'); return '标准方式：二维数组 0x0011，Java 自动创建了两个长度为 3 的一维数组 0x0022、0x0033。'; }],
+      [2, s => { s.alloc('0x00aa', [11, 22], 1); s.def('arr1', 'int[]', '0x00aa'); return '又创建了一个新的一维数组 arr1（0x00aa）。'; }],
+      [3, s => { s.alloc('0x00bb', [44, 55, 66], 1); s.def('arr2', 'int[]', '0x00bb'); return '再创建 arr2（0x00bb）。'; }],
+      [4, s => { s.cell('0x0011', 0, '0x00aa'); s.kill('0x0022'); return 'arr[0] = arr1：0 索引原来记录的 0x0022 被 0x00aa 覆盖。原来的 0x0022 没有人指向它了，变成垃圾。'; }],
+      [5, s => { s.cell('0x0011', 1, '0x00bb'); s.kill('0x0033'); return 'arr[1] = arr2：1 索引原来的 0x0033 被覆盖，也成了垃圾，会从内存中消失。二维数组的两个索引指向了两个新的数组。'; }],
+    ],
+  },
+]);
+
+/* ---------- 季度营业额 ---------- */
+(function () {
+  const D = [[22, 66, 44], [77, 33, 88], [25, 45, 65], [11, 66, 99]];
+  $('#sl').innerHTML = '<div class="h"></div><div class="h">j = 0</div><div class="h">j = 1</div><div class="h">j = 2</div><div class="h">合计</div>' +
+    D.map((r, i) => `<div>第 ${i + 1} 季度 <small style="color:var(--muted)">i = ${i}</small></div>` + r.map((v, j) => `<input class="inp" data-i="${i}" data-j="${j}" value="${v}" inputmode="numeric" aria-label="第 ${i + 1} 季度第 ${j + 1} 个月">`).join('') + `<div class="s" id="sl-s${i}"></div>`).join('');
+  function run() {
+    const a = D.map((r, i) => r.map((_, j) => Number($(`#sl input[data-i="${i}"][data-j="${j}"]`).value)));
+    if (a.flat().some(x => !Number.isInteger(x))) { $('#sl-out').innerHTML = '<span class="note">请都填整数</span>'; return; }
+    let year = 0; const lines = [];
+    a.forEach((r, i) => { const s = r.reduce((x, y) => x + y, 0); $('#sl-s' + i).textContent = s; lines.push(`第${i + 1}个季度的总营业额为：${s}`); year += s; });
+    lines.push('全年的总营业额为：' + year);
+    $('#sl-out').textContent = lines.join('\n');
+  }
+  $('#sl').addEventListener('input', run);
+  run();
+})();
+</script>
+</body>
+</html>

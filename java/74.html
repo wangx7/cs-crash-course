@@ -1,0 +1,654 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>P74–76 买机票、质数、验证码、评委打分 · Java 入门图文版</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+.btn.sm{font-size:13px;padding:4px 10px}
+code.blk{display:block;white-space:pre;padding:10px 14px;border-radius:10px;font-size:14px;line-height:1.7;overflow-x:auto}
+.hk{color:var(--accent);font-weight:700}
+.hs{color:var(--ok)}
+.hc{color:var(--muted);font-style:italic}
+.row{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:14px;margin:6px 0}
+.inp{font:14px var(--mono);border:1px solid var(--line);border-radius:6px;padding:3px 6px;background:var(--panel);color:var(--ink);width:90px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:14px;overflow:hidden;flex-wrap:wrap}
+.seg button{font:13px inherit;border:0;background:var(--panel);color:var(--ink);padding:3px 11px;cursor:pointer}
+.seg button.sel{background:var(--accent);color:#fff}
+.out{background:#0f1115;color:#d7dae0;border-radius:10px;padding:6px 12px;font:13.5px/1.6 var(--mono);margin-top:8px;min-height:28px;max-height:240px;overflow-y:auto;white-space:pre-wrap}
+.out .note{color:#7f8794}
+.out .err{color:#ff8f8f}
+.msg{font-size:14px;margin-top:8px}
+label{font-size:14px;display:inline-flex;align-items:center;gap:4px}
+.tt td{vertical-align:top}
+.steps{counter-reset:s;list-style:none;padding:0;margin:10px 0;display:grid;gap:6px}
+.steps li{counter-increment:s;border:1.5px solid var(--line);border-radius:10px;padding:6px 10px 6px 38px;position:relative;background:var(--panel);font-size:14px}
+.steps li::before{content:counter(s);position:absolute;left:10px;top:6px;width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font:700 12px/20px var(--mono);text-align:center}
+
+/* 折扣表 */
+.fare{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;margin:10px 0;font-size:14px;max-width:460px}
+.fare div{border:1.5px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--panel);text-align:center}
+.fare div.h{background:none;border-color:transparent;color:var(--muted);font-size:13px}
+.fare div.hit{border-color:var(--on);background:var(--on-soft);font-weight:700}
+
+/* 质数格子 */
+.pgrid{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;margin-top:8px}
+.pgrid button{font:12.5px var(--mono);border:1.5px solid var(--line);border-radius:6px;padding:4px 0;background:var(--panel);color:var(--muted);cursor:pointer}
+.pgrid button.p{border-color:var(--ok);background:var(--ok-soft);color:var(--ink);font-weight:700}
+.pgrid button.sel{outline:2px solid var(--on);outline-offset:1px}
+
+/* 字符数组 */
+.chs{display:grid;grid-template-columns:repeat(13,minmax(0,1fr));gap:3px;margin-top:8px}
+.chs div{border:1.5px solid var(--line);border-radius:6px;text-align:center;background:var(--panel);padding:2px 0}
+.chs div b{display:block;font:600 14px var(--mono);min-height:19px}
+.chs div i{display:block;font:10px var(--mono);font-style:normal;color:var(--muted)}
+.chs div.hit{border-color:var(--on);background:var(--on-soft)}
+.chs div.bad b{color:var(--bad)}
+.code5{display:inline-flex;gap:5px;margin-left:6px}
+.code5 span{font:700 20px var(--mono);border:2px solid var(--accent);border-radius:8px;width:34px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--accent-soft)}
+.code5 span.num{border-color:var(--ok);background:var(--ok-soft)}
+
+/* 数组格子 */
+.arr{display:flex;margin:14px 0 4px;overflow-x:auto;padding:22px 2px 2px;position:relative}
+.arr .cell{min-width:52px;text-align:center;flex:none;position:relative}
+.arr .v{border:2px solid var(--line);border-left-width:1px;border-right-width:1px;height:40px;display:flex;align-items:center;justify-content:center;font:600 15px var(--mono);background:var(--panel);transition:background .25s}
+.arr .cell:first-child .v{border-left-width:2px;border-radius:8px 0 0 8px}
+.arr .cell:last-child .v{border-right-width:2px;border-radius:0 8px 8px 0}
+.arr .ix{font:12px var(--mono);color:var(--muted);margin-top:3px}
+.arr .cell.hi .v{background:var(--on-soft);border-color:var(--on)}
+.arr .cell.ok .v{background:var(--ok-soft);border-color:var(--ok)}
+.arr .cell.bad .v{background:color-mix(in srgb,var(--bad) 16%,transparent);border-color:var(--bad)}
+.arr .cell.emp .v{color:var(--muted);font-weight:400}
+.arr .ptr{position:absolute;top:-21px;left:0;right:0;font:700 12px var(--mono);color:var(--bad)}
+</style>
+</head>
+<body data-ep="74" data-store="hm-java-read">
+
+<div class="topbar">
+  <a href="index.html">← Java 入门到起飞 · 图文版</a>
+  <a href="https://www.bilibili.com/video/BV17F411T7Ao?p=74" target="_blank" rel="noopener">有空时看视频 ↗</a>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">综合练习 · P74–P76</div>
+  <h1>买机票、质数、验证码、评委打分</h1>
+  <p class="en">Mixed Practice I: Airfare, Primes, Captcha, Array Copy, Judges' Scores</p>
+  <p class="lead">第七天是专题课，不学新内容，用九道有点难度的练习把前六天的知识串起来。这一篇是前五道：<b>卖飞机票</b>（判断嵌套，再抽取成方法）、<b>找质数</b>（循环嵌套）、<b>开发验证码</b>（在没规律的数据里随机）、<b>数组元素的复制</b>、<b>评委打分</b>（录入不合法就原地重录）。每道题都建议先自己想、自己写，再对照。</p>
+  <div class="road">
+    <span>卖飞机票</span><i>→</i><span>抽取方法</span><i>→</i><span>找质数</span><i>→</i><span>开发验证码</span><i>→</i><span>数组元素复制</span><i>→</i><span>评委打分</span>
+  </div>
+  <div class="legend">
+    <span class="l-src">正文：据视频字幕提炼重写，讲解顺序和例子来自原课</span>
+    <span class="l-add">蓝色虚线框：视频之外的补充 / 更正</span>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc" aria-label="目录">
+  <ol>
+    <li><a href="#ch1">1 · 卖飞机票</a></li>
+    <li><a href="#ch2">2 · 优化：抽取方法</a></li>
+    <li><a href="#ch3">3 · 找质数</a></li>
+    <li><a href="#ch4">4 · 开发验证码</a></li>
+    <li><a href="#ch5">5 · 数组元素的复制</a></li>
+    <li><a href="#ch6">6 · 评委打分</a></li>
+    <li><a href="#ch7">7 · 小结</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ 1 ============ -->
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节 · P74</div>
+  <h2>练习一：卖飞机票</h2>
+  <p>今天是专题课：不学新内容，写很多比较有难度的练习，目的是复习前面的 Java 知识、学会用它们解决问题，同时提高编程能力。九道练习有的来自斯坦福大学的 Java 入门练习，有的是力扣上的算法题，还有一些是大厂的面试真题。很多同学觉得自己编程没有思路，是因为编程思维和编程能力还没建立，这不是一朝一夕的事，需要时间沉淀和大量练习。记住一句话：<b>先模仿，再创新</b>。</p>
+  <p><b>需求</b>：机票价格按照淡季旺季、头等舱和经济舱收费。键盘录入机票原价、月份、头等舱或经济舱，按下面的规则计算机票价格：</p>
+  <div class="fare" id="fare-static">
+    <div class="h"></div><div class="h">头等舱</div><div class="h">经济舱</div>
+    <div class="h">旺季（5 ~ 10 月）</div><div>9 折</div><div>8.5 折</div>
+    <div class="h">淡季（11 月 ~ 来年 4 月）</div><div>7 折</div><div>6.5 折</div>
+  </div>
+  <p><b>分析</b>：没有思路就读题。</p>
+  <ol class="steps">
+    <li>键盘录入三样东西：机票原价、月份、头等舱或经济舱；</li>
+    <li>先判断月份是旺季还是淡季；</li>
+    <li>继续判断当前机票是经济舱还是头等舱；</li>
+    <li>根据实际情况计算出对应的价格。</li>
+  </ol>
+  <p>几个细节：</p>
+  <ul>
+    <li><b>原价用整数</b>：可以认为是小数，也可以认为是整数。坐飞机时很少见到几毛钱的机票，至少以元为单位，所以用 <code>nextInt</code>。</li>
+    <li><b>舱位用 0 和 1 表示</b>：0 头等舱，1 经济舱。用 true / false 行不行？行，但它只有两种情况，万一以后需求变更要加一个商务舱就搞不定了。用数字，以后再加 2、3、4、5 都能表示，<b>扩展性更好</b>。</li>
+    <li><b>淡季是两段</b>：1~4 月，以及 11~12 月。两个条件满足一个就行，中间用"或者"。先看中间的 <code>||</code>，左边看作第一个条件，右边看作第二个条件。</li>
+    <li><b>要强转</b>：<code>ticket * 0.9</code> 是小数，不能直接赋给 int 变量，要写 <code>(int) (ticket * 0.9)</code>。后面的小括号千万不能省，省了强转的就只是 ticket。</li>
+  </ul>
+  <code class="blk">Scanner sc = <span class="hk">new</span> Scanner(System.in);
+System.out.println(<span class="hs">"请输入机票的原价"</span>);
+<span class="hk">int</span> ticket = sc.nextInt();
+System.out.println(<span class="hs">"请输入当前的月份"</span>);
+<span class="hk">int</span> month = sc.nextInt();
+System.out.println(<span class="hs">"请输入当前购买的舱位 0 头等舱 1 经济舱"</span>);
+<span class="hk">int</span> seat = sc.nextInt();
+
+<span class="hk">if</span> (month &gt;= 5 &amp;&amp; month &lt;= 10) {                 <span class="hc">// 旺季</span>
+    <span class="hk">if</span> (seat == 0) {
+        ticket = (<span class="hk">int</span>) (ticket * 0.9);
+    } <span class="hk">else if</span> (seat == 1) {
+        ticket = (<span class="hk">int</span>) (ticket * 0.85);
+    } <span class="hk">else</span> {
+        System.out.println(<span class="hs">"没有这个舱位"</span>);
+    }
+} <span class="hk">else if</span> ((month &gt;= 1 &amp;&amp; month &lt;= 4) || (month &gt;= 11 &amp;&amp; month &lt;= 12)) {   <span class="hc">// 淡季</span>
+    <span class="hk">if</span> (seat == 0) {
+        ticket = (<span class="hk">int</span>) (ticket * 0.7);
+    } <span class="hk">else if</span> (seat == 1) {
+        ticket = (<span class="hk">int</span>) (ticket * 0.65);
+    } <span class="hk">else</span> {
+        System.out.println(<span class="hs">"没有这个舱位"</span>);
+    }
+} <span class="hk">else</span> {
+    System.out.println(<span class="hs">"键盘录入的月份不合法"</span>);
+}
+System.out.println(ticket);</code>
+  <p>运行两次：原价 1000、3 月、经济舱（像我们这种身份，一定是坐经济舱的），3 月是淡季，打 6.5 折，650；原价 2000、10 月、头等舱，旺季头等舱 9 折，1800。</p>
+
+  <div class="card">
+    <h3>动手：算一张机票</h3>
+    <div class="row"><label>原价 <input class="inp" id="tk-p" value="1000" inputmode="numeric"></label><label>月份 <input class="inp" id="tk-m" value="3" inputmode="numeric" style="width:56px"></label><span class="seg" id="tk-s"><button data-v="0">0 头等舱</button><button data-v="1">1 经济舱</button><button data-v="2">2（没有这个舱位）</button></span></div>
+    <div class="row"><span class="chips" style="font-size:13px;color:var(--muted)">试试：<a href="#" data-a="2000,10,0">2000 元、10 月、头等舱</a> · <a href="#" data-a="700,12,0">700 元、12 月、头等舱</a> · <a href="#" data-a="1000,13,1">13 月</a></span></div>
+    <div class="fare" id="tk-fare"></div>
+    <div class="out" id="tk-out"></div>
+    <div class="msg" id="tk-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">小数乘法加强转的坑：700 元打 7 折是 489？</span>
+    上面演示里点"700 元、12 月、头等舱"，结果是 <b>489</b>，不是 490。原因是 0.7 这样的小数在计算机里没法用二进制精确表示，<code>700 * 0.7</code> 算出来是 489.99999999999994，而 <code>(int)</code> 强转是<b>直接砍掉小数部分</b>，不是四舍五入。原价是 10 的倍数时，100 到 5000 之间有 69 个这样的价格（170、180、330、650、700……）。两种修法：四舍五入 <code>(int) Math.round(ticket * 0.7)</code>；或者全程用整数算，把折扣写成"百分之几"：<code>ticket * 70 / 100</code>。算钱尽量不要用 double，课程后面会学专门的 BigDecimal。
+  </div>
+  <div class="extra">
+    <span class="t">另外两个小地方</span>
+    ① 淡季的条件里，两对小括号可以不写：<code>&amp;&amp;</code> 的优先级比 <code>||</code> 高，会先算两边的"并且"。但像视频这样写上更好读。② 月份或舱位不合法时，程序打印完提示还会接着执行最后一行，把<b>原价</b>打印出来，容易让人误以为那是算好的票价。更稳妥的做法是录入不合法就不再打印价格（比如用后面"评委打分"里学的办法让用户重输）。
+  </div>
+</section>
+
+<!-- ============ 2 ============ -->
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节 · P74</div>
+  <h2>优化：把重复的判断抽取成方法</h2>
+  <p>代码还有优化之处：旺季里判断舱位的那一段，和淡季里的那一段，非常类似。为了提高代码的复用性，把它们抽取成一个方法，main 里直接调用。方法怎么写？还是问自己三个问题：</p>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td>① 我要干嘛？</td><td>看要抽取的那段代码在干嘛：根据舱位和折扣，计算最终的票价</td><td>决定方法体</td></tr>
+      <tr><td>② 需要什么才能完成？</td><td>原价（原价都不告诉我，我算个毛）、舱位、头等舱的折扣、经济舱的折扣</td><td>四个形参</td></tr>
+      <tr><td>③ 调用处是否要用结果？</td><td>要：调用处要把最终价格交给变量再打印</td><td>必须有返回值，int</td></tr>
+    </tbody>
+  </table>
+  <code class="blk"><span class="hk">if</span> (month &gt;= 5 &amp;&amp; month &lt;= 10) {
+    ticket = getPrice(ticket, seat, 0.9, 0.85);     <span class="hc">// 旺季</span>
+} <span class="hk">else if</span> ((month &gt;= 1 &amp;&amp; month &lt;= 4) || (month &gt;= 11 &amp;&amp; month &lt;= 12)) {
+    ticket = getPrice(ticket, seat, 0.7, 0.65);     <span class="hc">// 淡季</span>
+} <span class="hk">else</span> {
+    System.out.println(<span class="hs">"键盘录入的月份不合法"</span>);
+}
+System.out.println(ticket);
+
+<span class="hc">// v0：头等舱的折扣，v1：经济舱的折扣</span>
+<span class="hk">public static int</span> getPrice(<span class="hk">int</span> ticket, <span class="hk">int</span> seat, <span class="hk">double</span> v0, <span class="hk">double</span> v1) {
+    <span class="hk">if</span> (seat == 0) {
+        ticket = (<span class="hk">int</span>) (ticket * v0);
+    } <span class="hk">else if</span> (seat == 1) {
+        ticket = (<span class="hk">int</span>) (ticket * v1);
+    } <span class="hk">else</span> {
+        System.out.println(<span class="hs">"没有这个舱位"</span>);
+    }
+    <span class="hk">return</span> ticket;
+}</code>
+  <p>以后题目变了，比如把 11、12 月单独叫"过渡季"，折扣又不一样，只要再加一个 else if，里面还是调用 getPrice，不用再写那一串判断。</p>
+  <p>两个 IDEA 快捷键：</p>
+  <ul>
+    <li><b>Ctrl + P</b>：光标放在调用方法的小括号里按一下，可以看到形参的顺序（忘了四个参数谁先谁后时用）；</li>
+    <li><b>Ctrl + Alt + M</b>：<b>自动抽取方法</b>。选中要抽取的代码按快捷键，IDEA 会提示"方法里还有其他地方有重复的代码，要不要一起抽取"、"要不要用调用方法的形式去替换"，都选是。它抽出来的方法前面写的是 <code>private</code>（面向对象时会学），先改成 public 就行，其余和手写的几乎一模一样。</li>
+  </ul>
+  <p>课后两种都要练：先<b>手动抽取</b>，自己分析形参、方法体、返回值；等熟了，再用快捷键。</p>
+  <div class="extra">
+    <span class="t">Mac 上的快捷键</span>
+    查看形参 <code>Ctrl+P</code> → <code>⌘P</code>；抽取方法 <code>Ctrl+Alt+M</code> → <code>⌥⌘M</code>；本篇后面还会用到：批量改名 <code>Shift+F6</code> → <code>⇧F6</code>（MacBook 上可能要同时按 fn）。
+  </div>
+</section>
+
+<!-- ============ 3 ============ -->
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节 · P74</div>
+  <h2>练习二：找质数</h2>
+  <p><b>需求</b>：判断 101 ~ 200 之间有多少个素数，并输出所有素数。（素数和质数是一回事，只是两个称呼。）</p>
+  <p>这题之前做过类似的：<a href="49.html#ch5">给定一个数，判断它是不是质数</a>。当时有两个思路：思路一，循环判断 2 到"这个数减 1"之间有没有数字能把它整除；思路二，因为思路一在数字很大时循环次数太多，只判断到平方根就够了，但那时还没学怎么取平方根，只要求了解。这里还是用思路一。</p>
+  <p>一下子写成最终代码会有点懵，所以<b>先把题目改简单</b>：写出判断单个数字的代码，再加上范围。</p>
+  <code class="blk"><span class="hc">// 第一步：判断一个数 i 是否为质数</span>
+<span class="hk">int</span> i = 100;
+<span class="hk">boolean</span> flag = <span class="hk">true</span>;                 <span class="hc">// 标记：一开始认为 i 是质数</span>
+<span class="hk">for</span> (<span class="hk">int</span> j = 2; j &lt; i; j++) {       <span class="hc">// 变量名不能再叫 i 了；j 依次表示 2 ~ 99</span>
+    <span class="hk">if</span> (i % j == 0) {
+        flag = <span class="hk">false</span>;                <span class="hc">// 遇到能整除的，就不是质数</span>
+        <span class="hk">break</span>;
+    }
+}
+<span class="hk">if</span> (flag) {
+    System.out.println(<span class="hs">"当前数字是质数"</span>);
+} <span class="hk">else</span> {
+    System.out.println(<span class="hs">"当前数字不是质数"</span>);
+}</code>
+  <p>100 运行出来不是质数，改成 7 是质数，说明判断单个数字的代码没问题。再加范围：外面套一个循环，i 从 101 到 200（不放心可以先只打印 i，看看是不是 101、102、103……一直到 200）。i 依次表示范围里的每一个数字，那么在循环里判断 i 是不是质数就行了，<b>直接把刚才的代码粘进来</b>（注意别把上面的 <code>int i = 100;</code> 也粘进来）。不是质数就不用打印了。题目还问"有多少个"，再加一个统计变量。</p>
+  <code class="blk"><span class="hk">int</span> count = 0;                                  <span class="hc">// 统计有多少个质数</span>
+<span class="hk">for</span> (<span class="hk">int</span> i = 101; i &lt;= 200; i++) {            <span class="hc">// 外循环：得到范围里的每一个数字</span>
+    <span class="hk">boolean</span> flag = <span class="hk">true</span>;
+    <span class="hk">for</span> (<span class="hk">int</span> j = 2; j &lt; i; j++) {             <span class="hc">// 内循环：判断当前数字是否为质数</span>
+        <span class="hk">if</span> (i % j == 0) {
+            flag = <span class="hk">false</span>;
+            <span class="hk">break</span>;                            <span class="hc">// 跳出单层循环，也就是内循环</span>
+        }
+    }
+    <span class="hk">if</span> (flag) {
+        System.out.println(<span class="hs">"当前数字"</span> + i + <span class="hs">"是质数"</span>);
+        count++;
+    }
+}
+System.out.println(<span class="hs">"一共有"</span> + count + <span class="hs">"个质数"</span>);    <span class="hc">// 21</span></code>
+  <p>结果：101、103、107、109、113、127、131……一共 21 个。这题有两个难点：</p>
+  <ul>
+    <li><b>break 跳出的是哪个循环？</b>break 跳出<b>单层循环</b>，这里跳的是内循环。内循环结束后判断 flag，外循环的这一轮循环体就执行完了，i++，接着判断下一个数字。</li>
+    <li><b>循环的嵌套</b>。以后每次写循环嵌套，都要能清楚地说出<b>哪一层循环干了什么事</b>。这题里：外循环遍历 101 ~ 200，依次得到范围内的每一个数字；内循环判断当前数字是否为质数，为此要从 2 开始、到这个数减 1 结束再循环一遍。</li>
+  </ul>
+
+  <div class="card">
+    <h3>动手：点一个数，看内循环怎么判断它</h3>
+    <div class="row"><label>范围 <input class="inp" id="pr-a" value="101" style="width:64px" inputmode="numeric"></label><span>~</span><input class="inp" id="pr-b" value="200" style="width:64px" inputmode="numeric" aria-label="范围结束"><span id="pr-cnt" style="font-weight:700"></span></div>
+    <div class="pgrid" id="pr-grid"></div>
+    <div class="msg" id="pr-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">两层循环一共转了多少圈</span>
+    演示最下面会数出内循环体总共执行的次数。101 ~ 200 用思路一是 3291 次：合数很快就 break（偶数第一圈就走了），而 21 个质数每个都要从 2 一直试到自己减 1，占了其中的绝大部分。这就是"思路二"值得学的原因：只试到平方根，质数也只要试十来次，总数能降到 392 次。等学了 <code>Math.sqrt</code> 之后，把内循环的条件改成 <code>j &lt;= Math.sqrt(i)</code> 即可；现在不用库函数的写法是 <code>j * j &lt;= i</code>。
+  </div>
+</section>
+
+<!-- ============ 4 ============ -->
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节 · P75</div>
+  <h2>练习三：开发验证码</h2>
+  <p><b>需求</b>：定义方法实现随机产生一个 5 位的验证码。格式：长度为 5；前四位是大写字母或者小写字母；最后一位是数字。</p>
+  <p>核心是<b>随机</b>。可大写字母、小写字母没有什么规律，怎么随机？分享一个技巧：</p>
+  <div class="callout key">
+    <span class="t">编程技巧</span>
+    要在一堆<b>没有什么规律</b>的数据中随机抽取，可以先把这些数据放到<b>数组</b>里，再随机抽取一个<b>索引</b>。数组的索引是有规律的：从 0 开始，连续、逐个加一、中间不间断。
+  </div>
+  <ol class="steps">
+    <li>把大写字母和小写字母都放到数组当中（数字不放进去，前四位没有数字）；</li>
+    <li>随机抽取 4 次：随机的是数组的索引，再用索引拿到对应的元素；</li>
+    <li>随机抽取一个 0 ~ 9 的数字，拼在最后。</li>
+  </ol>
+  <p><b>第一步是难点</b>。直接写 <code>char[] chs = {'a', 'b', 'c', …}</code> 一路排下去可以，但要敲好久，不推荐。换个办法：先创建长度 52 的数组 <code>new char[52]</code>，再用循环往里放。回忆 ASCII 码表：数字和字母是一一对应的，把 97 强转成 char 就是 <code>'a'</code>，98 是 <code>'b'</code>。所以写 <code>chs[i] = (char) (97 + i);</code>：i 是 0 时 97 + 0 强转是 a，放在 0 索引；i 是 1 时 98 是 b……</p>
+  <p>这样跑完，0 ~ 25 索引是 a ~ z，可后面跟着一堆乱七八糟的东西。所以加个判断：i ≤ 25 时添加小写字母；否则添加大写字母。大写 A 对应 65，但不能写 <code>65 + i</code>：i 到 26 才开始放大写字母，65 + 26 转出来就不是 A 了。所以要<b>再减 26</b>：i = 26 时 65 + 26 − 26 = 65，是 A；i = 27 时是 66，B。</p>
+  <code class="blk"><span class="hc">// 1. 大写字母和小写字母都放到数组当中</span>
+<span class="hk">char</span>[] chs = <span class="hk">new char</span>[52];
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; chs.length; i++) {
+    <span class="hk">if</span> (i &lt;= 25) {
+        chs[i] = (<span class="hk">char</span>) (97 + i);           <span class="hc">// 添加小写字母，a 是 97</span>
+    } <span class="hk">else</span> {
+        chs[i] = (<span class="hk">char</span>) (65 + i - 26);      <span class="hc">// 添加大写字母，A 是 65</span>
+    }
+}
+
+<span class="hc">// 2. 随机抽取 4 次</span>
+String result = <span class="hs">""</span>;                       <span class="hc">// 记录最终的结果，一开始是长度为 0 的字符串</span>
+Random r = <span class="hk">new</span> Random();
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; 4; i++) {
+    <span class="hk">int</span> randomIndex = r.nextInt(chs.length);   <span class="hc">// 随机索引 0 ~ 51</span>
+    result = result + chs[randomIndex];        <span class="hc">// 利用随机索引获取元素，拼接上去</span>
+}
+
+<span class="hc">// 3. 随机抽取一个数字 0 ~ 9</span>
+<span class="hk">int</span> number = r.nextInt(10);
+result = result + number;
+
+System.out.println(result);</code>
+  <p>第二步也是先做简单的：先随机一次并打印（o、c、q……每次都不一样），再套上循环 4 次。四个字母要拼在一起，所以定义字符串变量 result，初始值是 <code>""</code>（长度为 0、什么都没有的字符串）。<code>result = result + 字符</code> 的过程：一开始 result 是空的，随机到 a，拼出新的字符串 "a"，再赋回给 result，原来的被覆盖；下一次在 "a" 的后面再拼一个。</p>
+  <p>想让数字的位置也随机？等后面学完字符串那一章再回来改写，现在先完成当前的需求。</p>
+
+  <div class="card">
+    <h3>动手：52 个格子，随机 4 个索引</h3>
+    <div class="row"><span class="seg" id="vc-m"><button data-v="0">正确写法</button><button data-v="1">只写 (char)(97 + i)</button><button data-v="2">大写忘了减 26</button></span><button class="btn sm primary" id="vc-go">生成验证码</button><span class="code5" id="vc-code"></span></div>
+    <div class="chs" id="vc-chs"></div>
+    <div class="msg" id="vc-msg"></div>
+  </div>
+  <div class="extra">
+    <span class="t">不用背 97 和 65</span>
+    char 参与运算时本来就会变成它在码表里的数字，所以可以直接拿字符来算：<code>(char) ('a' + i)</code>、<code>(char) ('A' + i - 26)</code>，意思一目了然。另外演示里"只写 (char)(97 + i)"时后 26 格显示的 <code>{ | } ~</code> 等就是视频里说的"乱七八糟的东西"：码表上 z（122）后面紧挨着的符号，再往后是不可见的控制字符。
+  </div>
+</section>
+
+<!-- ============ 5 ============ -->
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节 · P75</div>
+  <h2>练习四：数组元素的复制</h2>
+  <p><b>需求</b>：把一个数组中的元素复制到另一个新数组中去。比如老数组是 1、2、3、4、5，复制到新数组里也应该是 1、2、3、4、5。</p>
+  <ol class="steps">
+    <li>定义一个老数组并存储一些元素；</li>
+    <li>定义一个新数组，长度跟老数组一致；</li>
+    <li>遍历老数组，得到每一个元素，依次存入新数组。</li>
+  </ol>
+  <code class="blk"><span class="hk">int</span>[] arr = {1, 2, 3, 4, 5};
+<span class="hk">int</span>[] newArr = <span class="hk">new int</span>[arr.length];        <span class="hc">// 长度和老数组一致</span>
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; arr.length; i++) {
+    <span class="hc">// i 表示老数组中的索引，同时也是新数组中的索引；arr[i] 表示老数组中的元素</span>
+    newArr[i] = arr[i];
+}
+<span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; newArr.length; i++) {
+    System.out.println(newArr[i]);
+}</code>
+  <p>这题的难点就是循环里的 <b>i</b>：因为老数组和新数组<b>等长</b>，所以 i 同时表示老数组的索引和新数组的索引。把老数组 0 索引的值存到新数组的 0 索引，i++，再把 1 索引的存到 1 索引，一个一个挨着存。</p>
+  <div class="extra">
+    <span class="t">为什么不直接写 int[] newArr = arr;</span>
+    那样并没有复制任何元素。<a href="71.html#ch3">上一篇</a>讲过：数组变量里存的是地址值，<code>newArr = arr</code> 只是让两个变量指向堆里的同一个数组，改 newArr[0]，arr[0] 也跟着变。这道题用 new 开辟了第二块空间，再把数据一个个搬过去，两个数组才互不影响。对比<a href="68.html#ch7">上上篇的 copyOfRange</a>：那里只拷贝一段，新老数组不等长，所以才需要另外伪造一个 index。
+  </div>
+</section>
+
+<!-- ============ 6 ============ -->
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节 · P76</div>
+  <h2>练习五：评委打分</h2>
+  <p><b>需求</b>：在唱歌比赛中，有 6 名评委给选手打分，分数范围是 [0, 100] 之间的整数。选手的最后得分为：去掉最高分、最低分后的 4 个评委的平均分。请完成上述过程并计算出选手的得分。</p>
+  <ol class="steps">
+    <li>定义一个数组，用来存储 6 名评委的打分（键盘录入，0 ~ 100）；</li>
+    <li>求出数组中的最大值；</li>
+    <li>求出数组中的最小值；</li>
+    <li>求出数组中 6 个分数的总和；</li>
+    <li>（总和 − 最大值 − 最小值）÷ 4；</li>
+    <li>打印结果。</li>
+  </ol>
+  <p>步骤比较多，用方法一个一个做。<b>最难的是第一步</b>。先用三个问题设计它：要干嘛？定义数组存 6 名评委的打分。需要什么？什么都不需要，数组可以在方法里创建，键盘录入也写在方法里，所以无参。要不要返回？下面还要用这个存满分数的数组，必须返回，返回值类型写 <code>int[]</code>（只写 int 表示返回一个整数）。</p>
+  <p>核心代码很快就能写出来：动态初始化 <code>new int[6]</code>，循环里 <code>nextInt</code> 录入、存到 i 索引。测试 100、100、100、50、100、60，没问题。但录一个 120 呢？它也被存进了数组，这不是我想要的。于是加判断：分数在 0 ~ 100 之间才存。再测：连录六个 120，数组里是六个 0，而且<b>程序也没让我重新输</b>。为什么？</p>
+  <p>i 是 0 时录了 120，不满足 if 的条件，没存；然后循环照常 i++，i 变成 1，相当于<b>把 0 索引跳过去了</b>。改法很简单：<b>把 i++ 从 for 的小括号里拿走，放到 if 的里面</b>。条件控制语句空着不写，表示 i 不会自己变化；只有录了合法的数据、成功存进去，i 才 ++。录入不合法，i 还是原来的值，下一圈让你对着同一个索引再录一次。</p>
+  <code class="blk"><span class="hk">public static int</span>[] getScores() {
+    <span class="hk">int</span>[] scores = <span class="hk">new int</span>[6];
+    Scanner sc = <span class="hk">new</span> Scanner(System.in);
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; scores.length; ) {            <span class="hc">// 小括号里没有 i++</span>
+        System.out.println(<span class="hs">"请输入评委的打分"</span>);
+        <span class="hk">int</span> score = sc.nextInt();
+        <span class="hk">if</span> (score &gt;= 0 &amp;&amp; score &lt;= 100) {
+            scores[i] = score;
+            i++;                                       <span class="hc">// 成功存进去了，索引才移动</span>
+        } <span class="hk">else</span> {
+            System.out.println(<span class="hs">"成绩超出了范围，继续录入，当前的i为："</span> + i);
+        }
+    }
+    <span class="hk">return</span> scores;
+}</code>
+
+  <div class="card">
+    <h3>动手：当一回评委</h3>
+    <div class="row"><span class="seg" id="sc-m"><button data-v="0">i++ 放在 if 里（正确）</button><button data-v="1">i++ 写在 for 的小括号里</button></span></div>
+    <div class="row"><label>请输入评委的打分 <input class="inp" id="sc-in" inputmode="numeric" placeholder="比如 100"></label><button class="btn sm primary" id="sc-add">录入</button><button class="btn sm" id="sc-re">重来</button>
+      <span class="chips" style="font-size:13px;color:var(--muted)">一键录入：<a href="#" data-a="100,50,80,80,80,80">100 50 80 80 80 80</a> · <a href="#" data-a="120,120,120,120,120,120">六个 120</a></span></div>
+    <div class="arr" id="sc-arr"></div>
+    <div class="out" id="sc-out"></div>
+    <div class="msg" id="sc-msg"></div>
+  </div>
+
+  <p>后面几步难度不大。求最大值、最小值、总和各写一个方法，都需要你把数组给我，都要返回结果：</p>
+  <code class="blk"><span class="hk">public static void</span> main(String[] args) {
+    <span class="hk">int</span>[] scoresArr = getScores();                  <span class="hc">// 1. 录入 6 个分数</span>
+    <span class="hk">int</span> max = getMax(scoresArr);                    <span class="hc">// 2. 最大值</span>
+    <span class="hk">int</span> min = getMin(scoresArr);                    <span class="hc">// 3. 最小值</span>
+    <span class="hk">int</span> sum = getSum(scoresArr);                    <span class="hc">// 4. 总和</span>
+    <span class="hk">int</span> avg = (sum - max - min) / (scoresArr.length - 2);   <span class="hc">// 5. 平均分</span>
+    System.out.println(<span class="hs">"选手的最终得分为："</span> + avg);   <span class="hc">// 6. 打印</span>
+}
+
+<span class="hk">public static int</span> getMax(<span class="hk">int</span>[] scoresArr) {       <span class="hc">// 求数组的最大值</span>
+    <span class="hk">int</span> max = scoresArr[0];                         <span class="hc">// 初始值一定要是数组里的元素</span>
+    <span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt; scoresArr.length; i++) {
+        <span class="hk">if</span> (scoresArr[i] &gt; max) {
+            max = scoresArr[i];
+        }
+    }
+    <span class="hk">return</span> max;
+}
+
+<span class="hk">public static int</span> getMin(<span class="hk">int</span>[] scoresArr) {       <span class="hc">// 复制 getMax，改名字，&gt; 改成 &lt;</span>
+    <span class="hk">int</span> min = scoresArr[0];
+    <span class="hk">for</span> (<span class="hk">int</span> i = 1; i &lt; scoresArr.length; i++) {
+        <span class="hk">if</span> (scoresArr[i] &lt; min) {
+            min = scoresArr[i];
+        }
+    }
+    <span class="hk">return</span> min;
+}
+
+<span class="hk">public static int</span> getSum(<span class="hk">int</span>[] scoresArr) {       <span class="hc">// 求总和</span>
+    <span class="hk">int</span> sum = 0;
+    <span class="hk">for</span> (<span class="hk">int</span> i = 0; i &lt; scoresArr.length; i++) {
+        sum = sum + scoresArr[i];
+    }
+    <span class="hk">return</span> sum;
+}</code>
+  <p>两个小技巧：</p>
+  <ul>
+    <li><b>批量改名 Shift + F6</b>：getMin 是复制 getMax 来的，把变量 max 改成 min 时不用一个个改。选中 max 按 Shift + F6，再改成 min，下面凡是用到这个变量的地方都跟着一起改。</li>
+    <li><b>值能不写死，尽量不写死</b>：第五步除以 4 就是写死了。建议写 <code>scoresArr.length - 2</code>（减去一个最大的、一个最小的），以后数组长度变了，这行不用改。</li>
+  </ul>
+  <p>测试：最高分 100、最低分 50，其余四个 80，最终得分 80。这道题不算很难，注意两处：一是录入时的判断，不合法就不存，而且索引不动；二是步骤多，写之前一定把思路捋顺。</p>
+  <div class="extra">
+    <span class="t">平均分是整数除法</span>
+    avg 是 int，<code>(sum - max - min) / 4</code> 会直接丢掉小数部分。比如打分 90、91、92、93、94、95，去掉 95 和 90 剩 370，370 / 4 得 92，真实的平均分是 92.5。演示里录完六个分数后会同时显示两种结果。想保留小数，把其中一边变成小数即可：<code>double avg = (sum - max - min) * 1.0 / (scoresArr.length - 2);</code>。另外，如果有两位评委都打了最高分，按规则也只去掉其中一个，上面的代码正好就是这个效果。
+  </div>
+</section>
+
+<!-- ============ 7 ============ -->
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结</h2>
+  <table class="tt" style="width:100%">
+    <tbody>
+      <tr><td><b>卖飞机票</b></td><td>先判断淡旺季，再判断舱位；舱位用数字表示，扩展性好；小数结果赋给 int 要整体强转</td></tr>
+      <tr><td><b>抽取方法</b></td><td>重复的代码抽成方法（先手动分析三个问题，熟了再用 Ctrl+Alt+M）</td></tr>
+      <tr><td><b>找质数</b></td><td>先写判断单个数字的代码，再在外面套范围；外循环给数字，内循环做判断；break 只跳出内循环</td></tr>
+      <tr><td><b>验证码</b></td><td>没规律的数据先放进数组，随机索引；<code>(char) (97 + i)</code>、<code>(char) (65 + i - 26)</code>；用 <code>""</code> 拼接结果</td></tr>
+      <tr><td><b>数组复制</b></td><td>新数组和老数组等长，同一个 i 同时当两个数组的索引</td></tr>
+      <tr><td><b>评委打分</b></td><td>录入合法才存、才 i++；最大、最小、求和各一个方法；除数写 <code>length - 2</code> 不写死</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout key">
+    <span class="t">一句话</span>
+    没思路就读题，把步骤一条条写成注释；难的那一步先改成简单的版本写出来，再往上加。
+  </div>
+
+  <div class="card">
+    <h3>自测</h3>
+    <div class="q">
+      <div class="qt">1. 舱位为什么用 0、1 表示，而不用 boolean？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">boolean 只有 true、false 两种情况；以后要加商务舱等其他舱位，数字可以接着用 2、3、4……扩展性更好。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. <code>ticket = (int) ticket * 0.9;</code> 为什么不行？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">少了后面的小括号，强转的只是 ticket，乘 0.9 之后结果还是小数，不能赋给 int 变量，编译报错。要写 <code>(int) (ticket * 0.9)</code>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 找质数的代码里，外循环和内循环各干了什么事？内循环里的 break 跳出的是谁？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">外循环遍历 101 ~ 200，依次得到每一个数字；内循环从 2 到这个数减 1，判断当前数字是否为质数。break 只跳出内循环，然后外循环继续判断下一个数字。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. 往 chs 数组里放大写字母时，为什么是 <code>(char) (65 + i - 26)</code>？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">前 26 个位置（i 为 0 ~ 25）放了小写字母，i 从 26 才开始放大写。i = 26 时要得到 A（65），所以要把多出来的 26 减掉：65 + 26 − 26 = 65。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. 录入评委打分时，<code>for (int i = 0; i &lt; scores.length; i++)</code> 配上"合法才存"的 if，连续录入 120、90 会怎样？怎么改？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">120 不合法没存，但 i 照样 ++，0 索引被跳过（留着默认值 0），90 存进了 1 索引。改法：把 i++ 从小括号里拿走，放进 if 里，只有成功存入时索引才移动。</div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:24px"><button class="btn primary" id="mark-read">读完了，打个卡</button></div>
+
+  <div class="pager">
+    <a href="71.html"><small>← 上一篇</small>P71–73 方法的内存与值传递</a>
+    <a class="next" href="77.html"><small>下一篇 →</small>P77–79 加密解密、抽奖、双色球</a>
+  </div>
+
+  <div class="credit">
+    内容来源：黑马程序员《Java 零基础视频教程（上部）：Java 入门到起飞》P74–P76（<a href="https://www.bilibili.com/video/BV17F411T7Ao?p=74" target="_blank" rel="noopener">B 站</a>）。视频版权归原作者所有。<br>
+    正文是看视频字幕后提炼、重写的学习笔记，讲解思路和例子来自原课；示意图、交互演示与"补充"框由 Claude Opus 5.5 制作。仅供个人学习，非官方内容。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+function segInit(sel, v, fn) {
+  const bs = $$(sel + ' button');
+  const set = val => { bs.forEach(b => b.classList.toggle('sel', b.dataset.v === String(val))); };
+  bs.forEach(b => b.onclick = () => { set(b.dataset.v); fn(b.dataset.v); });
+  set(v);
+  return set;
+}
+function drawArr(box, vals, cls = {}, ptr = {}) {
+  box.innerHTML = vals.map((v, i) => `<div class="cell ${cls[i] || ''}">${ptr[i] ? `<div class="ptr">${ptr[i]}</div>` : ''}<div class="v">${esc(v)}</div><div class="ix">${i}</div></div>`).join('');
+}
+
+/* ---------- 机票 ---------- */
+(function () {
+  let seat = 1;
+  const D = [[0.9, 0.85], [0.7, 0.65]], DN = [['9 折', '8.5 折'], ['7 折', '6.5 折']];
+  function run() {
+    const p = Number($('#tk-p').value), m = Number($('#tk-m').value);
+    const out = $('#tk-out'), msg = $('#tk-msg');
+    if (!Number.isInteger(p) || p < 0 || p > 1e8 || $('#tk-p').value.trim() === '' || !Number.isInteger(m) || $('#tk-m').value.trim() === '') { $('#tk-fare').innerHTML = ''; out.innerHTML = '<span class="note">原价和月份请填整数</span>'; msg.textContent = ''; return; }
+    const season = m >= 5 && m <= 10 ? 0 : (m >= 1 && m <= 4) || (m >= 11 && m <= 12) ? 1 : -1;
+    const hit = (s, c) => season === s && seat === c ? 'hit' : '';
+    $('#tk-fare').innerHTML = `<div class="h"></div><div class="h">0 头等舱</div><div class="h">1 经济舱</div>` + ['旺季（5 ~ 10 月）', '淡季（11 ~ 4 月）'].map((n, s) => `<div class="h" ${season === s ? 'style="color:var(--ink);font-weight:700"' : ''}>${n}</div><div class="${hit(s, 0)}">${DN[s][0]}</div><div class="${hit(s, 1)}">${DN[s][1]}</div>`).join('');
+    const lines = []; let t = p, why;
+    if (season === -1) { lines.push('键盘录入的月份不合法'); why = `month = ${m}，两个 if 的条件都不满足，走最后的 else。注意最后一行仍然会打印原价 ${p}。`; }
+    else if (seat > 1) { lines.push('没有这个舱位'); why = `${m} 月是${season ? '淡' : '旺'}季，但 seat = ${seat} 既不是 0 也不是 1。最后一行打印的还是原价。`; }
+    else {
+      const d = D[season][seat], raw = p * d; t = Math.trunc(raw);
+      why = `${m} 月是<b>${season ? '淡季' : '旺季'}</b>，${seat ? '经济舱' : '头等舱'}打 <b>${DN[season][seat]}</b>：(int) (${p} * ${d}) = (int) ${raw} = <b>${t}</b>。`;
+      const exact = Math.round(p * d * 100) / 100;
+      if (Number.isInteger(exact) && t !== exact) why += ` <span style="color:var(--bad)">本来应该是 ${exact}，被 double 的误差加强转砍掉了 1 块钱，见下面的补充框。</span>`;
+      else if (!Number.isInteger(exact)) why += ' 强转直接去掉了小数部分。';
+    }
+    lines.push(t);
+    out.textContent = lines.join('\n'); msg.innerHTML = why;
+  }
+  const set = segInit('#tk-s', 1, v => { seat = +v; run(); });
+  ['#tk-p', '#tk-m'].forEach(s => $(s).addEventListener('input', run));
+  $$('.chips a[data-a]').forEach(a => { if (!a.closest('#ch1')) return; a.onclick = e => { e.preventDefault(); const [p, m, s] = a.dataset.a.split(','); $('#tk-p').value = p; $('#tk-m').value = m; seat = +s; set(s); run(); }; });
+  run();
+})();
+
+/* ---------- 质数 ---------- */
+(function () {
+  let sel = null;
+  const test = n => { for (let j = 2; j < n; j++) if (n % j === 0) return [false, j, j - 1]; return [true, null, Math.max(0, n - 2)]; };   // [是否质数, 第一个整除它的 j, 内循环体执行次数]
+  function build() {
+    const a = Number($('#pr-a').value), b = Number($('#pr-b').value), g = $('#pr-grid');
+    if (!Number.isInteger(a) || !Number.isInteger(b) || a < 2 || b < a || b - a > 299 || b > 100000) { g.innerHTML = ''; $('#pr-cnt').textContent = ''; $('#pr-msg').textContent = '范围请填 2 以上的整数，最多 300 个数。'; return; }
+    let cnt = 0, loops = 0, loops2 = 0, h = '';
+    for (let n = a; n <= b; n++) {
+      const [p, , k] = test(n); if (p) cnt++; loops += k;
+      for (let j = 2; j * j <= n; j++) { loops2++; if (n % j === 0) break; }
+      h += `<button class="${p ? 'p' : ''}" data-n="${n}">${n}</button>`;
+    }
+    g.innerHTML = h; $('#pr-cnt').textContent = `一共有${cnt}个质数`;
+    g.dataset.sum = `整个范围内循环体一共执行 ${loops} 次；只试到平方根的话是 ${loops2} 次。`;
+    sel = null; $('#pr-msg').innerHTML = '绿色的是质数。点任意一个数看内循环的过程。 ' + g.dataset.sum;
+  }
+  $('#pr-grid').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    $$('#pr-grid button').forEach(x => x.classList.toggle('sel', x === b));
+    const n = +b.dataset.n, [p, j, k] = test(n);
+    $('#pr-msg').innerHTML = (p ? `i = ${n}：j 从 2 一直试到 ${n - 1}，没有一个能整除，内循环转了 <b>${k}</b> 圈，flag 始终是 true，<b>是质数</b>，count++。` : `i = ${n}：j 试到 <b>${j}</b> 时 ${n} % ${j} == 0，flag 变成 false，break 跳出内循环（只转了 ${k} 圈${k === 1 ? '' : '，j = ' + (j > 3 ? '2 ~ ' + (j - 1) : '2') + ' 都不能整除'}），<b>不是质数</b>。`) + ' ' + $('#pr-grid').dataset.sum;
+  };
+  ['#pr-a', '#pr-b'].forEach(s => $(s).addEventListener('input', build));
+  build();
+})();
+
+/* ---------- 验证码 ---------- */
+(function () {
+  let m = 0, chs, picks = [];
+  const show = c => { const k = c.charCodeAt(0); return k < 33 || k > 126 ? '' : c; };
+  function build() {
+    chs = [];
+    for (let i = 0; i < 52; i++) {
+      if (m === 1) chs.push(String.fromCharCode(97 + i));
+      else if (i <= 25) chs.push(String.fromCharCode(97 + i));
+      else chs.push(String.fromCharCode(m === 2 ? 65 + i : 65 + i - 26));
+    }
+    picks = []; paint();
+    $('#vc-code').innerHTML = '';
+    $('#vc-msg').innerHTML = m === 0 ? '0 ~ 25 索引是 a ~ z，26 ~ 51 索引是 A ~ Z。点"生成验证码"。' : m === 1 ? '只写 (char)(97 + i)：前 26 个是小写字母，后 26 个是码表里 z 后面的符号（红色），再往后是显示不出来的字符。' : '大写部分写成 (char)(65 + i)：i 从 26 开始，65 + 26 = 91，是 <code>[</code> 而不是 A，后面又绕回了小写字母（红色的都不对）。';
+  }
+  function paint() {
+    $('#vc-chs').innerHTML = chs.map((c, i) => `<div class="${picks.includes(i) ? 'hit' : ''} ${i > 25 && !/[A-Z]/.test(c) ? 'bad' : ''}"><b>${esc(show(c))}</b><i>${i}</i></div>`).join('');
+  }
+  $('#vc-go').onclick = () => {
+    picks = Array.from({ length: 4 }, () => Math.floor(Math.random() * 52));
+    const num = Math.floor(Math.random() * 10);
+    paint();
+    $('#vc-code').innerHTML = picks.map(i => `<span>${esc(show(chs[i]) || '?')}</span>`).join('') + `<span class="num">${num}</span>`;
+    $('#vc-msg').innerHTML = `四次随机索引：${picks.map(i => `<b>${i}</b> → ${esc(show(chs[i]) || '（不可见字符）')}`).join('，')}；再随机一个数字 r.nextInt(10) = <b>${num}</b>。result 从 "" 开始依次拼接。` + (new Set(picks).size < 4 ? ' 这次有索引被抽到了两次：验证码允许重复字符。' : '');
+  };
+  segInit('#vc-m', 0, v => { m = +v; build(); });
+  build();
+})();
+
+/* ---------- 评委打分 ---------- */
+(function () {
+  let m = 0, sc, i, log, tries;
+  function reset() { sc = [0, 0, 0, 0, 0, 0]; i = 0; log = []; tries = 0; paint('请输入第一个评委的打分（0 ~ 100 的整数）。'); }
+  function paint(msg) {
+    const cls = {}, ptr = {};
+    sc.forEach((v, k) => { if (k >= i) cls[k] = 'emp'; });
+    if (i < 6) { cls[i] = 'hi'; ptr[i] = 'i'; }
+    (paint.bad || []).forEach(k => cls[k] = 'bad');
+    drawArr($('#sc-arr'), sc, cls, ptr);
+    $('#sc-out').innerHTML = log.length ? esc(log.join('\n')) : '<span class="note">（控制台）</span>';
+    $('#sc-out').scrollTop = 1e6;
+    $('#sc-msg').innerHTML = msg;
+    $('#sc-add').disabled = $('#sc-in').disabled = i >= 6;
+  }
+  function add(v) {
+    if (i >= 6) return;
+    if (!Number.isInteger(v)) { paint('请填一个整数。'); return; }
+    tries++; log.push('请输入评委的打分', String(v));
+    let msg;
+    if (v >= 0 && v <= 100) { sc[i] = v; msg = `${v} 在 0 ~ 100 之间，存入 scores[${i}]，i++。`; i++; }
+    else if (m === 0) { log.push('成绩超出了范围，继续录入，当前的i为：' + i); msg = `${v} 超出范围，没有存。i++ 在 if 里面，这次没执行到，<b>i 还是 ${i}</b>，下一次还是录这个位置。`; }
+    else { (paint.bad = paint.bad || []).push(i); msg = `${v} 超出范围，没有存。但 for 的小括号里有 i++，照样执行：<b>${i} 索引被跳过去了</b>，留着默认值 0。`; i++; }
+    if (i >= 6) msg += ' ' + done();
+    paint(msg);
+  }
+  function done() {
+    const max = Math.max(...sc), min = Math.min(...sc), sum = sc.reduce((a, b) => a + b, 0), avg = Math.trunc((sum - max - min) / 4), real = (sum - max - min) / 4;
+    log.push('选手的最终得分为：' + avg);
+    return `数组存满（一共录了 ${tries} 次）。最大值 ${max}，最小值 ${min}，总和 ${sum}；(${sum} - ${max} - ${min}) / (6 - 2) = <b>${avg}</b>` + (real !== avg ? `（整数除法丢了小数，真实平均分是 ${real}）` : '') + '。' + ((paint.bad || []).length ? ' <span style="color:var(--bad)">红色的格子是被跳过的评委，他们的"分数"成了 0，结果不对。</span>' : '');
+  }
+  const go = () => { const t = $('#sc-in').value.trim(); if (t === '') return; add(Number(t)); $('#sc-in').value = ''; $('#sc-in').focus(); };
+  $('#sc-add').onclick = go;
+  $('#sc-in').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  $('#sc-re').onclick = () => { paint.bad = []; reset(); };
+  $$('#ch6 .chips a[data-a]').forEach(a => a.onclick = e => { e.preventDefault(); paint.bad = []; reset(); a.dataset.a.split(',').forEach(x => add(+x)); });
+  segInit('#sc-m', 0, v => { m = +v; paint.bad = []; reset(); });
+  reset();
+})();
+</script>
+</body>
+</html>
