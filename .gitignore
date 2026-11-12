@@ -7,3 +7,6 @@ tools/bili-transcripts/venv/
 
 # 推广素材（公众号推文等），不发布到 Pages
 promo/
+
+# 写课用的本地资料（SpringBlade 源码、IDEA 中文语言包、已核对的参考文档、实测代码），不发布
+local/

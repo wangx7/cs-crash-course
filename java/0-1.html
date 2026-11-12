@@ -1,0 +1,519 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0.1 一个请求的一生 · Java 后端</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font-family:var(--mono);font-size:13.5px;line-height:1.65;background:var(--code);border-radius:10px;padding:12px 14px;margin:10px 0;overflow-x:auto;white-space:pre;tab-size:2}
+.src{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.src code{font-size:12px}
+.note{font-size:13px;color:var(--muted)}
+
+/* 猜一猜 */
+.guess{padding:16px 0;border-bottom:1px solid var(--line)}
+.guess:last-of-type{border-bottom:none}
+.guess .qt{font-weight:600}
+.guess .opts{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+.guess .opt.right{border-color:var(--ok);background:var(--ok-soft);color:var(--ink)}
+.guess .opt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--ink)}
+.guess .why{display:none;font-size:15px;margin-top:10px;padding:10px 14px;background:var(--bg);border-radius:10px}
+.guess.done .why{display:block}
+#guess-score{font-size:14px;color:var(--muted);margin:10px 0 0;min-height:24px}
+
+/* 路线图 */
+.st rect{fill:var(--panel);stroke:var(--wire);stroke-width:2;transition:fill .25s,stroke .25s}
+.st.seen rect{stroke:var(--ink)}
+.st.on rect{fill:var(--on-soft);stroke:var(--on)}
+.box-desk{fill:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:5 4}
+.link{fill:none;stroke:var(--wire);stroke-width:3;stroke-linecap:round}
+#pk{fill:var(--on);filter:drop-shadow(0 0 5px var(--on-glow));transition:transform .45s ease}
+.shapes{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:14px 0 4px;font-size:13px}
+.shapes span{padding:3px 10px;border-radius:999px;border:1px solid var(--line);color:var(--muted);background:var(--bg)}
+.shapes span.cur{border-color:var(--on);background:var(--on-soft);color:var(--ink);font-weight:600}
+.shapes i{font-style:normal;color:var(--muted)}
+.stepno{font-family:var(--mono);font-size:13px;color:var(--on);font-weight:700}
+#step h3{margin:2px 0 6px}
+#step .lbl{font-size:12.5px;color:var(--muted);margin:12px 0 0}
+.more{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:12px;font-size:12.5px;color:var(--muted)}
+.more a{padding:2px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel);text-decoration:none}
+
+/* id 演示 */
+.idrow{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;font-family:var(--mono);font-size:14px;margin:10px 0 0;padding:12px 14px;background:var(--bg);border-radius:10px}
+.idrow span:nth-child(odd){color:var(--muted);font-family:inherit}
+.idrow b.bad{color:var(--bad)}
+.idrow b.ok{color:var(--ok)}
+.idrow span{overflow-wrap:anywhere}
+
+/* 读代码 */
+pre.reader{font-size:13px}
+button.tk{font:inherit;color:inherit;background:var(--accent-soft);border:none;border-bottom:2px solid var(--accent);border-radius:4px 4px 0 0;padding:0 2px;cursor:pointer}
+button.tk.seen{background:var(--ok-soft);border-bottom-color:var(--ok)}
+button.tk.cur{background:var(--on-soft);border-bottom-color:var(--on)}
+#tk-count{font-size:13px;color:var(--muted)}
+
+/* 三层 */
+.layers{display:grid;gap:8px;margin:16px 0}
+.layer{display:grid;grid-template-columns:128px minmax(0,1fr);gap:12px;align-items:center;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.layer .nm{font-weight:650}
+.layer .nm small{display:block;font-weight:400;font-size:12.5px;color:var(--muted);line-height:1.5}
+.layer .chips{display:flex;flex-wrap:wrap;gap:6px}
+.layer .chips span{font-size:13px;padding:3px 10px;border-radius:8px;background:var(--bg);border:1px solid var(--line)}
+.layer .chips span b{font-family:var(--mono);color:var(--on);margin-right:5px}
+.layer .chips span.here{border-color:var(--on);background:var(--on-soft)}
+@media (max-width:600px){.layer{grid-template-columns:1fr;gap:6px}}
+
+/* 参考资料 */
+.refs h3{margin:18px 0 6px;font-size:16px}
+.refs h3:first-child{margin-top:0}
+.refs ul{list-style:none;margin:0;padding:0}
+.refs li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px;overflow-wrap:anywhere}
+.refs li:last-child{border-bottom:none}
+.refs li span{display:block;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body data-ep="1" data-store="java-be-read" data-unit="篇">
+<div class="topbar">
+  <a href="index.html">← Java 后端 · 目录</a>
+  <span class="muted">第 0 部分 · 出发前</span>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">第 0 部分 · 出发前 · 0.1</div>
+  <h1>一个请求的一生</h1>
+  <p class="en">The life of a request</p>
+  <p class="lead">浏览器发出一个 HTTP 请求，稍后收到一段 JSON。为了算出这段 JSON，服务器那边有好几个各自独立运行的程序先后参与。这一篇拿一个真实接口的源码，按先后顺序把它们各自做的事走一遍。目的是看见全貌，不要求每一步都懂。</p>
+  <div class="road"><span>先猜</span><i>→</i><span>跟着走一趟</span><i>→</i><span>读那十几行代码</span><i>→</i><span>这门课的走法</span></div>
+  <p class="note" style="margin-top:16px">代码引自开源项目 SpringBlade v3.7.1，可以对着源码核对。标着“示意”的数据是按规则推出来的，不是抓包结果。</p>
+</header>
+
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">先猜三件事</a></li>
+  <li><a href="#ch2">跟着请求走一趟</a></li>
+  <li><a href="#ch3">id 为什么是字符串</a></li>
+  <li><a href="#ch4">你写的，和你没写的</a></li>
+  <li><a href="#ch5">这门课的走法</a></li>
+  <li><a href="#ch6">小结和自测</a></li>
+  <li><a href="#ch7">参考资料</a></li>
+</ol></nav>
+
+<main>
+
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>先猜三件事</h2>
+  <p>一个后台管理页面要显示“通知公告”列表。打开页面时，它发出这样一个请求：</p>
+<pre class="code">GET /blade-desk/notice/list?current=1&amp;size=10&amp;title=公告
+Blade-Auth: bearer eyJ0eXAiOiJKV1Qi…</pre>
+  <p>随后拿到一段 JSON，里面是第一页的公告。在往下读之前，先凭直觉猜三件事。猜错没关系，这三个答案就是这一篇要讲的东西。</p>
+
+  <div class="card" id="guesses">
+    <div class="guess" data-a="2">
+      <div class="qt">① 从发出到返回，这个请求一共惊动了几个独立运行的程序？</div>
+      <div class="opts">
+        <button class="btn opt">1 个：一个后端程序</button>
+        <button class="btn opt">2 个：后端程序和数据库</button>
+        <button class="btn opt">至少 5 个</button>
+      </div>
+      <div class="why"><b>至少 5 个。</b>网关、注册中心、公告所在的服务、数据库，还有另一个专门管“字典”的服务。它们各是各的进程，可以跑在不同的机器上。下一节一站一站看。</div>
+    </div>
+    <div class="guess" data-a="0">
+      <div class="qt">② 处理这个接口的那个 Java 方法，方法体有几行？</div>
+      <div class="opts">
+        <button class="btn opt">2 行</button>
+        <button class="btn opt">20 行左右</button>
+        <button class="btn opt">200 行左右</button>
+      </div>
+      <div class="why"><b>2 行。</b>校验登录、解析参数、拼 SQL、把结果转成 JSON，这些事一行都没有出现在方法里。它们是谁做的，是第 4 节的主题。</div>
+    </div>
+    <div class="guess" data-a="1">
+      <div class="qt">③ 同一秒有 200 个人打开了这个页面。负责这个接口的 <code>NoticeController</code> 对象，内存里有几个？</div>
+      <div class="opts">
+        <button class="btn opt">200 个，一人一个</button>
+        <button class="btn opt">1 个</button>
+        <button class="btn opt">看服务器配置</button>
+      </div>
+      <div class="why"><b>1 个。</b>程序启动时创建一个，之后所有请求都用它。200 个请求是 200 个线程在同时执行同一个对象的同一个方法。所以这个对象的字段里不能放会随请求变化的数据，否则线程之间会互相改掉对方的值。第 3 部分讲。</div>
+    </div>
+    <p id="guess-score"></p>
+  </div>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>跟着请求走一趟</h2>
+  <p>下面这张图是这个请求经过的所有地方。点“下一步”，橙色的点会往前走一站，下方显示这一站发生了什么、此刻数据长什么样、依据是哪个文件。</p>
+  <p>留意“数据的形状”那一行。从头到尾，同一份信息换了六次形状。</p>
+
+  <div class="card">
+    <div class="scroll-x">
+    <svg class="diagram" viewBox="0 0 760 262" id="route" role="img" aria-label="请求经过的路线：浏览器、网关、注册中心、blade-desk 服务内的 Web 服务器、Controller、Service、Mapper，以及 MySQL 和 blade-system 服务">
+      <rect class="box-desk" x="326" y="14" width="420" height="112" rx="12"/>
+      <text class="t-sub" x="338" y="34">blade-desk 服务（一个独立的 Java 程序）</text>
+      <path class="link" d="M114 80H160"/><path class="link" d="M280 80H340"/>
+      <path class="link" d="M426 80H440"/><path class="link" d="M530 80H544"/><path class="link" d="M630 80H644"/>
+      <path class="link" d="M220 108V160"/><path class="link" d="M485 108V186"/><path class="link" d="M688 108V186"/>
+      <g class="st" data-st="browser"><rect x="14" y="52" width="100" height="56" rx="10"/><text class="t-main mid" x="64" y="85">浏览器</text></g>
+      <g class="st" data-st="gw"><rect x="160" y="52" width="120" height="56" rx="10"/><text class="t-main mid" x="220" y="77">网关</text><text class="t-sub mid" x="220" y="95">blade-gateway</text></g>
+      <g class="st" data-st="nacos"><rect x="160" y="160" width="120" height="56" rx="10"/><text class="t-main mid" x="220" y="185">注册中心</text><text class="t-sub mid" x="220" y="203">Nacos</text></g>
+      <g class="st" data-st="web"><rect x="340" y="52" width="86" height="56" rx="10"/><text class="t-main mid" x="383" y="77">Web 服务器</text><text class="t-sub mid" x="383" y="95">一个线程</text></g>
+      <g class="st" data-st="ctrl"><rect x="440" y="52" width="90" height="56" rx="10"/><text class="t-main mid" x="485" y="85">Controller</text></g>
+      <g class="st" data-st="svc"><rect x="544" y="52" width="86" height="56" rx="10"/><text class="t-main mid" x="587" y="85">Service</text></g>
+      <g class="st" data-st="mapper"><rect x="644" y="52" width="88" height="56" rx="10"/><text class="t-main mid" x="688" y="85">Mapper</text></g>
+      <g class="st" data-st="sys"><rect x="420" y="186" width="130" height="56" rx="10"/><text class="t-main mid" x="485" y="211">blade-system</text><text class="t-sub mid" x="485" y="229">另一个服务：字典</text></g>
+      <g class="st" data-st="db"><rect x="630" y="186" width="116" height="56" rx="10"/><text class="t-main mid" x="688" y="211">MySQL</text><text class="t-sub mid" x="688" y="229">数据库</text></g>
+      <circle id="pk" r="9" cx="0" cy="0"/>
+    </svg>
+    </div>
+
+    <div class="shapes" id="shapes" aria-label="数据的形状">
+      <span>HTTP 文本</span><i>→</i><span>Java 对象</span><i>→</i><span>SQL 文本</span><i>→</i><span>表里的行</span><i>→</i><span>Java 对象</span><i>→</i><span>JSON 文本</span>
+    </div>
+
+    <div class="step-text" id="step" aria-live="polite"></div>
+
+    <div class="btns">
+      <button class="btn" id="prev">上一步</button>
+      <button class="btn primary" id="next">下一步</button>
+      <button class="btn" id="reset">从头再走</button>
+    </div>
+  </div>
+
+  <div class="callout">
+    <span class="t">这一趟里有三处没有对着源码核对</span>
+    SpringBlade 把很多基础功能放在另一个工具包 BladeTool 里，这一篇没有读它的源码。所以有三处是按 MyBatis-Plus 的通用行为和公开资料写的：第 7 步 SQL 条件的具体写法，第 10 步“每条记录各问一次字典”，以及第 11 步 JSON 里外壳字段的名字。第 10 部分会把 BladeTool 打开核对。
+  </div>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>一个细节：id 为什么是字符串</h2>
+  <p>上一节最后那段 JSON 里，<code>id</code> 是带引号的字符串，而 <code>category</code> 是数字。数据库里它们都是整数。这不是随手写的，实体类 <code>Notice</code> 里专门有一行：</p>
+<pre class="code">@JsonSerialize(using = ToStringSerializer.class)
+private Long id;</pre>
+  <p class="src">出处：<code>blade-desk-api/…/entity/Notice.java</code> 第 47–48 行</p>
+  <p>意思是：这个字段转 JSON 时，按字符串输出。原因在接收方。Java 的 <code>Long</code> 是 64 位整数，最大值是 9223372036854775807，共 19 位。JavaScript 的数字是双精度浮点数，能精确表示的最大整数是 9007199254740991，共 16 位。公告的 id 有 19 位，超出了这个范围。</p>
+  <div class="card">
+    <h3>在你的浏览器里试一下</h3>
+    <p>下面两个按钮真的会在这个页面里执行 <code>JSON.parse</code>，不是写死的结果。</p>
+    <div class="btns">
+      <button class="btn" id="id-num">后端直接给数字</button>
+      <button class="btn" id="id-str">后端给字符串</button>
+    </div>
+    <div class="idrow" id="id-out"><span>收到的 JSON</span><span>（点上面的按钮）</span><span>解析出的 id</span><span></span></div>
+  </div>
+  <p>给数字的话，最后三位变了，拿这个 id 再去请求详情就查不到这条公告。<code>@JsonSerialize</code> 那一行不处理任何业务，它的作用只是让数据在换形状时不走样。数值类型的范围和精度是 1.1 篇的内容。</p>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>你写的十几行，和你没写的</h2>
+  <p>现在看这个接口的源码。下面是 <code>NoticeController</code> 里和列表接口有关的全部内容，只省略了三行接口文档注解和其他几个方法。</p>
+  <p>带底色的词都可以点。每点一个，下方会说明它是什么，以及这门课的哪一篇会把它讲透。<b>现在看不懂是正常的</b>，这一节的目的是让你知道“不懂的东西一共有哪些”。</p>
+
+  <div class="card">
+    <pre class="code reader" id="reader"></pre>
+    <p class="src">出处：<code>blade-service/blade-desk/…/controller/NoticeController.java</code> 第 43–49、65–75 行。<span id="tk-count"></span></p>
+    <div class="step-text" id="tk-out">点代码里带底色的词。</div>
+  </div>
+
+  <p>全部点完之后回头看：方法体只有两行，但这十几行里出现了注解、继承、接口、泛型、静态方法、依赖注入、路由、统一返回、跨服务调用。它们没有一个是这个项目自己发明的，都来自语言本身或者框架。</p>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>这门课的走法</h2>
+  <p>把上面看到的东西按“谁写的”分一下，是三层：</p>
+
+  <div class="layers">
+    <div class="layer">
+      <div class="nm">表层<small>你每天亲手写的</small></div>
+      <div class="chips"><span class="here"><b>0</b>出发前（你在这）</span><span><b>10</b>回到真实项目</span></div>
+    </div>
+    <div class="layer">
+      <div class="nm">中层<small>框架和工具替你做的</small></div>
+      <div class="chips"><span><b>4</b>工程</span><span><b>6</b>Spring</span><span><b>7</b>缓存和消息</span><span><b>8</b>微服务</span><span><b>9</b>上线和运行</span></div>
+    </div>
+    <div class="layer">
+      <div class="nm">底层<small>框架能做到的原因</small></div>
+      <div class="chips"><span><b>1</b>对象与类型</span><span><b>2</b>集合与函数式</span><span><b>3</b>IO、网络、并发、JVM</span><span><b>5</b>数据库</span></div>
+    </div>
+  </div>
+
+  <p>数字是阅读顺序。这门课的判断是：只学表层，能照着写出一个接口，但出了问题不知道该往哪一层查。所以看完这一眼全貌之后，先沉到底层，再一层一层搭上来：</p>
+  <ul>
+    <li><b>每一部分回答一个问题</b>，这个问题是上一部分留下的。比如学完对象，自然会问“一堆对象放在哪”，那就是集合。</li>
+    <li><b>先亲手造一个小的，再用现成的大的。</b>会写一个几十行的 HTTP 服务器、一个迷你的依赖注入容器、一个最小的 Mapper。造过一次，框架就不再是黑盒。</li>
+    <li><b>不讲你已经会的。</b>变量、分支、循环这些，0.3 用一篇带过。</li>
+    <li><b>说的话要有出处。</b>自己写的代码都实际运行过；引用别人的代码写明文件和行号；推出来的数据标“示意”；每篇末尾列参考资料，并写明每一条支撑的是文中哪句话。</li>
+  </ul>
+  <p>完整的篇目在<a href="index.html">目录页</a>。</p>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>小结和自测</h2>
+  <div class="callout key">
+    <span class="t">带走一句话</span>
+    在这个请求里，同一份信息先后有过六种形状，至少有五个程序参与。处理它的那个方法只有两行，其余的事是网关、Spring、MyBatis-Plus 和数据库做的。这门课要讲的，就是这些“其余的事”。
+  </div>
+
+  <div class="card">
+    <h3>三个问题</h3>
+    <div class="q">
+      <div class="qt">1. 令牌过期了。<code>NoticeController.list</code> 这个方法还会被执行吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不会。请求先到网关，网关的 <code>AuthFilter</code> 解析令牌失败后直接返回 401，没有把请求往后转发。blade-desk 根本不知道有过这个请求。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 假如 blade-system 这个服务挂了，公告列表会怎样？先猜，再看答案。</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">按源码推断，列表照常返回，只是每条公告的“类型名”是空的。<code>IDictClient</code> 上写了 <code>fallback = IDictClientFallback.class</code>：调用失败时改用这个备用实现，它返回“获取数据失败”；而 <code>NoticeWrapper</code> 里有一句 <code>if (dict.isSuccess())</code>，失败就不填名字。备用实现只有在开启了熔断组件时才生效，这个项目的共享配置里开了（<code>doc/nacos/blade.yaml</code> 第 27–29 行，<code>feign.sentinel.enabled: true</code>）。这个结论没有实际停掉服务验证过。一个服务出事时别的服务怎么不被拖垮，是 8.6 篇的内容。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 在这个项目里全文搜索，找不到 <code>noticeService.page</code> 里 <code>page</code> 方法的定义。它在哪？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">在项目依赖的类库里。<code>INoticeService</code> 继承了 BladeTool 的 <code>BaseService</code>，后者又继承了 MyBatis-Plus 的 <code>IService</code>，<code>page</code> 是在那里定义的。在 IDEA 里按住 <kbd>⌘</kbd> 点方法名可以直接跳过去。</div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>参考资料</h2>
+  <p>文中的说法依据下面这些资料。每一条后面写了它支撑的是哪句话，可以点开对照。链接和原文在 2026-11-12 逐条打开核对过。</p>
+  <div class="card refs">
+    <h3>源码：SpringBlade v3.7.1</h3>
+    <ul>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-desk/src/main/java/org/springblade/desk/controller/NoticeController.java" target="_blank" rel="noopener">NoticeController.java</a><span>支撑：第 4 节的代码；路由注解、方法体的两行</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-gateway/src/main/java/org/springblade/gateway/filter/AuthFilter.java" target="_blank" rel="noopener">AuthFilter.java</a><span>支撑：网关怎样检查令牌，失败时直接返回 401</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-gateway/src/main/resources/bootstrap.yml" target="_blank" rel="noopener">网关的 bootstrap.yml</a><span>支撑：网关监听 80 端口；<code>discovery.locator.enabled: true</code></span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/doc/nacos/blade.yaml" target="_blank" rel="noopener">共享配置 blade.yaml</a><span>支撑：Web 服务器是 Undertow、工作线程 400 个；<code>feign.sentinel.enabled: true</code></span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service-api/blade-desk-api/src/main/java/org/springblade/desk/entity/Notice.java" target="_blank" rel="noopener">Notice.java</a><span>支撑：表名 <code>blade_notice</code>；id 转 JSON 时按字符串输出</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-desk/src/main/java/org/springblade/desk/service/INoticeService.java" target="_blank" rel="noopener">INoticeService.java</a><span>支撑：接口里没有 <code>page</code> 方法，它是继承来的</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-desk/src/main/java/org/springblade/desk/mapper/NoticeMapper.java" target="_blank" rel="noopener">NoticeMapper.java</a><span>支撑：Mapper 是接口，没有实现类</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-desk/src/main/java/org/springblade/desk/wrapper/NoticeWrapper.java" target="_blank" rel="noopener">NoticeWrapper.java</a><span>支撑：补“类型名”时调用了字典服务</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service-api/blade-dict-api/src/main/java/org/springblade/system/feign/IDictClient.java" target="_blank" rel="noopener">IDictClient.java</a><span>支撑：字典调用是 Feign 远程调用，并指定了备用实现</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-system/src/main/java/org/springblade/system/service/impl/DictServiceImpl.java" target="_blank" rel="noopener">DictServiceImpl.java</a><span>支撑：字典查询加了缓存</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/doc/sql/blade/blade-saber-mysql.sql" target="_blank" rel="noopener">blade-saber-mysql.sql</a><span>支撑：公告表结构、三条初始公告、通知类型的字典值</span></li>
+    </ul>
+    <h3>官方文档</h3>
+    <ul>
+      <li><a href="https://docs.spring.io/spring-cloud-gateway/docs/3.1.x/reference/html/#the-discoveryclient-route-definition-locator" target="_blank" rel="noopener">Spring Cloud Gateway 文档：DiscoveryClient Route Definition Locator</a><span>支撑：第 3 步：默认把 <code>/服务名/**</code> 转给同名服务，并在转发前去掉路径里的服务名</span></li>
+      <li><a href="https://docs.spring.io/spring-framework/docs/5.3.x/reference/html/core.html#beans-factory-scopes-singleton" target="_blank" rel="noopener">Spring Framework 文档：The Singleton Scope</a><span>支撑：“先猜”第 ③ 题：Spring 保管的对象默认只有一个实例</span></li>
+      <li><a href="https://docs.spring.io/spring-framework/docs/5.3.x/reference/html/web.html#mvc-ann-controller" target="_blank" rel="noopener">Spring Framework 文档：Annotated Controllers</a><span>支撑：<code>@RestController</code> 等于 <code>@Controller</code> 加 <code>@ResponseBody</code>，返回值直接写进响应</span></li>
+      <li><a href="https://docs.spring.io/spring-framework/docs/5.3.x/reference/html/web.html#mvc-ann-requestparam" target="_blank" rel="noopener">Spring Framework 文档：@RequestParam</a><span>支撑：第 5 步：参数声明成 Map 时，会收到全部请求参数</span></li>
+      <li><a href="https://docs.spring.io/spring-boot/docs/2.7.18/reference/html/web.html#web.servlet.embedded-container" target="_blank" rel="noopener">Spring Boot 文档：Embedded Servlet Container Support</a><span>支撑：第 4 步：服务里内置 Web 服务器，可选 Tomcat、Jetty、Undertow</span></li>
+      <li><a href="https://docs.spring.io/spring-cloud-openfeign/docs/3.1.x/reference/html/#spring-cloud-feign-circuitbreaker-fallback" target="_blank" rel="noopener">Spring Cloud OpenFeign 文档：CircuitBreaker Fallbacks</a><span>支撑：自测第 2 题：<code>fallback</code> 在熔断打开或调用出错时执行</span></li>
+      <li><a href="https://baomidou.com/guides/logic-delete/" target="_blank" rel="noopener">MyBatis-Plus 文档：逻辑删除支持</a><span>支撑：第 7 步：查询时自动加上“未删除”条件</span></li>
+      <li><a href="https://baomidou.com/plugins/pagination/" target="_blank" rel="noopener">MyBatis-Plus 文档：分页插件</a><span>支撑：第 7、9 步：分页查询会另外执行一条计数 SQL；分页结果里有 records、total、size、current</span></li>
+      <li><a href="https://mybatis.org/mybatis-3/zh_CN/getting-started.html" target="_blank" rel="noopener">MyBatis 文档：入门</a><span>支撑：第 7 步：Mapper 接口的对象由 MyBatis 提供，不需要自己写实现类</span></li>
+      <li><a href="https://nacos.io/docs/latest/what-is-nacos/" target="_blank" rel="noopener">Nacos 文档：Nacos 是什么</a><span>支撑：第 3 步：注册中心负责服务发现</span></li>
+    </ul>
+    <h3>规范</h3>
+    <ul>
+      <li><a href="https://www.rfc-editor.org/rfc/rfc9110" target="_blank" rel="noopener">RFC 9110：HTTP Semantics</a><span>支撑：第 1 步：请求由方法、路径、请求头组成</span></li>
+      <li><a href="https://www.rfc-editor.org/rfc/rfc7519" target="_blank" rel="noopener">RFC 7519：JSON Web Token</a><span>支撑：第 2 步：令牌的格式</span></li>
+      <li><a href="https://www.rfc-editor.org/rfc/rfc8259#section-6" target="_blank" rel="noopener">RFC 8259：JSON，第 6 节 Numbers</a><span>支撑：第 3 节：整数在 ±(2<sup>53</sup>−1) 之内，各种实现才能保证读出同一个值</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.2.1" target="_blank" rel="noopener">Java 语言规范（Java SE 8）§4.2.1</a><span>支撑：第 3 节：<code>long</code> 的最大值是 9223372036854775807</span></li>
+      <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Number/MAX_SAFE_INTEGER" target="_blank" rel="noopener">MDN：Number.MAX_SAFE_INTEGER</a><span>支撑：第 3 节：JavaScript 能精确表示的最大整数是 9007199254740991</span></li>
+    </ul>
+  </div>
+  <p class="note">没有资料支撑、只凭推断写的地方：第 2 节末尾列出的三处，以及自测第 2 题的结论。</p>
+
+  <button class="btn" id="mark-read"></button>
+
+  <div class="pager">
+    <a class="off"><small>上一篇</small>这是第一篇</a>
+    <a class="next" href="0-2.html"><small>下一篇</small>0.2 Java 是怎么跑起来的</a>
+  </div>
+
+  <div class="credit">
+    本篇是原创内容，由 Claude Fable 5.2（Anthropic）写作并制作示意图和交互演示，非任何官方教材。<br>
+    文中代码引自开源项目 <a href="https://github.com/chillzhuang/SpringBlade" target="_blank" rel="noopener">SpringBlade</a> v3.7.1（作者 Chill，Apache License 2.0），版权归原作者所有；公告和字典的数据来自该项目自带的初始化 SQL。BladeX 是它的商业版，本篇没有使用 BladeX 的源码。<br>
+    IP 地址、线程名、SQL 语句和 JSON 的具体内容是示意。其余内容随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+// ---------- 第 1 节：先猜三件事 ----------
+(() => {
+  const gs = $$('#guesses .guess');
+  let right = 0, answered = 0;
+  gs.forEach(g => {
+    const a = +g.dataset.a, opts = $$('.opt', g);
+    opts.forEach((b, i) => b.addEventListener('click', () => {
+      if (g.classList.contains('done')) return;
+      g.classList.add('done');
+      answered++;
+      if (i === a) right++;
+      opts[a].classList.add('right');
+      if (i !== a) b.classList.add('wrong');
+      opts.forEach(o => { if (!o.classList.contains('right') && !o.classList.contains('wrong')) o.disabled = true; });
+      if (answered === gs.length) {
+        $('#guess-score').textContent = `猜对 ${right} / ${gs.length}。` + (right === gs.length ? '直觉很准，下面看看依据。' : '猜错的那几个，正是值得往下看的地方。');
+      }
+    }));
+  });
+})();
+
+// ---------- 第 2 节：跟着请求走一趟 ----------
+(() => {
+  const POS = { browser: [64, 80], gw: [220, 80], nacos: [220, 188], web: [383, 80], ctrl: [485, 80], svc: [587, 80], mapper: [688, 80], sys: [485, 214], db: [688, 214] };
+  const P = n => ['index.html#p' + n, '第 ' + n + ' 部分'];
+  // st：点停在哪一站；shape：此刻数据是六种形状里的第几种
+  const STEPS = [
+    { st: 'browser', shape: 0, title: '浏览器发出请求',
+      what: '到这里为止都是你熟悉的。发出去的是一段按 HTTP 格式写好的文本：第一行是方法和路径，后面是请求头。<code>title</code> 的值是“公告”两个字编码后的样子。',
+      lbl: '此刻的数据', data: 'GET /blade-desk/notice/list?current=1&size=10&title=%E5%85%AC%E5%91%8A HTTP/1.1\nHost: api.example.com\nBlade-Auth: bearer eyJ0eXAiOiJKV1Qi…',
+      src: '', more: [] },
+    { st: 'gw', shape: 0, title: '网关：先验票',
+      what: '在这套架构里，外面来的请求都先到网关，它监听 80 端口。网关里的 <code>AuthFilter</code> 先看路径在不在免检名单里（登录、验证码这类接口必须免检，否则没登录的人永远拿不到令牌）。这个路径不在，于是从请求头 <code>Blade-Auth</code> 里取出令牌并解析。解析不出来就直接回 401，后面的服务不会知道有过这个请求。',
+      lbl: '令牌无效时，网关直接返回', data: '{"code":401,"msg":"请求未授权","data":null}',
+      src: 'blade-gateway/…/filter/AuthFilter.java，blade-gateway/…/provider/ResponseProvider.java，bootstrap.yml 第 2 行', more: [P(6), P(8)] },
+    { st: 'nacos', shape: 0, title: '网关：再问路',
+      what: '令牌没问题，网关要决定把请求交给谁。相关的配置只有一行：<code>discovery.locator.enabled: true</code>，意思是把路径的第一段当作服务名。网关拿着 <code>blade-desk</code> 去问注册中心 Nacos：这个服务现在有哪几个实例在运行，地址各是什么。然后挑一个，去掉路径第一段，转发过去。请求本身不经过 Nacos，网关只是去查了一下。',
+      lbl: '网关查到的（IP 是示意，端口来自配置文件）', data: '服务名  blade-desk\n实例    192.168.0.21:8105   ← 这次选它\n        192.168.0.22:8105\n转发    GET /notice/list?current=1&size=10&title=…',
+      src: 'blade-gateway/src/main/resources/bootstrap.yml，blade-desk/…/application-dev.yml', more: [P(8)] },
+    { st: 'web', shape: 0, title: 'blade-desk 收下请求',
+      what: 'blade-desk 是一个独立运行的 Java 程序，里面内置了一个 Web 服务器（从共享配置看，用的是 Undertow），一直在 8105 端口上等着。请求到了，它从工作线程池里取出一个空闲的线程，由这个线程把那段文本解析成请求对象，并且一直负责到返回为止。同一时刻到达的另一个请求，由另一个线程负责。配置里这个线程池的大小是 400。',
+      lbl: '这个线程手里的东西（线程名是示意）', data: '线程    worker-7\nmethod  GET\npath    /notice/list\nparams  current=1, size=10, title=公告\nheader  Blade-Auth: bearer eyJ0…',
+      src: 'doc/nacos/blade.yaml 第 3–13 行（Undertow，worker: 400），blade-desk/…/application-dev.yml（端口 8105）', more: [P(3), P(6)] },
+    { st: 'ctrl', shape: 1, title: '找到方法，把参数变成对象',
+      what: 'Spring 根据两个注解找到该调用谁：类上的 <code>@RequestMapping("notice")</code> 加上方法上的 <code>@GetMapping("/list")</code>，合起来正是 <code>/notice/list</code>。然后按方法的参数表准备参数：<code>Map&lt;String, Object&gt; notice</code> 收下全部查询参数，<code>Query query</code> 收下分页相关的那几个。<b>第一次变形：文本变成了 Java 对象。</b>',
+      lbl: '方法收到的两个参数', data: 'notice = {current=1, size=10, title=公告}    // Map<String, Object>\nquery  = Query(current=1, size=10)          // 分页参数',
+      src: 'NoticeController.java 第 44、65、72 行', more: [P(6)] },
+    { st: 'svc', shape: 1, title: 'Service：一个搜不到定义的方法',
+      what: '方法体第一行调用了 <code>noticeService.page(…)</code>。打开 <code>INoticeService</code> 和 <code>NoticeServiceImpl</code>，里面都没有 <code>page</code> 这个方法。它是继承来的：这两个类型各自继承了 BladeTool 里的父类型，再往上是 MyBatis-Plus，<code>page</code> 定义在那里。调用前，<code>Condition</code> 这个工具先把两个参数换成了 MyBatis-Plus 认识的样子。',
+      lbl: '传给 page 方法的两个对象', data: 'page    = 第 1 页，每页 10 条                // IPage<Notice>\nwrapper = 查 Notice，条件来自 {title=公告}    // QueryWrapper<Notice>',
+      src: 'NoticeController.java 第 73 行，INoticeService.java 第 28 行，NoticeServiceImpl.java', more: [P(1), P(2), P(5)] },
+    { st: 'mapper', shape: 2, title: 'Mapper：没有实现类的接口，拼出 SQL',
+      what: '<code>NoticeMapper</code> 是一个接口，整个项目里没有任何一个类实现它。程序启动时，MyBatis 在内存里现造了一个实现。它根据分页对象和条件对象拼出两条 SQL：先数一共多少条，再取这一页。注意 <code>is_deleted = 0</code>，这个条件没有人写，是自动加上的：这张表的“删除”只是把这一列改成 1，所以每次查询都要排除掉。<b>第二次变形：对象变成了 SQL 文本。</b>',
+      lbl: '发给数据库的 SQL（示意）', data: "SELECT COUNT(*) FROM blade_notice\n WHERE is_deleted = 0 AND (title LIKE '%公告%')\n\nSELECT id, title, category, release_time, content, …\n  FROM blade_notice\n WHERE is_deleted = 0 AND (title LIKE '%公告%')\n LIMIT 10",
+      src: 'NoticeMapper.java 第 30 行；表结构见 doc/sql/blade/blade-saber-mysql.sql 第 271 行', more: [P(3), P(5)] },
+    { st: 'db', shape: 3, title: 'MySQL：找到这几行',
+      what: 'Mapper 从连接池里借一条通往 MySQL 的连接，把 SQL 发过去。MySQL 是又一个独立的程序。它在 <code>blade_notice</code> 表里找出符合条件的行，按列返回。<b>第三次变形：SQL 换回来的是表里的行。</b>下面三行是 SpringBlade 自带的初始数据。',
+      lbl: '数据库返回的行（只列了四列）', data: 'id                   title      category  release_time\n1123598818738675223  测试公告    3         2018-12-31 20:03:31\n1123598818738675224  测试公告2   1         2018-12-05 20:03:31\n1123598818738675225  测试公告3   6         2018-12-29 00:00:00',
+      src: 'doc/sql/blade/blade-saber-mysql.sql 第 292 行', more: [P(5)] },
+    { st: 'mapper', shape: 4, title: '行变回对象',
+      what: 'MyBatis 把每一行变成一个 <code>Notice</code> 对象：列 <code>release_time</code> 对应字段 <code>releaseTime</code>，其余同理。三行变成三个对象，装进分页结果里交还给 Controller。<b>第四次变形：行变成了 Java 对象。</b>',
+      lbl: 'Controller 第一行拿到的 pages', data: 'IPage<Notice>\n  records = [ Notice(id=1123598818738675223, title=测试公告,  category=3, …),\n              Notice(id=1123598818738675224, title=测试公告2, category=1, …),\n              Notice(id=1123598818738675225, title=测试公告3, category=6, …) ]\n  total   = 3',
+      src: 'Notice.java 第 37–38 行', more: [P(5)] },
+    { st: 'sys', shape: 4, title: '补上“类型名”：去问另一个服务',
+      what: '表里只存了类型编号 3，页面上要显示的是“转发通知”。编号对应的名字不在这个服务里，在 blade-system 的字典表里。方法体第二行的 <code>NoticeWrapper</code> 负责补上它：<code>dictClient.getValue("notice", 3)</code>。这一行看起来是普通的方法调用，实际上是一次 HTTP 请求，因为 <code>IDictClient</code> 是一个贴了 <code>@FeignClient</code> 的接口。三条公告，问三次。blade-system 那边在这个方法上加了缓存，同一个编号第二次问就不再查库。',
+      lbl: 'blade-desk 发给 blade-system 的三次请求', data: 'GET /dict/getValue?code=notice&dictKey=3   →  转发通知\nGET /dict/getValue?code=notice&dictKey=1   →  发布通知\nGET /dict/getValue?code=notice&dictKey=6   →  事务通知',
+      src: 'NoticeWrapper.java 第 44–52 行，IDictClient.java 第 33–49 行，DictServiceImpl.java 第 58 行', more: [P(8), P(7)] },
+    { st: 'ctrl', shape: 5, title: '包一层外壳，变成 JSON',
+      what: '<code>R.data(…)</code> 给结果包上一层统一的外壳：状态码、是否成功、数据、提示语。所有接口都用同一种外壳，前端就能用同一段代码判断成败。然后方法返回。因为类上有 <code>@RestController</code>，Spring 把返回的对象交给 JSON 库转成文本。<b>第五次变形：对象变成了 JSON 文本。</b>',
+      lbl: '返回的 JSON（示意）', data: '{\n  "code": 200,\n  "success": true,\n  "data": {\n    "records": [\n      { "id": "1123598818738675223", "title": "测试公告",\n        "category": 3, "categoryName": "转发通知",\n        "releaseTime": "2018-12-31 20:03:31", … },\n      …\n    ],\n    "total": 3, "size": 10, "current": 1, "pages": 1\n  },\n  "msg": "操作成功"\n}',
+      src: 'NoticeController.java 第 43、74 行', more: [P(6)] },
+    { st: 'browser', shape: 5, title: '原路返回',
+      what: '这段文本由那个线程写回给网关，网关再写回给浏览器。线程回到线程池，等下一个请求。算上出发时的那一种，同一份信息一共有过六种形状：HTTP 文本、Java 对象、SQL 文本、表里的行、Java 对象、JSON 文本。每一次变形都可能出错：参数类型对不上、SQL 拼错、列名和字段名对不上、数字到了 JSON 里丢精度。下一节看的就是最后这一种。',
+      lbl: '', data: '', src: '', more: [] },
+  ];
+  const sts = $$('#route .st'), chips = $$('#shapes span'), pk = $('#pk'), box = $('#step');
+  const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  let i = 0;
+  const seen = new Set();
+  function paint() {
+    const s = STEPS[i];
+    seen.add(s.st);
+    sts.forEach(g => { g.classList.toggle('on', g.dataset.st === s.st); g.classList.toggle('seen', seen.has(g.dataset.st)); });
+    chips.forEach((c, k) => c.classList.toggle('cur', k === s.shape));
+    const [x, y] = POS[s.st];
+    pk.style.transform = `translate(${x}px,${y - 28}px)`;
+    // 窄屏上路线图要横向滚动：让当前这一站滚到中间
+    const wrap = $('#route').parentElement;
+    if (wrap.scrollWidth > wrap.clientWidth) wrap.scrollTo({ left: x / 760 * wrap.scrollWidth - wrap.clientWidth / 2, behavior: 'smooth' });
+    box.innerHTML =
+      `<div class="stepno">第 ${i + 1} 步 / 共 ${STEPS.length} 步</div><h3>${s.title}</h3><div>${s.what}</div>` +
+      (s.data ? `<div class="lbl">${s.lbl}</div><pre class="code">${esc(s.data)}</pre>` : '') +
+      (s.src ? `<p class="src">依据：${s.src}</p>` : '') +
+      (s.more.length ? `<div class="more">会在这里细讲：${s.more.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>` : '');
+    $('#prev').disabled = i === 0;
+    $('#next').disabled = i === STEPS.length - 1;
+  }
+  $('#next').addEventListener('click', () => { if (i < STEPS.length - 1) { i++; paint(); } });
+  $('#prev').addEventListener('click', () => { if (i > 0) { i--; paint(); } });
+  $('#reset').addEventListener('click', () => { i = 0; seen.clear(); paint(); });
+  paint();
+})();
+
+// ---------- 第 3 节：id 为什么是字符串 ----------
+(() => {
+  const out = $('#id-out'), ID = '1123598818738675223';
+  function show(json) {
+    const id = JSON.parse(json).id;           // 真的在浏览器里解析
+    const same = String(id) === ID;
+    out.innerHTML = '';
+    [['收到的 JSON', json, ''], ['解析出的 id', String(id) + (same ? '   一位不差' : '   最后三位变了'), same ? 'ok' : 'bad'], ['类型', typeof id, '']].forEach(([k, v, cls]) => {
+      const a = document.createElement('span'), b = document.createElement('span');
+      a.textContent = k;
+      if (cls) { const s = document.createElement('b'); s.className = cls; s.textContent = v; b.appendChild(s); } else b.textContent = v;
+      out.append(a, b);
+    });
+  }
+  $('#id-num').addEventListener('click', () => show('{"id":' + ID + '}'));
+  $('#id-str').addEventListener('click', () => show('{"id":"' + ID + '"}'));
+})();
+
+// ---------- 第 4 节：读那十几行代码 ----------
+(() => {
+  const P = n => `<a href="index.html#p${n}">第 ${n} 部分</a>`;
+  const TIPS = {
+    rc: ['@RestController', `<code>@</code> 开头的叫注解。注解本身什么都不做，它是贴给框架看的标签。这一个告诉 Spring 两件事：这个类的对象由 Spring 来创建和保管；它的方法返回什么，就把什么转成 JSON 写回去。注解是怎么被读到的在 ${P(3)}，Spring 怎么保管对象在 ${P(6)}。`],
+    route: ['@RequestMapping 和 @GetMapping', `路由。类上写一段路径，方法上再写一段，拼起来就是这个方法负责的地址：<code>/notice/list</code>，并且只接 GET 请求。${P(6)} 讲。`],
+    ctor: ['@AllArgsConstructor', `这个注解来自 Lombok，一个在编译时替你补代码的工具。它会生成一个“把所有字段都当参数”的构造器。配合下面那个字段看：Spring 创建 <code>NoticeController</code> 时发现构造器需要一个 <code>INoticeService</code>，就把自己保管的那个传进来。这叫构造器注入，在统计的 223 个文件里出现了 49 次。${P(6)} 讲。`],
+    doc: ['@Api 和 @ApiOperation', `接口文档注解。它们不影响程序怎么运行，有工具会读它们，生成一个可以在线调试的接口文档页面。在这份源码里，这类注解有 471 行，比 Spring 自己的常用注解加起来（约 300 行）还多。${P(6)} 讲。`],
+    ext: ['extends BladeController implements CacheNames', `<code>extends</code> 是继承一个类，<code>implements</code> 是实现一个接口。写了这半行，<code>NoticeController</code> 就自动拥有了 <code>BladeController</code> 里的全部方法。这份源码的 223 个文件里，有 161 个的类声明带这两个词之一。继承和接口在 ${P(1)}；<code>BladeController</code> 里具体有什么，留到 ${P(10)}。`],
+    field: ['private INoticeService noticeService;', `一个字段，类型是接口 <code>INoticeService</code>。注意两件事。第一，这里没有 <code>= new …</code>，那它的值是谁给的？答案在 <code>@AllArgsConstructor</code> 那里。第二，这个 Controller 全程只有一个对象，被所有线程共用，所以字段里只能放这种“放进去就不再变”的东西。前一件事在 ${P(6)}，后一件事在 ${P(3)}。`],
+    ret: ['R<IPage<NoticeVO>>', `方法的返回类型，尖括号是泛型。从外往里读：最外面是统一的返回外壳 <code>R</code>，壳里装的是一页数据 <code>IPage</code>，这一页里的每一条是 <code>NoticeVO</code>。读熟了以后，光看这一个类型就知道接口返回的 JSON 长什么样。泛型在 ${P(2)}。`],
+    params: ['方法的两个参数', `<code>@RequestParam Map&lt;String, Object&gt; notice</code> 表示把所有查询参数收进一个 Map；<code>Query query</code> 没有注解，Spring 会创建一个 <code>Query</code> 对象，把同名的参数填进去。<code>@ApiIgnore</code> 只是告诉文档工具别把这个 Map 列出来。参数绑定在 ${P(6)}，Map 在 ${P(2)}。`],
+    page: ['noticeService.page(…)', `调用 Service 的分页查询。这个方法不是项目里写的，是从 MyBatis-Plus 继承来的，所以在项目里搜不到它的定义。一个类型从父类型那里得到方法，是 ${P(1)} 的内容；MyBatis-Plus 提供了哪些现成的方法，在 ${P(5)}。`],
+    cond: ['Condition.getPage 和 Condition.getQueryWrapper', `<code>类名.方法名(…)</code> 这种不用先创建对象就能调的，是静态方法。<code>Condition</code> 是 BladeTool 里的工具类，这两个方法把前端传来的参数换成 MyBatis-Plus 需要的分页对象和条件对象。这份源码引用 BladeTool 394 次，引用 Java 自带的类库只有 183 次。静态方法在 ${P(1)}，BladeTool 在 ${P(10)}。`],
+    r: ['R.data(…)', `又一个静态方法，给结果包上统一的外壳。失败时对应的写法是 <code>R.fail(…)</code>。为什么所有接口要用同一种外壳、出了异常怎么也变成这种外壳，在 ${P(6)}。`],
+    wrap: ['NoticeWrapper.build().pageVO(pages)', `把数据库实体 <code>Notice</code> 转成给前端看的 <code>NoticeVO</code>，后者多一个“类型名”字段。就是这一小段里藏着对另一个服务的调用。从这行代码上完全看不出来它会发网络请求，这正是微服务里容易出性能问题的地方。${P(8)} 讲。`],
+  };
+  // [文本] 是普通代码，[文本, 键] 是可以点的词
+  const CODE = [
+    ['@RestController', 'rc'], ['\n'],
+    ['@RequestMapping("notice")', 'route'], ['\n'],
+    ['@AllArgsConstructor', 'ctor'], ['\n'],
+    ['@Api(value = "用户博客", tags = "博客接口")', 'doc'], ['\n'],
+    ['public class NoticeController '], ['extends BladeController implements CacheNames', 'ext'], [' {\n\n'],
+    ['  '], ['private INoticeService noticeService;', 'field'], ['\n\n'],
+    ['  '], ['@GetMapping("/list")', 'route'], ['\n'],
+    ['  '], ['@ApiOperation(value = "分页", notes = "传入notice")', 'doc'], ['\n'],
+    ['  public '], ['R<IPage<NoticeVO>>', 'ret'], [' list('], ['@ApiIgnore @RequestParam Map<String, Object> notice, Query query', 'params'], [') {\n'],
+    ['    IPage<Notice> pages = '], ['noticeService.page', 'page'], ['('], ['Condition.getPage', 'cond'], ['(query), '], ['Condition.getQueryWrapper', 'cond'], ['(notice, Notice.class));\n'],
+    ['    return '], ['R.data', 'r'], ['('], ['NoticeWrapper.build().pageVO(pages)', 'wrap'], [');\n'],
+    ['  }\n}'],
+  ];
+  const pre = $('#reader'), out = $('#tk-out'), count = $('#tk-count');
+  const keys = Object.keys(TIPS), seen = new Set(), btns = [];
+  CODE.forEach(([t, k]) => {
+    if (!k) { pre.appendChild(document.createTextNode(t)); return; }
+    const b = document.createElement('button');
+    b.className = 'tk'; b.type = 'button'; b.textContent = t; b.dataset.k = k;
+    b.addEventListener('click', () => {
+      seen.add(k);
+      btns.forEach(o => { o.classList.toggle('cur', o.dataset.k === k); o.classList.toggle('seen', seen.has(o.dataset.k) && o.dataset.k !== k); });
+      out.innerHTML = `<b>${TIPS[k][0].replace(/</g, '&lt;')}</b><div style="margin-top:4px">${TIPS[k][1]}</div>`;
+      paintCount();
+    });
+    btns.push(b); pre.appendChild(b);
+  });
+  function paintCount() {
+    count.textContent = seen.size === keys.length ? `${keys.length} 处都看过了。` : `已看 ${seen.size} / ${keys.length} 处。`;
+  }
+  paintCount();
+})();
+</script>
+</body>
+</html>

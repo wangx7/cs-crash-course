@@ -48,10 +48,10 @@ const COURSES = [
     extras: [],
   },
   {
-    href: 'java/index.html', icon: '☕', key: 'hm-java-read', total: 64,
-    title: 'Java 入门到起飞 · 图文版',
-    sub: '黑马程序员 Java 零基础视频教程（上部）：200 集按话题整理成 64 篇：概念精讲，练习做成题单，偏门内容略读。',
-    video: 'https://www.bilibili.com/video/BV17F411T7Ao/',
+    href: 'java/index.html', icon: '☕', key: 'java-be-read', total: 86,
+    title: 'Java 后端 · 图文课',
+    sub: '原创课，没有对应视频。写给已经会编程的人：从一个请求讲起，走到语言、并发、数据库的底层，再搭回 Spring 和微服务。陆续更新中。',
+    video: '',
     extras: [],
   },
 ];
@@ -62,7 +62,7 @@ $('#courses').innerHTML = COURSES.map(c => {
     <div class="ic">${c.icon}</div>
     <div>
       <a class="title" href="${c.href}"><div class="zh">${c.title}</div><div class="sub">${c.sub}</div></a>
-      <div class="meta"><span><span class="prog"><i style="width:${pct}%"></i></span>　已读 ${read} / ${c.total} 篇</span><a href="${c.video}" target="_blank" rel="noopener">原视频 ↗</a></div>
+      <div class="meta"><span><span class="prog"><i style="width:${pct}%"></i></span>　已读 ${read} / ${c.total} 篇</span>${c.video ? `<a href="${c.video}" target="_blank" rel="noopener">原视频 ↗</a>` : ''}</div>
       ${c.extras.length ? `<div class="extra-links">${c.extras.map(([h, t]) => `<a href="${h}">${t}</a>`).join('')}</div>` : ''}
     </div>
   </li>`;

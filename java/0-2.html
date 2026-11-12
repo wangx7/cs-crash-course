@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0.2 Java 是怎么跑起来的 · Java 后端</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font-family:var(--mono);font-size:13.5px;line-height:1.65;background:var(--code);border-radius:10px;padding:12px 14px;margin:10px 0;overflow-x:auto;white-space:pre;tab-size:4}
+.src{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.src code{font-size:12px}
+.note{font-size:13px;color:var(--muted)}
+.files{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:10px 0}
+.files figure{margin:0}
+.files figcaption{font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.files pre.code{margin:4px 0 0}
+
+/* 终端 */
+.term{--t-bg:#1d2127;--t-ink:#e3e1dc;--t-dim:#8d939c;--t-ps:#7fb4ff;--t-err:#ff8a80;--t-warn:#e8c26a;--t-add:#7ad69a;--t-del:#ff8a80}
+.tm-screen{background:var(--t-bg);color:var(--t-ink);font-family:var(--mono);font-size:13px;line-height:1.6;border-radius:10px;padding:12px 14px;min-height:120px;max-height:440px;overflow:auto;white-space:pre}
+.tm-screen .ps{color:var(--t-ps)}
+.tm-screen .v{display:inline-block;font-size:11px;line-height:1.4;padding:0 6px;margin-right:6px;border-radius:4px;background:#2f6fde;color:#fff;vertical-align:1px}
+.tm-screen .v.v25{background:#7b5bd6}
+.tm-screen .err{color:var(--t-err)}
+.tm-screen .warn{color:var(--t-warn)}
+.tm-screen .cm{color:var(--t-dim)}
+.tm-screen .add{color:var(--t-add)}
+.tm-screen .del{color:var(--t-del)}
+.tm-screen .cur{display:inline-block;width:.6em;background:var(--t-ink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+.tm-ask{margin-top:12px}
+.tm-ask:empty{display:none}
+.tm-ask .qt{font-weight:600}
+.tm-ask .opts{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 0}
+.tm-ask .opt.right{border-color:var(--ok);background:var(--ok-soft);color:var(--ink)}
+.tm-ask .opt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--ink)}
+.tm-note{margin-top:12px;font-size:15px;padding:10px 14px;background:var(--bg);border-radius:10px}
+.tm-note:empty{display:none}
+.tm-foot{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:12px}
+.tm-foot .score{font-size:13px;color:var(--muted)}
+
+/* 字节浏览器 */
+.tasks{list-style:none;margin:8px 0 0;padding:0;display:grid;gap:4px}
+.tasks li{font-size:14.5px;padding-left:26px;position:relative}
+.tasks li::before{content:"";position:absolute;left:2px;top:4px;width:15px;height:15px;border:2px solid var(--wire);border-radius:4px}
+.tasks li.done::before{border-color:var(--ok);background:var(--ok)}
+.tasks li.done::after{content:"✓";position:absolute;left:5px;top:-1px;color:#fff;font-size:13px;font-weight:700}
+.tasks li.done span{color:var(--muted)}
+.bv{display:grid;grid-template-columns:minmax(0,auto) minmax(0,1fr);gap:14px;margin-top:12px;align-items:start}
+@media (max-width:860px){.bv{grid-template-columns:minmax(0,1fr)}}
+.hex{font-family:var(--mono);font-size:12.5px;line-height:1;display:grid;grid-template-columns:44px repeat(16,22px);row-gap:3px;padding:10px;background:var(--code);border-radius:10px;width:max-content}
+.hex .off{color:var(--muted);font-size:11px;align-self:center}
+.hex b{font-weight:400;text-align:center;padding:3px 0;border-radius:3px;cursor:pointer}
+.hex b:hover{outline:1px solid var(--wire)}
+.hex b.hl{background:var(--on-soft);box-shadow:inset 0 -2px 0 var(--on);font-weight:700}
+.hex b.rel{background:var(--accent-soft);box-shadow:inset 0 -2px 0 var(--accent)}
+.tree{max-height:470px;overflow:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:4px 0}
+.tree button{display:block;width:100%;text-align:left;font:inherit;font-size:13px;line-height:1.45;color:var(--ink);background:none;border:none;padding:3px 10px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tree button:hover{background:var(--bg)}
+.tree button.on{background:var(--on-soft)}
+.tree button .rg{font-family:var(--mono);font-size:11px;color:var(--muted);margin-right:6px}
+#bv-out{min-height:84px}
+#bv-out code{overflow-wrap:anywhere}
+
+/* 对照表 */
+table.map{width:100%;border-collapse:collapse;font-size:14.5px;margin:10px 0}
+table.map th,table.map td{border-bottom:1px solid var(--line);padding:8px 8px;text-align:left;vertical-align:top}
+table.map th{font-size:13px;color:var(--muted);font-weight:600}
+table.map td:first-child{width:34%}
+.path{font-weight:600}
+.ver{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.ver span{font-family:var(--mono);font-size:13px;padding:3px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel)}
+.ver span b{color:var(--on)}
+
+/* 参考资料 */
+.refs h3{margin:18px 0 6px;font-size:16px}
+.refs h3:first-child{margin-top:0}
+.refs ul{list-style:none;margin:0;padding:0}
+.refs li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px;overflow-wrap:anywhere}
+.refs li:last-child{border-bottom:none}
+.refs li span{display:block;font-size:13px;color:var(--muted)}
+</style>
+</head>
+<body data-ep="2" data-store="java-be-read" data-unit="篇">
+<div class="topbar">
+  <a href="index.html">← Java 后端 · 目录</a>
+  <span class="muted">第 0 部分 · 出发前</span>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">第 0 部分 · 出发前 · 0.2</div>
+  <h1>Java 是怎么跑起来的</h1>
+  <p class="en">From .java to a running JVM</p>
+  <p class="lead">0.1 里的 blade-desk 服务，在服务器上是由它 Dockerfile 最后一行的 <code>java -jar app.jar</code> 启动的。从一个 <code>.java</code> 源文件到这条命令，中间要经过编译、加载、打包。这一篇在命令行里把这几步亲手做一遍，打开编译出来的文件看里面存了什么，再故意弄坏几次，看错误出在哪一步。最后把每条命令对应到 IDEA 的菜单和设置。</p>
+  <div class="road"><span>编译和运行</span><i>→</i><span>打开 .class</span><i>→</i><span>故意弄坏</span><i>→</i><span>版本号</span><i>→</i><span>打包</span><i>→</i><span>IDEA</span></div>
+  <p class="note" style="margin-top:16px">页面上所有终端输出都是实际执行后贴进来的。环境：macOS（Apple 芯片）；JDK 8 是 Amazon Corretto 1.8.0_512，JDK 25 是 OpenJDK 25.0.2。很长的调用栈删去了一部分，删的地方写着“省略”。</p>
+</header>
+
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">两条命令</a></li>
+  <li><a href="#ch2">打开 Hello.class</a></li>
+  <li><a href="#ch3">用到时才去找</a></li>
+  <li><a href="#ch4">只重新编译一个文件</a></li>
+  <li><a href="#ch5">52 和 69</a></li>
+  <li><a href="#ch6">打成 jar</a></li>
+  <li><a href="#ch7">搬进 IDEA</a></li>
+  <li><a href="#ch8">小结和自测</a></li>
+  <li><a href="#ch9">参考资料</a></li>
+</ol></nav>
+
+<main>
+
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>两条命令：javac 和 java</h2>
+  <p>JDK 里有两个命令是这一篇的主角：<code>javac</code> 是编译器，<code>java</code> 是启动 JVM（Java 虚拟机）的命令。下面的终端从一个只打印一行字的文件开始。每点一次“下一条命令”执行一条；有些命令执行前会先让你猜结果。</p>
+  <div class="card term" id="t1"></div>
+  <p>这一段里有两件事后面一直要用：</p>
+  <ul>
+    <li><code>javac</code> 的产物不是 macOS 能直接执行的程序，而是 <code>.class</code> 文件，里面是给 JVM 看的指令，叫<b>字节码</b>。同一个 <code>.class</code> 拷到 Linux 服务器上，由那里的 JVM 执行。</li>
+    <li><code>javac</code> 收的是<b>文件名</b>，<code>java</code> 收的是<b>类名</b>。JVM 拿到类名以后，自己去找对应的 <code>.class</code> 文件。“去哪找、什么时候找”是第 3 节的内容。</li>
+  </ul>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>打开 Hello.class</h2>
+  <p>刚才生成的 <code>Hello.class</code> 一共 416 个字节，下面是它的全部内容（十六进制）。这个浏览器不是写死的说明图：页面里的脚本按 Java 虚拟机规范第 4 章的格式，把这 416 个字节一项一项解析出来，列在右边。点右边的某一项，左边对应的字节会亮起来；点左边的任意一个字节，也会跳到它所属的那一项。</p>
+  <p>先别急着看说明，带着下面四个任务去找。第四个任务请先猜一下能不能找到。</p>
+  <div class="card">
+    <ul class="tasks" id="bv-tasks">
+      <li data-k="hello"><span>找到“你好，JVM”这几个字存在哪</span></li>
+      <li data-k="code-main"><span>找到 <code>main</code> 方法编译成的指令（只有 9 个字节）</span></li>
+      <li data-k="init"><span>找到一个你没有写过的方法</span></li>
+      <li data-k="println"><span>找到 <code>println</code> 的代码。先猜：它在这个文件里吗？</span></li>
+    </ul>
+    <div class="step-text" id="bv-out" aria-live="polite">点右边列表里的一项，或者点左边任意一个字节。</div>
+    <div class="bv">
+      <div class="scroll-x"><div class="hex" id="hex" role="grid" aria-label="Hello.class 的 416 个字节"></div></div>
+      <div class="tree" id="tree" aria-label="解析出的结构"></div>
+    </div>
+  </div>
+  <p>四个任务做完会发现：</p>
+  <ul>
+    <li>源码里只有一个方法，文件里有两个。多出来的 <code>&lt;init&gt;</code> 是构造器：类里一个构造器都没写时，编译器按语言规范补一个默认的，它只调用父类 <code>Object</code> 的构造器。</li>
+    <li><code>println</code> 的代码不在这里。文件里只有一串名字：类 <code>java/io/PrintStream</code>、方法名 <code>println</code>、描述符 <code>(Ljava/lang/String;)V</code>（收一个 String，返回 void）。连 <code>System</code>、<code>Object</code> 也一样，都只是名字。</li>
+  </ul>
+  <p><b>class 文件之间是靠名字互相引用的，不是靠地址。</b>名字什么时候换成真正的类和方法、换不成会怎样，是下面三节的内容。</p>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>用到时才去找</h2>
+  <p>换一个有两个类的例子。<code>App</code> 只在命令行带了参数时才会用到 <code>Report</code>：</p>
+  <div class="files">
+    <figure><figcaption>App.java</figcaption><pre class="code">public class App {
+    public static void main(String[] args) {
+        System.out.println("启动了");
+        if (args.length &gt; 0) {
+            new Report().print();
+        }
+        System.out.println("结束");
+    }
+}</pre></figure>
+    <figure><figcaption>Report.java</figcaption><pre class="code">public class Report {
+    void print() {
+        System.out.println("打印报表");
+    }
+}</pre></figure>
+  </div>
+  <div class="card term" id="t2"></div>
+  <p>前端打包时，一个 import 指向的文件不存在，构建就会失败。Java 不一样：编译时检查过，运行时 JVM 还要按名字再找一次，而且是在某条指令<b>第一次真正用到</b>那个类时才去找。没走到那一行，缺了也不知道。这个实验在 JDK 25 上重做一遍，结果相同。</p>
+  <p>Java 虚拟机规范对此留了余地：可以用到时再找，也可以在一开始全部找好，只要求错误在“用到”的那一刻抛出。所以准确的说法是“实测的这两个 JVM 是用到时才找”，不是“Java 规定用到时才找”。</p>
+  <p>在这个例子里，<code>NoClassDefFoundError</code> 说的是：编译时这个类在，运行时找不到了。注意它和 <code>ClassNotFoundException</code> 的关系：后者是“找的那一步”失败，JVM 把它包成前者抛给你，调用栈里的 <code>Caused by</code> 就是它。</p>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>只重新编译一个文件</h2>
+  <p>上一节是整个类不见了。更常见的情况是类还在，但内容变了。下面的 <code>Main</code> 用到了 <code>Shop</code> 的三样东西：一个方法、一个常量、一个带参数的方法。我们会改三次 <code>Shop.java</code>，每次<b>只重新编译 Shop</b>，<code>Main.class</code> 一直不动。</p>
+  <div class="files">
+    <figure><figcaption>Main.java</figcaption><pre class="code">public class Main {
+    public static void main(String[] args) {
+        System.out.println(Shop.greet());
+        System.out.println("每页 " + Shop.PAGE_SIZE + " 条");
+        System.out.println(Shop.price(199));
+    }
+}</pre></figure>
+    <figure><figcaption>Shop.java（改动前）</figcaption><pre class="code">public class Shop {
+    public static final int PAGE_SIZE = 10;
+
+    public static String greet() {
+        return "欢迎光临";
+    }
+
+    public static String price(int yuan) {
+        return "¥" + yuan;
+    }
+}</pre></figure>
+  </div>
+  <div class="card term" id="t3"></div>
+  <p>三次改动，三种结果，原因是同一个：</p>
+  <ul>
+    <li><b>方法按名字和描述符找。</b><code>Main.class</code> 里记的是“<code>Shop</code> 类里叫 <code>greet</code>、描述符 <code>()Ljava/lang/String;</code> 的方法”。方法体换了，名字和描述符没变，就找得到新的；参数变了，描述符就变了，旧的那个找不到，报 <code>NoSuchMethodError</code>。</li>
+    <li><b>常量例外。</b><code>static final</code> 且用常量初始化的字段，语言规范要求编译器把值直接写进用它的类，不留引用。所以改了它，用到它的类必须重新编译。</li>
+    <li><b>编译器只能检查编译那一刻它看得见的东西。</b>两边一起编译时，参数不对立刻报错；分开编译，错误就推迟到运行时。</li>
+  </ul>
+  <p>这和后端项目的关系：在 Maven 工程里，你的代码是对着某个版本的 jar 编译的，运行时 classpath 上放的却可能是另一个版本。依赖树里同一个库出现了几个版本时，Maven 只留下一个（规则见参考资料里的 Maven 文档）。留下的那个如果少了你调用的方法，表现就和上面第三次改动一模一样：启动正常，执行到那一行才报 <code>NoSuchMethodError</code>。依赖管理在 4.1 篇讲。</p>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>52 和 69：class 文件的版本号</h2>
+  <p>第 2 节的字节浏览器里，魔数后面紧跟着版本号 <code>00 34</code>，也就是 52。每个 JDK 版本的编译器默认产出自己那一版的格式，JVM 只认得不比自己新的格式：</p>
+  <div class="ver"><span>Java 8 → <b>52</b></span><span>Java 11 → <b>55</b></span><span>Java 17 → <b>61</b></span><span>Java 21 → <b>65</b></span><span>Java 25 → <b>69</b></span></div>
+  <p class="note">规律是 44 加上版本号。52 和 69 是下面实测出来的，其余三个按 Java 虚拟机规范 Java SE 25 版第 4.1 节的表。</p>
+  <p>这件事和你直接相关。这台 Mac 上装的 JDK 只有 25；SpringBlade 的服务在容器里跑的是 Java 8：</p>
+<pre class="code">FROM anapsix/alpine-java:8_server-jre_unlimited
+…
+ADD ./target/blade-desk.jar ./app.jar
+…
+ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]</pre>
+  <p class="src">出处：<code>blade-service/blade-desk/Dockerfile</code> 第 1、11、13 行。镜像名里的 <code>8_server-jre</code> 表示 Java 8 的运行环境（JRE，只有 <code>java</code>，没有 <code>javac</code>）。</p>
+  <p>下面这个小程序用了 <code>String.isBlank()</code>，这是 Java 11 才加的方法。终端里的命令会在两个 JDK 之间切换，每行开头的标签写着用的是哪一个。</p>
+  <figure style="margin:0"><figcaption class="src" style="font-family:var(--mono)">Check.java</figcaption><pre class="code">public class Check {
+    public static void main(String[] args) {
+        String name = args.length &gt; 0 ? args[0] : " ";
+        System.out.println(name.isBlank() ? "名字是空的" : "你好，" + name);
+    }
+}</pre></figure>
+  <div class="card term" id="t4"></div>
+  <p>三种编译方式，结论分别是：</p>
+  <div class="scroll-x"><table class="map">
+    <tr><th>用 JDK 25 编译时</th><th>class 版本</th><th>在 JDK 8 上</th></tr>
+    <tr><td><code>javac Check.java</code></td><td>69</td><td>加载时报 <code>UnsupportedClassVersionError</code>，一行都不执行</td></tr>
+    <tr><td><code>javac -source 8 -target 8</code></td><td>52</td><td>能加载，执行到 <code>isBlank</code> 才报 <code>NoSuchMethodError</code>；在你的 Mac 上测试则一切正常</td></tr>
+    <tr><td><code>javac --release 8</code></td><td>—</td><td>编译时就报错：Java 8 的 <code>String</code> 没有这个方法</td></tr>
+  </table></div>
+  <p>第二种最危险，因为它在本机测不出来。而 SpringBlade 的 <code>pom.xml</code> 第 136–137 行写的正是 <code>&lt;source&gt;</code> 和 <code>&lt;target&gt;</code>（值为 1.8），没有用 <code>release</code>。也就是说，用 JDK 25 来构建这样的工程，就落在第二种情况里。最省事的做法是让构建用的 JDK 本身就是 8，第 7 节说在 IDEA 里改哪里。你们 BladeX 的 <code>pom.xml</code> 怎么写的，要打开自己的文件看。</p>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>打成 jar</h2>
+  <p>一个服务有几百个 class 文件，再加上几十个依赖库，不可能一个个拷到服务器上。jar 就是把它们装进一个 zip 格式的文件。拿第 4 节的两个类试一下（命令和输出都来自 JDK 8）：</p>
+<pre class="code">$ jar cfe shop.jar Main Main.class Shop.class
+$ jar tf shop.jar
+META-INF/
+META-INF/MANIFEST.MF
+Main.class
+Shop.class
+$ unzip -p shop.jar META-INF/MANIFEST.MF
+Manifest-Version: 1.0
+Created-By: 1.8.0_512 (Amazon.com Inc.)
+Main-Class: Main
+$ java -jar shop.jar
+欢迎光临
+每页 10 条
+¥199</pre>
+  <p><code>jar cfe</code> 里的 <code>e</code> 指定入口类，它被写进 <code>MANIFEST.MF</code> 的 <code>Main-Class</code>。<code>java -jar</code> 读这一行，知道该从哪个类的 <code>main</code> 开始，并且把这个 jar 当作找类的地方（classpath）。</p>
+  <p>Spring Boot 打出来的 <code>blade-desk.jar</code> 多了一层。JDK 没有提供加载“jar 里套着的 jar”的标准办法，而一个服务的几十个依赖都是 jar。Spring Boot 的做法是把它们原样放进去，再放一个自己的启动器负责读取：</p>
+<pre class="code">blade-desk.jar
+├─ META-INF/MANIFEST.MF
+│     Main-Class:  org.springframework.boot.loader.JarLauncher   ← java -jar 先启动它
+│     Start-Class: 带 main 方法的启动类                           ← 它再去调用这个
+├─ org/springframework/boot/loader/…   启动器自己的 class
+├─ BOOT-INF/classes/                   项目代码编译出的 class
+└─ BOOT-INF/lib/                       依赖的 jar，每个都原样放着</pre>
+  <p class="src">结构依据 Spring Boot 2.7.18 文档的“可执行 jar 格式”一章，没有实际构建 SpringBlade 解开核对。blade-desk 的启动类是 <code>org.springblade.desk.DeskApplication</code>。</p>
+  <p>所以第 4 节说的“运行时 classpath 上是哪个版本的 jar”，在 Spring Boot 服务里就是 <code>BOOT-INF/lib/</code> 里放的那一个。</p>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>搬进 IDEA</h2>
+  <p>在 IDEA 里点按钮，要解决的还是前面这几个问题：用哪个 JDK、编译成什么版本、class 文件放哪、从哪个类启动。下面左边是这一篇用过的命令行做法，右边是 IntelliJ IDEA 2026.1 中文界面里管这件事的位置：</p>
+  <div class="scroll-x"><table class="map">
+    <tr><th>命令行</th><th>IDEA</th></tr>
+    <tr><td>用哪个 JDK 的 <code>javac</code> 和 <code>java</code></td><td><span class="path">文件 → 项目结构… → 项目 → SDK</span>。下拉列表里有 <span class="path">下载 JDK…</span>，可以直接下载一个 JDK 8</td></tr>
+    <tr><td><code>-source</code> / <code>-target</code></td><td>同一页的 <span class="path">语言级别</span></td></tr>
+    <tr><td><code>javac</code>，以及 class 文件放在哪</td><td><span class="path">构建 → 构建项目</span>。普通项目输出到 <code>out/production/&lt;模块名&gt;</code>；Maven 项目按 Maven 的约定输出到 <code>target/classes</code></td></tr>
+    <tr><td><code>java -cp … Main</code></td><td>点 <code>main</code> 方法那一行左边的绿色三角。默认会先构建，再运行</td></tr>
+    <tr><td>用哪个 JDK 跑 Maven（打包用的就是它）</td><td><span class="path">IntelliJ IDEA → 设置… → 构建、执行、部署 → 构建工具 → Maven → 运行程序 → JRE</span></td></tr>
+  </table></div>
+  <p>打开公司项目以后，先看第一行和最后一行这两处。要是显示的是 25，你就处在第 5 节表格的第二行：本机一切正常，部署到 Java 8 的服务器上，用到新方法的那一行才会出错。</p>
+  <div class="callout">
+    <span class="t">动手：在 IDEA 里重做第 4 节的第 2 步</span>
+    新建一个普通 Java 项目，放进 <code>Main.java</code> 和 <code>Shop.java</code>，运行一次。然后只把 <code>PAGE_SIZE</code> 改成 20，再点运行。命令行里只重新编译 <code>Shop</code> 会得到旧值 10；IDEA 的构建会不会顺带重新编译 <code>Main</code>，这一篇没有在 IDEA 里试过，你的结果就是答案。
+  </div>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>小结和自测</h2>
+  <div class="callout key">
+    <span class="t">带走一句话</span>
+    <code>javac</code> 把源码编译成按名字互相引用的 class 文件；<code>java</code> 启动 JVM，由它在 classpath 上按名字找这些文件，用到时才找。编译时检查过的东西，运行时还要再对一次，对不上就是 <code>NoClassDefFoundError</code>、<code>NoSuchMethodError</code>、<code>UnsupportedClassVersionError</code>。常量是例外，它在编译时就被抄进了用它的类。
+  </div>
+
+  <div class="card">
+    <h3>三个问题</h3>
+    <div class="q">
+      <div class="qt">1. 新服务上线，日志里只有一行错误：<code>UnsupportedClassVersionError: … (class file version 61.0), this version of the Java Runtime only recognizes class file versions up to 52.0</code>。发生了什么？该改哪里？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">61 = 44 + 17，说明这个 class 是用 JDK 17 默认设置编译的；52 说明服务器上跑的是 Java 8。改构建这一侧：用 JDK 8 构建，或者用 JDK 9 以上构建并加 <code>--release 8</code>。只加 <code>-source 8 -target 8</code> 能让这条错误消失，但可能换成第 5 节里的 <code>NoSuchMethodError</code>。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. SpringBlade 的 <code>pom.xml</code> 第 140 行给编译器加了一个参数 <code>-parameters</code>。它改变了 class 文件里的什么？谁需要它？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">默认情况下，javac 不把方法的参数名写进 class 文件（实测：对 <code>list(String title, int size)</code> 用 <code>javap -v</code> 查看，找不到 <code>title</code> 和 <code>size</code>）。加上 <code>-parameters</code> 后，class 文件里多了一个 <code>MethodParameters</code> 属性，记着这两个名字。Spring 需要它：参数名和请求参数同名时，<code>@PathVariable</code>、<code>@RequestParam</code> 可以不写名字，Spring 就是从这里读到参数名的（Spring 文档的原话是需要调试信息或者 <code>-parameters</code>）。“框架怎么读到 class 文件里的信息”是 3.10 篇的内容。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 你的代码编译时依赖某个库的 2.0 版，调用了 2.0 才有的方法 <code>X</code>。运行时 classpath 上实际是 1.0 版。程序会在什么时候出错、报什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">启动不报错（第 3 节：用到时才找）。执行到调用 <code>X</code> 的那一行时报 <code>NoSuchMethodError</code>，没用到 <code>X</code> 的功能照常工作。如果你用的是 2.0 新增的一整个类，报的就是 <code>NoClassDefFoundError</code>。所以这类错误可能在上线以后、有人第一次用到某个功能时才出现。</div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="ch9">
+  <div class="ch-num">第 9 节</div>
+  <h2>参考资料</h2>
+  <p>每一条后面写了它支撑的是哪句话。链接和原文在 2026-11-12 逐条打开核对过。</p>
+  <div class="card refs">
+    <h3>规范</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.1" target="_blank" rel="noopener">Java 虚拟机规范（Java SE 8）§4.1 The ClassFile Structure</a><span>支撑：第 2 节字节浏览器的解析格式；魔数是 0xCAFEBABE；JDK 1.k 支持到 44+k 版，即 Java 8 是 52</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html#jvms-4.1" target="_blank" rel="noopener">Java 虚拟机规范（Java SE 25）§4.1</a><span>支撑：第 5 节的版本号表；Java SE 25 支持的 major_version 是 45 到 69</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-5.html#jvms-5.4" target="_blank" rel="noopener">Java 虚拟机规范（Java SE 8）§5.4 Linking</a><span>支撑：第 3 节：规范允许“用到时再解析”（lazy）和“一次全部解析”两种实现</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-5.html#jvms-5.3" target="_blank" rel="noopener">Java 虚拟机规范（Java SE 8）§5.3 Creation and Loading</a><span>支撑：第 3 节：加载器抛出 ClassNotFoundException 时，JVM 必须抛出以它为原因的 NoClassDefFoundError</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-5.html#jvms-5.4.3.3" target="_blank" rel="noopener">Java 虚拟机规范（Java SE 8）§5.4.3.3 Method Resolution</a><span>支撑：第 4 节：按名字和描述符找方法，找不到时抛出 NoSuchMethodError</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-13.html#jls-13.1" target="_blank" rel="noopener">Java 语言规范（Java SE 8）§13.1 The Form of a Binary</a><span>支撑：第 4 节：对 static 常量的引用必须在编译时换成值，class 文件里不应留下对该字段的引用</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-13.html#jls-13.4.9" target="_blank" rel="noopener">Java 语言规范（Java SE 8）§13.4.9 final Fields and static Constant Variables</a><span>支撑：第 4 节：改了常量的值，已编译的类不重新编译就看不到新值</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.28" target="_blank" rel="noopener">Java 语言规范（Java SE 8）§15.28 Constant Expressions</a><span>支撑：第 4 节：<code>"每页 " + Shop.PAGE_SIZE + " 条"</code> 是常量表达式，所以 javac 能把它算成一个字符串</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.8.9" target="_blank" rel="noopener">Java 语言规范（Java SE 8）§8.8.9 Default Constructor</a><span>支撑：第 2 节：类里没写构造器时，编译器补一个默认构造器</span></li>
+    </ul>
+    <h3>JDK 和工具文档</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html" target="_blank" rel="noopener">JDK 8 工具文档：java</a><span>支撑：第 1 节：java 的参数是类名；第 6 节：<code>-jar</code> 时入口类由 MANIFEST 的 Main-Class 指定</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/javac.html" target="_blank" rel="noopener">JDK 8 工具文档：javac，Searching for Types 一节</a><span>支撑：第 3 节：javac 找到被引用类型的源文件时，默认也编译它</span></li>
+      <li><a href="https://openjdk.org/jeps/330" target="_blank" rel="noopener">JEP 330：Launch Single-File Source-Code Programs</a><span>支撑：第 1 节：JDK 11 起 java 命令可以直接运行单个源文件</span></li>
+      <li><a href="https://openjdk.org/jeps/247" target="_blank" rel="noopener">JEP 247：Compile for Older Platform Versions</a><span>支撑：第 5 节：<code>--release N</code>（N &lt; 9 时）大致等于 <code>-source N -target N</code> 再加上 N 版的类库</span></li>
+      <li><a href="https://maven.apache.org/guides/mini/guide-java-target.html" target="_blank" rel="noopener">Maven：Guide to Targeting a Java Version</a><span>支撑：第 5 节：和 <code>release</code> 不同，<code>-source</code>/<code>-target</code> 不会报告代码用了旧版本没有的 API</span></li>
+      <li><a href="https://maven.apache.org/guides/introduction/introduction-to-dependency-mechanism.html" target="_blank" rel="noopener">Maven：Introduction to the Dependency Mechanism</a><span>支撑：第 4 节：同一个库出现多个版本时，Maven 选依赖树里离项目最近的那个（nearest definition）</span></li>
+      <li><a href="https://maven.apache.org/ref/3.9.9/maven-model-builder/super-pom.html" target="_blank" rel="noopener">Maven：Super POM</a><span>支撑：第 7 节：Maven 项目的 class 默认输出到 <code>target/classes</code></span></li>
+      <li><a href="https://docs.spring.io/spring-boot/docs/2.7.18/reference/html/executable-jar.html#appendix.executable-jar.nested-jars" target="_blank" rel="noopener">Spring Boot 2.7.18 文档：The Executable Jar Format</a><span>支撑：第 6 节：Java 没有加载嵌套 jar 的标准办法；BOOT-INF/classes 和 BOOT-INF/lib；Main-Class 是 JarLauncher，Start-Class 是真正的启动类</span></li>
+      <li><a href="https://docs.spring.io/spring-framework/docs/5.3.x/reference/html/web.html#mvc-ann-requestmapping-uri-templates" target="_blank" rel="noopener">Spring Framework 5.3 文档：URI patterns</a><span>支撑：自测第 2 题：用调试信息或 <code>-parameters</code> 编译时，可以省略 <code>@PathVariable</code> 的名字</span></li>
+      <li><a href="https://www.jetbrains.com/help/idea/compiling-applications.html" target="_blank" rel="noopener">IntelliJ IDEA 文档：Compile and build applications</a><span>支撑：第 7 节：普通项目输出到 <code>out/production/&lt;模块名&gt;</code>；运行前默认先编译</span></li>
+    </ul>
+    <h3>源码：SpringBlade v3.7.1</h3>
+    <ul>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-desk/Dockerfile" target="_blank" rel="noopener">blade-desk/Dockerfile</a><span>支撑：第 5 节：基础镜像是 Java 8 的 JRE；第 6 节：用 <code>java -jar app.jar</code> 启动</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/pom.xml" target="_blank" rel="noopener">pom.xml</a><span>支撑：第 15 行 <code>java.version</code> 为 1.8；第 136–137 行用 source/target；第 140 行 <code>-parameters</code></span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-desk/src/main/java/org/springblade/desk/DeskApplication.java" target="_blank" rel="noopener">DeskApplication.java</a><span>支撑：第 6 节：blade-desk 的启动类</span></li>
+    </ul>
+  </div>
+  <p class="note">没有实测、只凭资料或推断写的地方：IDEA 的 <span class="path">下载 JDK…</span> 列表里有哪些 8 版本，没有在这台电脑上点开看过；IDEA 构建在只改常量时会不会重新编译用到它的类，没有试过（第 7 节的“动手”）；<code>blade-desk.jar</code> 的内部结构按 Spring Boot 文档写，没有解包核对；Docker 镜像是 Java 8 是按镜像标签判断的，没有拉取镜像查看。</p>
+
+  <button class="btn" id="mark-read"></button>
+
+  <div class="pager">
+    <a href="0-1.html"><small>上一篇</small>0.1 一个请求的一生</a>
+    <a class="next off"><small>下一篇（还没写）</small>0.3 语法速览</a>
+  </div>
+
+  <div class="credit">
+    本篇是原创内容，由 Claude Opus 5.5（Anthropic）写作并制作交互演示，非任何官方教材。终端输出来自在 Amazon Corretto 1.8.0_512 和 OpenJDK 25.0.2 上的实际运行。<br>
+    文中引用的 Dockerfile、pom.xml 片段来自开源项目 <a href="https://github.com/chillzhuang/SpringBlade" target="_blank" rel="noopener">SpringBlade</a> v3.7.1（作者 Chill，Apache License 2.0），版权归原作者所有。BladeX 是它的商业版，本篇没有使用 BladeX 的源码。<br>
+    其余内容随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// ---------- 终端：按步执行，部分命令先猜后看 ----------
+// 每一步：{ v: 'JDK 版本', cmd, out, ask: { q, opts, a, why }, note }，或 { edit: '文件名', diff: [...], note }
+function term(root, dir, steps) {
+  root.innerHTML = '<div class="tm-screen" tabindex="0"></div><div class="tm-ask"></div><div class="tm-note" aria-live="polite"></div>' +
+    '<div class="tm-foot"><button class="btn primary tm-next">下一条命令</button><button class="btn tm-reset">从头再来</button><span class="score"></span></div>';
+  const scr = $('.tm-screen', root), ask = $('.tm-ask', root), note = $('.tm-note', root);
+  const next = $('.tm-next', root), score = $('.tm-score, .score', root);
+  const total = steps.filter(s => s.ask).length;
+  let i, right, asked;
+  const ps = v => `<span class="v${v === '25' ? ' v25' : ''}">JDK ${v}</span><span class="ps">${dir} $</span> `;
+  const paintOut = out => out ? out.split('\n').map(l =>
+    `<span class="${/^(错误|Error|Exception|Caused by|\tat |\t\.\.\.|.*: 错误:|  符号|  位置|  需要|  找到|  原因|\s+\^$)/.test(l) ? 'err' : /^(警告|  不设置|    建议|\d+ 个警告)/.test(l) ? 'warn' : /^…（省略/.test(l) ? 'cm' : ''}">${esc(l)}</span>`).join('\n') + '\n' : '';
+  function print(html) { scr.insertAdjacentHTML('beforeend', html); scr.scrollTop = scr.scrollHeight; }
+  function reset() {
+    i = 0; right = 0; asked = 0; scr.innerHTML = ''; ask.innerHTML = ''; note.innerHTML = '';
+    score.textContent = total ? `要猜的有 ${total} 处` : '';
+    next.disabled = false; next.textContent = '下一条命令';
+  }
+  function finish(s) {
+    if (s.cmd !== undefined) print(paintOut(s.out));
+    note.innerHTML = s.note || '';
+    i++;
+    if (i >= steps.length) { next.disabled = true; next.textContent = '已执行完'; if (total) score.textContent = `猜对 ${right} / ${total}`; }
+    else next.disabled = false;
+  }
+  function step() {
+    const s = steps[i];
+    ask.innerHTML = ''; note.innerHTML = '';
+    if (s.edit) {
+      print(`<span class="cm"># 编辑 ${esc(s.edit)}</span>\n` + s.diff.map(l => `<span class="${l[0] === '+' ? 'add' : 'del'}">${esc(l)}</span>`).join('\n') + '\n');
+      finish(s); return;
+    }
+    if (!s.ask) { print(ps(s.v) + esc(s.cmd) + '\n'); finish(s); return; }
+    print(ps(s.v) + esc(s.cmd) + '<span class="cur">&nbsp;</span>');
+    next.disabled = true;
+    ask.innerHTML = `<div class="qt">先猜：${s.ask.q}</div><div class="opts">${s.ask.opts.map(o => `<button class="btn opt">${o}</button>`).join('')}</div>`;
+    $$('.opt', ask).forEach((b, k) => b.addEventListener('click', () => {
+      const opts = $$('.opt', ask);
+      opts.forEach(o => o.disabled = true);
+      opts[s.ask.a].classList.add('right');
+      if (k !== s.ask.a) b.classList.add('wrong'); else right++;
+      asked++;
+      $('.cur', scr).remove();
+      print('\n');
+      finish({ ...s, note: `<b>${k === s.ask.a ? '猜对了。' : '和你猜的不一样。'}</b>${s.ask.why}` });
+    }));
+  }
+  next.addEventListener('click', step);
+  $('.tm-reset', root).addEventListener('click', reset);
+  reset();
+}
+
+// ---------- 第 1 节：两条命令 ----------
+term($('#t1'), '~/hello', [
+  { v: '8', cmd: 'cat Hello.java', out: 'public class Hello {\n    public static void main(String[] args) {\n        System.out.println("你好，JVM");\n    }\n}' },
+  { v: '8', cmd: 'javac Hello.java', out: '',
+    ask: { q: 'javac 没有输出任何东西就结束了。目录里现在多了什么？', opts: ['什么都没多', '一个可以双击运行的程序', '一个 Hello.class 文件'], a: 2,
+      why: '多了 <code>Hello.class</code>，416 字节。它不是 macOS 能直接执行的程序，里面是给 JVM 看的指令。第 2 节会把它打开。' } },
+  { v: '8', cmd: 'ls', out: 'Hello.class\nHello.java' },
+  { v: '8', cmd: 'java Hello.class', out: '错误: 找不到或无法加载主类 Hello.class',
+    ask: { q: '用 java 运行它，参数写文件名 Hello.class，会怎样？', opts: ['打印“你好，JVM”', '报错'], a: 1,
+      why: '<code>java</code> 的参数是<b>类名</b>，不是文件名。它把 <code>Hello.class</code> 整个当成一个类名去找，找不到。' } },
+  { v: '8', cmd: 'java Hello', out: '你好，JVM',
+    note: '<code>java</code> 启动一个 JVM，JVM 在当前目录里找名叫 <code>Hello</code> 的类，也就是 <code>Hello.class</code> 这个文件，把它读进内存，然后执行它的 <code>main</code> 方法。' },
+  { v: '8', cmd: 'java Hello.java', out: '错误: 找不到或无法加载主类 Hello.java',
+    ask: { q: '跳过 javac，直接把源文件交给 java 呢？', opts: ['能运行', '报错'], a: 1,
+      why: '在 JDK 8 上报错。从 JDK 11 起，<code>java</code> 可以直接运行单个源文件（在内存里先编译，不留下 .class），你 Mac 上的 JDK 25 执行这一行会打印“你好，JVM”。项目的服务器是 Java 8，而且真实项目有成百上千个文件，所以还是要先 <code>javac</code> 再 <code>java</code>。' } },
+]);
+
+// ---------- 第 2 节：字节浏览器 ----------
+(() => {
+  // javac 1.8.0_512 编译 Hello.java 得到的 Hello.class，原样转成十六进制
+  const HEX = 'cafebabe00000034001d0a0006000f09001000110800120a001300140700150700160100063c696e69743e010003282956010004436f646501000f4c696e654e756d6265725461626c650100046d61696e010016285b4c6a6176612f6c616e672f537472696e673b295601000a536f7572636546696c6501000a48656c6c6f2e6a6176610c000700080700170c0018001901000ce4bda0e5a5bdefbc8c4a564d07001a0c001b001c01000548656c6c6f0100106a6176612f6c616e672f4f626a6563740100106a6176612f6c616e672f53797374656d0100036f75740100154c6a6176612f696f2f5072696e7453747265616d3b0100136a6176612f696f2f5072696e7453747265616d0100077072696e746c6e010015284c6a6176612f6c616e672f537472696e673b2956002100050006000000000002000100070008000100090000001d00010001000000052ab70001b100000001000a000000060001000000010009000b000c00010009000000250002000100000009b200021203b60004b100000001000a0000000a000200000003000800040001000d00000002000e';
+  const B = Uint8Array.from(HEX.match(/../g), h => parseInt(h, 16));
+  const dec = new TextDecoder();
+  let p = 0;
+  const u1 = () => B[p++], u2 = () => (B[p++] << 8) | B[p++], u4 = () => ((B[p++] << 24) >>> 0) + (B[p++] << 16) + (B[p++] << 8) + B[p++];
+  const hx = (s, e) => Array.from(B.subarray(s, e), b => b.toString(16).padStart(2, '0')).join(' ');
+  const R = [];
+  const add = (s, e, d, label, html, key) => { const r = { s, e, d, label, html, key, rel: [] }; R.push(r); return r; };
+
+  // 头部
+  p = 4; add(0, 4, 0, '魔数 CAFEBABE', '每个 class 文件的头 4 个字节都是 <code>CA FE BA BE</code>。JVM 先看这 4 个字节，确认这是一个 class 文件。', 'magic');
+  const minor = u2(), major = u2();
+  add(4, 8, 0, `版本号 ${major}.${minor}`, `前两个字节是次版本号 ${minor}，后两个是主版本号 <code>00 34</code> = ${major}。52 对应 Java 8：用 JDK 8 的 javac 编译，默认就是这个版本。JVM 遇到比自己新的版本号会拒绝加载，第 5 节专门做这个实验。`, 'ver');
+  const n = u2();
+  add(8, 10, 0, `常量池项数 ${n}`, `<code>00 1d</code> = ${n}。常量池的编号从 1 开始，所以后面一共有 ${n - 1} 项。`);
+
+  // 常量池
+  const cp = [null], cpReg = add(10, 0, 0, `常量池（${n - 1} 项）`, '常量池是这个类用到的所有名字和常量的清单：类名、方法名、字段名、描述符、字符串。后面的指令不直接写名字，只写“常量池第几项”。');
+  for (let i = 1; i < n; i++) {
+    const s = p, tag = u1(), c = { tag, s };
+    if (tag === 1) { const len = u2(); c.len = len; c.str = dec.decode(B.subarray(p, p + len)); p += len; }
+    else if (tag === 7 || tag === 8 || tag === 16) c.a = u2();
+    else if ([9, 10, 11, 12, 18].includes(tag)) { c.a = u2(); c.b = u2(); }
+    else if (tag === 3 || tag === 4) p += 4;
+    else if (tag === 5 || tag === 6) { p += 8; i++; }
+    else if (tag === 15) p += 3;
+    c.e = p; cp[i] = c;
+  }
+  cpReg.e = p;
+  const S = i => { const c = cp[i]; return c.tag === 1 ? c.str : (c.tag === 7 || c.tag === 8) ? S(c.a) : c.tag === 12 ? S(c.a) + ':' + S(c.b) : S(c.a) + '.' + S(c.b); };
+  const TYPE = { 1: 'Utf8', 7: 'Class', 8: 'String', 9: 'Fieldref', 10: 'Methodref', 12: 'NameAndType' };
+  const MEAN = { 1: '一段文字', 7: '一个类，类名在', 8: '一个字符串常量，内容在', 9: '一个字段：所属的类在 #A，名字和类型在 #B', 10: '一个方法：所属的类在 #A，名字和描述符在 #B', 12: '名字在 #A，描述符在 #B' };
+  const NOTE = {
+    3: '<code>main</code> 里的 <code>ldc #3</code> 取的就是这一项。',
+    4: '<b>这就是调用 println 时用的那一项，但文件里能找到的只有这些名字</b>：类 <code>java/io/PrintStream</code>、方法名 <code>println</code>、描述符 <code>(Ljava/lang/String;)V</code>。<code>println</code> 的代码在 JDK 自带的类库里，运行时 JVM 按这几个名字去找。',
+    1: '构造器 <code>&lt;init&gt;</code> 里的 <code>invokespecial #1</code> 用的是这一项：调用父类 <code>Object</code> 的构造器。',
+    2: '<code>System.out</code> 这个静态字段。描述符 <code>Ljava/io/PrintStream;</code> 表示它的类型是 <code>PrintStream</code>。',
+    12: '<code>main</code> 的描述符。<code>[</code> 表示数组，<code>L…;</code> 包着一个类名，括号后的 <code>V</code> 表示返回 void。',
+    18: '“你好，JVM”按 UTF-8 存储：三个中文字符各占 3 字节，<code>JVM</code> 占 3 字节，一共 12 字节，所以前面的长度是 <code>00 0c</code>。',
+    27: '方法名 <code>println</code>，只是 7 个字母。',
+    7: '<code>&lt;init&gt;</code> 是构造器在 class 文件里的名字。',
+  };
+  const KEY = { 3: 'hello', 18: 'hello', 4: 'println', 20: 'println', 27: 'println' };
+  for (let i = 1; i < n; i++) {
+    const c = cp[i];
+    const mean = c.tag === 1 ? `${MEAN[1]}，${c.len} 字节` : (MEAN[c.tag] || '').replace('#A', '#' + c.a).replace('#B', '#' + c.b) + (c.tag === 7 || c.tag === 8 ? ' #' + c.a : '');
+    const r = add(c.s, c.e, 1, `#${i} ${TYPE[c.tag]}  ${S(i)}`,
+      `类型 ${TYPE[c.tag]}（标记字节 <code>${hx(c.s, c.s + 1)}</code>）：${mean}。<br>解析出来是 <code>${esc(S(i))}</code>${NOTE[i] ? '<br>' + NOTE[i] : ''}`, KEY[i]);
+    [c.a, c.b].forEach(k => { if (k && cp[k]) r.rel.push([cp[k].s, cp[k].e]); });
+  }
+
+  // 类本身
+  let s = p; const acc = u2();
+  add(s, p, 0, `访问标志 0x${acc.toString(16).padStart(4, '0')}`, '<code>00 21</code> = <code>ACC_PUBLIC</code>（0x0001）加 <code>ACC_SUPER</code>（0x0020）：这是一个 public 类。');
+  s = p; const th = u2(); add(s, p, 0, `本类 #${th}  ${S(th)}`, `这个类叫 <code>${S(th)}</code>，名字在常量池第 ${th} 项。`).rel.push([cp[th].s, cp[th].e]);
+  s = p; const su = u2(); add(s, p, 0, `父类 #${su}  ${S(su)}`, `源码里没写 <code>extends</code>，父类就是 <code>java.lang.Object</code>。注意 class 文件里用 <code>/</code> 分隔包名。`).rel.push([cp[su].s, cp[su].e]);
+  s = p; const ic = u2(); p += ic * 2; add(s, p, 0, `实现的接口：${ic} 个`, '没有实现任何接口。');
+  s = p; const fc = u2(); add(s, p, 0, `字段：${fc} 个`, '没有声明字段。');
+
+  // 属性（Code 里还会套属性）
+  const OPS = { 0x2a: ['aload_0', 0, '取出 this（当前对象）'], 0xb7: ['invokespecial', 2, '调用构造器'], 0xb1: ['return', 0, '方法结束，返回'],
+    0xb2: ['getstatic', 2, '读一个静态字段'], 0x12: ['ldc', 1, '取常量池里的一个常量'], 0xb6: ['invokevirtual', 2, '调用一个对象的方法'] };
+  function attr(d, owner) {
+    const as = p, ni = u2(), len = u4(), name = S(ni), end = p + len;
+    const r = add(as, end, d, `属性 ${name}（内容 ${len} 字节）`, '');
+    if (name === 'Code') {
+      r.html = `方法 <code>${owner}</code> 的代码。`;
+      r.key = owner === '<init>' ? 'init' : undefined;
+      const hs = p; const ms = u2(), ml = u2(), cl = u4();
+      add(as, hs, d + 1, '属性名和长度', `<code>${hx(as, as + 2)}</code> 指向常量池 #${ni}（<code>Code</code>），<code>${hx(as + 2, hs)}</code> 是长度 ${len}。`);
+      add(hs, p, d + 1, `栈深 ${ms}，局部变量 ${ml}，指令 ${cl} 字节`, `JVM 执行这个方法时需要多大的操作数栈（${ms}）和多少个局部变量槽（${ml}），以及后面的指令有几个字节（${cl}）。`);
+      const cs = p, cr = add(cs, cs + cl, d + 1, `指令（${cl} 字节）`, '', 'code-' + (owner === 'main' ? 'main' : 'init'));
+      const lines = [];
+      while (p < cs + cl) {
+        const is = p, op = u1(), [nm, k, mean] = OPS[op];
+        const arg = k === 2 ? u2() : k === 1 ? u1() : null;
+        const txt = `${String(is - cs).padStart(2)}: ${nm}${arg !== null ? ' #' + arg : ''}`;
+        lines.push(`<code>${hx(is, p)}</code> → <code>${esc(txt)}</code>${arg !== null ? `  <span class="note">${esc(S(arg))}</span>` : ''}`);
+        const ir = add(is, p, d + 2, txt + (arg !== null ? '  ' + S(arg) : ''), `<code>${hx(is, p)}</code>：第一个字节 <code>${hx(is, is + 1)}</code> 是指令 <code>${nm}</code>（${mean}）${arg !== null ? `，后面是常量池编号 #${arg}，指向 <code>${esc(S(arg))}</code>` : ''}。`,
+          arg === 4 ? 'println' : undefined);
+        if (arg !== null) ir.rel.push([cp[arg].s, cp[arg].e]);
+      }
+      cr.html = `方法 <code>${owner}</code> 编译成的全部指令，一行一条：<br>${lines.join('<br>')}<br>${owner === 'main' ? '对照源码：取出 <code>System.out</code>，取出字符串，调用 <code>println</code>，返回。三个 # 编号都指向常量池，点开那几行能看到它们指向的项亮成蓝色。' : '这个构造器你没有写过，是编译器补上的：取出 this，调用父类 <code>Object</code> 的构造器，返回。'}`;
+      const es = p, el = u2(); p += el * 8; add(es, p, d + 1, `异常表：${el} 项`, '这个方法没有 try/catch，所以是空的。');
+      const cs2 = p, ac = u2(); add(cs2, p, d + 1, `子属性：${ac} 个`, '');
+      for (let j = 0; j < ac; j++) attr(d + 1, owner);
+    } else if (name === 'LineNumberTable') {
+      const ts = p, tl = u2(), rows = [];
+      for (let j = 0; j < tl; j++) { const pc = u2(), ln = u2(); rows.push(`第 ${pc} 字节的指令 ↔ 源码第 ${ln} 行`); }
+      r.html = `行号表：${rows.join('；')}。出错时调用栈里的 <code>(App.java:5)</code> 这种行号，就是 JVM 查这张表得到的。`;
+    } else if (name === 'SourceFile') {
+      const si = u2();
+      r.html = `源文件名 <code>${esc(S(si))}</code>。调用栈里括号中的文件名来自这里。`;
+      r.rel.push([cp[si].s, cp[si].e]);
+    }
+    p = end;
+  }
+
+  // 方法
+  s = p; const mc = u2(); add(s, p, 0, `方法：${mc} 个`, '源码里只写了 <code>main</code> 一个方法，这里是 2 个。另一个是谁，点下面的方法看。');
+  for (let m = 0; m < mc; m++) {
+    const ms = p, ma = u2(), ni = u2(), di = u2(), ac = u2(), name = S(ni);
+    const mr = add(ms, 0, 0, `方法 ${name}${S(di)}`, '', name === '<init>' ? 'init' : undefined);
+    add(ms, p, 1, `访问标志、名字 #${ni}、描述符 #${di}`, `访问标志 <code>${hx(ms, ms + 2)}</code>（${ma & 8 ? 'public static' : 'public'}），名字 <code>${esc(name)}</code>，描述符 <code>${esc(S(di))}</code>，后面跟着 ${ac} 个属性。`).rel.push([cp[ni].s, cp[ni].e], [cp[di].s, cp[di].e]);
+    for (let j = 0; j < ac; j++) attr(1, name);
+    mr.e = p;
+    mr.html = name === '<init>'
+      ? '<b>这是你没写过的方法。</b><code>&lt;init&gt;</code> 是构造器在 class 文件里的名字。类里一个构造器都没写时，编译器按 Java 语言规范补一个无参的默认构造器。'
+      : '<code>public static void main(String[])</code>，你写的那个方法。展开它的 Code 属性能看到指令。';
+  }
+  s = p; const cac = u2(); add(s, p, 0, `类的属性：${cac} 个`, '');
+  for (let j = 0; j < cac; j++) attr(0, '');
+
+  R.sort((a, b) => a.s - b.s || a.d - b.d);
+
+  // 画十六进制
+  const hex = $('#hex'), cells = [];
+  for (let i = 0; i < B.length; i++) {
+    if (i % 16 === 0) { const o = document.createElement('span'); o.className = 'off'; o.textContent = i.toString(16).padStart(4, '0'); hex.appendChild(o); }
+    const b = document.createElement('b'); b.textContent = B[i].toString(16).padStart(2, '0'); b.dataset.i = i;
+    hex.appendChild(b); cells.push(b);
+  }
+  // 画结构列表
+  const tree = $('#tree'), rows = R.map((r, k) => {
+    const b = document.createElement('button'); b.type = 'button';
+    b.style.paddingLeft = (10 + r.d * 16) + 'px';
+    b.innerHTML = `<span class="rg">${r.s}–${r.e - 1}</span>${esc(r.label)}`;
+    b.addEventListener('click', () => pick(k, false));
+    tree.appendChild(b); return b;
+  });
+  const out = $('#bv-out'), tasks = $$('#bv-tasks li');
+  function pick(k, fromHex) {
+    const r = R[k];
+    cells.forEach((c, i) => { c.classList.toggle('hl', i >= r.s && i < r.e); c.classList.remove('rel'); });
+    r.rel.forEach(([a, b]) => { for (let i = a; i < b; i++) if (!cells[i].classList.contains('hl')) cells[i].classList.add('rel'); });
+    rows.forEach((b, j) => b.classList.toggle('on', j === k));
+    const row = rows[k];
+    if (fromHex) tree.scrollTop = row.offsetTop - tree.clientHeight / 2;
+    out.innerHTML = `<b>${esc(r.label)}</b> <span class="note">第 ${r.s}–${r.e - 1} 字节，共 ${r.e - r.s} 字节</span><div style="margin-top:4px">${r.html}</div>`;
+    if (r.key) tasks.forEach(t => { if (t.dataset.k === r.key) t.classList.add('done'); });
+  }
+  hex.addEventListener('click', e => {
+    const i = +e.target.dataset.i; if (e.target.tagName !== 'B') return;
+    let best = -1;
+    R.forEach((r, k) => { if (i >= r.s && i < r.e && (best < 0 || r.d >= R[best].d)) best = k; });
+    if (best >= 0) pick(best, true);
+  });
+})();
+
+// ---------- 第 3 节：用到时才去找 ----------
+term($('#t2'), '~/lazy', [
+  { v: '8', cmd: 'ls', out: 'App.java\nReport.java' },
+  { v: '8', cmd: 'javac App.java', out: '',
+    ask: { q: '只把 App.java 交给了 javac。会生成几个 .class？', opts: ['1 个：App.class', '2 个：App.class 和 Report.class', '报错：Report 还没编译'], a: 1,
+      why: 'javac 编译 App 时发现它用到了 <code>Report</code>，在当前目录里找到 <code>Report.java</code>，默认就顺手把它也编译了。' } },
+  { v: '8', cmd: 'ls', out: 'App.class\nApp.java\nReport.class\nReport.java' },
+  { v: '8', cmd: 'java App', out: '启动了\n结束' },
+  { v: '8', cmd: 'java App print', out: '启动了\n打印报表\n结束', note: '带了一个参数，<code>args.length &gt; 0</code>，所以走进了 <code>if</code>。' },
+  { v: '8', cmd: 'rm Report.class', out: '', note: '现在把 <code>Report.class</code> 删掉。<code>App.class</code> 没有动，它里面仍然写着要用 <code>Report</code>。' },
+  { v: '8', cmd: 'java App', out: '启动了\n结束',
+    ask: { q: 'Report.class 没了。不带参数运行（不会走到 new Report()）：', opts: ['启动时就报错，找不到 Report', '正常打印“启动了”“结束”', '打印“启动了”之后报错'], a: 1,
+      why: '完全正常。这次没有走到 <code>new Report()</code> 那一行，JVM 就一直没去找 <code>Report</code>，也就不知道它不见了。' } },
+  { v: '8', cmd: 'java App print', out: '启动了\nException in thread "main" java.lang.NoClassDefFoundError: Report\n\tat App.main(App.java:5)\nCaused by: java.lang.ClassNotFoundException: Report\n\tat java.net.URLClassLoader.findClass(URLClassLoader.java:387)\n\tat java.lang.ClassLoader.loadClass(ClassLoader.java:418)\n\tat sun.misc.Launcher$AppClassLoader.loadClass(Launcher.java:352)\n\tat java.lang.ClassLoader.loadClass(ClassLoader.java:351)\n\t... 1 more',
+    ask: { q: '带上参数，这次会走到 new Report()：', opts: ['启动时就报错', '打印“启动了”之后报错'], a: 1,
+      why: '“启动了”已经打印出来，错误才出现，位置是 <code>App.java:5</code>，也就是 <code>new Report()</code> 那一行。程序在这之前已经运行了一段。' } },
+]);
+
+// ---------- 第 4 节：只重新编译一个文件 ----------
+term($('#t3'), '~/shop', [
+  { v: '8', cmd: 'javac Main.java Shop.java', out: '' },
+  { v: '8', cmd: 'java Main', out: '欢迎光临\n每页 10 条\n¥199', note: '两个文件一起编译，结果和预期一样。下面开始改 <code>Shop.java</code>。' },
+  { edit: 'Shop.java（第 1 次：只改方法体）', diff: ['-        return "欢迎光临";', '+        return "欢迎回来";'] },
+  { v: '8', cmd: 'javac Shop.java', out: '' },
+  { v: '8', cmd: 'java Main', out: '欢迎回来\n每页 10 条\n¥199',
+    ask: { q: '只重新编译了 Shop，Main.class 没动。第一行会打印：', opts: ['欢迎光临', '欢迎回来'], a: 1,
+      why: '<code>Main.class</code> 里没有抄 <code>greet</code> 的代码，只记着“去 <code>Shop</code> 里找 <code>greet</code>”。运行时找到的是新的 <code>Shop.class</code>。' } },
+  { edit: 'Shop.java（第 2 次：改常量）', diff: ['-    public static final int PAGE_SIZE = 10;', '+    public static final int PAGE_SIZE = 20;'] },
+  { v: '8', cmd: 'javac Shop.java', out: '' },
+  { v: '8', cmd: 'java Main', out: '欢迎回来\n每页 10 条\n¥199',
+    ask: { q: '同样只重新编译 Shop。第二行会打印：', opts: ['每页 10 条', '每页 20 条'], a: 0,
+      why: '还是 10。<code>PAGE_SIZE</code> 是 <code>static final</code> 且用常量初始化的，Java 语言规范要求编译 <code>Main</code> 时把值直接写进 <code>Main.class</code>，不留对 <code>Shop.PAGE_SIZE</code> 的引用。下一条命令看证据。' } },
+  { v: '8', cmd: 'javap -c Main', out: '  public static void main(java.lang.String[]);\n    Code:\n       0: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;\n       3: invokestatic  #3                  // Method Shop.greet:()Ljava/lang/String;\n       6: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V\n       9: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;\n      12: ldc           #6                  // String 每页 10 条\n      14: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V\n      17: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;\n      20: sipush        199\n      23: invokestatic  #7                  // Method Shop.price:(I)Ljava/lang/String;\n      26: invokevirtual #4                  // Method java/io/PrintStream.println:(Ljava/lang/String;)V\n      29: return',
+    note: '<code>javap -c</code> 把 class 文件里的指令翻译成可读的文字（这里只保留了 <code>main</code>）。第 12 字节：<code>ldc #6 // String 每页 10 条</code>。javac 把 <code>"每页 " + Shop.PAGE_SIZE + " 条"</code> 整个算成了一个现成的字符串，<code>Main.class</code> 里根本没有 <code>PAGE_SIZE</code> 这个名字。对比第 3 和第 23 字节：<code>greet</code> 和 <code>price</code> 都是按名字调用的。' },
+  { edit: 'Shop.java（第 3 次：给 price 加一个参数）', diff: ['-    public static String price(int yuan) {', '-        return "¥" + yuan;', '+    public static String price(int yuan, String unit) {', '+        return yuan + unit;'] },
+  { v: '8', cmd: 'javac Shop.java', out: '' },
+  { v: '8', cmd: 'java Main', out: '欢迎回来\n每页 10 条\nException in thread "main" java.lang.NoSuchMethodError: Shop.price(I)Ljava/lang/String;\n\tat Main.main(Main.java:5)',
+    ask: { q: '这次 javac Shop.java 没有报错。运行 Main：', opts: ['三行都正常', '前两行正常，第三行报错', '一行都不打印，直接报错'], a: 1,
+      why: '<code>Shop</code> 本身没错，所以编译通过。错误要等运行到 <code>Main</code> 第 5 行、去找 <code>price</code> 时才出现。错误信息里的 <code>(I)Ljava/lang/String;</code> 是方法描述符：括号里的 <code>I</code> 表示一个 int 参数，括号后是返回类型 String。<code>Main.class</code> 要找的是这个签名，新的 <code>Shop</code> 里只有 <code>(ILjava/lang/String;)Ljava/lang/String;</code>。' } },
+  { v: '8', cmd: 'javac Main.java Shop.java', out: 'Main.java:5: 错误: 无法将类 Shop中的方法 price应用到给定类型;\n        System.out.println(Shop.price(199));\n                               ^\n  需要: int,String\n  找到: int\n  原因: 实际参数列表和形式参数列表长度不同\n1 个错误',
+    note: '两个文件一起重新编译，编译器立刻发现参数对不上。' },
+]);
+
+// ---------- 第 5 节：52 和 69 ----------
+term($('#t4'), '~/check', [
+  { v: '25', cmd: 'javac Check.java', out: '' },
+  { v: '25', cmd: 'javap -v Check | grep major', out: '  major version: 69', note: 'JDK 25 的 javac 默认产出 69 版的 class 文件。' },
+  { v: '8', cmd: 'java Check 小王', out: 'Error: A JNI error has occurred, please check your installation and try again\nException in thread "main" java.lang.UnsupportedClassVersionError: Check has been compiled by a more recent version of the Java Runtime (class file version 69.0), this version of the Java Runtime only recognizes class file versions up to 52.0\n\tat java.lang.ClassLoader.defineClass1(Native Method)\n…（省略 12 行调用栈）',
+    ask: { q: '把这个 Check.class 交给 JDK 8 运行：', opts: ['正常打印', '报错'], a: 1,
+      why: '加载这个类的时候就失败了，一行代码都没执行。第一行的“JNI error”容易把人带偏，原因在第二行：文件是 69.0 版，这个 JVM 最高只认 52.0。' } },
+  { v: '25', cmd: 'javac -source 8 -target 8 Check.java', out: '警告: [options] 未与 -source 8 一起设置引导类路径\n  不设置引导类路径可能会导致类文件无法在 JDK 8 上运行\n    建议使用 --release 8 而不是 -source 8 -target 8，因为它会自动设置引导类路径\n警告: [options] 源值 8 已过时，将在未来发行版中删除\n警告: [options] 目标值 8 已过时，将在未来发行版中删除\n警告: [options] 要隐藏有关已过时选项的警告, 请使用 -Xlint:-options。\n4 个警告',
+    note: '只有警告，没有错误，class 文件生成了。留意第一条警告的第二行。' },
+  { v: '25', cmd: 'javap -v Check | grep major', out: '  major version: 52' },
+  { v: '25', cmd: 'java Check 小王', out: '你好，小王', note: '在你的 Mac 上（JDK 25）测试，一切正常。' },
+  { v: '8', cmd: 'java Check 小王', out: 'Exception in thread "main" java.lang.NoSuchMethodError: java.lang.String.isBlank()Z\n\tat Check.main(Check.java:4)',
+    ask: { q: '版本号已经是 52 了。拿到 JDK 8 上运行：', opts: ['正常打印“你好，小王”', '报错'], a: 1,
+      why: '<code>-source</code> 和 <code>-target</code> 只管语法和 class 文件的版本号，编译时查方法用的还是 JDK 25 自带的类库，那里的 <code>String</code> 有 <code>isBlank</code>。JDK 8 的 <code>String</code> 没有，运行到第 4 行时按名字找不到。前面那条警告说的就是这件事。' } },
+  { v: '25', cmd: 'javac --release 8 Check.java', out: '警告: [options] 源值 8 已过时，将在未来发行版中删除\n警告: [options] 目标值 8 已过时，将在未来发行版中删除\n警告: [options] 要隐藏有关已过时选项的警告, 请使用 -Xlint:-options。\nCheck.java:4: 错误: 找不到符号\n        System.out.println(name.isBlank() ? "名字是空的" : "你好，" + name);\n                               ^\n  符号:   方法 isBlank()\n  位置: 类型为String的变量 name\n1 个错误\n3 个警告',
+    note: '<code>--release 8</code> 让编译器拿 Java 8 的类库来检查，问题在编译时就暴露了。' },
+  { v: '8', cmd: 'javac Check.java', out: 'Check.java:4: 错误: 找不到符号\n        System.out.println(name.isBlank() ? "名字是空的" : "你好，" + name);\n                               ^\n  符号:   方法 isBlank()\n  位置: 类型为String的变量 name\n1 个错误',
+    note: '直接用 JDK 8 的 javac 编译，结果和 <code>--release 8</code> 一样。' },
+]);
+</script>
+</body>
+</html>
