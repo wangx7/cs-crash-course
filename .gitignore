@@ -13,3 +13,6 @@ local/springblade-3.7.1/
 local/idea-zh/
 local/refs/*.html
 local/refs/*.txt
+
+# 实测代码的编译产物不入库（0.3 起的惯例：只留 .java 和 .out）
+local/examples/**/*.class
