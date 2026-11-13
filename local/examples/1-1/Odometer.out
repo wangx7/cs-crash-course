@@ -1,0 +1,7 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac Odometer.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java Odometer
+2147483647
+-2147483648
+-2
+500654080
+86400000000
+addExact 抛出: java.lang.ArithmeticException: integer overflow

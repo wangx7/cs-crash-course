@@ -1,0 +1,10 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac Floats.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java Floats
+0.30000000000000004
+false
+0.3
+true
+false
+Infinity
+NaN
+false
+true

@@ -1,0 +1,7 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac Money.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java Money
+0.1000000000000000055511151231257827021181583404541015625
+0.1
+false
+0
+1/3 抛出: java.lang.ArithmeticException: Non-terminating decimal expansion; no exact representable decimal result.
+0.33

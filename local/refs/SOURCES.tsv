@@ -29,4 +29,11 @@ jep361	https://openjdk.org/jeps/361	0.3 箭头 switch 是 Java 14 才有
 jep441	https://openjdk.org/jeps/441	0.3 switch 模式匹配是 Java 21 才有
 api_arrays	https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html	0.3 Arrays.toString
 api_string	https://docs.oracle.com/javase/8/docs/api/java/lang/String.html	0.3 String.equals
-jls25_10	https://docs.oracle.com/javase/specs/jls/se25/html/jls-10.html	0.3 数组规则到 Java 25 未变的核对（本地文件待 setup.sh 补下）
+jls25_10	https://docs.oracle.com/javase/specs/jls/se25/html/jls-10.html	0.3 数组规则到 Java 25 未变的核对
+api_bigdecimal	https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html	1.1 BigDecimal(double) 构造器警告、equals 看标度、divide 舍入
+api_math	https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html	1.1 addExact/multiplyExact 溢出抛异常
+jls25_4	https://docs.oracle.com/javase/specs/jls/se25/html/jls-4.html	1.1 整数溢出、浮点规则到 Java 25 未变的核对
+jls25_15	https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html	1.1 整数除法向零取整到 Java 25 未变的核对
+jep306	https://openjdk.org/jeps/306	1.1 Java 17 起浮点一律 strict（strictfp 成历史）
+api25_bigdecimal	https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html	1.1 BigDecimal 语义到 Java 25 未变的核对
+mdn_bigint	https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/BigInt	1.1 JS 侧新变化：BigInt 能原样接住 19 位 ID（ES2020）
