@@ -30,6 +30,6 @@ tools/bili-transcripts/  B 站合集 → 字幕文本的工具（字幕下载 + 
 ## 来源与协议
 
 - **计算机科学速成课**：原作 Crash Course Computer Science（PBS Digital Studios），中英字幕来自 [1c7/Crash-Course-Computer-Science-Chinese](https://github.com/1c7/Crash-Course-Computer-Science-Chinese)。图文版以 [CC BY-NC-SA 4.0](https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans) 协议发布，与原作一致，见 `LICENSE`。第 41–47 集续集是本项目的原创内容，不是 Crash Course 官方作品，同样以 CC BY-NC-SA 4.0 发布。
-- **Java 后端 · 图文课**：原创内容，随本仓库以 CC BY-NC-SA 4.0 发布。文中引用的 [SpringBlade](https://github.com/chillzhuang/SpringBlade) 代码版权归原作者所有，按 Apache License 2.0 引用。0.1 由 Claude Fable 5.2 写作，0.2 起由 Claude Opus 5.5 写作。
+- **Java 后端 · 图文课**：原创内容，随本仓库以 CC BY-NC-SA 4.0 发布。文中引用的 [SpringBlade](https://github.com/chillzhuang/SpringBlade) 代码版权归原作者所有，按 Apache License 2.0 引用。0.1 由 Claude Fable 5.2 写作，0.2 由 Claude Opus 5.5 写作，0.3 由 GPT-6（OpenAI Codex）写作。
 - **`transcripts/` 里的字幕文本**：来自黑马程序员在 B 站发布的视频（BV17F411T7Ao 等），视频和字幕版权归原作者所有，仅供个人学习。
-- 示意图、交互演示和"补充"内容由 Claude Opus 5.5 制作。
+- 示意图、交互演示和“补充”内容的作者见各篇署名。

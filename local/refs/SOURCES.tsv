@@ -18,3 +18,8 @@ mvn_dep	https://maven.apache.org/guides/introduction/introduction-to-dependency-
 superpom	https://maven.apache.org/ref/3.9.9/maven-model-builder/super-pom.html	0.2 target/classes
 ij_compile	https://www.jetbrains.com/help/idea/compiling-applications.html	0.2 IDEA 编译输出目录
 ij_sdk	https://www.jetbrains.com/help/idea/sdk.html	IDEA SDK（备用）
+jls4	https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html	0.3 类型与初始化
+jls10	https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html	0.3 数组
+jls14	https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html	0.3 分支与循环
+api_arrays	https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html	0.3 数组内容打印
+api_string	https://docs.oracle.com/javase/8/docs/api/java/lang/String.html	0.3 字符串内容比较

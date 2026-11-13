@@ -1,0 +1,4 @@
+fail/Unassigned.java:4: error: variable total might not have been initialized
+        System.out.println(total);
+                           ^
+1 error

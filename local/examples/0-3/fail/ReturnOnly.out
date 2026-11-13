@@ -1,0 +1,4 @@
+fail/ReturnOnly.java:3: error: method count(int) is already defined in class ReturnOnly
+    static long count(int n) { return n; }
+                ^
+1 error
