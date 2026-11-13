@@ -37,3 +37,8 @@ jls25_15	https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html	1.1 整�
 jep306	https://openjdk.org/jeps/306	1.1 Java 17 起浮点一律 strict（strictfp 成历史）
 api25_bigdecimal	https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/math/BigDecimal.html	1.1 BigDecimal 语义到 Java 25 未变的核对
 mdn_bigint	https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/BigInt	1.1 JS 侧新变化：BigInt 能原样接住 19 位 ID（ES2020）
+jvms2	https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html	1.2 JVM 栈、堆、方法区（§2.5）
+jvms25_2	https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-2.html	1.2 运行数据区到 Java 25 未变的核对
+jls25_5	https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html	1.2 装箱缓存规则到 Java 25 未变的核对
+jep444	https://openjdk.org/jeps/444	1.2 虚拟线程（Java 21）：栈帧改放堆上
+jep358	https://openjdk.org/jeps/358	1.2 Java 14 起 NPE 消息带变量名

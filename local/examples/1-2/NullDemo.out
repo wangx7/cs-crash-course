@@ -1,0 +1,4 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac NullDemo.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java NullDemo
+s.length() 抛出: java.lang.NullPointerException
+int m = n 抛出: java.lang.NullPointerException
+true

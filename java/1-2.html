@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.2 引用和内存：栈、堆、参数到底传了什么 · Java 后端</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font-family:var(--mono);font-size:13.5px;line-height:1.7;background:var(--code);border-radius:10px;padding:12px 14px;margin:10px 0;overflow-x:auto;white-space:pre;tab-size:4}
+.src{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.note{font-size:13px;color:var(--muted)}
+
+/* 逐行跑卡 */
+.liverun .term{background:#1a1d23;border-radius:10px;padding:10px 14px;margin-top:10px;font-family:var(--mono);font-size:13.5px;line-height:1.8;color:#d6e2d6;min-height:1.8em}
+.liverun .term .p{color:#5f6b76;user-select:none}
+.liverun pre.code{margin-bottom:0}
+.liverun .cl{display:block;margin:0 -4px;padding:0 4px;border-radius:4px}
+.liverun .cl.cur{background:var(--accent-soft)}
+
+/* 步进器：变量表 ↔ 堆 */
+.stepper .st-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:16px;align-items:start}
+.stepper pre.code{margin:0}
+.stepper .cl{display:block;margin:0 -6px;padding:0 6px;border-radius:4px}
+.stepper .cl.cur{background:var(--accent-soft)}
+.st-cap{font-size:13px;color:var(--muted);margin:2px 0 6px;font-weight:600}
+.st-cap+.st-vars,.st-cap+.st-heap{margin-bottom:14px}
+.st-vars .vr{display:flex;align-items:center;gap:8px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;margin-bottom:6px;font-family:var(--mono);font-size:13.5px}
+.st-vars .vr .vn{color:var(--muted);min-width:2.2em}
+.st-vars .vr .vv{font-weight:700}
+.st-vars .vr.chg{border-color:var(--ok);background:var(--ok-soft)}
+.st-vars .vr .ref{padding:0 6px;border:1.5px solid var(--accent);border-radius:6px;color:var(--accent);font-weight:700}
+.st-heap .obj{border:1.5px solid var(--accent);border-radius:10px;padding:8px 10px;display:inline-block}
+.st-heap .oid{font-family:var(--mono);font-size:12px;color:var(--accent);font-weight:700;display:block;margin-bottom:6px}
+.st-heap .cells{display:flex;gap:6px}
+.st-heap .cell{width:34px;height:30px;line-height:30px;text-align:center;font-family:var(--mono);font-size:14px;background:var(--code);border-radius:6px}
+.st-heap .cell .ci{display:block;font-size:10px;color:var(--muted);line-height:1;margin-top:-4px}
+.st-heap .cell.chg{background:var(--ok-soft);outline:2px solid var(--ok);font-weight:700}
+.st-empty{font-size:13.5px;color:var(--muted);padding:6px 0}
+.st-note{font-size:14.5px;margin-top:12px;min-height:1.5em}
+.st-note .out{font-family:var(--mono);background:var(--code);border-radius:6px;padding:1px 6px}
+
+/* 参考资料 */
+.refs h3{margin:18px 0 6px;font-size:16px}
+.refs h3:first-child{margin-top:0}
+.refs ul{list-style:none;margin:0;padding:0}
+.refs li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px;overflow-wrap:anywhere}
+.refs li:last-child{border-bottom:none}
+.refs li span{display:block;font-size:13px;color:var(--muted)}
+
+@media (max-width:640px){
+  .stepper .st-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body data-ep="102" data-store="java-be-read" data-unit="篇">
+<div class="topbar">
+  <a href="index.html">← Java 后端 · 目录</a>
+  <span class="muted">第 1 部分 · 对象与类型</span>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">第 1 部分 · 对象与类型 · 1.2</div>
+  <h1>引用和内存</h1>
+  <p class="en">What a variable actually holds</p>
+  <p class="lead">Java 的变量分两种：一种直接装值，一种装指向对象的引用。赋值和传参，拷的都是变量里装的东西——所以 swap 换不动两个 int，而 service 里的一个 set 能打在 controller 传来的那个对象上。这一篇先用六行代码的步进演示看清这个差别，再往下走一层：变量和对象各住在哪里、栈什么时候满、null 到底是个什么值。</p>
+  <div class="road"><span>先猜</span><i>→</i><span>两种变量</span><i>→</i><span>参数传递</span><i>→</i><span>栈和堆</span><i>→</i><span>栈的边界</span><i>→</i><span>null</span><i>→</i><span>自测</span></div>
+  <p class="note" style="margin-top:16px">页面上所有程序输出都是在 Amazon Corretto 1.8.0_512 上实际执行后贴进来的，源码和逐条输出文件在仓库的 <code>local/examples/1-2/</code>。</p>
+</header>
+
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">先猜：两对 Integer</a></li>
+  <li><a href="#ch2">变量两种：装值的、装箭头的</a></li>
+  <li><a href="#ch3">参数传递：只有按值传递</a></li>
+  <li><a href="#ch4">栈和堆：谁住哪</a></li>
+  <li><a href="#ch5">栈的边界：StackOverflowError</a></li>
+  <li><a href="#ch6">null：空箭头</a></li>
+  <li><a href="#ch7">小结和自测</a></li>
+  <li><a href="#ch8">参考资料</a></li>
+</ol></nav>
+
+<main>
+
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>先猜：两对 Integer</h2>
+  <p>四行代码，两个 <code>==</code>。先各说一句 true 还是 false，再点「跑下一行」让它真的跑起来——一次一行，输出会出现在下面的终端里。</p>
+  <div class="card liverun" id="lr1"></div>
+  <p>第二对多半和你的直觉不一样。这个差别不是 bug，是规范里一条具体的规则，第 2 节末尾揭晓。</p>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>变量两种：装值的、装箭头的</h2>
+  <p>Java 的变量分两大类。基本类型的变量<b>直接装值</b>：<code>int a = 5;</code> 之后，a 这个格子里就是 5。引用类型的变量装的是<b>指向对象的引用</b>——语言规范的原话是 "The values of a reference type are references to objects"（§4.1）。0.3 说过数组是对象，所以数组变量也是装引用的。</p>
+  <p>赋值只有一条规则：<b>把右边变量里装的东西拷一份</b>。基本类型拷的是值，引用类型拷的是引用。六行代码，点「下一步」逐行执行，盯着右边两栏看：</p>
+  <div class="card stepper" id="stepper">
+    <div class="st-grid">
+      <pre class="code" id="st-code"></pre>
+      <div>
+        <div class="st-cap">变量表（局部变量）</div>
+        <div class="st-vars" id="st-vars"><div class="st-empty">（空）</div></div>
+        <div class="st-cap">堆</div>
+        <div class="st-heap" id="st-heap"><div class="st-empty">（空）</div></div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn primary" id="st-next">下一步</button>
+      <button class="btn" id="st-r">重来</button>
+    </div>
+    <div class="st-note" id="st-note"></div>
+  </div>
+  <p>走完能看到两件事：<code>b = a</code> 之后改 b 碰不到 a（两个格子各装各的）；<code>ys = xs</code> 之后改 ys 指向的内容，xs 也看得见（两支箭头指同一个对象）。这段代码的实际输出是 <code>5</code> 和 <code>[99, 2]</code>，实测存档在 <code>CopyVsShare.out</code>。</p>
+  <h3>揭晓第 1 节：== 比的是箭头，不是值</h3>
+  <p>两个引用变量之间写 <code>==</code>，比的是两边装的引用——是不是指向<b>同一个对象</b>。那么 <code>Integer x = 127;</code> 这类写法发生了什么？int 被自动装箱成了一个 Integer 对象，而规范 §5.1.7 有条专门的规则：-128 到 127 之间的整数（还有 true、false 和一部分字符）装箱后<b>保证是同一个对象</b>——"It is always the case that a == b"，实现可以缓存这些值。127 的 == 是 true，靠的就是这个缓存。</p>
+  <p>128 为什么 false？规范对范围外的值的原话是 "disallows any assumptions about the identity"：<b>不做任何承诺</b>。这台 Corretto 8 的默认实现只缓存到 127，所以 128 每次装箱都是新对象——换成别的 JVM、或者给 JVM 加参数扩大缓存范围，结果可能不同。规范没承诺的事，不能当规则用。</p>
+  <p>工程结论：<b>包装类型判等，用 equals 或拆箱后比</b>。两种写法在 BoxCache.java 里实测都是 true。这条不是学究：SpringBlade 的实体类里有 27 个 <code>Integer</code> 字段（1.1 篇统计过），对它们写 == 就是在赌值不超过 127。</p>
+  <div class="callout">
+    <span class="t">新版补充：到 Java 25 没变化</span>
+    "引用类型的值是指向对象的引用"（§4.1）和装箱缓存规则（§5.1.7：-128 到 127 保证 ==），在 Java SE 25 的规范里原文都还在，已逐句核对。
+  </div>
+  <p class="src">实测：<code>local/examples/1-2/CopyVsShare.java</code>、<code>BoxCache.java</code>。</p>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>参数传递：只有按值传递</h2>
+  <p>调用方法时发生了什么？规范 §15.12.4.2 的说法：把实参的值赋给"新创建的参数变量"（freshly created parameter variables）。<b>参数是一个新变量，装着实参的拷贝</b>——拷贝规则和上一节的赋值完全一样：基本类型拷值，引用类型拷引用。</p>
+  <p>三行对照，全部实测：</p>
+  <pre class="code">static void swap(int x, int y) { int t = x; x = y; y = t; }
+static void zeroFirst(int[] arr) { arr[0] = 0; }
+static void reassign(int[] arr) { arr = new int[]{9, 9}; }
+
+int a = 1, b = 2;
+swap(a, b);
+System.out.println(a + ", " + b);
+int[] xs = {1, 2};
+zeroFirst(xs);
+System.out.println(Arrays.toString(xs));
+reassign(xs);
+System.out.println(Arrays.toString(xs));
+
+1, 2
+[0, 2]
+[0, 2]</pre>
+  <ul>
+    <li><code>swap</code> 换不动：x、y 是 a、b 的<b>值</b>的副本，交换发生在副本上，方法返回就消失了。</li>
+    <li><code>zeroFirst</code> 改得动：arr 是 xs 的<b>引用</b>的副本——两支箭头指同一个数组，顺着哪支改都行。</li>
+    <li><code>reassign</code> 换不动：给 arr 这支副本换一支新箭头，xs 那支还指原来的数组。</li>
+  </ul>
+  <p>所以"Java 有没有引用传递"的答案是：没有，只有按值传递。方法能改对象的内部，换不掉调用者手里的引用。JS 在这一点上完全一样——对象共享、swap 同样无效——这套直觉可以直接搬过来。</p>
+  <h3>工程里每天的样子</h3>
+  <p>SpringBlade 的部门维护就是这条链：controller 把请求体 JSON 转成的 Dept 直接传给 service，service 往里填字段：</p>
+  <pre class="code">// DeptController.java 第 98–99 行
+public R submit(@Valid @RequestBody Dept dept) {
+    return R.status(deptService.submit(dept));
+}
+
+// DeptServiceImpl.java 第 70–88 行（节选）
+public boolean submit(Dept dept) {
+    ...
+    if (Func.isEmpty(dept.getParentId())) {
+        dept.setTenantId(SecureUtil.getTenantId());
+        dept.setParentId(BladeConstant.TOP_PARENT_ID);
+        ...
+    }
+    ...
+    dept.setIsDeleted(BladeConstant.DB_NOT_DELETED);
+    return saveOrUpdate(dept);
+}</pre>
+  <p><code>submit</code> 手里的 <code>dept</code> 是 controller 那个 <code>dept</code> 的引用副本，指向同一个对象：四个 set 全打在调用者的对象上，填完直接 <code>saveOrUpdate(dept)</code> 入库。整个流程能成立，靠的就是"传的是引用副本"这一条。</p>
+  <div class="callout">
+    <span class="t">新版补充：到 Java 25 没变化</span>
+    "assign the argument values to corresponding freshly created parameter variables" 在 Java SE 25 的规范里原文还在（§15.12.4.2，已核对）。Java 没有、也没有加过引用传递。
+  </div>
+  <p class="src">实测：<code>local/examples/1-2/Swap.java</code>。源码证据见参考资料。</p>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>栈和堆：谁住哪</h2>
+  <p>第 2 节的步进器其实已经把它们画出来了，现在给两栏对上名字。虚拟机规范 §2.5 规定了 JVM 的运行时数据区，和这一篇有关的是两个：</p>
+  <ul>
+    <li><b>JVM 栈</b>（§2.5.2）：每个线程各有一个。栈里压的是<b>帧</b>（frame），一次方法调用一帧，帧里放这个方法的局部变量——步进器左边那栏"变量表"就是当前帧的局部变量。方法返回，帧弹出，里面的变量随之消失。</li>
+    <li><b>堆</b>（§2.5.3）：所有线程共享一个堆，规范的原话是 "memory for all class instances and arrays is allocated"——所有类的实例和所有数组都在这里分配。步进器右边那栏就是。</li>
+  </ul>
+  <p>所以对得上：局部变量（不管装值还是装引用）在栈帧里，对象和数组本体在堆里。堆里没人指的对象由 GC 回收，3.8 篇展开；类的字节码和元数据住在另一个区（方法区，§2.5.4），3.9 篇讲类加载时再看。</p>
+  <p>一个诚实的注脚：规范还说了一句 "frames may be heap allocated"——栈是逻辑结构（只压入弹出帧），规范并不规定帧物理上必须存在哪。"栈上分配、堆上分配"是实现层面的说法，HotSpot 的实现确实把帧放在连续栈上；但你学到的规则应该是：<b>变量的归属跟作用域走，对象的归属跟引用走</b>，这一条和物理布局无关。</p>
+  <div class="callout">
+    <span class="t">新版补充：虚拟线程把栈帧放进了堆里（Java 21）</span>
+    数据区的划分到 Java 25 没变化（JVMS §2.5 原文核对过）。真正的新事在 Java 21：虚拟线程（JEP 444）的栈帧存在堆里——JEP 的原话是 "The stacks of virtual threads are stored in Java's garbage-collected heap as stack chunk objects"，所以一台机器能撑起百万级的并发任务。你们的 Tomcat 项目暂时还是平台线程、一个请求一个栈；第 3 部分讲线程时回来。（依据 JEP 444 原文，本机没有 21，未实测。）
+  </div>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>栈的边界：StackOverflowError</h2>
+  <p>栈不是无限的。规范 §2.5.2：线程需要的栈超过允许的值，JVM 抛 <code>StackOverflowError</code>。最常见的踩法是不小心写出的无限递归。真的炸一次看：</p>
+  <pre class="code">static long depth = 0;
+
+static void go() {
+    depth++;
+    go();
+}
+
+public static void main(String[] args) {
+    try { go(); }
+    catch (StackOverflowError e) {
+        System.out.println("StackOverflowError，深度停在 " + depth);
+    }
+}</pre>
+  <p>连跑三次的输出：</p>
+  <pre class="code">StackOverflowError，深度停在 30630
+StackOverflowError，深度停在 30622
+StackOverflowError，深度停在 30545</pre>
+  <p>三万左右，而且每次不一样。深度不是定值这件事本身值得记住：规范允许 JVM 栈固定大小或动态扩展（§2.5.2），不同 JVM、不同启动参数（如 <code>-Xss</code>）下数字都会变。工程里能依赖的只有"太深会抛"，不能依赖"多深才抛"。</p>
+  <div class="card">
+    <p style="margin-top:0">同一个无限递归，换你的浏览器（JS）跑一次——它的栈也有边界：</p>
+    <div class="btns"><button class="btn primary" id="js-go">在这个浏览器里递归到底</button></div>
+    <div class="note" id="js-out" style="margin-top:10px"></div>
+  </div>
+  <div class="callout">
+    <span class="t">新版补充：到 Java 25 没变化</span>
+    栈满抛 StackOverflowError 的规则在 Java SE 25 的虚拟机规范里原文还在（§2.5.2，已核对）。变的是"一个栈多少钱"：虚拟线程的栈能伸能缩、存在堆里（见第 4 节新版补充），同样的内存能装的栈多了几个数量级。
+  </div>
+  <p class="src">实测：<code>local/examples/1-2/StackDepth.java</code>（深度数字是本机实测，见 README）。</p>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>null：空箭头</h2>
+  <p>null 是可以赋给任何引用类型的值。规范里它的类型叫 "null type"（§4.1），没有名字——所以不能声明一个"null 类型"的变量，null 只是这个类型唯一的值。用第 2 节的画面说：<b>装了 null 的变量是一支空箭头，不指任何对象</b>。</p>
+  <p>顺着空箭头走，就抛 NullPointerException：</p>
+  <pre class="code">String s = null;
+try {
+    System.out.println(s.length());
+} catch (NullPointerException e) {
+    System.out.println("s.length() 抛出: " + e);
+}
+Integer n = null;
+try {
+    int m = n;
+    System.out.println(m);
+} catch (NullPointerException e) {
+    System.out.println("int m = n 抛出: " + e);
+}
+System.out.println(s == null);
+
+s.length() 抛出: java.lang.NullPointerException
+int m = n 抛出: java.lang.NullPointerException
+true</pre>
+  <p>两处都在"顺着箭头走"：<code>s.length()</code> 要顺着引用找到对象才能调方法；<code>int m = n</code> 是拆箱，要顺着引用找到那个 Integer 才能取出里面的 int（0.3 见过 Boolean 版）。判断空不空用 <code>== null</code>，这是引用之间比"指不指对象"，合法且不会抛。</p>
+  <p>注意上面两条异常消息是<b>空的</b>——异常名后面什么都没有。这是 Java 8 的 NPE 的样子：它告诉你错了，不告诉你谁错了。</p>
+  <div class="callout">
+    <span class="t">新版补充：NPE 开始说话了（Java 14）</span>
+    从 Java 14 起（JEP 358），NPE 自带详情，同样这段代码会打印 <code>Cannot invoke "String.length()" because "s" is null</code> 这样的消息，直接点名是哪个变量、哪个操作。null 本身没有任何变化：还是能赋给任何引用类型、顺空箭头还是抛。另外 Java 8 自己引入了 <code>Optional</code> 作为"可能没有值"的显式写法，2.7 篇展开。（JEP 358 依据原文，本机只有 JDK 8，未实测。）
+  </div>
+  <p class="src">实测：<code>local/examples/1-2/NullDemo.java</code>。</p>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结和自测</h2>
+  <div class="callout key">
+    <span class="t">带走四句话</span>
+    变量两种：基本类型装值，引用类型装引用；赋值和传参拷的都是变量里装的东西。方法能改传入对象的内部，换不掉调用者手里的引用。局部变量住在栈帧里、随方法返回消失，对象和数组住在堆里、没人指了由 GC 收；栈太深抛 StackOverflowError。null 是空箭头，顺着它走就抛 NullPointerException；包装类型判等用 equals，不用 ==。
+  </div>
+
+  <div class="card">
+    <h3>四个问题</h3>
+    <div class="q">
+      <div class="qt">1. <code>Integer a = 127, b = 127;</code> 和 <code>Integer c = 128, d = 128;</code>，两组各自写 <code>==</code>，结果是什么？判等应该用什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">本机 JDK 8 实测：127 那组 true，128 那组 false（BoxCache.java）。规范只承诺 -128 到 127 装箱后是同一个对象（§5.1.7），范围外不做承诺。判等用 <code>equals</code> 或拆箱后 <code>==</code>，两种写法实测都得 true。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 能写出一个 <code>swap(int a, int b)</code>，让调用者的两个 int 真的交换吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不能。参数是新变量，装着实参值的副本，交换发生在副本上，方法返回就没了。要交换得换思路，比如返回一个数组 <code>new int[]{b, a}</code>，或把两个值装进一个对象里改。实测见 Swap.java。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. DeptController 把 <code>dept</code> 传给 <code>submit</code>，submit 里执行了 <code>dept.setTenantId(...)</code>。submit 返回后，controller 手里那个 dept 变没变？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">变了。两个变量装的是同一个对象的引用（传参拷的是引用），submit 的 set 打在堆里的同一个对象上，controller 手里的 dept 顺着同一支箭头看，字段已经是新值。真实代码见 DeptServiceImpl.java 第 70–88 行。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>String s = null; s.length()</code> 和 <code>Integer n = null; int m = n;</code> 各自会怎样？报的错说了什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">都抛 NullPointerException：前者顺着引用找对象，后者拆箱要取出对象里的值。Java 8 的异常消息是空的（只有异常名）；Java 14 起会带"哪个变量是 null"的详情（JEP 358）。实测见 NullDemo.java。</div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>参考资料</h2>
+  <p>每一条后面写了它支撑的是哪句话。规范和 JEP 在本地留有副本，链接和原文在 2026-11-14 逐条核对过；未特别标注版本的规范均为 Java SE 8 版。</p>
+  <div class="card refs">
+    <h3>源码（SpringBlade v3.7.1）</h3>
+    <ul>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-system/src/main/java/org/springblade/system/controller/DeptController.java#L98" target="_blank" rel="noopener">DeptController.java 第 98–99 行</a><span>支撑：第 3 节——controller 把 @RequestBody 转出的 Dept 直接传给 deptService.submit(dept)</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-system/src/main/java/org/springblade/system/service/impl/DeptServiceImpl.java#L70" target="_blank" rel="noopener">DeptServiceImpl.java 第 70–88 行</a><span>支撑：第 3 节和自测第 3 题——submit 对传入的同一个 dept 连做四个 set，然后 saveOrUpdate(dept)</span></li>
+    </ul>
+    <h3>语言规范（JLS）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.1" target="_blank" rel="noopener">JLS §4.1 The Kinds of Types and Values</a><span>支撑：第 2 节——引用类型的值是指向对象的引用；第 6 节——null type 没有名字，null 是它唯一的值</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.1.7" target="_blank" rel="noopener">JLS §5.1.7 Boxing Conversion</a><span>支撑：第 2 节——-128 到 127 装箱后保证 ==（"It is always the case that a == b"），实现可缓存；范围外"不做任何关于同一性的假设"</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.12.4.2" target="_blank" rel="noopener">JLS §15.12.4.2 Evaluate Arguments</a><span>支撑：第 3 节——实参的值赋给"新创建的参数变量"</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-4.html#jls-4.1" target="_blank" rel="noopener">JLS（Java SE 25）§4.1</a>、<a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-5.html#jls-5.1.7" target="_blank" rel="noopener">§5.1.7</a>、<a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.12.4.2" target="_blank" rel="noopener">§15.12.4.2</a><span>支撑：第 2、3 节「新版补充」——引用语义、装箱缓存、参数传递的原文到 Java 25 未变</span></li>
+    </ul>
+    <h3>虚拟机规范（JVMS）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5.2" target="_blank" rel="noopener">JVMS §2.5.2 Java Virtual Machine Stacks</a><span>支撑：第 4 节——每线程一个 JVM 栈、帧里放局部变量、"frames may be heap allocated"；第 5 节——栈超界抛 StackOverflowError、栈可固定大小或动态扩展</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5.3" target="_blank" rel="noopener">JVMS §2.5.3 Heap</a><span>支撑：第 4 节——堆为所有线程共享，所有类实例和数组的内存从这里分配</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-2.html#jvms-2.5.2" target="_blank" rel="noopener">JVMS（Java SE 25）§2.5.2、§2.5.3</a><span>支撑：第 4、5 节「新版补充」——数据区划分与 StackOverflowError 规则的原文到 Java 25 未变</span></li>
+    </ul>
+    <h3>JEP（新特性的来处）</h3>
+    <ul>
+      <li><a href="https://openjdk.org/jeps/444" target="_blank" rel="noopener">JEP 444：Virtual Threads（Java 21）</a><span>支撑：第 4 节「新版补充」——虚拟线程的栈以 stack chunk 对象存在堆里</span></li>
+      <li><a href="https://openjdk.org/jeps/358" target="_blank" rel="noopener">JEP 358：Helpful NullPointerExceptions（Java 14）</a><span>支撑：第 6 节「新版补充」——Java 14 起 NPE 消息带变量名和具体操作</span></li>
+    </ul>
+    <h3>本篇实验</h3>
+    <ul>
+      <li><a href="https://github.com/wangx7/cs-crash-course/tree/main/local/examples/1-2" target="_blank" rel="noopener">local/examples/1-2/</a><span>支撑：全篇的源码、每条命令的输出（.out 文件）、复现方法</span></li>
+    </ul>
+  </div>
+  <p class="note">没有实测、只凭资料或推断写的地方：虚拟线程（JEP 444）和详细 NPE 消息（JEP 358）依据 JEP 原文，本机只有 JDK 8，没有在新版上运行过；「128 装箱 == 为 false」是这台 Corretto 8 默认缓存范围的实测行为，规范对范围外不做承诺，其他 JVM 或其他参数下可能不同；栈深度数字（30545 ~ 30630）是本机默认栈设置下的实测，规范不规定栈大小；浏览器递归深度因浏览器而异，页面上跑出来的数字只对当时当刻的浏览器有效；「27 个 Integer 字段」是 grep 统计，命令在 <code>local/examples/1-1/README.md</code>。</p>
+
+  <button class="btn" id="mark-read"></button>
+
+  <div class="pager">
+    <a href="1-1.html"><small>上一篇</small>1.1 数值类型和它的坑</a>
+    <a class="next off"><small>下一篇（还没写）</small>1.3 String</a>
+  </div>
+
+  <div class="credit">
+    本篇是原创内容，由 Kimi K3（月之暗面）写作并制作交互演示，非任何官方教材。文中引用的 SpringBlade v3.7.1 代码版权归原作者所有，按 Apache License 2.0 引用；所有示例代码在 Amazon Corretto 1.8.0_512 上实际编译运行后引用输出。<br>
+    内容随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// ---------- 第 1 节：逐行跑 ----------
+(() => {
+  const CODE = [
+    'Integer x = 127, y = 127;',
+    'System.out.println(x == y);',
+    'Integer p = 128, q = 128;',
+    'System.out.println(p == q);',
+  ];
+  const OUT = { 1: 'true', 3: 'false' };
+  const root = $('#lr1');
+  root.innerHTML = `<pre class="code">${CODE.map((c, i) => `<span class="cl" data-i="${i}">${esc(c)}</span>`).join('\n')}</pre>` +
+    `<div class="term" id="lr-term"><span class="p">$ </span>java BoxCache</div>` +
+    `<div class="btns" style="margin-top:10px"><button class="btn primary" id="lr-next">跑下一行</button><button class="btn" id="lr-r">重来</button></div>`;
+  const term = $('#lr-term'), next = $('#lr-next');
+  let cur = -1;
+  function render() {
+    $$('.cl', root).forEach(el => el.classList.toggle('cur', +el.dataset.i === cur));
+    next.textContent = cur >= CODE.length - 1 ? '跑完了' : '跑下一行';
+    next.disabled = cur >= CODE.length - 1;
+  }
+  next.addEventListener('click', () => {
+    cur++;
+    if (OUT[cur] !== undefined) term.innerHTML += `\n${OUT[cur]}`;
+    render();
+  });
+  $('#lr-r').addEventListener('click', () => {
+    cur = -1;
+    term.innerHTML = '<span class="p">$ </span>java BoxCache';
+    render();
+  });
+  render();
+})();
+
+// ---------- 第 2 节：步进器（变量表 ↔ 堆） ----------
+(() => {
+  const CODE = [
+    'int a = 5;',
+    'int b = a;',
+    'b = 9;',
+    'int[] xs = {1, 2};',
+    'int[] ys = xs;',
+    'ys[0] = 99;',
+  ];
+  // 每一步：执行到的行、变量表、堆、解说；chg 标记变色的变量/格
+  const STEPS = [
+    { line: -1, vars: [], heap: null, note: '点「下一步」开始执行。' },
+    { line: 0, vars: [['a', 5]], heap: null, note: 'int a = 5：变量表里多了 a，直接装值 5。' },
+    { line: 1, vars: [['a', 5], ['b', 5]], chg: 'b', note: 'int b = a：把 a 里装的东西拷一份给 b——两个格子，各装各的 5。' },
+    { line: 2, vars: [['a', 5], ['b', 9]], chg: 'b', note: 'b = 9：只改 b 自己的格子，a 不受影响。' },
+    { line: 3, vars: [['a', 5], ['b', 9], ['xs', '#1']], heap: { id: '#1', cells: [1, 2] }, note: 'int[] xs = {1, 2}：数组对象造在堆里，xs 装的是指向它的引用。' },
+    { line: 4, vars: [['a', 5], ['b', 9], ['xs', '#1'], ['ys', '#1']], chg: 'ys', heap: { id: '#1', cells: [1, 2] }, note: 'int[] ys = xs：拷的是引用——现在两支箭头指着同一个数组。' },
+    { line: 5, vars: [['a', 5], ['b', 9], ['xs', '#1'], ['ys', '#1']], heap: { id: '#1', cells: [99, 2], chgCell: 0 }, note: 'ys[0] = 99：顺着 ys 的箭头改到堆里那个数组。xs 那支箭头没动过，但 xs[0] 也是 99——同一个对象。' },
+    { line: -1, vars: [['a', 5], ['b', 9], ['xs', '#1'], ['ys', '#1']], heap: { id: '#1', cells: [99, 2] }, note: '实测输出（CopyVsShare.out）：<span class="out">5</span> <span class="out">[99, 2]</span>' },
+  ];
+  const codeEl = $('#st-code'), varsEl = $('#st-vars'), heapEl = $('#st-heap'), noteEl = $('#st-note'), nextBtn = $('#st-next');
+  codeEl.innerHTML = CODE.map((c, i) => `<span class="cl" data-i="${i}">${esc(c)}</span>`).join('\n');
+  let cur = 0;
+  function render() {
+    const s = STEPS[cur];
+    $$('.cl', codeEl).forEach(el => el.classList.toggle('cur', +el.dataset.i === s.line));
+    varsEl.innerHTML = s.vars.length
+      ? s.vars.map(([n, v]) => `<div class="vr${s.chg === n ? ' chg' : ''}"><span class="vn">${n}</span>${typeof v === 'string' ? `<span>→</span><span class="ref">${v}</span>` : `<span class="vv">${v}</span>`}</div>`).join('')
+      : '<div class="st-empty">（空）</div>';
+    heapEl.innerHTML = s.heap
+      ? `<div class="obj"><span class="oid">数组 ${s.heap.id}</span><span class="cells">${s.heap.cells.map((v, i) => `<span class="cell${s.heap.chgCell === i ? ' chg' : ''}">${v}<span class="ci">[${i}]</span></span>`).join('')}</span></div>`
+      : '<div class="st-empty">（空）</div>';
+    noteEl.innerHTML = s.note;
+    nextBtn.textContent = cur >= STEPS.length - 1 ? '跑完了' : '下一步';
+    nextBtn.disabled = cur >= STEPS.length - 1;
+  }
+  nextBtn.addEventListener('click', () => { if (cur < STEPS.length - 1) { cur++; render(); } });
+  $('#st-r').addEventListener('click', () => { cur = 0; render(); });
+  render();
+})();
+
+// ---------- 第 5 节：浏览器里的递归到底 ----------
+(() => {
+  $('#js-go').addEventListener('click', () => {
+    let d = 0;
+    function go() { d++; go(); }
+    try {
+      go();
+    } catch (e) {
+      $('#js-out').textContent = `${e.name}: ${e.message}——深度停在 ${d}。这是你这个浏览器此刻的栈限制，和上面 Java 的三万没有关系，但"栈有边界"是同一条规律。`;
+    }
+  });
+})();
+</script>
+</body>
+</html>

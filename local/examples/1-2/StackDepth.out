@@ -1,0 +1,4 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac StackDepth.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java StackDepth （连跑三次）
+StackOverflowError，深度停在 30630
+StackOverflowError，深度停在 30622
+StackOverflowError，深度停在 30545
