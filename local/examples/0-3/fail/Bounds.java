@@ -1,6 +1,6 @@
-class Bounds {
+public class Bounds {
     public static void main(String[] args) {
-        int[] counts = new int[3];
-        System.out.println(counts[3]);
+        int[] a = new int[2];
+        System.out.println(a[5]);
     }
 }

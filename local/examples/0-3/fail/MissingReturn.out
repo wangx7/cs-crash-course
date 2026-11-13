@@ -1,4 +1,5 @@
-fail/MissingReturn.java:6: error: missing return statement
+$ javac -encoding UTF-8 MissingReturn.java
+MissingReturn.java:6: 错误: 缺少返回语句
     }
     ^
-1 error
+1 个错误

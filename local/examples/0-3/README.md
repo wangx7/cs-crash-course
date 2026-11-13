@@ -1,25 +1,20 @@
-# 0.3 · 语法速览的可复现实验
+# 0.3 页面上实际运行过的代码
 
-对应 `java/0-3.html`。2026-11-13 使用 Amazon Corretto 1.8.0_512 编译运行。
+终端输出都是用 JDK 8（Amazon Corretto 1.8.0_512，Apple 芯片）跑出来的，页面上的输出原样摘自这些运行。同名 `.out` 文件里是命令和输出。
 
-在仓库根目录执行：
+| 文件 | 页面位置 | 内容 |
+| --- | --- | --- |
+| `OrderStats.java` | 第 1 节起贯穿 | 整篇的主程序：正数累加、零跳过、负数停止 |
+| `Checks.java` | 第 2–5 节的零散结论 | 数组默认值、增强 for 的副本、`&&` 短路、switch、整数除法、`Boolean` 拆箱抛 NPE（最后一行故意抛的） |
+| `FallThrough.java` | 第 3 节 | `switch` 不写 `break` 会一路走进 `default` |
+| `variants/OrderStatsContinue.java` | 第 7 节动手 | 把负数分支的 `break` 换成 `continue`，输出从 5 变 11 |
+| `fail/Unassigned.java` | 第 2 节 | 局部变量没赋值就读：编译错误 |
+| `fail/Truthiness.java` | 第 3 节 | `int` 当 `if` 条件：编译错误 |
+| `fail/MissingReturn.java` | 第 5 节 | 有返回类型却有路径不返回：编译错误 |
+| `fail/DuplicateMethod.java` | 第 5 节 | 只靠返回类型区分同名方法：编译错误 |
+| `fail/VarKeyword.java` | 第 2 节 | Java 8 没有 `var`：编译器把它当成一个类名去找 |
+| `fail/Bounds.java` | 第 4 节 | 越界编译不管，运行时抛 `ArrayIndexOutOfBoundsException` |
+| `fail/Inspect.java` | 第 6 节找错练习 | 19 行、四类问题混在一起 |
+| `fail/Inspect2/3/4.java` | 第 6 节 | 同一个文件第 2–4 轮的样子（类名不同只是为了能放在同一目录；页面上统一叫 `Inspect.java`，行号和页面一致） |
 
-```sh
-python3 local/examples/0-3/verify.py
-```
-
-默认通过 macOS 的 `/usr/libexec/java_home -v 1.8` 找 JDK。其他系统可设置 `JDK8` 为 JDK 8 安装目录。脚本在临时目录生成 class，结束后自动清理，不改源码。
-
-- `OrderStats.java`：本篇完整例子，实际输出在 `OrderStats.out`。
-- `SyntaxChecks.java`：声明、默认值、条件、switch、数组循环、整数除法；实际输出在同名 `.out`。
-- `fail/Unassigned.java`：局部变量未初始化，预期编译失败。
-- `fail/Condition.java`：int 不能作为 if 条件，预期编译失败。
-- `fail/MissingReturn.java`：有返回类型却可能走到方法末尾，预期编译失败。
-- `fail/ReturnOnly.java`：仅返回类型不同，预期编译失败。
-- `fail/Bounds.java`：编译成功，运行时数组越界。
-
-`fail/*.out` 保存实测诊断，编译器使用 `-J-Duser.language=en`；仅把本机绝对路径缩短为实验目录内的相对路径。不同 JDK 8 发行版的错误排版可能不同，脚本检查错误类别。
-
-验证还包括练习修改版（把负数分支的 break 换成 continue，结果为 11）、空数组求和，以及访问空数组下标 0 抛出异常。修改版和边界实验均在临时目录生成。
-
-页面的逐轮追踪是 JavaScript 制作的固定流程示意，不是 JVM 解释器。订单状态、满 5 件的标签、负数停止标记都是教学约定。
+复现：JDK 8 的 `javac`/`java`，命令见各 `.out` 文件第一行。本机 PATH 上的 JDK 是 Temurin 8，页面统一用 `$(/usr/libexec/java_home -v 1.8)` 取 Corretto 8。

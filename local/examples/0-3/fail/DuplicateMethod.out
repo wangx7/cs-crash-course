@@ -1,0 +1,5 @@
+$ javac -encoding UTF-8 DuplicateMethod.java
+DuplicateMethod.java:6: 错误: 已在类 DuplicateMethod中定义了方法 count(int)
+    static long count(int n) {
+                ^
+1 个错误

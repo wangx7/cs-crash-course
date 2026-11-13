@@ -1,2 +1,4 @@
-Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 3
+$ javac -encoding UTF-8 Bounds.java
+$ java Bounds（编译通过后运行）
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 5
 	at Bounds.main(Bounds.java:4)

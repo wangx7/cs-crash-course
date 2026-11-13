@@ -1,0 +1,5 @@
+$ javac -encoding UTF-8 Inspect.java  （第 3 轮：再修第 4、13 行；本目录里是 Inspect3.java）
+Inspect.java:12: 错误: 可能尚未初始化变量total
+        System.out.println(total);
+                           ^
+1 个错误

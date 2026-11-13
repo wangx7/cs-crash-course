@@ -18,8 +18,15 @@ mvn_dep	https://maven.apache.org/guides/introduction/introduction-to-dependency-
 superpom	https://maven.apache.org/ref/3.9.9/maven-model-builder/super-pom.html	0.2 target/classes
 ij_compile	https://www.jetbrains.com/help/idea/compiling-applications.html	0.2 IDEA 编译输出目录
 ij_sdk	https://www.jetbrains.com/help/idea/sdk.html	IDEA SDK（备用）
-jls4	https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html	0.3 类型与初始化
-jls10	https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html	0.3 数组
-jls14	https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html	0.3 分支与循环
-api_arrays	https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html	0.3 数组内容打印
-api_string	https://docs.oracle.com/javase/8/docs/api/java/lang/String.html	0.3 字符串内容比较
+jls3	https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html	0.3 字面量后缀 L/F、小数默认 double
+jls4	https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html	0.3 基本类型位宽、变量默认值
+jls5	https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html	0.3 拆箱 null 抛 NPE
+jls10	https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html	0.3 数组长度固定、length 字段、越界检查
+jls14	https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html	0.3 if/switch/for/while 语句规则
+jls16	https://docs.oracle.com/javase/specs/jls/se8/html/jls-16.html	0.3 局部变量读取前必须赋值
+jep286	https://openjdk.org/jeps/286	0.3 var 是 Java 10 才有
+jep361	https://openjdk.org/jeps/361	0.3 箭头 switch 是 Java 14 才有
+jep441	https://openjdk.org/jeps/441	0.3 switch 模式匹配是 Java 21 才有
+api_arrays	https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html	0.3 Arrays.toString
+api_string	https://docs.oracle.com/javase/8/docs/api/java/lang/String.html	0.3 String.equals
+jls25_10	https://docs.oracle.com/javase/specs/jls/se25/html/jls-10.html	0.3 数组规则到 Java 25 未变的核对（本地文件待 setup.sh 补下）

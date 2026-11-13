@@ -1,0 +1,4 @@
+$ javac -encoding UTF-8 Inspect.java && java Inspect  （第 4 轮：再给第 8 行的 total 赋初值；本目录里是 Inspect4.java）
+有元素
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 5
+	at Inspect.main(Inspect.java:7)

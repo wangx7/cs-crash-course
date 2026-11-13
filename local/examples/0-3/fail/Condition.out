@@ -1,4 +1,0 @@
-fail/Condition.java:4: error: incompatible types: int cannot be converted to boolean
-        if (quantity) {
-            ^
-1 error

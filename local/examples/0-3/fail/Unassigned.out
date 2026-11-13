@@ -1,4 +1,5 @@
-fail/Unassigned.java:4: error: variable total might not have been initialized
+$ javac -encoding UTF-8 Unassigned.java
+Unassigned.java:4: 错误: 可能尚未初始化变量total
         System.out.println(total);
                            ^
-1 error
+1 个错误

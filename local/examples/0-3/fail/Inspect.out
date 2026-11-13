@@ -1,0 +1,8 @@
+$ javac -encoding UTF-8 Inspect.java
+Inspect.java:14: 错误: 需要';'
+        int half(int n) {
+                ^
+Inspect.java:14: 错误: 需要';'
+        int half(int n) {
+                      ^
+2 个错误

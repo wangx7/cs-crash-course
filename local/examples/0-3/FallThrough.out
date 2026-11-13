@@ -1,0 +1,4 @@
+$ javac -encoding UTF-8 FallThrough.java && java FallThrough
+已付款
+已关闭
+未知状态

@@ -1,0 +1,8 @@
+$ javac -encoding UTF-8 Inspect.java  （第 2 轮：删掉第 14–16 行；本目录里是 Inspect2.java）
+Inspect.java:4: 错误: 不兼容的类型: int无法转换为boolean
+        if (a.length) {
+             ^
+Inspect.java:13: 错误: 不兼容的类型: String无法转换为char
+        char c = "x";
+                 ^
+2 个错误

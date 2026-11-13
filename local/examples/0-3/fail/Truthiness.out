@@ -1,0 +1,5 @@
+$ javac -encoding UTF-8 Truthiness.java
+Truthiness.java:4: 错误: 不兼容的类型: int无法转换为boolean
+        if (quantity) {
+            ^
+1 个错误

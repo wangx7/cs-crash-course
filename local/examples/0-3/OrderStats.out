@@ -1,2 +1,3 @@
+$ javac -encoding UTF-8 OrderStats.java && java OrderStats
 件数=5
 可发货

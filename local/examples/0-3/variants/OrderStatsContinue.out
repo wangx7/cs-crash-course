@@ -1,0 +1,3 @@
+$ java OrderStatsContinue（把负数分支的 break 换成 continue）
+件数=11
+可发货

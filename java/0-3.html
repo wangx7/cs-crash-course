@@ -3,145 +3,103 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0.3 语法速览 · Java 后端</title>
+<title>0.3 语法速览：你已经会的那部分，在 Java 里怎么写 · Java 后端</title>
 <link rel="stylesheet" href="../assets/cc.css">
 <style>
-pre.code{font-family:var(--mono);font-size:13.5px;line-height:1.7;background:var(--code);border-radius:10px;padding:16px;margin:12px 0;overflow-x:auto;white-space:pre;tab-size:4}
-pre.code code{background:none;padding:0;font-size:inherit;border-radius:0}
-.note,.src{font-size:13px;color:var(--muted)}
-.split{display:grid;grid-template-columns:1fr 1fr;gap:16px}.split>*{min-width:0}
-.guess{border-top:3px solid var(--on)}
-details.answer{border-top:1px solid var(--line);padding-top:10px;margin-top:12px}summary{cursor:pointer;color:var(--accent);font-weight:600}summary:focus-visible,.btn:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
-.tape{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0}.cell{min-width:66px;flex:1;border:1px solid var(--line);border-radius:8px;padding:8px;text-align:center;background:var(--bg)}.cell small{display:block;font:12px var(--mono);color:var(--muted)}.cell b{font:26px var(--mono)}.cell.active{border:2px solid var(--on);background:var(--on-soft)}.cell.past{opacity:.55}
-.trace-status{border-left:3px solid var(--on);padding:10px 14px;min-height:110px;background:var(--bg)}.trace-status strong{display:block;font:24px var(--mono);margin-bottom:6px}.trace-status p{margin:0;font-size:15px}
-.refs li{margin-bottom:14px}.refs li span{display:block;color:var(--muted);font-size:14px}.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{padding:10px;text-align:left;border-bottom:1px solid var(--line)}th{color:var(--muted);font-weight:500}
-@media(max-width:640px){.split{grid-template-columns:1fr}.cell{min-width:42px;padding:8px 3px}.tape{gap:6px}pre.code{font-size:12px;padding:12px}.topbar{flex-wrap:wrap}}
+pre.code{font-family:var(--mono);font-size:13.5px;line-height:1.7;background:var(--code);border-radius:10px;padding:12px 14px;margin:10px 0;overflow-x:auto;white-space:pre;tab-size:4}
+pre.code .ln{display:inline-block;width:2em;margin-right:1.2em;text-align:right;color:var(--muted);user-select:none}
+.src{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.note{font-size:13px;color:var(--muted)}
+
+/* 猜卡片 */
+.gcard .opts{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 0}
+.gcard .opt.right{border-color:var(--ok);background:var(--ok-soft);color:var(--ink)}
+.gcard .opt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--ink)}
+.gcard .ans{display:none;margin-top:12px;font-size:15px}
+.gcard.done .ans{display:block}
+.gcard .ans pre.code{margin:8px 0}
+
+/* 声明速查 */
+table.map{width:100%;border-collapse:collapse;font-size:14.5px;margin:10px 0}
+table.map th,table.map td{border-bottom:1px solid var(--line);padding:7px 8px;text-align:left;vertical-align:top}
+table.map th{font-size:13px;color:var(--muted);font-weight:600}
+table.map td:first-child{white-space:nowrap}
+
+/* 找错练习 */
+.ins{list-style:none;margin:10px 0;padding:8px 0;background:var(--code);border-radius:10px;font-family:var(--mono);font-size:13.5px;line-height:1.75}
+.ins li{display:flex;align-items:baseline;padding:1px 12px;border-left:3px solid transparent;white-space:pre}
+.ins.live li{cursor:pointer}
+.ins.live li:hover{background:var(--panel)}
+.ins li.sel{background:var(--accent-soft)}
+.ins .no{flex:0 0 2em;text-align:right;margin-right:1.2em;color:var(--muted);user-select:none}
+.ins .cd{flex:0 1 auto}
+.ins .st{margin-left:auto;padding-left:14px;font-size:12.5px;white-space:nowrap}
+.ins li.hit{border-left-color:var(--ok);background:var(--ok-soft)}
+.ins li.hit .st{color:var(--ok);font-weight:600}
+.ins li.miss{border-left-color:var(--bad);background:var(--bad-soft)}
+.ins li.miss .st{color:var(--bad);font-weight:600}
+.ins li.over .st{color:var(--muted);text-decoration:line-through}
+.ins li.trap{border-left-color:var(--on);background:var(--on-soft)}
+.ins li.trap .st{color:var(--on);font-weight:600}
+.rounds{margin-top:14px}
+.rounds h4{margin:14px 0 2px;font-size:14px}
+.rounds .edit{font-size:13px;color:var(--muted)}
+
+/* 参考资料 */
+.refs h3{margin:18px 0 6px;font-size:16px}
+.refs h3:first-child{margin-top:0}
+.refs ul{list-style:none;margin:0;padding:0}
+.refs li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px;overflow-wrap:anywhere}
+.refs li:last-child{border-bottom:none}
+.refs li span{display:block;font-size:13px;color:var(--muted)}
+
+@media (max-width:640px){
+  .ins{font-size:12px}
+  .ins .st{padding-left:8px}
+}
 </style>
 </head>
 <body data-ep="3" data-store="java-be-read" data-unit="篇">
-<div class="topbar"><a href="index.html">← Java 后端 · 目录</a><span class="muted">Java 8 · 原创图文课</span></div>
+<div class="topbar">
+  <a href="index.html">← Java 后端 · 目录</a>
+  <span class="muted">第 0 部分 · 出发前</span>
+</div>
+
 <header class="hero">
-<div class="eyebrow">第 0 部分 · 出发前 / 0.3</div>
-<h1>语法速览</h1><div class="en">Reading and writing a small Java program</div>
-<p class="lead">上一节已经把 .java 编译成了 .class。这一节写一个能统计数量的小程序：把类型标在什么位置，条件能写什么，怎样遍历数组，以及怎样把计算收进方法。你已经会的控制流程，只看 Java 的写法和限制。</p>
-<div class="road"><span>声明</span><i>→</i><span>判断</span><i>→</i><span>数组与循环</span><i>→</i><span>方法</span><i>→</i><span>跑起来</span></div>
+  <div class="eyebrow">第 0 部分 · 出发前 · 0.3</div>
+  <h1>语法速览</h1>
+  <p class="en">Syntax you already know, the way Java writes it</p>
+  <p class="lead">0.2 把一个只有一行有效代码的程序从源码跟到了 JVM。这一篇换一个真正做计算的程序：统计一组数量。判断、循环、方法你已经会，所以这篇只讲 Java 多出来的限制——每一条限制都让 JDK 8 的编译器实际拦一次，错误信息原样贴出。最后有一个 19 行的找错练习，把整篇的检查点混在一起。</p>
+  <p class="lead" style="font-size:15px;margin-top:10px">你们的服务跑在 Java 8 上，所以正文一律按 Java 8 实测。每一节后面附一段<b>新版补充</b>，说清新的版本在这条上加了什么写法。方向可以放心：新版加的是更省事的写法，你学到的 Java 8 规则并没有被废掉。</p>
+  <div class="road"><span>先读程序</span><i>→</i><span>声明</span><i>→</i><span>分支</span><i>→</i><span>数组和循环</span><i>→</i><span>方法</span><i>→</i><span>找错</span><i>→</i><span>自测</span></div>
+  <p class="note" style="margin-top:16px">页面上所有编译错误和程序输出，都是在 Amazon Corretto 1.8.0_512 上实际执行后贴进来的；源码和逐条的输出文件在仓库的 <code>local/examples/0-3/</code>。</p>
 </header>
-<div class="layout"><nav class="toc" aria-label="本篇目录"><ol>
-<li><a href="#ch1">01 · 先猜两行代码</a></li><li><a href="#ch2">02 · 类型与初始化</a></li><li><a href="#ch3">03 · 条件得是布尔值</a></li><li><a href="#ch4">04 · 数组与循环</a></li><li><a href="#ch5">05 · 收进一个方法</a></li><li><a href="#ch6">06 · 自己改一次</a></li><li><a href="#ch7">参考资料</a></li>
-</ol></nav><main>
-<section class="ch" id="ch1"><div class="ch-num">01 / 先预测</div><h2>它会打印 0 吗？</h2>
-<p>把下面两行放在上一节的 <code>main</code> 方法里。先选一个结果，再展开答案：打印 <code>0</code>、运行时报错，还是根本编译不过？</p>
-<pre class="code"><code>int total;
-System.out.println(total);</code></pre>
-<details class="answer"><summary>看 JDK 8 的编译结果</summary><pre class="code"><code>fail/Unassigned.java:4: error: variable total might not have been initialized
-        System.out.println(total);
-                           ^
-1 error</code></pre>
-<p>编译不过。<code>total</code> 是方法里的<strong>局部变量</strong>，读取之前必须有确定的赋值。要从零累加，就明确写 <code>int total = 0;</code>。Java 对数组元素的规则又不一样，下一节马上对照。</p></details>
-<p class="src">实测文件：<a href="../local/examples/0-3/fail/Unassigned.java">Unassigned.java</a>，第 3–4 行。错误输出使用英文诊断，便于对照错误名。</p>
-</section>
-<section class="ch" id="ch2"><div class="ch-num">02 / 声明</div><h2>类型写在名字前面</h2>
-<p>本篇用到的声明如下。在 Java 8 里，局部变量不能用 <code>var</code> 推断类型；这里直接写出类型名。</p>
-<pre class="code"><code>int quantity = 3;
-long orderId = 3000000000L;
-double ratio = 0.5;
-float progress = 0.5F;
-boolean paid = false;
-char grade = &#x27;A&#x27;;
-String status = &quot;PAID&quot;;</code></pre>
-<p><code>int</code> 和 <code>long</code> 都是整数类型，分别为 32 位和 64 位；这个订单号超出了 <code>int</code> 的正数范围，所以字面量末尾写 <code>L</code>。小数默认按 <code>double</code> 写，<code>float</code> 的字面量加 <code>F</code>。范围、转换和计算误差在 1.1 篇展开。</p>
-<p><code>boolean</code> 只有 <code>true</code> 和 <code>false</code>。单引号用于 <code>char</code>，双引号用于 <code>String</code>；<code>char</code> 存一个 UTF-16 代码单元，不保证能装下一个完整的 Unicode 字符，例如某些 emoji。<code>String</code> 是引用类型，前面的六种是基本类型；另外两种基本类型是 <code>byte</code> 和 <code>short</code>。</p>
-<h3>局部变量和数组元素，别混在一起</h3>
-<pre class="code"><code>int[] counts = new int[3];
-String[] names = new String[2];
-System.out.println(Arrays.toString(counts));
-System.out.println(Arrays.toString(names));</code></pre><pre class="code"><code>[0, 0, 0]
-[null, null]</code></pre>
-<p><code>new int[3]</code> 创建三个元素，元素自动初始化为 <code>0</code>；引用类型数组的元素默认是 <code>null</code>。这里的局部变量 <code>counts</code>、<code>names</code> 都已经由等号右边赋过值。<code>Arrays.toString</code> 用于把数组内容转成便于阅读的字符串，文件顶部要写 <code>import java.util.Arrays;</code>。</p>
-<div class="callout"><strong>区分声明的位置。</strong>字段和数组元素有默认值；局部变量必须在读取前赋值。字段是直接声明在类里的变量，1.4 篇再写。把“Java 变量默认是零”记成统一规则，会在本篇开头就碰壁。</div>
-<p class="note">本节及后面的零散片段摘自 <a href="../local/examples/0-3/SyntaxChecks.java">SyntaxChecks.java</a>；它是可下载、可编译的完整文件。</p>
-</section>
-<section class="ch" id="ch3"><div class="ch-num">03 / 分支</div><h2>不把数量当作真假</h2>
-<p><code>if (quantity)</code> 在 Java 中编译不过，即使它的值是 <code>3</code>。条件要写成能得到布尔值的表达式：</p>
-<pre class="code"><code>if (quantity &gt; 0 &amp;&amp; &quot;PAID&quot;.equals(status)) {
-    System.out.println(&quot;可处理&quot;);
-} else {
-    System.out.println(&quot;暂不处理&quot;);
-}</code></pre>
-<p>这里用 <code>quantity &gt; 0</code> 判断数量，用 <code>"PAID".equals(status)</code> 判断字符串内容。不要把字符串的 <code>==</code> 当成内容比较：它比较的是引用是否相同。字符串比较为什么这样写，1.3 篇细讲；这次先用 <code>equals</code>。</p>
-<p><code>&amp;&amp;</code>、<code>||</code>、<code>!</code> 分别是逻辑与、逻辑或、逻辑非。前两个会短路，因此这个判断不会访问空引用的 <code>length</code>：</p>
-<pre class="code"><code>int[] missing = null;
-System.out.println(missing != null &amp;&amp; missing.length &gt; 0);</code></pre>
-<p>输出是 <code>false</code>。左边已经为假，<code>&amp;&amp;</code> 右边不执行。<code>if</code> 也接受包装类型 <code>Boolean</code>，但它会被拆箱；若值是 <code>null</code>，会抛出异常。本篇只用基本类型 <code>boolean</code>。</p>
-<h3>几个固定状态：Java 8 的 switch</h3>
-<pre class="code"><code>switch (status) {
-    case &quot;PAID&quot;:
-        System.out.println(&quot;已付款&quot;);
-        break;
-    case &quot;CLOSED&quot;:
-        System.out.println(&quot;已关闭&quot;);
-        break;
-    default:
-        System.out.println(&quot;未知状态&quot;);
-}</code></pre>
-<p>输出是“已付款”。Java 8 的 <code>switch</code> 可以匹配字符串；使用 <code>case ...:</code> 的写法，若匹配后没有 <code>break</code>、<code>return</code> 等结束控制流，就会继续执行后面的语句，甚至走进 <code>default</code>。这里的 <code>break</code> 退出这个 <code>switch</code>。</p>
-<p>只需要在两个值里选一个时，可以写 <code>String label = total &gt;= 5 ? "可发货" : "待凑单";</code>。后面的完整程序会用到它。Java 8 没有新版教程里的 <code>case ... -&gt;</code> 写法。</p>
-</section>
-<section class="ch" id="ch4"><div class="ch-num">04 / 数组与循环</div><h2>先看遍历到底改了谁</h2>
-<div class="card guess"><h3>预测：数组里的数量翻倍了吗？</h3>
-<pre class="code"><code>int[] quantities = {2, 0, 3};
-for (int quantityCopy : quantities) {
-    quantityCopy *= 2;
-}
-System.out.println(Arrays.toString(quantities));</code></pre>
-<details class="answer"><summary>展开实际输出和原因</summary><pre class="code"><code>[2, 0, 3]</code></pre>
-<p>没有翻倍。<code>for (int quantityCopy : quantities)</code> 是增强 <code>for</code>，每轮把当前元素的值赋给局部变量 <code>quantityCopy</code>。给这个 <code>int</code> 变量重新赋值，不会写回数组。要更新元素，用下标：</p>
-<pre class="code"><code>for (int i = 0; i &lt; quantities.length; i++) {
-    quantities[i] *= 2;
-}
-System.out.println(Arrays.toString(quantities));</code></pre><pre class="code"><code>[4, 0, 6]</code></pre>
-<p>这个结论针对给循环变量赋值。如果数组里装的是对象引用，通过引用调用方法修改对象，是另一回事，留到 1.2 篇。</p></details></div>
-<p><code>int[]</code> 是“元素类型为 int 的数组”。<code>{2, 0, 3}</code> 在声明时给出初值，也确定了长度。数组创建以后长度固定，取长度写 <code>quantities.length</code>，没有括号。想要能增删元素的容器，第 2 部分用 <code>List</code>。</p>
-<p>下标从 <code>0</code> 到 <code>length - 1</code>；越界会在运行时抛 <code>ArrayIndexOutOfBoundsException</code>。所以遍历条件是 <code>i &lt; quantities.length</code>，不是小于等于。越界示例已在 <a href="../local/examples/0-3/fail/Bounds.java">Bounds.java</a> 实测。</p>
-<h3>把 continue 和 break 放进一次统计</h3>
-<p>为观察控制流程，约定一批演示数据 <code>{2, 0, 3, -1, 6}</code>：正数累加，零跳过，遇到负数就停止。<strong>负数是本例人为约定的停止标记，不是订单系统的通用规则。</strong></p>
-<pre class="code"><code>int total = 0;
-for (int i = 0; i &lt; quantities.length; i++) {
-    int quantity = quantities[i];
-    if (quantity &lt; 0) {
-        break;
-    }
-    if (quantity == 0) {
-        continue;
-    }
-    total += quantity;
-}</code></pre>
-<div class="card" id="trace"><h3>先猜总数，再逐轮追踪</h3><p class="note">示意：浏览器按上面的固定数据展示步骤，不在网页中执行 JVM。最终结果已与 JDK 8 输出核对。</p>
-<div class="tape" aria-label="quantities 数组"><div class="cell"><small>[0]</small><b>2</b></div><div class="cell"><small>[1]</small><b>0</b></div><div class="cell"><small>[2]</small><b>3</b></div><div class="cell"><small>[3]</small><b>-1</b></div><div class="cell"><small>[4]</small><b>6</b></div></div>
-<div class="trace-status" aria-live="polite" aria-atomic="true"><strong id="trace-total">total = 0</strong><p id="trace-text">还没进入循环。最后的 6 会被加进去吗？</p></div>
-<div class="btns"><button class="btn primary" id="trace-next">执行下一轮</button><button class="btn" id="trace-reset">重置</button></div></div>
-<p>这里的 <code>continue</code> 跳过本轮剩余部分，接着执行 <code>for</code> 的更新语句 <code>i++</code>，再判断条件。<code>break</code> 则直接退出这个循环，不会再走到最后的 <code>6</code>。如果把 <code>return total;</code> 写进循环里，退出的就是整个方法。</p>
-<details class="answer"><summary>while 和 do-while 的写法速查</summary>
-<pre class="code"><code>int i = 0;
-while (i &lt; quantities.length) {
-    System.out.println(quantities[i]);
-    i++;
-}
-int attempts = 0;
-do {
-    attempts++;
-} while (attempts &lt; 1);
-System.out.println(attempts);</code></pre>
-<p><code>while</code> 的条件同样要是布尔值。上面的数组已经翻倍，依次打印 <code>4</code>、<code>0</code>、<code>6</code>。<code>do-while</code> 先执行再判断，本例最后打印 <code>1</code>；注意结尾有分号。若在 <code>while</code> 里写 <code>continue</code>，它会直接回到条件判断，不会替你执行后面手写的 <code>i++</code>。</p></details>
-</section>
-<section class="ch" id="ch5"><div class="ch-num">05 / 方法</div><h2>把统计收进一个有返回值的方法</h2>
-<p>将下面完整代码保存为 <code>OrderStats.java</code>。<code>main</code> 准备输入、调用统计方法，再打印结果；计算逻辑放进同一个类里的 <code>sumBeforeStop</code>。</p>
-<pre class="code"><code>public class OrderStats {
+
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">先读，不先讲</a></li>
+  <li><a href="#ch2">声明：先给值再读</a></li>
+  <li><a href="#ch3">分支：条件得算出个布尔</a></li>
+  <li><a href="#ch4">数组和循环</a></li>
+  <li><a href="#ch5">方法</a></li>
+  <li><a href="#ch6">练习：编译器会拦哪几行</a></li>
+  <li><a href="#ch7">编译运行，改一条再跑</a></li>
+  <li><a href="#ch8">小结和自测</a></li>
+  <li><a href="#ch9">参考资料</a></li>
+</ol></nav>
+
+<main>
+
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>先读，不先讲</h2>
+  <p>下面是一个完整的 Java 程序，统计一批数量：正数累加，零跳过，遇到负数停止。先通读一遍，猜它打印什么。</p>
+  <pre class="code" data-num>public class OrderStats {
     public static void main(String[] args) {
         int[] quantities = {2, 0, 3, -1, 6};
         int total = sumBeforeStop(quantities);
-        String label = total &gt;= 5 ? &quot;可发货&quot; : &quot;待凑单&quot;;
-        System.out.println(&quot;件数=&quot; + total);
+        String label = total &gt;= 5 ? "可发货" : "待凑单";
+        System.out.println("件数=" + total);
         System.out.println(label);
     }
 
@@ -159,91 +117,446 @@ System.out.println(attempts);</code></pre>
         }
         return total;
     }
-}</code></pre>
-<div class="table-wrap"><table><thead><tr><th>方法声明中的部分</th><th>这里的含义</th></tr></thead><tbody>
-<tr><td><code>static</code></td><td>这是类方法；此处可从同类的 static main 直接调用，无需先创建对象。</td></tr>
-<tr><td><code>int</code></td><td>返回结果的类型。若不返回值，写 <code>void</code>。</td></tr>
-<tr><td><code>sumBeforeStop</code></td><td>方法名，调用时在后面加括号。</td></tr>
-<tr><td><code>int[] quantities</code></td><td>参数的类型与名字；传入值必须与参数类型兼容。</td></tr>
-<tr><td><code>return total;</code></td><td>返回结果并结束本次调用。</td></tr>
-</tbody></table></div>
-<p>方法写在类体内，和 <code>main</code> 并列，不能把普通方法声明塞进另一个方法体。这里先用 <code>static</code> 把程序跑通；对象方法、访问修饰符和 <code>static</code> 的适用场景会在 1.4、1.5 篇展开，不要据此把业务方法全部加上 <code>static</code>。</p>
-<p>返回类型为 <code>int</code> 的方法不能走到末尾却没给出结果。例如只在 <code>if (paid)</code> 分支里返回，另一个分支走到结尾，就会报 <code>missing return statement</code>。这不意味着每条路径必须写 <code>return</code>：抛出异常的路径也不会正常走到结尾。</p>
-<p>Java 允许同名方法用不同的参数列表重载，但<strong>不能只靠返回类型区分</strong>。同时声明 <code>int count(int n)</code> 和 <code>long count(int n)</code>，会被当成重复方法。两种编译错误都保留在本篇的 <a href="../local/examples/0-3/README.md">实验目录</a>。</p>
-<h3>用上一节的 JDK 8 跑一次</h3>
-<p>在文件所在目录打开终端。下面在 macOS 上明确选中 JDK 8，避免用到默认的新版 JDK：</p>
-<pre class="code"><code>JDK8=&quot;$(/usr/libexec/java_home -v 1.8)&quot;
-&quot;$JDK8/bin/javac&quot; -encoding UTF-8 OrderStats.java
-&quot;$JDK8/bin/java&quot; OrderStats</code></pre><pre class="code"><code>件数=5
-可发货</code></pre>
-<p>注意顺序：调用返回后，<code>main</code> 才把返回值赋给自己的 <code>total</code>。两个方法中的 <code>total</code> 只是同名，各自属于各自的方法作用域。</p>
+}</pre>
+  <div class="card gcard" id="g1"></div>
+  <p>这个程序的每一行你大概都读得懂。会读和会写之间的差距不在思路，在编译器：Java 运行任何东西之前先过编译器，很多写法问题在这一步就被拦下，根本等不到运行。接下来四节，每一节挑一处最容易凭直觉写错的地方，让 JDK 8 的 javac 实际拦给你看。</p>
 </section>
-<section class="ch" id="ch6"><div class="ch-num">06 / 动手与自测</div><h2>改一条规则，确认你读懂了</h2>
-<p>在 <code>OrderStats.java</code> 里把负数分支的 <code>break</code> 换成 <code>continue</code>，重新编译运行。先算结果，再看答案。</p>
-<details class="answer"><summary>看改动后的输出</summary><pre class="code"><code>件数=11
-可发货</code></pre>
-<p>负数不再结束循环，只跳过这一个元素，因此最后的 <code>6</code> 也计入总数。这个改动也用 JDK 8 实测过，验证脚本会在临时目录里生成修改版。</p></details>
-<div class="card"><h3>三道自测</h3>
-<div class="q"><div class="qt">1. <code>new int[0]</code> 能创建吗？访问它的第一个元素呢？</div><button class="btn">看答案</button><div class="ans">能创建长度为零的数组，遍历它不会进入循环。但它没有合法下标，访问 <code>[0]</code> 会在运行时抛出 <code>ArrayIndexOutOfBoundsException</code>。</div></div>
-<div class="q"><div class="qt">2. 想在数组里把每个数加 1，用增强 for 给循环变量赋值行吗？</div><button class="btn">看答案</button><div class="ans">对本篇的 <code>int[]</code> 不行，修改局部变量不会写回数组。用普通 for 和下标写 <code>quantities[i] += 1;</code>。</div></div>
-<div class="q"><div class="qt">3. <code>double average = 5 / 2;</code> 得到 2.5 吗？</div><button class="btn">看答案</button><div class="ans">得到 <code>2.0</code>。右侧先做整数除法，得到 <code>2</code>，然后才转成 double。写 <code>5 / 2.0</code> 得到 <code>2.5</code>。这两种输出都在 SyntaxChecks.java 中实测过；下一篇从这里展开数值类型。</div></div>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>声明：类型写在前面，先给值再读</h2>
+  <p>本篇用到的声明都在这里。类型名写在变量名前面，等号右边给初值：</p>
+  <pre class="code">int quantity = 3;
+long orderId = 3000000000L;
+double ratio = 0.5;
+float progress = 0.5F;
+boolean paid = false;
+char grade = 'A';
+String status = "PAID";</pre>
+  <ul>
+    <li><code>int</code> 是 32 位整数，<code>long</code> 是 64 位。这个订单号超出了 int 的范围，字面量末尾要加 <code>L</code>。小数默认是 <code>double</code>，<code>float</code> 的字面量加 <code>F</code>。</li>
+    <li><code>boolean</code> 只有两个值：<code>true</code> 和 <code>false</code>。</li>
+    <li>单引号是 <code>char</code>（一个 UTF-16 代码单元），双引号是 <code>String</code>。<code>String</code> 不是基本类型，是引用类型。基本类型一共八种：上面六种加 <code>byte</code>、<code>short</code>。</li>
+    <li><code>var total = 0;</code> 在 Java 8 上编译不过：<code>错误: 找不到符号 … 类 var</code>——编译器把 <code>var</code> 当成一个类名去找（实测）。它后来才出现，见本节的「新版补充」。</li>
+  </ul>
+  <div class="callout">
+    <span class="t">新版补充：var（Java 10）</span>
+    从 Java 10 起，局部变量可以写 <code>var</code>，类型由编译器按等号右边推断：<code>var list = new ArrayList&lt;String&gt;();</code> 推断为 <code>ArrayList&lt;String&gt;</code>。它只能用于带初值的局部变量（包括 for 循环里的），字段、方法参数和返回类型都不行。<code>var</code> 不是关键字，是一个保留的类型名，所以老代码里叫 var 的变量不受影响。你们的项目是 Java 8，用不上它；读新代码见到时，知道它只是省写类型、类型检查一步不少就行。（依据 JEP 286，本机只有 JDK 8，这段没有实测。）
+  </div>
+  <p>声明还有一条运行前就生效的规则，先猜：</p>
+  <div class="card gcard" id="g2"></div>
+  <p>和局部变量对照着记的是数组元素：<code>new int[3]</code> 造出来的三个元素自动是 <code>0</code>，引用类型数组的元素自动是 <code>null</code>。这两个输出是实际跑出来的：</p>
+  <pre class="code">System.out.println(Arrays.toString(new int[3]));
+System.out.println(Arrays.toString(new String[2]));
+
+[0, 0, 0]
+[null, null]</pre>
+  <p>规则的分界线是声明的位置：<b>字段和数组元素在创建时带默认值，局部变量不带</b>——任何读取局部变量的位置，编译器都要能确定它之前被赋过值。字段是直接写在类里的变量，1.4 篇再写。把“Java 的变量默认是零”记成一条统一规则，会在局部变量上撞墙。</p>
+  <p class="src">实测：<code>local/examples/0-3/Checks.java</code>（数组默认值）、<code>fail/Unassigned.java</code>、<code>fail/VarKeyword.java</code>。</p>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>分支：条件得算出个布尔</h2>
+  <p>第 2 节的 <code>quantity</code> 是 3。把下面这行交给 javac，先猜结果：</p>
+  <div class="card gcard" id="g3"></div>
+  <p>条件得写成一个能算出布尔值的表达式：</p>
+  <pre class="code">if (quantity &gt; 0 &amp;&amp; "PAID".equals(status)) {
+    System.out.println("可处理");
+} else {
+    System.out.println("暂不处理");
+}</pre>
+  <p>字符串比内容用 <code>equals</code>（逐个字符相同才算等）。<code>==</code> 用在字符串上比的不是内容，是两边是否指向同一个对象——为什么有时“碰巧也对”，1.3 篇讲常量池时看，现在先记住：内容比较写 <code>equals</code>。</p>
+  <p><code>&amp;&amp;</code> 和 <code>||</code> 会短路：左边已经能定出结果，右边就不执行。所以下面这行不会访问空引用的 <code>length</code>，输出 <code>false</code>：</p>
+  <pre class="code">int[] missing = null;
+System.out.println(missing != null &amp;&amp; missing.length &gt; 0);
+
+false</pre>
+  <p><code>if</code> 的括号也接受包装类型 <code>Boolean</code>，但它会被拆箱；对 <code>null</code> 拆箱会在运行时抛 <code>NullPointerException</code>（实测，<code>Checks.java</code> 最后一行）。本篇只用 <code>boolean</code>。</p>
+  <h3>几个固定状态：Java 8 的 switch</h3>
+  <pre class="code">switch (status) {
+    case "PAID":
+        System.out.println("已付款");
+        break;
+    case "CLOSED":
+        System.out.println("已关闭");
+        break;
+    default:
+        System.out.println("未知状态");
+}</pre>
+  <p>输出“已付款”。Java 8 的 <code>switch</code> 能匹配字符串（还能匹配 int、char、枚举等）。一点注意：</p>
+  <ul>
+    <li>冒号写法里，匹配上以后如果没有 <code>break</code> 之类的结束语句，会顺着往下执行，<code>default</code> 也拦不住。实测：把上面三个 <code>break</code> 都删掉，三行“已付款”“已关闭”“未知状态”会全部打印。</li>
+  </ul>
+  <div class="callout">
+    <span class="t">新版补充：箭头写法和 switch 表达式（Java 14、21）</span>
+    Java 14 给 <code>switch</code> 加了箭头写法，匹配后只执行箭头右侧，不贯穿，<code>break</code> 不再需要；<code>switch</code> 还可以整体当表达式，直接把结果赋给变量：
+    <pre class="code">String label = switch (status) {
+    case "PAID" -&gt; "已付款";
+    case "CLOSED" -&gt; "已关闭";
+    default -&gt; "未知状态";
+};</pre>
+    冒号旧写法没有被废弃：JEP 361 的原话是传统的 <code>case ... :</code> 和新的 <code>case ... -&gt;</code> 两种标签都可用。Java 21 又让 <code>switch</code> 能按类型匹配（模式匹配，JEP 441）。这些在 Java 8 的项目里见不到，但读新代码会碰到。（示意：这段没有在 Java 14+ 的编译器上跑过，写法依据 JEP 361。）
+  </div>
+  <p>两个值里选一个时可以用条件表达式，第 1 节第 5 行就是：<code>total &gt;= 5 ? "可发货" : "待凑单"</code>。</p>
+  <p class="src">实测：<code>fail/Truthiness.java</code>、<code>Checks.java</code>（短路）、<code>FallThrough.java</code>（switch 贯穿）。</p>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>数组和循环</h2>
+  <p><code>int[]</code> 读作“元素类型为 int 的数组”。<code>{2, 0, 3}</code> 在声明时给出初值，也定下了长度。数组创建以后长度不再变；想要能增删的容器，第 2 部分的 <code>List</code> 是干这个的。</p>
+  <p>取长度写 <code>quantities.length</code>，<b>不带括号</b>——它是数组对象上一个 public final 字段。String 的长度是方法 <code>length()</code>，带括号。两个写法都存在，写混了编译器会拦。</p>
+  <p>下标的合法范围是 <code>0</code> 到 <code>length - 1</code>。越界这件事<b>编译器不查</b>，它在运行时抛 <code>ArrayIndexOutOfBoundsException</code>——下面这个文件编译顺利通过，运行才炸：</p>
+  <pre class="code">int[] a = new int[2];
+System.out.println(a[5]);
+
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: 5
+	at Bounds.main(Bounds.java:4)</pre>
+  <p>所以遍历条件写 <code>i &lt; quantities.length</code>，不是小于等于。</p>
+  <h3>增强 for：循环变量是个副本</h3>
+  <div class="card gcard" id="g4"></div>
+  <p>增强 for 每一轮把当前元素的值赋给循环变量。给这个 int 变量重新赋值，不会写回数组。要改元素，用下标：</p>
+  <pre class="code">for (int i = 0; i &lt; quantities.length; i++) {
+    quantities[i] *= 2;
+}
+System.out.println(Arrays.toString(quantities));
+
+[4, 0, 6]</pre>
+  <p>这条结论的边界要说清：它针对的是“给循环变量赋值”。如果数组里放的是对象引用，通过引用调用方法改对象内部，是另一回事，1.2 篇讲引用时再看。</p>
+  <h3>三个出口</h3>
+  <p>第 1 节的循环里 <code>break</code>、<code>continue</code>、<code>return</code> 都有，正好是三个不同的出口：<code>continue</code> 跳过本轮剩下的部分（接着执行 <code>for</code> 的更新语句 <code>i++</code> 再判断条件）；<code>break</code> 退出整个循环，所以最后的 6 没有被加进去；<code>return</code> 退出的就是整个方法，写在哪一层都一样。</p>
+  <p class="note"><code>while</code> 和 <code>do-while</code> 的写法和你习惯的一样，条件同样必须是布尔值，这篇不单独演示。</p>
+  <div class="callout">
+    <span class="t">新版补充：这一节没有新版要补</span>
+    数组是这门语言最早的一批特性，它的规则在新版里没有变化——“数组对象创建后长度不再改变”“所有数组访问都在运行时检查”这两句，在 Java SE 25 的规范里原文还在（参考资料里有链接）。遍历的新写法没有发生在数组上，发生在集合那边：<code>forEach</code>、<code>Stream</code> 是第 2 部分的内容。
+  </div>
+  <p class="src">实测：<code>fail/Bounds.java</code>（越界）、<code>Checks.java</code>（增强 for 副本、下标写回）。</p>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>方法</h2>
+  <p>第 1 节把统计收进了 <code>sumBeforeStop</code>。拿它的第一行拆一遍方法声明：</p>
+  <table class="map">
+    <tr><th>写法</th><th>含义</th></tr>
+    <tr><td><code>static</code></td><td>类方法，这里为了能从同为 static 的 <code>main</code> 里直接调用。<code>static</code> 的适用场景 1.5 篇讲，不要据此把业务方法都加上 <code>static</code>。</td></tr>
+    <tr><td><code>int</code></td><td>返回类型。不返回值就写 <code>void</code>。</td></tr>
+    <tr><td><code>sumBeforeStop</code></td><td>方法名。</td></tr>
+    <tr><td><code>int[] quantities</code></td><td>参数：类型 + 名字。传进来的值必须和声明的类型对得上。</td></tr>
+    <tr><td><code>return total;</code></td><td>交回结果并结束本次调用。</td></tr>
+  </table>
+  <p>方法写在类体里，和 <code>main</code> 并列。Java 8 不能把方法定义塞进另一个方法的内部——这条你先记着，下一节的练习里会亲手撞到它。</p>
+  <h3>每条正常路径都得有结果</h3>
+  <p>声明了返回类型的方法，不允许“从末尾掉出去”。下面这个 <code>fee</code> 只在 <code>paid</code> 为真时返回，另一条路径正常走完方法体——编译不过：</p>
+  <pre class="code">static int fee(boolean paid) {
+    if (paid) {
+        return 0;
+    }
+}
+
+MissingReturn.java:6: 错误: 缺少返回语句
+    }
+    ^
+1 个错误</pre>
+  <p>注意这条规则管的是“正常走完”的路径：抛出异常的路径不算正常结束，不受这条限制。</p>
+  <h3>同名方法靠什么区分</h3>
+  <p>Java 允许同名方法并存，靠参数列表区分（重载）。但方法的签名只有<b>名字和参数类型</b>，不含返回类型。所以只靠返回类型不同的两个同名方法，会被当成重复定义：</p>
+  <pre class="code">static int count(int n) { return n; }
+static long count(int n) { return n; }
+
+DuplicateMethod.java:6: 错误: 已在类 DuplicateMethod中定义了方法 count(int)
+    static long count(int n) {
+                ^
+1 个错误</pre>
+  <div class="callout">
+    <span class="t">新版补充：变化的重心在方法旁边</span>
+    这一节没有新版写法要记。和方法相关的写法变化，最大的一次就是 Java 8 自己：lambda 表达式和方法引用把“一段行为”变成了可以当值传递的东西（2.5 篇展开）；接口从 Java 8 起可以有带实现的方法（默认方法，1.7 篇讲）。
+  </div>
+  <p class="src">实测：<code>fail/MissingReturn.java</code>、<code>fail/DuplicateMethod.java</code>。</p>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>练习：编译器会拦哪几行</h2>
+  <p>这一篇见过的检查点都在下面这个 19 行的文件里了，另外还混进了一条没讲过的。任务：<b>点出所有会被 javac 拦下的行</b>（编译错误），可以多点，然后提交。其中有一行 javac 永远不管——它属于另一类问题。</p>
+  <div class="card">
+    <ol class="ins live" id="ins"></ol>
+    <div class="btns">
+      <button class="btn primary" id="ins-go">提交答案</button>
+      <button class="btn" id="ins-reset">重选</button>
+      <span class="note" id="ins-score"></span>
+    </div>
+    <div class="rounds" id="ins-rounds" hidden></div>
+  </div>
+  <div id="ins-after" hidden>
+    <p>四轮输出连起来看，能看出 javac 是<b>分阶段</b>干活的：先把源码读成结构（第 1 轮只报了第 14 行），再核对类型（第 2 轮报第 4、13 行），再检查赋值路径（第 3 轮报第 12 行）。前一阶段有错，后面的检查就不做。所以改完一拨错误再编译，可能冒出新的错误——不是你改坏了，是编译器终于走到了下一步。</p>
+    <p>第 7 行从头到尾没出现在任何一轮的编译输出里。下标越界的检查本来就被规定在运行时，编译期查的是语法结构、类型、赋值路径这些不看运行数据就能定的事。</p>
+    <p class="note">说清楚边界：报错的顺序和分阶段，是这台机器上 Corretto 1.8.0_512 的 javac 的实测行为；语言规范只规定“这些写法是编译错误”，不承诺先报哪一个。仓库 <code>local/examples/0-3/fail/</code> 里有这四轮对应的源文件和输出。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>编译运行，改一条再跑</h2>
+  <p>把第 1 节的程序存成 <code>OrderStats.java</code>，在文件所在目录用 0.2 的办法编译运行（明确选 JDK 8，免得用到 PATH 上别的版本）：</p>
+  <pre class="code">JDK8="$(/usr/libexec/java_home -v 1.8)"
+"$JDK8/bin/javac" -encoding UTF-8 OrderStats.java
+"$JDK8/bin/java" OrderStats
+
+件数=5
+可发货</pre>
+  <div class="callout">
+    <span class="t">动手：改一条规则</span>
+    把负数分支的 <code>break</code> 换成 <code>continue</code>，先心算结果再编译运行。实测输出会从“件数=5”变成“件数=11”：负数不再结束循环，只是跳过它，所以最后的 6 也加了进去。改动版在 <code>local/examples/0-3/variants/OrderStatsContinue.java</code>。
+  </div>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>小结和自测</h2>
+  <div class="callout key">
+    <span class="t">带走一句话</span>
+    读得懂和写得对之间隔着编译器的检查：局部变量先赋值再读，条件必须算出布尔，声明了返回类型的方法每条正常路径都要给结果，同名方法靠参数列表区分。这些过不去，程序根本不会被运行。而数组越界、<code>null</code> 拆箱这类问题编译器不查，它们在运行时等着。每节末尾的「新版补充」是全课的固定栏目：正文按你们项目的 Java 8 实测，新版本加的写法单列。
+  </div>
+
+  <div class="card">
+    <h3>三个问题</h3>
+    <div class="q">
+      <div class="qt">1. 字段、局部变量、数组元素——哪些不赋值就能读？读出来是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">字段和数组元素：创建时带默认值，int 是 0，引用类型是 null，boolean 是 false。局部变量：没有默认值，读取之前编译器必须能确定它被赋过值，否则编译错误。实测见第 2 节。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. <code>double average = 5 / 2;</code> 打印 <code>average</code> 得到 2.5 吗？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">得到 <code>2.0</code>。等号右边先算整数除法，5 / 2 得 2（整数除法向零取整），然后才把 2 转成 double。写 <code>5 / 2.0</code> 才得到 2.5。两种输出都在 <code>Checks.java</code> 里实测过。除法、溢出、小数精度这些数值的坑，是下一篇 1.1 的内容。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 同事写了 <code>if ("PAID" == status)</code>。能编译吗？行为对不对？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">能编译——<code>==</code> 用在引用类型上是合法的。但它比的是两边是否指向同一个对象，不是内容是否相同。内容比较要写 <code>"PAID".equals(status)</code>。为什么 <code>==</code> 有时“碰巧”也对，1.3 篇讲字符串常量池时会拆开看。</div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="ch9">
+  <div class="ch-num">第 9 节</div>
+  <h2>参考资料</h2>
+  <p>每一条后面写了它支撑的是哪句话。规范正文在本地留有副本，链接和原文在 2026-11-13 逐条核对过；未特别标注版本的语言规范均为 Java SE 8 版。</p>
+  <div class="card refs">
+    <h3>语言规范（JLS）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.2" target="_blank" rel="noopener">JLS §4.2 Primitive Types and Values</a><span>支撑：第 2 节——八种基本类型；int 32 位、long 64 位；char 是 UTF-16 代码单元；boolean 只有 true 和 false</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.1" target="_blank" rel="noopener">JLS §3.10.1 Integer Literals</a><span>支撑：第 2 节——long 字面量末尾写 L</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.2" target="_blank" rel="noopener">JLS §3.10.2 Floating-Point Literals</a><span>支撑：第 2 节——小数字面量默认是 double，写 F 才是 float</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.5" target="_blank" rel="noopener">JLS §4.12.5 Initial Values of Variables</a><span>支撑：第 2 节——字段和数组元素创建时带默认值（int 为 0，引用类型为 null）</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-16.html#jls-16" target="_blank" rel="noopener">JLS §16 Definite Assignment</a><span>支撑：第 2 节——局部变量在每次读取前必须已被赋值，否则编译错误</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.9" target="_blank" rel="noopener">JLS §14.9 The if Statement</a><span>支撑：第 3 节——条件必须是 boolean 或 Boolean（Boolean 会拆箱）</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.1.8" target="_blank" rel="noopener">JLS §5.1.8 Unboxing Conversion</a><span>支撑：第 3 节——对 null 拆箱抛 NullPointerException</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.23" target="_blank" rel="noopener">JLS §15.23 / §15.24 Conditional-And / Conditional-Or</a><span>支撑：第 3 节——&amp;&amp; 和 || 的短路</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.21.3" target="_blank" rel="noopener">JLS §15.21.3 Reference Equality Operators</a><span>支撑：第 3 节和自测第 3 题——== 为真当且仅当两边指向同一个对象（或都为 null）</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.11" target="_blank" rel="noopener">JLS §14.11 The switch Statement</a><span>支撑：第 3 节——switch 可匹配 String；冒号写法匹配后顺序往下执行（贯穿）</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html#jls-10.2" target="_blank" rel="noopener">JLS §10.2 Array Variables</a><span>支撑：第 4 节——数组对象创建后长度不再改变</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html#jls-10.4" target="_blank" rel="noopener">JLS §10.4 Array Access</a><span>支撑：第 4、6 节——所有数组访问在运行时检查，越界抛 ArrayIndexOutOfBoundsException</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html#jls-10.7" target="_blank" rel="noopener">JLS §10.7 Array Members</a><span>支撑：第 4 节——length 是数组的 public final 字段（所以不带括号）</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.14.2" target="_blank" rel="noopener">JLS §14.14.2 The enhanced for Statement</a><span>支撑：第 4 节——增强 for 每轮把元素赋给循环变量（等价于一个带下标的普通 for）</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.4.2" target="_blank" rel="noopener">JLS §8.4.2 Method Signature</a><span>支撑：第 5 节——签名只含名字和参数类型，不含返回类型</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.4.7" target="_blank" rel="noopener">JLS §8.4.7 Method Body</a><span>支撑：第 5 节——有返回类型的方法，方法体若能正常走完就是编译错误</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.17.2" target="_blank" rel="noopener">JLS §15.17.2 Division Operator</a><span>支撑：自测第 2 题——整数除法向零取整</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-10.html#jls-10.2" target="_blank" rel="noopener">JLS（Java SE 25）§10.2、§10.4</a><span>支撑：第 4 节「新版补充」——“创建后长度不再改变”“所有数组访问在运行时检查”两句原文到 Java 25 未变</span></li>
+    </ul>
+    <h3>JEP（新特性的来处）</h3>
+    <ul>
+      <li><a href="https://openjdk.org/jeps/286" target="_blank" rel="noopener">JEP 286：Local-Variable Type Inference（Java 10）</a><span>支撑：第 2 节「新版补充」——var 的推断方式、适用范围、“var 不是关键字而是保留类型名”</span></li>
+      <li><a href="https://openjdk.org/jeps/361" target="_blank" rel="noopener">JEP 361：Switch Expressions（Java 14）</a><span>支撑：第 3 节「新版补充」——箭头写法不贯穿、switch 可当表达式、传统冒号写法继续可用</span></li>
+      <li><a href="https://openjdk.org/jeps/441" target="_blank" rel="noopener">JEP 441：Pattern Matching for switch（Java 21）</a><span>支撑：第 3 节「新版补充」——Java 21 起 switch 能按类型匹配</span></li>
+    </ul>
+    <h3>官方 API 文档（Java 8）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#equals-java.lang.Object-" target="_blank" rel="noopener">String.equals(Object)</a><span>支撑：第 3 节——equals 按“相同的字符序列”比较内容</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html#toString-int:A-" target="_blank" rel="noopener">Arrays.toString(int[])</a><span>支撑：第 2、4 节——输出格式是方括号加逗号分隔，如 [2, 0, 3]</span></li>
+    </ul>
+    <h3>本篇实验</h3>
+    <ul>
+      <li><a href="https://github.com/wangx7/cs-crash-course/tree/main/local/examples/0-3" target="_blank" rel="noopener">local/examples/0-3/</a><span>支撑：全篇的源码、每条命令的输出（.out 文件）、复现方法</span></li>
+    </ul>
+  </div>
+  <p class="note">没有实测、只凭资料或推断写的地方：javac 报错的分阶段和顺序是 Corretto 1.8.0_512 的观察，规范没有承诺，其他 JDK 版本的行为没有试过；“方法里不能定义方法”在页面上以解析错误的形式出现（需要';'），这是这个编译器的报告方式，规范里对应的是方法声明只出现在类体中的语法规定（JLS §8.4）。<code>while</code>、<code>do-while</code> 只引用了规范（JLS §14.12、§14.13），没有演示。各节「新版补充」里的新语法（var、箭头 switch、switch 表达式、模式匹配）依据 JEP 286、361、441 的文档写出，本机只有 JDK 8，没有实际编译过；“数组规则到 Java 25 未变”核对的是 Java SE 25 版规范 §10.2、§10.4 的原文。</p>
+
+  <button class="btn" id="mark-read"></button>
+
+  <div class="pager">
+    <a href="0-2.html"><small>上一篇</small>0.2 Java 是怎么跑起来的</a>
+    <a class="next off"><small>下一篇（还没写）</small>1.1 数值类型和它的坑</a>
+  </div>
+
+  <div class="credit">
+    本篇是原创内容，由 Kimi K3（月之暗面）写作并制作交互演示，非任何官方教材。所有示例代码在 Amazon Corretto 1.8.0_512 上实际编译运行后引用输出。<br>
+    内容随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。
+  </div>
+</section>
+
+</main>
 </div>
-<div class="callout key">现在你可以写出并运行一个 Java 方法：声明参数和返回类型，用布尔表达式控制分支，用下标或增强 for 读取数组，并明确决定是跳过一轮、退出循环，还是结束方法。</div>
-<p>接下来进入第 1 部分。语法写得对，并不等于计算结果符合预期：除法、溢出和小数精度，会在 1.1 篇逐个验证。</p>
-</section>
-<section class="ch" id="ch7"><div class="ch-num">参考资料 / Java SE 8</div><h2>每条规则对应到哪里</h2>
-<p class="note">2026-11-13 打开原文核对。以下是 Java SE 8 规范与官方 API 文档；示例是为本课编写的实验，没有引用业务项目源码。</p>
-<div class="card refs"><h3>语言规范</h3><ul>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.2" target="_blank" rel="noopener">JLS §4.2 · 基本类型</a><span>支撑：int / long 的位宽、八种基本类型、char 是 UTF-16 代码单元。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.5" target="_blank" rel="noopener">JLS §4.12.5 · 变量的初值</a><span>支撑：字段与数组元素有默认值；局部变量在读取前必须明确赋值。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.4" target="_blank" rel="noopener">JLS §14.4 · 局部变量声明</a><span>支撑：Java 8 的局部变量声明语法需要写类型。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.9" target="_blank" rel="noopener">JLS §14.9 · if 语句</a><span>支撑：条件必须是 boolean 或 Boolean，后者会拆箱。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.11" target="_blank" rel="noopener">JLS §14.11 · switch 语句</a><span>支撑：Java 8 的冒号语法、字符串匹配与匹配后的顺序执行。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.23" target="_blank" rel="noopener">JLS §15.23 · 条件与运算符 &&</a><span>支撑：左侧为 false 时不计算右侧；相邻 §15.24 说明 || 的短路。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.21.3" target="_blank" rel="noopener">JLS §15.21.3 · 引用相等运算符</a><span>支撑：字符串用 == 比较的是引用，不是内容。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html#jls-10.2" target="_blank" rel="noopener">JLS §10.2 · 数组变量</a><span>支撑：数组对象创建后长度不变；§10.4 说明下标检查；§10.7 规定 length 字段。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.14.2" target="_blank" rel="noopener">JLS §14.14.2 · 增强 for</a><span>支撑：数组遍历时每轮把元素赋给循环变量，而不是把变量赋值写回元素。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.14.1.3" target="_blank" rel="noopener">JLS §14.14.1.3 · 普通 for 的控制转移</a><span>支撑：continue 后执行更新表达式；§14.12–14.17 规定 while、do、break、continue 和 return。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.4" target="_blank" rel="noopener">JLS §8.4 · 方法声明</a><span>支撑：参数、static 方法、返回类型、方法体；§8.4.2 / §8.4.9 规定签名与重载，不能只靠返回类型区分。</span></li>
-<li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.17.2" target="_blank" rel="noopener">JLS §15.17.2 · 除法运算符</a><span>支撑：整数除法向零截断；5 / 2 先得到整数 2。</span></li>
-</ul><h3>官方 API 与本篇实验</h3><ul>
-<li><a href="https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html#toString-int:A-" target="_blank" rel="noopener">Java 8 Arrays.toString(int[])</a><span>支撑：把 int 数组按方括号、逗号分隔的形式转成字符串；同页有 Object[] 重载。</span></li>
-<li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#equals-java.lang.Object-" target="_blank" rel="noopener">Java 8 String.equals(Object)</a><span>支撑：按字符串的字符序列比较内容。</span></li>
-<li><a href="../local/examples/0-3/README.md">本篇可复现实验</a><span>含完整源码、实际输出和验证脚本；正常示例、预期编译失败、数组越界、练习修改版都用 Amazon Corretto 1.8.0_512 检查。</span></li>
-</ul></div>
-<p class="note">示例边界：订单状态、负数停止标记和满 5 件的标签都是教学约定，不代表 BladeX 的业务规则。交互中的逐轮状态是按源码制作的示意；JVM 的实际最终输出单独保存。本文不推断实际项目的实现方式。</p>
-<button class="btn" id="mark-read"></button>
-<div class="pager"><a href="0-2.html"><small>上一篇</small>0.2 Java 是怎么跑起来的</a><a class="next off" aria-disabled="true"><small>下一篇（还没写）</small>1.1 数值类型和它的坑</a></div>
-<div class="credit">本篇是原创内容，由 GPT-6（OpenAI Codex）写作并制作交互演示，非任何官方教材。示例在 Amazon Corretto 1.8.0_512 上编译运行。内容随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。</div>
-</section></main></div>
+
 <script src="../assets/cc.js"></script>
 <script>
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// ---------- 带行号的代码块 ----------
+$$('pre.code[data-num]').forEach(p => {
+  const lines = p.textContent.replace(/^\n+|\n+$/g, '').split('\n');
+  p.innerHTML = lines.map((l, i) => `<span class="ln">${i + 1}</span>${esc(l)}`).join('\n');
+});
+
+// ---------- 猜卡片：先选，再看实测 ----------
+// cfg: { q, code?, opts, a, out?, why }
+function guess(id, cfg) {
+  const root = $(id);
+  root.innerHTML = `<div class="qt"><b>先猜：</b>${cfg.q}</div>` +
+    (cfg.code ? `<pre class="code">${cfg.code}</pre>` : '') +
+    `<div class="opts">${cfg.opts.map(o => `<button class="btn opt">${o}</button>`).join('')}</div>` +
+    `<div class="ans" aria-live="polite"></div>`;
+  const ans = $('.ans', root);
+  $$('.opt', root).forEach((b, k) => b.addEventListener('click', () => {
+    if (root.classList.contains('done')) return;
+    root.classList.add('done');
+    const opts = $$('.opt', root);
+    opts.forEach(o => o.disabled = true);
+    opts[cfg.a].classList.add('right');
+    if (k !== cfg.a) b.classList.add('wrong');
+    ans.innerHTML = `<b>${k === cfg.a ? '猜对了。' : '和你猜的不一样。'}</b>` +
+      (cfg.out ? `<pre class="code">${cfg.out}</pre>` : '') + cfg.why;
+  }));
+}
+
+guess('#g1', {
+  q: '上面的 OrderStats 打印什么？',
+  opts: ['件数=5，可发货', '件数=11，可发货', '件数=5，待凑单'],
+  a: 0,
+  out: '件数=5\n可发货',
+  why: '读到第 4 个元素 <code>-1</code> 时 <code>break</code> 退出循环，最后的 6 没有被加：2 + 3 = 5。5 满足 <code>total &gt;= 5</code>，标签是“可发货”。这是 JDK 8 上的实际输出，第 7 节有完整的编译运行命令。'
+});
+
+guess('#g2', {
+  q: '下面两行交给 javac，会怎样？',
+  code: 'int total;\nSystem.out.println(total);',
+  opts: ['打印 0', '运行时报错', '编译就报错'],
+  a: 2,
+  out: 'Unassigned.java:4: 错误: 可能尚未初始化变量total\n        System.out.println(total);\n                           ^\n1 个错误',
+  why: '<code>total</code> 是方法里的局部变量，Java 不给它默认值：编译器要在任何读取之前能确定它被赋过值。要从零开始，就明确写 <code>int total = 0;</code>。写惯了 JS 的话这是第一个反差：那里读出 <code>undefined</code>，这里编译都过不去。'
+});
+
+guess('#g3', {
+  q: 'quantity 是 3。<code>if (quantity) { … }</code> 编译得过吗？',
+  opts: ['编译通过，3 算真', '编译报错'],
+  a: 1,
+  out: 'Truthiness.java:4: 错误: 不兼容的类型: int无法转换为boolean\n        if (quantity) {\n            ^\n1 个错误',
+  why: '<code>if</code> 括号里的表达式必须算出 <code>boolean</code>（或会被拆箱的 <code>Boolean</code>）。Java 没有“真值/假值”的说法，整数不能当条件用。'
+});
+
+guess('#g4', {
+  q: '下面这段想把数组里的数量翻倍。打印什么？',
+  code: 'int[] quantities = {2, 0, 3};\nfor (int quantityCopy : quantities) {\n    quantityCopy *= 2;\n}\nSystem.out.println(Arrays.toString(quantities));',
+  opts: ['[4, 0, 6]', '[2, 0, 3]', '编译报错'],
+  a: 1,
+  out: '[2, 0, 3]',
+  why: '变量名里的 copy 就是答案：增强 for 每轮把元素的<b>值</b>赋给循环变量，给这个副本重新赋值不会写回数组。'
+});
+
+// ---------- 第 6 节：找错练习 ----------
 (() => {
-  const cells = Array.from(document.querySelectorAll('#trace .cell'));
-  const total = document.getElementById('trace-total');
-  const text = document.getElementById('trace-text');
-  const next = document.getElementById('trace-next');
-  const steps = [
-    [0, '还没进入循环。最后的 6 会被加进去吗？'],
-    [2, 'i = 0，quantity = 2：通过两个判断，执行 total += quantity。'],
-    [2, 'i = 1，quantity = 0：执行 continue，跳过累加，再执行 i++。'],
-    [5, 'i = 2，quantity = 3：执行累加，total 从 2 变成 5。'],
-    [5, 'i = 3，quantity = -1：执行 break，退出循环。下标 4 的 6 未读取；随后 return total 返回 5。']
+  const LINES = [
+    'public class Inspect {',
+    '    public static void main(String[] args) {',
+    '        int[] a = new int[2];',
+    '        if (a.length) {',
+    '            System.out.println("有元素");',
+    '        }',
+    '        int big = a[5];',
+    '        int total;',
+    '        if (big > 0) {',
+    '            total = big;',
+    '        }',
+    '        System.out.println(total);',
+    '        char c = "x";',
+    '        int half(int n) {',
+    '            return n / 2;',
+    '        }',
+    '        System.out.println(c);',
+    '    }',
+    '}',
   ];
-  let step = 0;
-  function render() {
-    total.textContent = 'total = ' + steps[step][0];
-    text.textContent = steps[step][1];
-    cells.forEach((cell, i) => {
-      cell.classList.toggle('active', i === step - 1);
-      cell.classList.toggle('past', i < step - 1);
-    });
-    next.disabled = step === steps.length - 1;
-    next.textContent = next.disabled ? '循环已结束' : '执行下一轮';
+  // 编译器会拦的行（行号从 1 开始）→ 戳记文字
+  const HIT = {
+    4:  '第 2 轮拦下：int 不能当条件',
+    12: '第 3 轮拦下：读取前可能没赋值',
+    13: '第 2 轮拦下：String 不能赋给 char',
+    14: '第 1 轮拦下：方法里不能定义方法',
+  };
+  const TRAP = 7; // 编译不管、运行时才炸的行
+  const ROUNDS = [
+    { t: '第 1 轮：原样编译', e: '',
+      o: 'Inspect.java:14: 错误: 需要\';\'\n        int half(int n) {\n                ^\nInspect.java:14: 错误: 需要\';\'\n        int half(int n) {\n                      ^\n2 个错误' },
+    { t: '第 2 轮：删掉第 14–16 行，再编译', e: '第 14 行是“在方法里定义方法”，这一步连源码结构都读不通，编译器没走到后面的检查。',
+      o: 'Inspect.java:4: 错误: 不兼容的类型: int无法转换为boolean\n        if (a.length) {\n             ^\nInspect.java:13: 错误: 不兼容的类型: String无法转换为char\n        char c = "x";\n                 ^\n2 个错误' },
+    { t: '第 3 轮：第 4 行改成 if (a.length > 0)，第 13 行改成 char c = \'x\'', e: '类型错误修完，才轮到赋值检查上场。',
+      o: 'Inspect.java:12: 错误: 可能尚未初始化变量total\n        System.out.println(total);\n                           ^\n1 个错误' },
+    { t: '第 4 轮：第 8 行改成 int total = 0;', e: '编译终于通过。运行：第 5 行先打印了“有元素”，然后死在第 7 行。',
+      o: '有元素\nException in thread "main" java.lang.ArrayIndexOutOfBoundsException: 5\n\tat Inspect.main(Inspect.java:7)' },
+  ];
+  const ins = $('#ins'), go = $('#ins-go'), score = $('#ins-score'), rounds = $('#ins-rounds'), after = $('#ins-after');
+  let picked;
+  function render(live) {
+    ins.innerHTML = LINES.map((l, i) => {
+      const n = i + 1;
+      return `<li data-n="${n}"><span class="no">${n}</span><span class="cd">${esc(l) || ' '}</span><span class="st"></span></li>`;
+    }).join('');
+    ins.classList.toggle('live', live);
   }
-  next.addEventListener('click', () => { if (step < steps.length - 1) { step++; render(); } });
-  document.getElementById('trace-reset').addEventListener('click', () => { step = 0; render(); });
-  render();
+  function reset() {
+    picked = new Set();
+    render(true);
+    go.disabled = false;
+    score.textContent = '';
+    rounds.hidden = true; rounds.innerHTML = '';
+    after.hidden = true;
+  }
+  ins.addEventListener('click', e => {
+    const li = e.target.closest('li');
+    if (!li || !ins.classList.contains('live')) return;
+    const n = +li.dataset.n;
+    if (picked.has(n)) { picked.delete(n); li.classList.remove('sel'); }
+    else { picked.add(n); li.classList.add('sel'); }
+  });
+  go.addEventListener('click', () => {
+    go.disabled = true;
+    ins.classList.remove('live');
+    let hit = 0;
+    const want = Object.keys(HIT).map(Number);
+    $$('li', ins).forEach(li => {
+      const n = +li.dataset.n, st = $('.st', li);
+      li.classList.remove('sel');
+      if (HIT[n]) {
+        if (picked.has(n)) { li.classList.add('hit'); hit++; st.textContent = HIT[n]; }
+        else { li.classList.add('miss'); st.textContent = '漏了：' + HIT[n]; }
+      } else if (n === TRAP) {
+        li.classList.add('trap');
+        st.textContent = '编译器没拦这行：越界在运行时才炸（第 4 轮）';
+      } else if (picked.has(n)) {
+        li.classList.add('over');
+        st.textContent = '多选了：这行编译器不管';
+      }
+    });
+    score.textContent = `编译错误共 ${want.length} 行，你点中 ${hit} 行` + (picked.has(TRAP) ? '；第 7 行是干扰项，它编译能过' : '');
+    rounds.hidden = false;
+    rounds.innerHTML = ROUNDS.map(r =>
+      `<h4>${r.t}</h4>${r.e ? `<div class="edit">${r.e}</div>` : ''}<pre class="code">${esc(r.o)}</pre>`).join('');
+    after.hidden = false;
+  });
+  $('#ins-reset').addEventListener('click', reset);
+  reset();
 })();
 </script>
 </body>

@@ -1,4 +1,4 @@
-class Condition {
+public class Truthiness {
     public static void main(String[] args) {
         int quantity = 3;
         if (quantity) {

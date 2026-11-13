@@ -1,0 +1,7 @@
+$ javac -encoding UTF-8 VarKeyword.java
+VarKeyword.java:3: 错误: 找不到符号
+        var total = 0;
+        ^
+  符号:   类 var
+  位置: 类 VarKeyword
+1 个错误
