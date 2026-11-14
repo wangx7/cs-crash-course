@@ -1,0 +1,7 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 ImmutableString.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java ImmutableString
+raw: [  Blade  ]
+trimmed: [Blade]
+upper: [BLADE]
+raw == trimmed: false
+trimmed == upper: false
+trimmed == trimmed.trim(): true

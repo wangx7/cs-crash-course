@@ -1,0 +1,8 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 Utf16.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java Utf16
+s: A😀B
+length(): 4
+codePointCount(): 3
+charAt(1), charAt(2): D83D DE00
+codePointAt(1): 128512
+offsetByCodePoints(0, 2): 3
+substring(0, afterEmoji): A😀

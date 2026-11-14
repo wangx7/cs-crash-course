@@ -1,0 +1,2 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d classes DefaultConstructor.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java -cp classes DefaultConstructor
+new ImplicitOnly(): success

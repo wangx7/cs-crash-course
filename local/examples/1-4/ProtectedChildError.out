@@ -1,0 +1,5 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d access-classes access-src/demo/model/Vault.java access-src/demo/client/ProtectedChildError.java
+/Users/wangx/我的/github/cs-crash-course/local/examples/1-4/access-src/demo/client/ProtectedChildError.java:7: 错误: inheritedValue 在 Vault 中是 protected 访问控制
+        return parent.inheritedValue;
+                     ^
+1 个错误

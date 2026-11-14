@@ -1,0 +1,5 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d classes MethodsAndThis.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java -cp classes MethodsAndThis
+before: field=unset, parameter=left
+before: field=unset, parameter=right
+left.describe(): left
+right.describe(): right

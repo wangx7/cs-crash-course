@@ -1,0 +1,4 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d classes TwoObjects.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java -cp classes TwoObjects
+two objects: first=1, second=0
+after alias: first=2, second=2
+first == second: true

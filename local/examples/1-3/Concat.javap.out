@@ -1,0 +1,103 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javap -c -p Concat
+Compiled from "Concat.java"
+public class Concat {
+  public Concat();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  static java.lang.String runtime(java.lang.String);
+    Code:
+       0: new           #2                  // class java/lang/StringBuilder
+       3: dup
+       4: invokespecial #3                  // Method java/lang/StringBuilder."<init>":()V
+       7: aload_0
+       8: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      11: ldc           #5                  // String ade
+      13: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      16: invokevirtual #6                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      19: areturn
+
+  static java.lang.String plusLoop();
+    Code:
+       0: ldc           #7                  // String
+       2: astore_0
+       3: iconst_0
+       4: istore_1
+       5: iload_1
+       6: iconst_3
+       7: if_icmpge     35
+      10: new           #2                  // class java/lang/StringBuilder
+      13: dup
+      14: invokespecial #3                  // Method java/lang/StringBuilder."<init>":()V
+      17: aload_0
+      18: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      21: iload_1
+      22: invokevirtual #8                  // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+      25: invokevirtual #6                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      28: astore_0
+      29: iinc          1, 1
+      32: goto          5
+      35: aload_0
+      36: areturn
+
+  static java.lang.String builderLoop();
+    Code:
+       0: new           #2                  // class java/lang/StringBuilder
+       3: dup
+       4: invokespecial #3                  // Method java/lang/StringBuilder."<init>":()V
+       7: astore_0
+       8: iconst_0
+       9: istore_1
+      10: iload_1
+      11: iconst_3
+      12: if_icmpge     27
+      15: aload_0
+      16: iload_1
+      17: invokevirtual #8                  // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+      20: pop
+      21: iinc          1, 1
+      24: goto          10
+      27: aload_0
+      28: invokevirtual #6                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      31: areturn
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+       3: ldc           #10                 // String compile-time: blade
+       5: invokevirtual #11                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+       8: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      11: new           #2                  // class java/lang/StringBuilder
+      14: dup
+      15: invokespecial #3                  // Method java/lang/StringBuilder."<init>":()V
+      18: ldc           #12                 // String runtime:
+      20: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      23: ldc           #13                 // String bl
+      25: invokestatic  #14                 // Method runtime:(Ljava/lang/String;)Ljava/lang/String;
+      28: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      31: invokevirtual #6                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      34: invokevirtual #11                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      37: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      40: new           #2                  // class java/lang/StringBuilder
+      43: dup
+      44: invokespecial #3                  // Method java/lang/StringBuilder."<init>":()V
+      47: ldc           #15                 // String plusLoop:
+      49: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      52: invokestatic  #16                 // Method plusLoop:()Ljava/lang/String;
+      55: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      58: invokevirtual #6                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      61: invokevirtual #11                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      64: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      67: new           #2                  // class java/lang/StringBuilder
+      70: dup
+      71: invokespecial #3                  // Method java/lang/StringBuilder."<init>":()V
+      74: ldc           #17                 // String builderLoop:
+      76: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      79: invokestatic  #18                 // Method builderLoop:()Ljava/lang/String;
+      82: invokevirtual #4                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      85: invokevirtual #6                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      88: invokevirtual #11                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      91: return
+}

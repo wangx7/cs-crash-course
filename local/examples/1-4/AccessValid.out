@@ -1,0 +1,10 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d access-classes access-src/demo/model/Vault.java access-src/demo/model/SamePackage.java access-src/demo/client/OtherPackage.java access-src/demo/client/ProtectedChild.java
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java -cp access-classes demo.model.SamePackage
+packageValue: 2
+inheritedValue: 3
+publicValue: 4
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java -cp access-classes demo.client.OtherPackage
+publicValue: 4
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java -cp access-classes demo.client.ProtectedChild
+this.inheritedValue: 3
+child.inheritedValue: 3

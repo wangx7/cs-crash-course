@@ -1,0 +1,5 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d access-classes access-src/demo/model/Vault.java access-src/demo/client/OtherPackageError.java
+/Users/wangx/我的/github/cs-crash-course/local/examples/1-4/access-src/demo/client/OtherPackageError.java:7: 错误: packageValue在Vault中不是公共的; 无法从外部程序包中对其进行访问
+        System.out.println(new Vault().packageValue);
+                                      ^
+1 个错误

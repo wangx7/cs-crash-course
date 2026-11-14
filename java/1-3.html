@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.3 String：不可变、常量池、== 和 equals · Java 后端</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font-family:var(--mono);font-size:13.5px;line-height:1.7;background:var(--code);border-radius:10px;padding:12px 14px;margin:10px 0;overflow-x:auto;white-space:pre;tab-size:4}
+.src{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.note{font-size:13px;color:var(--muted)}
+
+/* 先猜：身份判断实验 */
+.iq-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.iq-head h3{margin:0}
+.iq-score{font-size:13px;color:var(--muted)}
+.iq-row{display:grid;grid-template-columns:minmax(150px,1fr) auto;gap:8px 14px;align-items:center;padding:12px 0;border-top:1px solid var(--line)}
+.iq-row code{font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.iq-choices{display:flex;gap:6px}
+.iq-choices .btn{min-width:64px;margin:0;padding:6px 12px}
+.iq-choices .btn.picked{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.iq-result{display:none;grid-column:1/-1;font-size:13.5px;line-height:1.65;color:var(--muted)}
+.iq-row.answered .iq-result{display:block}
+.iq-result .actual{font-family:var(--mono);font-weight:700;color:var(--ink)}
+.iq-result .right{color:var(--ok);font-weight:700}
+.iq-result .wrong{color:var(--bad);font-weight:700}
+
+/* 对象关系：只是逻辑示意，不是内存地址图 */
+.objmap{display:grid;gap:9px;margin:14px 0}
+.objline{display:grid;grid-template-columns:minmax(120px,1fr) 28px minmax(170px,1.2fr);align-items:center;gap:8px}
+.objvars{font-family:var(--mono);font-size:13.5px;text-align:right;overflow-wrap:anywhere}
+.objarrow{text-align:center;color:var(--accent);font-weight:700}
+.objbox{padding:9px 12px;border:1.5px solid var(--accent);border-radius:9px;background:var(--accent-soft);font-family:var(--mono);font-size:13px}
+.objbox.new{border-color:var(--line);background:var(--code)}
+.objbox small{display:block;font-family:inherit;color:var(--muted);font-size:12px;margin-top:2px}
+
+/* 对照表 */
+.tablewrap{overflow-x:auto;margin:12px 0}
+table.rules{width:100%;border-collapse:collapse;font-size:14px;min-width:650px}
+.rules th,.rules td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+.rules th{color:var(--muted);font-size:13px}
+.rules td:first-child{font-family:var(--mono);white-space:nowrap}
+.rules td:last-child{white-space:nowrap;font-family:var(--mono)}
+
+/* 字节码对照 */
+.bytegrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bytegrid h3{font-size:15px;margin:0}
+.bytegrid pre.code{font-size:12.5px;min-height:100%}
+
+/* UTF-16 观察器 */
+.ulab{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:end}
+.ulab label{font-size:13px;color:var(--muted)}
+.ulab input{display:block;width:100%;box-sizing:border-box;margin-top:5px;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);font-family:var(--mono);font-size:16px}
+.ucount{padding:8px 10px;background:var(--code);border-radius:8px;text-align:center;min-width:82px}
+.ucount b{display:block;font-family:var(--mono);font-size:21px}
+.ucount span{font-size:12px;color:var(--muted)}
+.uunits{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;min-height:30px}
+.uunit{font-family:var(--mono);font-size:12px;padding:5px 7px;background:var(--code);border-radius:5px;color:var(--muted)}
+.uunit.hi,.uunit.lo{color:var(--accent);background:var(--accent-soft)}
+.ucap{font-size:12.5px;color:var(--muted);margin-top:10px}
+
+/* 参考资料 */
+.refs h3{margin:18px 0 6px;font-size:16px}
+.refs h3:first-child{margin-top:0}
+.refs ul{list-style:none;margin:0;padding:0}
+.refs li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px;overflow-wrap:anywhere}
+.refs li:last-child{border-bottom:none}
+.refs li span{display:block;font-size:13px;color:var(--muted)}
+
+@media (max-width:640px){
+  .iq-row{grid-template-columns:1fr}
+  .iq-result{grid-column:1}
+  .bytegrid{grid-template-columns:1fr}
+  .objline{grid-template-columns:minmax(95px,1fr) 20px minmax(140px,1.2fr)}
+  .ulab{grid-template-columns:1fr 1fr}
+  .ulab label{grid-column:1/-1}
+}
+</style>
+</head>
+<body data-ep="103" data-store="java-be-read" data-unit="篇">
+<div class="topbar">
+  <a href="index.html">← Java 后端 · 目录</a>
+  <span class="muted">第 1 部分 · 对象与类型</span>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">第 1 部分 · 对象与类型 · 1.3</div>
+  <h1>String：内容一样，对象未必一样</h1>
+  <p class="en">Identity, immutability, and the string pool</p>
+  <p class="lead">两个字符串都装着 blade，写 == 却可能一个 true、一个 false。差别不在字符，而在表达式什么时候求值、对象由谁创建、字面量如何驻留。这一篇用七道判断题把这些路径分开，再落到三件具体工作：判等时躲开 null，循环拼接时读懂 StringBuilder，处理 emoji 时别拿 length() 当字符数。</p>
+  <div class="road"><span>先猜七个结果</span><i>→</i><span>不可变</span><i>→</i><span>驻留与常量池</span><i>→</i><span>equals 与 null</span><i>→</i><span>拼接字节码</span><i>→</i><span>UTF-16</span><i>→</i><span>自测</span></div>
+  <p class="note" style="margin-top:16px">页面上的 Java 输出和字节码均在 Amazon Corretto 1.8.0_512 上实际执行后贴入，源码与完整输出在 <code>local/examples/1-3/</code>。第 6 节末尾的输入框是浏览器里的 UTF-16 观察工具，不冒充 Java 运行结果。</p>
+</header>
+
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">先猜：七个 blade</a></li>
+  <li><a href="#ch2">不可变：改的是谁</a></li>
+  <li><a href="#ch3">常量池：为什么有时 ==</a></li>
+  <li><a href="#ch4">equals：内容和 null</a></li>
+  <li><a href="#ch5">拼接：+ 和 StringBuilder</a></li>
+  <li><a href="#ch6">length：emoji 为什么算两个</a></li>
+  <li><a href="#ch7">小结和自测</a></li>
+  <li><a href="#ch8">参考资料</a></li>
+</ol></nav>
+
+<main>
+
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>先猜：七个 blade</h2>
+  <p>先只读声明，不急着记“常量池规则”。a 到 f 的字符内容全都是 <code>blade</code>；c 显式复制了一份，e 用普通变量拼接，f 用 <code>final</code> 常量变量拼接。</p>
+  <pre class="code">String a = "blade";
+String b = "blade";
+String c = new String("blade");
+String d = "bl" + "ade";
+String prefix = "bl";
+String e = prefix + "ade";
+final String fixed = "bl";
+String f = fixed + "ade";</pre>
+  <p>逐行选 true 或 false。选完才显示 JDK 8 的实测结果；七行全做完，再看后面的解释。</p>
+  <div class="card" id="identity-quiz"></div>
+  <p class="note">这些结果不是让你背七行答案，而是把三个问题分开：String 能不能改（第 2 节）、引用是否指同一个对象（第 3 节）、字符内容是否相同（第 4 节）。</p>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>不可变：改的是谁</h2>
+  <p>Java 8 的 String API 写得很直接："Strings are constant; their values cannot be changed after they are created"——<b>对象一旦创建，它表示的字符序列不能改</b>。所以 <code>trim()</code>、<code>toUpperCase()</code> 不会把原对象擦掉重写；需要变化后的内容时，就接住方法返回的引用。</p>
+  <pre class="code">String raw = "  Blade  ";
+String trimmed = raw.trim();
+String upper = trimmed.toUpperCase(Locale.ROOT);
+
+System.out.println("raw: [" + raw + "]");
+System.out.println("trimmed: [" + trimmed + "]");
+System.out.println("upper: [" + upper + "]");
+System.out.println("raw == trimmed: " + (raw == trimmed));
+System.out.println("trimmed == upper: " + (trimmed == upper));
+System.out.println("trimmed == trimmed.trim(): " + (trimmed == trimmed.trim()));
+
+raw: [  Blade  ]
+trimmed: [Blade]
+upper: [BLADE]
+raw == trimmed: false
+trimmed == upper: false
+trimmed == trimmed.trim(): true</pre>
+  <p>前两行没有改 raw：它仍带四个空格。trimmed 和 upper 各自指向表示新内容的对象。变量 raw 以后当然还能被重新赋值；<b>引用变量改指向</b>和<b>修改 String 对象的字符</b>是两件事。</p>
+  <p>最后一行专门拆掉一个过度推论：<b>不可变不等于每次调用方法都创建新对象</b>。trimmed 已经没有首尾空格，这台 Corretto 8 再执行 <code>trim()</code> 返回了原对象，所以 == 是 true。这个身份结果是本机实现行为，不是本篇用来判断内容的依据；要判内容仍然用 equals。</p>
+  <div class="callout">
+    <span class="t">新版补充：Java 9 换了内部存储，没换掉不可变语义</span>
+    JEP 254（Compact Strings，Java 9）把 String 的内部表示从 UTF-16 char 数组改为 byte 数组加编码标记：只含 Latin-1 字符时可用一字节存储，否则用 UTF-16。改变的是实现，不是字符序列不可变这条 API 约定；Java 25 的 String 文档仍保留 "values cannot be changed" 原文。以上新版内容依据 JEP 254 和 Java 25 文档，本机未运行 Java 9/25。
+  </div>
+  <p class="src">实测：<code>local/examples/1-3/ImmutableString.java</code>。API 原文见参考资料。</p>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>常量池：为什么有时 ==</h2>
+  <p>1.2 已经确定：引用之间的 == 比的是“是不是同一个对象”。这一节只回答对象从哪里来。JLS §3.10.5 规定，内容相同的字符串字面量会驻留（intern），共享同一个 String 实例；但这条规则不能只记成“内容相同就共享”，因为 new 和运行时拼接走的是别的路径。</p>
+  <div class="card">
+    <div class="objmap">
+      <div class="objline"><span class="objvars">a, b, d, f</span><span class="objarrow">──→</span><span class="objbox">对象 P："blade"<small>字面量 / 常量表达式的驻留实例</small></span></div>
+      <div class="objline"><span class="objvars">c</span><span class="objarrow">──→</span><span class="objbox new">对象 C："blade"<small>new String(...) 显式复制出的对象</small></span></div>
+      <div class="objline"><span class="objvars">e</span><span class="objarrow">──→</span><span class="objbox new">对象 E："blade"<small>普通变量参与的运行时拼接结果</small></span></div>
+      <div class="objline"><span class="objvars">c.intern()</span><span class="objarrow">──→</span><span class="objbox">对象 P："blade"<small>池中已有相同内容，返回池里的引用</small></span></div>
+    </div>
+    <p class="note" style="margin-bottom:0">示意：P、C、E 是为了区分对象身份而起的名字，不是 JVM 地址；图中“池”是逻辑关系，不表示这些 String 对象住在堆以外。</p>
+  </div>
+  <div class="tablewrap">
+    <table class="rules">
+      <thead><tr><th>表达式</th><th>走哪条规则</th><th>本例的身份结果</th></tr></thead>
+      <tbody>
+        <tr><td>a、b</td><td>相同内容的字面量共享驻留实例（§3.10.5）</td><td>a == b → true</td></tr>
+        <tr><td>c</td><td>String(String) 构造器明确初始化一个新对象</td><td>a == c → false</td></tr>
+        <tr><td>d</td><td>两个字面量拼接是常量表达式，编译期计算并当成字面量</td><td>a == d → true</td></tr>
+        <tr><td>e</td><td>普通局部变量 prefix 不是常量变量，拼接在运行时进行并创建新对象</td><td>a == e → false</td></tr>
+        <tr><td>f</td><td>fixed 是常量变量，fixed + "ade" 仍是常量表达式</td><td>a == f → true</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>d 和 e 的内容完全相同，结果却不同，分界线是<b>表达式是不是编译期常量</b>。JLS §15.18.1 的原话是：字符串拼接创建的 String 对象是新对象，除非整个表达式是 §15.28 所说的常量表达式。§15.28 又允许常量表达式引用“常量变量”；§4.12.4 对常量变量的定义不是只有 final，而是<b>基本类型或 String 的 final 变量，并且用常量表达式初始化</b>。所以本例的 fixed 合格，普通 prefix 不合格。</p>
+  <p><code>intern()</code> 是显式取规范实例的方法：池中已有 equals 相同的字符串，就返回池里那个；否则把当前字符串加入池再返回。因此 <code>c.intern() == a</code> 实测为 true。但不需要为了让 == 成立而给业务字符串到处 intern；第 4 节的内容判等更直接。</p>
+  <div class="callout">
+    <span class="t">新版补充：字面量规则没变，Java 15 多了文本块</span>
+    Java SE 25 的 §3.10.5 仍规定相同字面量共享实例、常量表达式编译期计算、运行时拼接创建不同对象；常量表达式条款移到了 §15.29，规则仍在。Java 15 通过 JEP 378 正式加入文本块（多行字符串字面量），结果仍是 String，不是新类型；Java SE 25 §3.10.6 也明确文本块表示的字符串会驻留。本机只有 JDK 8，文本块未实测。
+  </div>
+  <p class="src">实测：<code>local/examples/1-3/StringIdentity.java</code>。规范条款和构造器文档见参考资料。</p>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>equals：内容和 null</h2>
+  <p>String.equals 的规则是：参数非 null、也是 String、并且表示<b>相同的字符序列</b>，才返回 true。它不看两个引用是否共享对象。因此第 1 节里 <code>a == e</code> 是 false，<code>a.equals(e)</code> 却是 true——前者问“是不是同一个”，后者问“内容是不是一样”。</p>
+  <p>但 equals 是一个实例方法，调用者本身是 null 时仍然会在 1.2 说的“顺空箭头”处倒下。把已知非空的常量放在前面，可以安全地拿它比较一个可能为 null 的输入；两边都可能为 null 时，用 <code>Objects.equals(a, b)</code>：</p>
+  <pre class="code">String stored = new String("WEB");
+String input = null;
+
+System.out.println("\"WEB\".equals(stored): " + "WEB".equals(stored));
+System.out.println("\"WEB\".equals(input): " + "WEB".equals(input));
+System.out.println("Objects.equals(stored, input): " + Objects.equals(stored, input));
+System.out.println("Objects.equals(null, null): " + Objects.equals(null, null));
+try {
+    input.equals("WEB");
+} catch (NullPointerException e) {
+    System.out.println("input.equals(\"WEB\") 抛出: " + e);
+}
+
+"WEB".equals(stored): true
+"WEB".equals(input): false
+Objects.equals(stored, input): false
+Objects.equals(null, null): true
+input.equals("WEB") 抛出: java.lang.NullPointerException</pre>
+  <p>Objects.equals 的规则可以背成一张小表：两个都 null → true；恰好一个 null → false；都不是 null → 调用第一个参数的 equals。它不会发明新的字符串比较规则，只是把 null 分支收好了。</p>
+  <h3>真实项目里就是用来比内容</h3>
+  <pre class="code">// UserServiceImpl.java 第 139–143 行
+public boolean updatePassword(Long userId, String oldPassword,
+        String newPassword, String newPassword1) {
+    User user = getById(userId);
+    if (!newPassword.equals(newPassword1)) {
+        throw new ServiceException("请输入正确的确认密码!");
+    }</pre>
+  <p>SpringBlade 这里要判断两次输入的新密码是否是同一串字符，所以用 equals，而不是判断两个参数是否指同一对象。注意，<code>newPassword.equals(...)</code> 这种写法本身没有提供 null 安全；如果 newPassword 可能为 null，空值检查仍要另做。</p>
+  <div class="callout">
+    <span class="t">新版补充：到 Java 25 没变化</span>
+    Java 25 的 String.equals 仍以“非 null、String、相同字符序列”为 true 的条件；String 的索引和字符语义没有换成按对象身份比较。已逐句核对 Java 25 API 原文，本机未在新版运行。
+  </div>
+  <p class="src">实测：<code>local/examples/1-3/EqualsNull.java</code>。真实代码：<code>UserServiceImpl.java</code> 第 139–143 行。</p>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>拼接：+ 和 StringBuilder</h2>
+  <p>第 3 节说的是拼接结果的<b>身份</b>，这一节看 JDK 8 的编译器<b>怎样实现</b>拼接。下面四个式子的输出都是 blade 或 012，但字节码并不一样：</p>
+  <pre class="code">static String runtime(String prefix) {
+    return prefix + "ade";
+}
+
+static String plusLoop() {
+    String s = "";
+    for (int i = 0; i &lt; 3; i++) {
+        s += i;
+    }
+    return s;
+}
+
+static String builderLoop() {
+    StringBuilder b = new StringBuilder();
+    for (int i = 0; i &lt; 3; i++) {
+        b.append(i);
+    }
+    return b.toString();
+}
+
+compile-time: blade
+runtime: blade
+plusLoop: 012
+builderLoop: 012</pre>
+  <p>对编译后的 Concat.class 执行 <code>javap -c -p</code>，可以看到 Java 8 的 javac 把运行时 <code>+</code> 翻成 StringBuilder.append 链。单个 runtime 方法的完整核心指令是：</p>
+  <pre class="code">static java.lang.String runtime(java.lang.String);
+   0: new           #2   // class java/lang/StringBuilder
+   4: invokespecial #3   // Method java/lang/StringBuilder."&lt;init&gt;":()V
+   7: aload_0
+   8: invokevirtual #4   // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  11: ldc           #5   // String ade
+  13: invokevirtual #4   // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+  16: invokevirtual #6   // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+  19: areturn</pre>
+  <p class="note">指令、偏移和注释均摘自本机实测，完整原样输出见 Concat.javap.out。</p>
+  <p>所以“每次写一个 + 都手写 StringBuilder”没有从这段字节码得到支持：javac 8 已经这样翻了。真正值得看的是 <code>new</code> 指令在不在循环回边上：</p>
+  <div class="bytegrid">
+    <div class="card">
+      <h3>plusLoop：new 在循环体内</h3>
+      <pre class="code"> 5: iload_1
+ 6: iconst_3
+ 7: if_icmpge 35
+10: new #2  // StringBuilder
+...
+25: invokevirtual #6 // toString()
+28: astore_0
+29: iinc 1, 1
+32: goto 5</pre>
+    </div>
+    <div class="card">
+      <h3>builderLoop：new 在循环体外</h3>
+      <pre class="code"> 0: new #2  // StringBuilder
+ 4: invokespecial #3
+ 7: astore_0
+...
+10: iload_1
+11: iconst_3
+12: if_icmpge 27
+15: aload_0
+17: invokevirtual #8 // append(I)
+21: iinc 1, 1
+24: goto 10</pre>
+    </div>
+  </div>
+  <p>plusLoop 每轮都会回到偏移 5，再执行偏移 10 的 new，并在偏移 25 转出一个新的 String；builderLoop 只在进入循环前执行一次 new，循环里反复 append。<b>这是 javac 8 生成的字节码结构</b>，不是对 JIT 优化后实际分配次数的承诺。工程写法也因此很具体：循环里持续累积内容，把 StringBuilder 放到循环外。</p>
+  <h3>真实项目里的分步拼接</h3>
+  <pre class="code">// ErrorExceptionHandler.java 第 83–92 行
+StringBuilder message = new StringBuilder("Failed to handle request [");
+message.append(request.getMethodValue());
+message.append(" ");
+message.append(request.getURI());
+message.append("]");
+if (ex != null) {
+    message.append(": ");
+    message.append(ex.getMessage());
+}
+return message.toString();</pre>
+  <p>SpringBlade 的网关异常处理要按条件逐步补全一条消息，源码使用一个 StringBuilder 接住这些 append，最后 toString()。这里先能读懂“可变组装器 → 不可变 String”的交接；StringBuilder 自身的容量增长放到 2.2 讲集合扩容之后再拆。</p>
+  <div class="callout">
+    <span class="t">新版补充：Java 9 起，javac 默认改用 invokedynamic</span>
+    JEP 280（Java 9）把 javac 生成的字符串拼接字节码从 StringBuilder.append 链改为对 StringConcatFactory 的 invokedynamic 调用，让 JDK 可以更换底层拼接策略。语言层面的常量表达式、运行时新对象规则没有因此改变；上面的 new StringBuilder 字节码是 Java 8 实测，不要拿去描述所有新版本。本机没有 JDK 9+，未实测 invokedynamic 输出。
+  </div>
+  <p class="src">实测：<code>local/examples/1-3/Concat.java</code>、<code>Concat.javap.out</code>。真实代码：<code>ErrorExceptionHandler.java</code> 第 83–92 行。</p>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>length：emoji 为什么算两个</h2>
+  <p>String 的 length() 文档定义的是<b>Unicode 代码单元（code units）的数量</b>，不是 Unicode 代码点的数量。Java 8 的 String 以 UTF-16 表示字符串；补充字符用一对代理项表示，占两个 char 位置。😀 正是一个补充字符，所以 <code>A😀B</code> 有四个代码单元，却只有三个代码点。</p>
+  <pre class="code">String s = "A😀B";
+int afterEmoji = s.offsetByCodePoints(0, 2);
+
+System.out.println("s: " + s);
+System.out.println("length(): " + s.length());
+System.out.println("codePointCount(): " + s.codePointCount(0, s.length()));
+System.out.printf("charAt(1), charAt(2): %04X %04X%n",
+        (int) s.charAt(1), (int) s.charAt(2));
+System.out.println("codePointAt(1): " + s.codePointAt(1));
+System.out.println("offsetByCodePoints(0, 2): " + afterEmoji);
+System.out.println("substring(0, afterEmoji): " + s.substring(0, afterEmoji));
+
+s: A😀B
+length(): 4
+codePointCount(): 3
+charAt(1), charAt(2): D83D DE00
+codePointAt(1): 128512
+offsetByCodePoints(0, 2): 3
+substring(0, afterEmoji): A😀</pre>
+  <p>索引 1 的 D83D 是高代理项，索引 2 的 DE00 是低代理项；<code>codePointAt(1)</code> 把这一对合成代码点 128512。<code>substring</code> 的起止索引仍然按代码单元算，所以想截取前两个代码点，先用 <code>offsetByCodePoints(0, 2)</code> 得到索引 3，再截取 <code>[0, 3)</code>。直接写 <code>substring(0, 2)</code> 会从 😀 的代理对中间切开。</p>
+  <div class="card">
+    <p style="margin-top:0">换一段文本亲手看。观察器把你输入的内容拆成 UTF-16 代码单元；代理对的两格会变色。</p>
+    <div class="ulab">
+      <label>输入文本<input id="u-input" value="A😀B" autocomplete="off" spellcheck="false"></label>
+      <div class="ucount"><b id="u-len">4</b><span>代码单元</span></div>
+      <div class="ucount"><b id="u-cp">3</b><span>代码点</span></div>
+    </div>
+    <div class="uunits" id="u-units" aria-live="polite"></div>
+    <div class="ucap">每格是这个代码单元的十六进制值。这里只显示代码单元和代码点，不做字形簇切分；更复杂的文本切分不在本篇展开。</div>
+  </div>
+  <div class="callout">
+    <span class="t">新版补充：内部可以更省，length 的尺子没换</span>
+    Java 9 的 Compact Strings 可以为 Latin-1 内容选用单字节内部存储（见第 2 节），但 Java 25 的 length() 仍明确返回 Unicode 代码单元数，String 仍提供代码点方法来处理代理对。已核对 Java 25 String API；新版内部存储未在本机实测。
+  </div>
+  <p class="src">实测：<code>local/examples/1-3/Utf16.java</code>。观察器只计算当前输入，不保存或上传内容。</p>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结和自测</h2>
+  <div class="callout key">
+    <span class="t">带走五句话</span>
+    String 对象的字符序列不可变，但引用变量可以改指向，方法调用也不保证每次返回新对象。相同字面量和字符串常量表达式共享驻留实例；new 和普通变量参与的运行时拼接会走不同对象路径。== 比对象身份，equals 比字符内容；有 null 时用已知非空常量在前或 Objects.equals。JDK 8 的循环 += 在每轮字节码里都有 new StringBuilder 指令，持续累积用循环外的 StringBuilder。length() 数 UTF-16 代码单元，emoji 等补充字符占两个位置。
+  </div>
+
+  <div class="card">
+    <h3>五个问题</h3>
+    <div class="q">
+      <div class="qt">1. <code>String x = new String("blade"); String y = new String("blade");</code>，x == y 和 x.equals(y) 各是什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">本例中 x == y 为 false，x.equals(y) 为 true。复制构造器初始化的是新对象；equals 只看两边是不是相同的字符序列。不要反过来记成“new 的内容不同”——两边内容完全相同。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. <code>final String p = "bl"; String s = p + "ade";</code>，为什么本例 s == "blade" 是 true？把 final 去掉为什么会走另一条路？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">p 是 final 的 String 变量，并且用字面量这个常量表达式初始化，所以它是常量变量；p + "ade" 整体也是常量表达式，编译期计算并驻留。去掉 final 后，p 不再是常量变量，拼接在运行时进行，规范走“新对象”路径。实测对应 StringIdentity.java 的 f 和 e。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. <code>s.trim()</code> 会不会改 s 原来的对象？它是否一定创建一个新 String？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不会改原对象，这是 String 不可变的含义。但也不能推出“一定新建”：本机对已经没有首尾空格的 trimmed 再 trim()，返回了原对象。需要处理结果时接住返回值；不要靠方法是否返回新对象判断内容。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. input 可能是 null：怎样判断它是否等于 "WEB"？如果 a、b 两个引用都可能为 null 呢？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">常量和输入比较可写 <code>"WEB".equals(input)</code>，input 为 null 时结果是 false。两边都可能为 null 时写 <code>Objects.equals(a, b)</code>：都 null 得 true，一个 null 得 false，否则调用 a.equals(b)。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. <code>"A😀B".length()</code> 为什么是 4？想截取前两个 Unicode 代码点，索引应该取几？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">length() 数 UTF-16 代码单元：A、😀 的两个代理项、B，共 4 个。前两个代码点是 A 和 😀，结束索引是 3；可用 <code>int end = s.offsetByCodePoints(0, 2); s.substring(0, end)</code>，实测得到 A😀。</div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>参考资料</h2>
+  <p>每条后面写明它支撑文中哪句话。规范、API、JEP 和真实项目代码在 2026-11-14 逐条打开核对；未特别标注版本的规范与 API 均为 Java SE 8 版。</p>
+  <div class="card refs">
+    <h3>真实项目源码（SpringBlade v3.7.1）</h3>
+    <ul>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-user/src/main/java/org/springblade/system/user/service/impl/UserServiceImpl.java#L139-L143" target="_blank" rel="noopener">UserServiceImpl.java 第 139–143 行</a><span>支撑：第 4 节——更新密码时用 newPassword.equals(newPassword1) 比较两次输入的字符内容</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-gateway/src/main/java/org/springblade/gateway/handler/ErrorExceptionHandler.java#L83-L92" target="_blank" rel="noopener">ErrorExceptionHandler.java 第 83–92 行</a><span>支撑：第 5 节——网关用 StringBuilder 分步拼接异常消息，最后 toString()</span></li>
+    </ul>
+    <h3>官方 API 文档</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html" target="_blank" rel="noopener">String（Java 8）类说明与 String(String) 构造器</a><span>支撑：第 2 节——字符串创建后字符值不可改；第 3 节——复制构造器初始化一个新 String 对象；第 6 节——UTF-16、代理对和索引按 char 代码单元计算</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#equals-java.lang.Object-" target="_blank" rel="noopener">String.equals</a>、<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#intern--" target="_blank" rel="noopener">String.intern</a><span>支撑：第 3、4 节——equals 比较相同字符序列；intern 返回池中 equals 相同的规范实例</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/util/Objects.html#equals-java.lang.Object-java.lang.Object-" target="_blank" rel="noopener">Objects.equals（Java 8）</a><span>支撑：第 4 节——两个 null 得 true、一个 null 得 false，否则调用第一个参数的 equals</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#length--" target="_blank" rel="noopener">String.length</a>、<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#codePointCount-int-int-" target="_blank" rel="noopener">codePointCount</a>、<a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#offsetByCodePoints-int-int-" target="_blank" rel="noopener">offsetByCodePoints</a><span>支撑：第 6 节——length 数代码单元，代码点计数与按代码点求索引的方法</span></li>
+      <li><a href="https://docs.oracle.com/en/java/javase/25/docs/api/java.base/java/lang/String.html" target="_blank" rel="noopener">String（Java 25）</a><span>支撑：第 2、4、6 节「新版补充」——不可变、equals 的字符序列条件、length 的代码单元定义到 Java 25 未变</span></li>
+    </ul>
+    <h3>语言规范（JLS）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.5" target="_blank" rel="noopener">JLS §3.10.5 String Literals</a><span>支撑：第 3 节——相同字面量驻留共享实例；常量表达式编译期计算并视为字面量；运行时拼接创建不同对象；显式 intern 的结果</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.4" target="_blank" rel="noopener">JLS §4.12.4 final Variables</a><span>支撑：第 3 节——常量变量是基本类型或 String 的 final 变量，并且由常量表达式初始化</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.18.1" target="_blank" rel="noopener">JLS §15.18.1 String Concatenation Operator +</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.28" target="_blank" rel="noopener">§15.28 Constant Expressions</a><span>支撑：第 3 节——非常量拼接创建新对象；常量表达式可引用常量变量，String 常量表达式会驻留</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-3.html#jls-3.10.5" target="_blank" rel="noopener">JLS（Java SE 25）§3.10.5、§3.10.6</a>、<a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-15.html#jls-15.18.1" target="_blank" rel="noopener">§15.18.1、§15.29</a><span>支撑：第 3 节「新版补充」——字面量驻留、常量/运行时拼接规则未变；文本块也是驻留的 String</span></li>
+    </ul>
+    <h3>JEP（新特性的来处）</h3>
+    <ul>
+      <li><a href="https://openjdk.org/jeps/254" target="_blank" rel="noopener">JEP 254：Compact Strings（Java 9）</a><span>支撑：第 2、6 节「新版补充」——内部表示改为 byte 数组加编码标记，按内容选 Latin-1 或 UTF-16</span></li>
+      <li><a href="https://openjdk.org/jeps/280" target="_blank" rel="noopener">JEP 280：Indify String Concatenation（Java 9）</a><span>支撑：第 5 节「新版补充」——javac 的静态拼接字节码改用 invokedynamic / StringConcatFactory</span></li>
+      <li><a href="https://openjdk.org/jeps/378" target="_blank" rel="noopener">JEP 378：Text Blocks（Java 15）</a><span>支撑：第 3 节「新版补充」——文本块在 Java 15 成为正式特性，是多行字符串字面量，不引入 String 之外的新类型</span></li>
+    </ul>
+    <h3>本篇实验</h3>
+    <ul>
+      <li><a href="https://github.com/wangx7/cs-crash-course/tree/main/local/examples/1-3" target="_blank" rel="noopener">local/examples/1-3/</a><span>支撑：全篇五份 Java 源码、对应运行输出、Concat 的完整 javap 输出和复现命令</span></li>
+    </ul>
+  </div>
+  <p class="note">没有实测或需要限定范围的地方：Java 9 的 Compact Strings、invokedynamic 拼接和 Java 15 文本块均依据 JEP / 新版规范与 API，本机只有 JDK 8；<code>trimmed == trimmed.trim()</code> 为 true 只是这台 Corretto 8 的实现行为，不当作所有 JVM 的身份承诺；javap 展示的是 javac 8 生成的指令，不是 JIT 优化后的实际分配次数；对象关系图中的 P、C、E 是示意名称，不是内存地址；UTF-16 观察器在浏览器中计算，只用于观察代码单元，Java 结论以 Utf16.java 的实测和官方文档为准。</p>
+
+  <button class="btn" id="mark-read"></button>
+
+  <div class="pager">
+    <a href="1-2.html"><small>上一篇</small>1.2 引用和内存</a>
+    <a class="next" href="1-4.html"><small>下一篇</small>1.4 类和对象</a>
+  </div>
+
+  <div class="credit">
+    本篇是原创内容，由 Kimi K3.1 Pro（月之暗面）写作并制作交互演示，非任何官方教材。文中引用的 SpringBlade v3.7.1 代码版权归原作者所有，按 Apache License 2.0 引用；所有 Java 示例与字节码均在 Amazon Corretto 1.8.0_512 上实际编译、运行或反汇编后引用。<br>
+    内容随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// ---------- 第 1 节：先选择，再显示实测 ----------
+(() => {
+  const QUESTIONS = [
+    { expr: 'a == b', answer: true, why: '两个相同内容的字面量共享驻留实例。' },
+    { expr: 'a == c', answer: false, why: 'new String("blade") 显式复制出另一个对象。' },
+    { expr: 'a == d', answer: true, why: '"bl" + "ade" 是编译期常量表达式，按字面量处理。' },
+    { expr: 'a == e', answer: false, why: '普通变量 prefix 参与拼接，结果在运行时创建。' },
+    { expr: 'a == f', answer: true, why: 'fixed 是常量变量，fixed + "ade" 仍是常量表达式。' },
+    { expr: 'a.equals(e)', answer: true, why: 'a 和 e 不是同一对象，但字符序列完全相同。' },
+    { expr: 'c.intern() == a', answer: true, why: '池中已有内容相同的 a，intern() 返回池里的那个引用。' },
+  ];
+  const state = Array(QUESTIONS.length).fill(null);
+  const root = $('#identity-quiz');
+  root.innerHTML = `<div class="iq-head"><h3>你的判断</h3><span class="iq-score" id="iq-score" aria-live="polite"></span></div>` +
+    QUESTIONS.map((q, i) => `<div class="iq-row" id="iq-${i}">
+      <code>${esc(q.expr)}</code>
+      <div class="iq-choices">
+        <button class="btn" data-v="true" aria-pressed="false">true</button>
+        <button class="btn" data-v="false" aria-pressed="false">false</button>
+      </div>
+      <div class="iq-result" aria-live="polite"></div>
+    </div>`).join('') +
+    `<div class="btns" style="margin-top:12px"><button class="btn" id="iq-reset">清空重猜</button></div>`;
+
+  function updateScore() {
+    const answered = state.filter(v => v !== null).length;
+    const right = state.filter((v, i) => v === QUESTIONS[i].answer).length;
+    $('#iq-score').textContent = `已作答 ${answered} / ${QUESTIONS.length} · 答对 ${right}`;
+  }
+  function choose(i, value, btn) {
+    state[i] = value;
+    const q = QUESTIONS[i], row = $('#iq-' + i);
+    row.classList.add('answered');
+    $$('.iq-choices .btn', row).forEach(b => {
+      const picked = b === btn;
+      b.classList.toggle('picked', picked);
+      b.setAttribute('aria-pressed', String(picked));
+    });
+    const good = value === q.answer;
+    $('.iq-result', row).innerHTML = `<span class="${good ? 'right' : 'wrong'}">${good ? '判断正确' : '再修正一下直觉'}</span> · JDK 8 实测：<span class="actual">${q.answer}</span>。${q.why}`;
+    updateScore();
+  }
+  QUESTIONS.forEach((q, i) => {
+    $$('.iq-choices .btn', $('#iq-' + i)).forEach(btn => {
+      btn.addEventListener('click', () => choose(i, btn.dataset.v === 'true', btn));
+    });
+  });
+  $('#iq-reset').addEventListener('click', () => {
+    state.fill(null);
+    QUESTIONS.forEach((q, i) => {
+      const row = $('#iq-' + i);
+      row.classList.remove('answered');
+      $$('.iq-choices .btn', row).forEach(b => {
+        b.classList.remove('picked');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      $('.iq-result', row).textContent = '';
+    });
+    updateScore();
+  });
+  updateScore();
+})();
+
+// ---------- 第 6 节：UTF-16 代码单元观察器 ----------
+(() => {
+  const input = $('#u-input');
+  function render() {
+    const s = input.value;
+    const units = [];
+    for (let i = 0; i < s.length; i++) {
+      const n = s.charCodeAt(i);
+      const kind = n >= 0xD800 && n <= 0xDBFF ? 'hi' : n >= 0xDC00 && n <= 0xDFFF ? 'lo' : '';
+      units.push({ hex: n.toString(16).toUpperCase().padStart(4, '0'), kind });
+    }
+    $('#u-len').textContent = s.length;
+    $('#u-cp').textContent = Array.from(s).length;
+    $('#u-units').innerHTML = units.length
+      ? units.map(u => `<span class="uunit ${u.kind}">${u.hex}</span>`).join('')
+      : '<span class="note">空字符串：0 个代码单元</span>';
+  }
+  input.addEventListener('input', render);
+  render();
+})();
+</script>
+</body>
+</html>

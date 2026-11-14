@@ -1,0 +1,5 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d classes Encapsulation.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java -cp classes Encapsulation
+withdraw(30): true, balance=70
+withdraw(80): false, balance=70
+withdraw(0): false, balance=70
+sameBalance(new Wallet(70)): true

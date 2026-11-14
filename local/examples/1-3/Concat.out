@@ -1,0 +1,5 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 Concat.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java Concat
+compile-time: blade
+runtime: blade
+plusLoop: 012
+builderLoop: 012

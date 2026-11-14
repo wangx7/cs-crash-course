@@ -1,0 +1,6 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 EqualsNull.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java EqualsNull
+"WEB".equals(stored): true
+"WEB".equals(input): false
+Objects.equals(stored, input): false
+Objects.equals(null, null): true
+input.equals("WEB") 抛出: java.lang.NullPointerException

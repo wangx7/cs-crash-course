@@ -1,0 +1,8 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d classes Construction.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java -cp classes Construction
+before body: name=anonymous, balance=10
+two-arg body
+custom: blade:100
+before body: name=anonymous, balance=10
+two-arg body
+no-arg body
+no-arg: guest:0

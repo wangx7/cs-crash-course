@@ -1,0 +1,8 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 StringIdentity.java && /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/java StringIdentity
+a == b: true
+a == c: false
+a == d: true
+a == e: false
+a == f: true
+a.equals(e): true
+c.intern() == a: true

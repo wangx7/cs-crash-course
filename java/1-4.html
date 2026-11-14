@@ -1,0 +1,600 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.4 类和对象：字段、方法、构造器、封装 · Java 后端</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font-family:var(--mono);font-size:13.5px;line-height:1.7;background:var(--code);border-radius:10px;padding:12px 14px;margin:10px 0;overflow-x:auto;white-space:pre;tab-size:4}
+.src{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.note{font-size:13px;color:var(--muted)}
+
+/* 先预测，再看实测 */
+.pq-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+.pq-head h3{margin:0}
+.pq-score{font-size:13px;color:var(--muted)}
+.pq-row{padding:13px 0;border-top:1px solid var(--line)}
+.pq-q{font-family:var(--mono);font-size:13.5px;font-weight:700;margin-bottom:8px;overflow-wrap:anywhere}
+.pq-choices{display:flex;gap:6px;flex-wrap:wrap}
+.pq-choices .btn{margin:0;padding:6px 11px}
+.pq-choices .btn.picked{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.pq-result{display:none;margin-top:8px;font-size:13.5px;line-height:1.65;color:var(--muted)}
+.pq-row.answered .pq-result{display:block}
+.pq-result .right{color:var(--ok);font-weight:700}
+.pq-result .wrong{color:var(--bad);font-weight:700}
+.pq-result .actual{font-family:var(--mono);font-weight:700;color:var(--ink)}
+
+/* 实例关系图 */
+.objs{display:grid;grid-template-columns:minmax(105px,.8fr) 28px minmax(150px,1.2fr);gap:9px;align-items:center;margin:14px 0}
+.objvars{font-family:var(--mono);font-size:13.5px;text-align:right}
+.objarrow{text-align:center;color:var(--accent);font-weight:700}
+.objbox{padding:10px 12px;border:1.5px solid var(--accent);border-radius:10px;background:var(--accent-soft);font-family:var(--mono);font-size:13px}
+.objbox.second{border-color:var(--line);background:var(--code)}
+.objbox small{display:block;color:var(--muted);font-size:12px;margin-top:3px}
+.objcaption{font-size:13px;color:var(--muted);margin:0}
+
+/* 构造顺序 */
+.flow{display:flex;align-items:stretch;gap:7px;margin:14px 0;overflow-x:auto;padding-bottom:3px}
+.flow .fstep{flex:1;min-width:130px;padding:10px 11px;border:1px solid var(--line);border-radius:9px;background:var(--code);font-size:13px;line-height:1.55}
+.flow .fstep b{display:block;font-family:var(--mono);font-size:12px;color:var(--accent);margin-bottom:3px}
+.flow .farrow{align-self:center;color:var(--muted)}
+
+/* 封装对照模型 */
+.wallet-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+.wallet-panel{border:1px solid var(--line);border-radius:10px;padding:12px;background:var(--code)}
+.wallet-panel h3{font-size:15px;margin:0 0 6px}
+.wallet-panel p{font-size:13px;color:var(--muted);margin:4px 0}
+.wallet-balance{font-family:var(--mono);font-size:28px;font-weight:700;margin:8px 0}
+.wallet-balance.bad{color:var(--bad)}
+.wallet-status{font-family:var(--mono);font-size:12.5px;min-height:3.2em;line-height:1.55}
+.wallet-log{font-family:var(--mono);font-size:13px;line-height:1.65;padding:9px 11px;background:var(--code);border-radius:8px;min-height:3.3em;margin-top:10px}
+
+/* 访问控制 */
+.tablewrap{overflow-x:auto;margin:12px 0}
+table.access{width:100%;border-collapse:collapse;font-size:14px;min-width:660px}
+.access th,.access td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line)}
+.access th{color:var(--muted);font-size:13px}
+.access td:first-child{font-family:var(--mono);white-space:nowrap}
+.yes{color:var(--ok);font-weight:700}
+.no{color:var(--bad);font-weight:700}
+.limited{color:var(--accent);font-weight:700}
+
+/* 参考资料 */
+.refs h3{margin:18px 0 6px;font-size:16px}
+.refs h3:first-child{margin-top:0}
+.refs ul{list-style:none;margin:0;padding:0}
+.refs li{padding:7px 0;border-bottom:1px solid var(--line);font-size:14.5px;overflow-wrap:anywhere}
+.refs li:last-child{border-bottom:none}
+.refs li span{display:block;font-size:13px;color:var(--muted)}
+
+@media (max-width:640px){
+  .wallet-grid{grid-template-columns:1fr}
+  .objs{grid-template-columns:minmax(82px,.8fr) 20px minmax(135px,1.2fr)}
+  .pq-choices .btn{padding:6px 9px}
+}
+</style>
+</head>
+<body data-ep="104" data-store="java-be-read" data-unit="篇">
+<div class="topbar">
+  <a href="index.html">← Java 后端 · 目录</a>
+  <span class="muted">第 1 部分 · 对象与类型</span>
+</div>
+
+<header class="hero">
+  <div class="eyebrow">第 1 部分 · 对象与类型 · 1.4</div>
+  <h1>类和对象：字段跟着实例走</h1>
+  <p class="en">State, behavior, construction, and access</p>
+  <p class="lead">两次 new Counter() 得到的对象各自装着一份 value；一旦 second = first，两个变量又会改到同一个对象。类的语法从这里展开：字段保存哪个实例的状态，方法里的 this 指谁，构造器怎样把对象填好，private 与包访问到底挡住哪些写法。最后回到 SpringBlade：@Data 为什么让 private 字段仍有 public setter，手写构造器又为什么让无参 new 消失。</p>
+  <div class="road"><span>先猜三组结果</span><i>→</i><span>实例字段</span><i>→</i><span>方法与 this</span><i>→</i><span>构造顺序</span><i>→</i><span>封装</span><i>→</i><span>包和访问控制</span><i>→</i><span>自测</span></div>
+  <p class="note" style="margin-top:16px">页面上的 Java 输出和 javac 报错均在 Amazon Corretto 1.8.0_512 上实际执行后贴入，源码与完整输出在 <code>local/examples/1-4/</code>。余额对照模型是浏览器交互，不冒充 Java 运行结果。</p>
+</header>
+
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">先猜：状态与构造</a></li>
+  <li><a href="#ch2">字段：每个实例一份</a></li>
+  <li><a href="#ch3">方法：this 指谁</a></li>
+  <li><a href="#ch4">构造器：对象怎样填好</a></li>
+  <li><a href="#ch5">封装：private 还不够</a></li>
+  <li><a href="#ch6">包和访问控制</a></li>
+  <li><a href="#ch7">小结和自测</a></li>
+  <li><a href="#ch8">参考资料</a></li>
+</ol></nav>
+
+<main>
+
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>先猜：状态与构造</h2>
+  <p>先读这段代码。Counter 没有声明构造器，int 字段 value 也没有写初始值；两个检查点各会得到什么？</p>
+  <pre class="code">class Counter {
+    private int value;
+    void increment() { value++; }
+    int getValue() { return value; }
+}
+
+Counter first = new Counter();
+Counter second = new Counter();
+first.increment();
+// 检查点 A：first.getValue(), second.getValue()
+
+second = first;
+second.increment();
+// 检查点 B：first.getValue(), second.getValue()</pre>
+  <p>再单独看另一个类：<code>class NamedAccount { NamedAccount(String name) { } }</code>。它没有无参构造器，那么 <code>new NamedAccount()</code> 会怎样？三道都选完，再看后面的对象图和构造顺序。</p>
+  <div class="card" id="prediction-quiz"></div>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>字段：每个实例一份</h2>
+  <p>类声明定义一种类型；<code>new Counter()</code> 创建一个实例。没有 static 的字段叫实例字段，<b>每个实例各有一份</b>。所以第一次 increment 只把 first 指向对象的 value 从 0 改成 1，second 指向的另一个对象仍是 0。</p>
+  <div class="card">
+    <div class="objs">
+      <span class="objvars">first</span><span class="objarrow">──→</span><div class="objbox">Counter 实例 C1<small>value = 1</small></div>
+      <span class="objvars">second</span><span class="objarrow">──→</span><div class="objbox second">Counter 实例 C2<small>value = 0</small></div>
+    </div>
+    <p class="objcaption">检查点 A。C1、C2 是为讲解起的逻辑名称，不是 JVM 地址。</p>
+  </div>
+  <p>第二段的 <code>second = first</code> 不复制对象，只复制引用——这是 1.2 已经实测过的规则。此后 second 和 first 都指向 C1，second.increment() 改的就是 first 也能看到的那份 value：</p>
+  <pre class="code">two objects: first=1, second=0
+after alias: first=2, second=2
+first == second: true</pre>
+  <p>还要分清字段和局部变量：对象创建时，实例字段先取得默认值（int 是 0、boolean 是 false、引用类型是 null，JLS §4.12.5），声明处的初始化器随后执行。局部变量没有这套自动赋值，读取前必须明确赋值。下一篇讲 static 时，再看另一类“跟着类走”的字段。</p>
+  <div class="callout">
+    <span class="t">新版补充：实例字段这条基本规则到 Java 25 没变</span>
+    Java SE 25 的 §8.3 仍区分实例字段和类字段；实例仍由 new 创建。Java 16 新增的 record 也是一种类，其实例同样用 new 创建；record 给字段、构造器和访问器增加的专门规则放到第 3、5 节。
+  </div>
+  <p class="src">实测：<code>local/examples/1-4/TwoObjects.java</code>、<code>TwoObjects.out</code>。对象图中的名称和箭头是逻辑示意。</p>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>方法：this 指谁</h2>
+  <p>实例方法不是悬在空中执行的。<code>left.rename("left")</code> 的点号左边给出接收者，方法体里未加限定的实例字段和 this 都落在这个对象上。JLS §15.8.3 的定义很具体：在实例方法中，this 是“调用该方法所针对的对象”的引用；在构造器中，则是正在构造的对象。</p>
+  <pre class="code">class DisplayName {
+    private String name = "unset";
+
+    void rename(String name) {
+        System.out.println("before: field=" + this.name
+                + ", parameter=" + name);
+        this.name = name;
+    }
+
+    String describe() {
+        return name;
+    }
+}
+
+DisplayName left = new DisplayName();
+DisplayName right = new DisplayName();
+left.rename("left");
+right.rename("right");</pre>
+  <p>rename 的参数也叫 name，它在方法体里遮蔽了同名字段。因此右边的 name 是参数，this.name 才是字段；<code>this.name = name</code> 把参数值写进当前对象。describe 里没有同名局部变量或参数，所以直接写 name 就能读到当前对象的字段。</p>
+  <pre class="code">before: field=unset, parameter=left
+before: field=unset, parameter=right
+left.describe(): left
+right.describe(): right</pre>
+  <p>同名方法还可以<b>重载</b>：在不涉及泛型的直观情况下，方法签名由名字和参数类型列表决定，返回类型不在签名里。所以参数列表不同可以共存，仅把返回类型改掉不能构成重载。构造器的重载遵循同样的思路，下一节就能看到。</p>
+  <div class="callout">
+    <span class="t">新版补充：record 的访问器不叫 getX</span>
+    Java 16 的 JEP 395 正式加入 record。比如 <code>record Point(int x, int y) { }</code> 会得到名为 <code>x()</code>、<code>y()</code> 的 public 访问器，而不是 JavaBeans 风格的 <code>getX()</code>、<code>getY()</code>。方法签名和重载的基本规则仍在 Java SE 25 §8.4 中保留。record 语法依据 JEP，本机 JDK 8 未运行。
+  </div>
+  <p class="src">实测：<code>local/examples/1-4/MethodsAndThis.java</code>。this 的接收者定义见 JLS §15.8.3。</p>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>构造器：对象怎样填好</h2>
+  <p>构造器与类同名，没有返回类型，连 void 也不写。new 表达式负责创建实例并最后返回引用；构造器负责初始化。下面这个类有字段初始化器，也有两个构造器：</p>
+  <pre class="code">class UserAccount {
+    private String name = "anonymous";
+    private int balance = 10;
+
+    UserAccount() {
+        this("guest", 0);
+        System.out.println("no-arg body");
+    }
+
+    UserAccount(String name, int balance) {
+        System.out.println("before body: name=" + this.name
+                + ", balance=" + this.balance);
+        this.name = name;
+        this.balance = balance;
+        System.out.println("two-arg body");
+    }
+
+    String describe() { return name + ":" + balance; }
+}
+
+new UserAccount("blade", 100);
+new UserAccount();</pre>
+  <div class="flow">
+    <div class="fstep"><b>1 · 分配对象</b>实例字段先得到 0、false 或 null</div><span class="farrow">→</span>
+    <div class="fstep"><b>2 · 向上构造</b>执行父类构造过程；继承在 1.6 展开</div><span class="farrow">→</span>
+    <div class="fstep"><b>3 · 当前类初始化器</b>按源码顺序执行字段初始化器和实例初始化块</div><span class="farrow">→</span>
+    <div class="fstep"><b>4 · 构造器余下主体</b>给字段赋参数值，执行其他语句</div>
+  </div>
+  <p>这是 JLS §12.5 的初始化顺序。若构造器以 <code>this(...)</code> 委托同类的另一个构造器，先递归处理被委托者，再回来执行委托者余下的主体；当前类的字段初始化器不会沿委托链重复执行。所以无参 new 的输出依次是两参主体、无参主体：</p>
+  <pre class="code">before body: name=anonymous, balance=10
+two-arg body
+custom: blade:100
+before body: name=anonymous, balance=10
+two-arg body
+no-arg body
+no-arg: guest:0</pre>
+  <p>before body 打印的是 anonymous 和 10，说明进入两参构造器主体时，<b>默认值阶段已经结束，声明处的字段初始化器也已经执行</b>。这段输出没有直接展示更早的 null 和 0；那一阶段依据 §12.5，而不是从打印结果反推。</p>
+  <h3>“无参构造器”不等于“默认构造器”</h3>
+  <p>UserAccount() 是我们亲手写的无参构造器。JLS 所说的<b>默认构造器</b>有另一个严格含义：类里一个构造器声明都没有时，编译器隐式提供一个。只要能写 <code>new ImplicitOnly()</code> 的 ImplicitOnly 完全没声明构造器，就符合这条规则：</p>
+  <pre class="code">class ImplicitOnly { }
+new ImplicitOnly();
+// 实测输出：new ImplicitOnly(): success</pre>
+  <p>但只要写了一个构造器，编译器就不再补默认构造器。第 1 节的 NamedAccount 只声明了 NamedAccount(String)，所以 new NamedAccount() 实测编译失败：</p>
+  <pre class="code">错误: 无法将类 NamedAccount中的构造器 NamedAccount应用到给定类型;
+  需要: String
+  找到: 没有参数
+  原因: 实际参数列表和形式参数列表长度不同
+1 个错误</pre>
+  <p class="note">这里省略了报错里的本机绝对路径和源码指示行，完整原文见 MissingNoArg.out。</p>
+  <h3>真实项目里的手写构造器</h3>
+  <pre class="code">// DemoController.java 第 35–44 行
+public class DemoController {
+
+    private final DemoProperties properties;
+
+    public DemoController(DemoProperties properties) {
+        this.properties = properties;
+    }
+}</pre>
+  <p>右边的 properties 是参数，this.properties 是当前 DemoController 的字段。这个类既然显式声明了构造器，Java 就不会再补一个无参默认构造器。项目里还有许多 @AllArgsConstructor 让 Lombok 生成构造器；谁负责调用它、依赖怎样传进来，留到 Spring 的依赖注入篇。</p>
+  <div class="callout">
+    <span class="t">新版补充：Java 25 允许构造器先写 prologue</span>
+    Java 8 要求显式 this(...) 或 super(...) 必须是构造器主体的第一条语句。JEP 513 在 Java 25 正式加入“灵活构造器方法体”：调用前的语句段叫 prologue，可以先校验参数或初始化当前对象的字段；调用后的语句段叫 epilogue。prologue 仍不能随意读取 this 或调用当前对象的实例方法。默认构造器“仅在没有任何构造器声明时出现”的条件到 Java 25 没变。新版语法依据 JEP 513 和 Java SE 25 §8.8，本机未运行。
+  </div>
+  <p class="src">实测：<code>Construction.java</code>、<code>DefaultConstructor.java</code>、<code>MissingNoArg.java</code>。真实代码：<code>DemoController.java</code> 第 35–44 行。</p>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>封装：private 还不够</h2>
+  <p>把字段写成 private，首先是限制哪些源码能直接访问它。要进一步保证“余额不会被改成负数”，还需要所有修改入口都执行同一条约束。Wallet 没有公开字段，也不提供随意赋值的 setter，只开放会检查金额的 withdraw：</p>
+  <pre class="code">class Wallet {
+    private int balance;
+
+    Wallet(int balance) { this.balance = balance; }
+
+    boolean withdraw(int amount) {
+        if (amount &lt;= 0 || amount &gt; balance) {
+            return false;
+        }
+        balance -= amount;
+        return true;
+    }
+
+    int getBalance() { return balance; }
+
+    boolean sameBalance(Wallet other) {
+        return this.balance == other.balance;
+    }
+}</pre>
+  <pre class="code">withdraw(30): true, balance=70
+withdraw(80): false, balance=70
+withdraw(0): false, balance=70
+sameBalance(new Wallet(70)): true</pre>
+  <p>sameBalance 还拆掉一个常见误解：<b>private 不是“只有这个对象自己能看”，而是“只有包围声明的类体能看”</b>。所以 Wallet 的方法可以读取另一个 Wallet 实例的 other.balance；包里的其他类仍然不行，第 6 节会让 javac 证明这一点。</p>
+  <div class="card" id="wallet-lab">
+    <h3 style="margin-top:0">对照：字段公开，还是方法守门</h3>
+    <p class="note">按顺序执行三步，两边初始余额都是 100。左边直接改 public 字段；右边只能调用上面的 withdraw。这里是按相同规则制作的浏览器对照模型，Java 实测输出以上方为准。</p>
+    <div class="wallet-grid">
+      <div class="wallet-panel">
+        <h3>public balance</h3>
+        <p>调用处可以直接赋值或做减法</p>
+        <div class="wallet-balance" id="open-balance">100</div>
+        <div class="wallet-status" id="open-status">等待操作</div>
+      </div>
+      <div class="wallet-panel">
+        <h3>private balance + withdraw</h3>
+        <p>直接写字段会在编译期被拒绝</p>
+        <div class="wallet-balance" id="guarded-balance">100</div>
+        <div class="wallet-status" id="guarded-status">等待操作</div>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn primary" id="wallet-next">执行：取出 30</button>
+      <button class="btn" id="wallet-reset">重置</button>
+    </div>
+    <div class="wallet-log" id="wallet-log">尚未执行。</div>
+  </div>
+  <h3>SpringBlade 的 private 字段为什么还能 set</h3>
+  <pre class="code">// User.java 第 35–38、56–62 行（节选）
+@Data
+public class User extends TenantEntity {
+    private String account;
+    private String password;
+    private String name;
+}</pre>
+  <p>User 里没有手写 getPassword 或 setPassword，但类上有 Lombok 的 @Data。@Data 的官方规则包括：给所有字段生成 getter，给所有非 final 字段生成 setter，而且生成的 getter/setter 默认是 public。于是 service 写的是方法调用，不是直接访问 private 字段：</p>
+  <pre class="code">// UserServiceImpl.java 第 58–62 行
+public boolean submit(User user) {
+    if (Func.isNotEmpty(user.getPassword())) {
+        user.setPassword(DigestUtil.encrypt(user.getPassword()));
+    }</pre>
+  <p>所以“private 字段外界完全不能改”是错的；准确说法是“外界不能直接写字段，能否通过方法改，要看类提供了什么方法”。User 这种实体承担数据承载，SpringBlade 选择用 Lombok 开放访问器；Wallet 要守住余额约束，就不能再给一个不做检查的 public setBalance。两种设计服务于不同目的。</p>
+  <div class="callout">
+    <span class="t">新版补充：Java 16 的 record 面向不可变数据载体</span>
+    JEP 395 规定，record 的每个组件对应 private final 字段，并自动获得规范构造器、访问器、equals、hashCode 和 toString；record 本身不提供一套 JavaBeans setter。JEP 同时明确：解决可变 JavaBeans 类的需求不是 record 的目标。因此不能把 User 这类需要逐字段修改的实体机械地改成 record。以上依据 JEP 395，本机 JDK 8 未运行 record。
+  </div>
+  <p class="src">实测：<code>local/examples/1-4/Encapsulation.java</code>。真实代码：<code>User.java</code>、<code>UserServiceImpl.java</code>；生成规则见 Lombok @Data 文档。</p>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>包和访问控制：四道门</h2>
+  <p><code>package org.springblade.system.user.entity;</code> 声明当前编译单元属于哪个包；import 只是让其他包的类型可以用简单名书写。每个编译单元会自动导入 java.lang 里的 public 类型，所以 String 不用手写 import。import 不会连带导入子包。</p>
+  <p>包也参与访问控制。下面这个 Vault 特意写齐四种字段，接下来用三个包位置去访问：</p>
+  <pre class="code">package demo.model;
+
+public class Vault {
+    private int secret = 1;
+    int packageValue = 2;
+    protected int inheritedValue = 3;
+    public int publicValue = 4;
+}</pre>
+  <div class="tablewrap">
+    <table class="access">
+      <thead><tr><th>声明方式</th><th>同一个类</th><th>同一个包</th><th>跨包子类</th><th>跨包普通类</th></tr></thead>
+      <tbody>
+        <tr><td>private</td><td class="yes">可以</td><td class="no">不行</td><td class="no">不行</td><td class="no">不行</td></tr>
+        <tr><td>不写修饰符<br><span class="note">包私有 / default access</span></td><td class="yes">可以</td><td class="yes">可以</td><td class="no">不行</td><td class="no">不行</td></tr>
+        <tr><td>protected</td><td class="yes">可以</td><td class="yes">可以</td><td class="limited">受继承规则限制</td><td class="no">不行</td></tr>
+        <tr><td>public</td><td class="yes">可以</td><td class="yes">可以</td><td class="yes">可以</td><td class="yes">可以</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="note">前提：包含成员的类或接口本身也必须可访问。“default”在这里是访问级别的名字，不是要写到字段前的关键字。</p>
+  <p>同包的 SamePackage 能读 packageValue、inheritedValue、publicValue；跨包普通类 OtherPackage 只读到了 publicValue。对应的 javac 报错也分别验证了：同包仍读不了 private，跨包读不了包私有字段。</p>
+  <pre class="code">// 同包读取 private：SamePackagePrivateError.java
+错误: secret 在 Vault 中是 private 访问控制
+
+// 跨包读取包私有字段：OtherPackageError.java
+错误: packageValue在Vault中不是公共的; 无法从外部程序包中对其进行访问</pre>
+  <h3>protected 不能简化成“子类随便访问”</h3>
+  <p>跨包时，访问代码必须位于子类中；对实例字段，点号左边表达式的编译时类型还有限制。假设 ProtectedChild 在 demo.client，Vault 在 demo.model：</p>
+  <pre class="code">// ProtectedChild.java：两种写法均实测通过
+int readFromThis() {
+    return this.inheritedValue;
+}
+int readFromChild(ProtectedChild child) {
+    return child.inheritedValue;
+}
+
+// ProtectedChildError.java：单独编译，确认报错
+int readFromParent(Vault parent) {
+    return parent.inheritedValue;
+}
+// 错误: inheritedValue 在 Vault 中是 protected 访问控制</pre>
+  <p>原因是 JLS §6.6.2.1：在子类 S 的类体里跨包访问 protected 实例成员时，限定表达式的类型必须是 S 或 S 的子类。这里 this 和 child 都是 ProtectedChild，parent 却是 Vault。继承本身下一篇再展开，这里先记住 protected 的准确边界。</p>
+  <div class="callout">
+    <span class="t">新版补充：Java 9 模块在包之外又加了一道 exports</span>
+    四种成员访问级别和 protected 的上述限制在 Java SE 25 §6.6 中仍保留。JEP 261 在 Java 9 交付模块系统：在命名模块之间，一个 public 类型所在包还需要被 exports，访问方还要能读取提供方模块；public 不再单独保证处处可访问。classpath 项目和模块项目不能混为一谈。本机示例是普通 JDK 8 包访问实验，未运行模块示例。
+  </div>
+  <p class="src">实测：<code>local/examples/1-4/access-src/</code>；成功输出见 <code>AccessValid.out</code>，三份预期编译失败输出见对应 <code>*Error.out</code>。</p>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>小结和自测</h2>
+  <div class="callout key">
+    <span class="t">带走六句话</span>
+    每次 new 都创建实例，非 static 字段每个实例一份；引用赋值则会让多个变量指向同一实例。实例方法里的 this 指向接收者，构造器里的 this 指向正在构造的对象。字段先经历默认值和初始化器，再执行构造器余下主体；this(...) 委托不会让字段初始化器重复执行。只有完全没写构造器时才有默认构造器，手写无参构造器不叫默认构造器。private 限制直接访问，公开方法和 Lombok setter 仍能修改状态。包私有不是 public，protected 跨包实例访问还受子类和表达式类型限制。
+  </div>
+
+  <div class="card">
+    <h3>六个问题</h3>
+    <div class="q">
+      <div class="qt">1. <code>Counter a = new Counter(); Counter b = new Counter(); a.increment();</code>，b 的 value 为什么不是 1？若接着写 <code>b = a; b.increment();</code>，a 又会看到什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">两次 new 创建两个实例，各自有一份 value，所以第一次只改 a 的对象。b = a 只复制引用，此后两者指向同一个对象；再调用 b.increment()，a 也会看到同一个 value 变为 2。对应 TwoObjects 的实测。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 方法参数和实例字段同名时，<code>this.name = name;</code> 左右两边各指什么？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">右边 name 是参数；左边 this.name 是当前接收者对象的实例字段。在构造器里，this 则是正在构造的对象。不能把两边都理解为字段。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 一个类写了 <code>UserAccount() { this("guest", 0); }</code>，这个无参构造器是 JLS 的默认构造器吗？字段初始化器会执行几次？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不是，它是显式声明的无参构造器。默认构造器只在类没有任何构造器声明时隐式出现。this(...) 委托链中，当前类的字段初始化器只执行一次；Construction 的两次 new 各自初始化一次，但同一次无参 new 内没有重复初始化。</div>
+    </div>
+    <div class="q">
+      <div class="qt">4. <code>class A { A(String x) { } }</code> 能否写 <code>new A()</code>？怎样才能有一个公开的无参构造器？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">不能，已有显式构造器后不会再补默认构造器。若设计需要无参入口，就按所需访问级别显式声明，例如 public A() { ... }；是否委托其他构造器由类的初始化需求决定。</div>
+    </div>
+    <div class="q">
+      <div class="qt">5. User 的 password 是 private，UserServiceImpl 为什么还能调用 setPassword？同一个 Wallet 类里又为什么能读 other.balance？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">User 上的 Lombok @Data 为非 final 字段生成 public setter，service 调的是公开方法，不是直接访问 private 字段。private 的访问边界是包围声明的类体，不是单个对象，所以 Wallet 的方法可以访问另一个 Wallet 实例的私有字段。</div>
+    </div>
+    <div class="q">
+      <div class="qt">6. 跨包子类中，为什么 <code>this.inheritedValue</code> 和 <code>child.inheritedValue</code> 可以，<code>parent.inheritedValue</code> 却编译失败？</div>
+      <button class="btn">看参考答案</button>
+      <div class="ans">在 demo.client 的子类 ProtectedChild 中跨包访问 demo.model.Vault 的 protected 实例字段时，限定表达式类型必须是 ProtectedChild 或它的子类。this 和 child 满足，声明为 Vault 的 parent 不满足；仅“代码位于子类里”还不够。</div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>参考资料</h2>
+  <p>每条后面写明它支撑文中哪句话。规范、JEP、Lombok 文档和真实项目代码在 2026-11-14 逐条打开核对；未特别标注版本的规范均为 Java SE 8 版。</p>
+  <div class="card refs">
+    <h3>真实项目源码（SpringBlade v3.7.1）</h3>
+    <ul>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service-api/blade-user-api/src/main/java/org/springblade/system/user/entity/User.java#L35-L66" target="_blank" rel="noopener">User.java 第 35–66 行</a><span>支撑：第 5 节——@Data、private account/password/name 字段的真实声明</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-user/src/main/java/org/springblade/system/user/service/impl/UserServiceImpl.java#L58-L67" target="_blank" rel="noopener">UserServiceImpl.java 第 58–67 行</a><span>支撑：第 5 节——service 通过 getPassword/setPassword 访问和修改 User</span></li>
+      <li><a href="https://github.com/chillzhuang/SpringBlade/blob/v3.7.1/blade-service/blade-demo/src/main/java/com/example/demo/controller/DemoController.java#L35-L54" target="_blank" rel="noopener">DemoController.java 第 35–54 行</a><span>支撑：第 4 节——显式构造器、final 字段和 this.properties = properties</span></li>
+    </ul>
+    <h3>语言规范（JLS）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.5" target="_blank" rel="noopener">JLS §4.12.5 Initial Values of Variables</a><span>支撑：第 2 节——实例字段的默认初始值，以及局部变量不自动初始化的区别</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.3" target="_blank" rel="noopener">JLS §8.3 Fields</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.4.2" target="_blank" rel="noopener">§8.4.2 Method Signature</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.4.9" target="_blank" rel="noopener">§8.4.9 Overloading</a><span>支撑：第 2、3 节——实例字段、方法签名与重载；返回类型不构成单独的重载依据</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.8.7" target="_blank" rel="noopener">JLS §8.8.7 Constructor Body</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.8.9" target="_blank" rel="noopener">§8.8.9 Default Constructor</a><span>支撑：第 4 节——Java 8 的 this(...) 首句规则，以及仅在没有任何构造器声明时提供默认构造器</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-12.html#jls-12.5" target="_blank" rel="noopener">JLS §12.5 Creation of New Class Instances</a><span>支撑：第 4 节——默认值、父类构造、字段初始化器、构造器主体，以及 this(...) 委托的处理顺序</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.8.3" target="_blank" rel="noopener">JLS §15.8.3 this</a><span>支撑：第 3、4 节——this 在实例方法中指接收者，在构造器中指正在构造的对象</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-6.html#jls-6.6.1" target="_blank" rel="noopener">JLS §6.6.1 Determining Accessibility</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-6.html#jls-6.6.2.1" target="_blank" rel="noopener">§6.6.2.1 protected Member Access</a><span>支撑：第 5、6 节——private 的类体边界、包访问、public，以及 protected 跨包实例访问的表达式类型限制</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-7.html#jls-7.3" target="_blank" rel="noopener">JLS §7.3 Compilation Units</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-7.html#jls-7.5.1" target="_blank" rel="noopener">§7.5.1 Single-Type Import</a><span>支撑：第 6 节——java.lang 隐式导入、import 让类型可用简单名表示且不导入子包</span></li>
+    </ul>
+    <h3>新版规则与工具文档</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-8.html" target="_blank" rel="noopener">JLS（Java SE 25）第 8 章</a>、<a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-6.html#jls-6.6" target="_blank" rel="noopener">第 6 章 §6.6</a><span>支撑：第 2、3、4、6 节「新版补充」——实例字段、方法、默认构造器条件与成员访问控制在新版规范中的保留</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se25/html/jls-7.html#jls-7.6" target="_blank" rel="noopener">JLS（Java SE 25）§7.6、§7.7</a>、<a href="https://openjdk.org/jeps/261" target="_blank" rel="noopener">JEP 261：Module System（Java 9）</a><span>支撑：第 6 节「新版补充」——命名模块中的 public 类型还受 exports 和模块可读性约束</span></li>
+      <li><a href="https://openjdk.org/jeps/395" target="_blank" rel="noopener">JEP 395：Records（Java 16）</a><span>支撑：第 2、3、5 节「新版补充」——record 是 new 创建的类；组件访问器命名、private final 字段、规范构造器和数据承载目标</span></li>
+      <li><a href="https://openjdk.org/jeps/513" target="_blank" rel="noopener">JEP 513：Flexible Constructor Bodies（Java 25）</a><span>支撑：第 4 节「新版补充」——prologue / epilogue、显式构造器调用前允许的安全语句，以及访问当前对象的限制</span></li>
+      <li><a href="https://projectlombok.org/features/Data" target="_blank" rel="noopener">Lombok @Data 官方文档</a><span>支撑：第 5 节——@Data 生成 getter、非 final 字段的 public setter，以及构造器等方法；这不是 Java 自动给普通类生成访问器</span></li>
+    </ul>
+    <h3>本篇实验</h3>
+    <ul>
+      <li><a href="https://github.com/wangx7/cs-crash-course/tree/main/local/examples/1-4" target="_blank" rel="noopener">local/examples/1-4/</a><span>支撑：全篇 Java 源码、成功运行输出、三份预期 javac 失败输出、包访问实验与复现命令</span></li>
+    </ul>
+  </div>
+  <p class="note">范围与未实测项：Java 16 record、Java 25 灵活构造器方法体、Java 9 模块均依据 JEP 和新版规范，本机只有 JDK 8，未运行这些新版语法。SpringBlade 按本地 v3.7.1 源码逐行核对，Lombok 生成规则依据官方文档，本篇没有重新启动整个微服务工程。对象图中的 C1、C2 是逻辑名称，不是地址。余额对照模型只在浏览器中执行，Java 结论以 Encapsulation.java 的实测与 JLS 为准。构造顺序图的“父类构造”只标出位置，继承与方法分派留到 1.6。</p>
+
+  <button class="btn" id="mark-read"></button>
+
+  <div class="pager">
+    <a href="1-3.html"><small>上一篇</small>1.3 String</a>
+    <a class="next off"><small>下一篇（还没写）</small>1.5 static 和 final</a>
+  </div>
+
+  <div class="credit">
+    本篇是原创内容，由 Kimi K3.1 Pro（月之暗面）写作并制作交互演示，非任何官方教材。文中引用的 SpringBlade v3.7.1 代码版权归原作者所有，按 Apache License 2.0 引用；所有 Java 示例与编译报错均在 Amazon Corretto 1.8.0_512 上实际编译、运行或验证后引用。<br>
+    内容随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。
+  </div>
+</section>
+
+</main>
+</div>
+
+<script src="../assets/cc.js"></script>
+<script>
+const escapeHtml = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// ---------- 第 1 节：先预测，再显示实测 ----------
+(() => {
+  const QUESTIONS = [
+    {
+      q: '检查点 A：first.getValue(), second.getValue()',
+      choices: ['0, 0', '1, 0', '1, 1'], answer: '1, 0',
+      why: '两次 new 创建两个实例；first 的 value 改为 1，second 的对象仍是 0。'
+    },
+    {
+      q: '检查点 B：first.getValue(), second.getValue()',
+      choices: ['1, 1', '1, 2', '2, 2'], answer: '2, 2',
+      why: 'second = first 复制引用；两个变量此后指向同一对象，再 increment 后都读到 2。'
+    },
+    {
+      q: '只有 NamedAccount(String) 时，new NamedAccount()',
+      choices: ['能创建，name 为 null', '编译失败'], answer: '编译失败',
+      why: '已有显式构造器后不再提供默认构造器，javac 报告实际参数与形式参数长度不同。'
+    }
+  ];
+  const state = Array(QUESTIONS.length).fill(null);
+  const root = $('#prediction-quiz');
+  root.innerHTML = `<div class="pq-head"><h3>你的预测</h3><span class="pq-score" id="pq-score" aria-live="polite"></span></div>` +
+    QUESTIONS.map((q, i) => `<div class="pq-row" id="pq-${i}">
+      <div class="pq-q">${escapeHtml(q.q)}</div>
+      <div class="pq-choices">${q.choices.map((c, j) => `<button class="btn" data-choice="${j}" aria-pressed="false">${escapeHtml(c)}</button>`).join('')}</div>
+      <div class="pq-result" aria-live="polite"></div>
+    </div>`).join('') +
+    `<div class="btns" style="margin-top:12px"><button class="btn" id="pq-reset">清空重猜</button></div>`;
+
+  function updateScore() {
+    const answered = state.filter(v => v !== null).length;
+    const right = state.filter((v, i) => v === QUESTIONS[i].answer).length;
+    $('#pq-score').textContent = `已作答 ${answered} / ${QUESTIONS.length} · 答对 ${right}`;
+  }
+  function choose(i, btn) {
+    const q = QUESTIONS[i];
+    const value = q.choices[Number(btn.dataset.choice)];
+    state[i] = value;
+    const row = $('#pq-' + i);
+    row.classList.add('answered');
+    $$('.pq-choices .btn', row).forEach(b => {
+      const picked = b === btn;
+      b.classList.toggle('picked', picked);
+      b.setAttribute('aria-pressed', String(picked));
+    });
+    const good = value === q.answer;
+    $('.pq-result', row).innerHTML = `<span class="${good ? 'right' : 'wrong'}">${good ? '预测正确' : '修正一下直觉'}</span> · JDK 8 实测：<span class="actual">${escapeHtml(q.answer)}</span>。${q.why}`;
+    updateScore();
+  }
+  QUESTIONS.forEach((q, i) => {
+    $$('.pq-choices .btn', $('#pq-' + i)).forEach(btn => btn.addEventListener('click', () => choose(i, btn)));
+  });
+  $('#pq-reset').addEventListener('click', () => {
+    state.fill(null);
+    QUESTIONS.forEach((q, i) => {
+      const row = $('#pq-' + i);
+      row.classList.remove('answered');
+      $$('.pq-choices .btn', row).forEach(b => {
+        b.classList.remove('picked');
+        b.setAttribute('aria-pressed', 'false');
+      });
+      $('.pq-result', row).textContent = '';
+    });
+    updateScore();
+  });
+  updateScore();
+})();
+
+// ---------- 第 5 节：余额约束的浏览器对照模型 ----------
+(() => {
+  const steps = [
+    {
+      label: '取出 30', open: 70, guarded: 70,
+      openStatus: 'balance -= 30\n允许，余额 70',
+      guardedStatus: 'withdraw(30) → true\n检查通过，余额 70',
+      log: '第 1 步：两边都取出 30，余额都为 70。'
+    },
+    {
+      label: '再取出 80', open: -10, guarded: 70,
+      openStatus: 'balance -= 80\n允许，余额变成 -10',
+      guardedStatus: 'withdraw(80) → false\n拒绝，余额仍为 70',
+      log: '第 2 步：公开字段没有检查，出现 -10；守门方法拒绝超额取款。'
+    },
+    {
+      label: '直接写入 -50', open: -50, guarded: 70,
+      openStatus: 'balance = -50\n允许，余额变成 -50',
+      guardedStatus: 'wallet.balance = -50\n编译失败，余额不变',
+      log: '第 3 步：左边仍可随意改值；右边的直接字段访问无法通过编译。'
+    }
+  ];
+  let index = 0;
+  function render(open, guarded, openStatus, guardedStatus, log) {
+    $('#open-balance').textContent = open;
+    $('#guarded-balance').textContent = guarded;
+    $('#open-balance').classList.toggle('bad', open < 0);
+    $('#guarded-balance').classList.toggle('bad', guarded < 0);
+    $('#open-status').textContent = openStatus;
+    $('#guarded-status').textContent = guardedStatus;
+    $('#wallet-log').textContent = log;
+  }
+  $('#wallet-next').addEventListener('click', () => {
+    if (index >= steps.length) return;
+    const s = steps[index++];
+    render(s.open, s.guarded, s.openStatus, s.guardedStatus, s.log);
+    $('#wallet-next').textContent = index < steps.length ? `执行：${steps[index].label}` : '三步已执行完';
+    $('#wallet-next').disabled = index >= steps.length;
+  });
+  $('#wallet-reset').addEventListener('click', () => {
+    index = 0;
+    render(100, 100, '等待操作', '等待操作', '尚未执行。');
+    $('#wallet-next').textContent = `执行：${steps[0].label}`;
+    $('#wallet-next').disabled = false;
+  });
+})();
+</script>
+</body>
+</html>

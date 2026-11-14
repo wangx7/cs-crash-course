@@ -1,0 +1,5 @@
+$ /Users/wangx/Library/Java/JavaVirtualMachines/corretto-1.8.0_512/Contents/Home/bin/javac -encoding UTF-8 -d access-classes access-src/demo/model/Vault.java access-src/demo/model/SamePackagePrivateError.java
+/Users/wangx/我的/github/cs-crash-course/local/examples/1-4/access-src/demo/model/SamePackagePrivateError.java:5: 错误: secret 在 Vault 中是 private 访问控制
+        System.out.println(new Vault().secret);
+                                      ^
+1 个错误
