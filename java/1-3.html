@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.3 String：不可变、常量池、== 和 equals · Java 后端</title>
+<meta name="description" content="用 JDK 8 实测和一个可操作的字符串工作台，看清 String 对象从哪里来：常量池、常量折叠、intern、不可变与 hashCode 缓存，以及 == 和 equals 的区别。">
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font:13px/1.75 var(--mono);background:var(--code);border-radius:10px;padding:14px 16px;overflow-x:auto;white-space:pre;tab-size:4;margin:14px 0}
+.note{font-size:13px;line-height:1.8;color:var(--muted);overflow-wrap:anywhere}
+.src{font-size:12.5px;color:var(--muted);margin:6px 0 0}
+.output-label{font:12px/1.6 var(--mono);color:var(--muted);margin:14px 0 5px}
+.run-result pre{border-left:3px solid var(--ok);margin-top:0}
+[hidden]{display:none!important}
+.run-result{margin-bottom:16px}
+
+/* 先猜 */
+.guess{padding:16px 0;border-bottom:1px solid var(--line)}
+.guess:last-of-type{border-bottom:none}
+.guess .qt{font-weight:600}
+.guess .opts{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 0}
+.guess .opt.right{border-color:var(--ok);background:var(--ok-soft);color:var(--ink)}
+.guess .opt.wrong{border-color:var(--bad);background:var(--bad-soft);color:var(--ink)}
+.guess .why{display:none;font-size:15px;margin-top:10px;padding:10px 14px;background:var(--bg);border-radius:10px}
+.guess.done .why{display:block}
+#guess-score{font-size:14px;color:var(--muted);margin:10px 0 0;min-height:24px}
+
+/* 字符串工作台 */
+.bench-grid{display:grid;grid-template-columns:minmax(230px,300px) minmax(0,1fr);gap:16px;margin:16px 0}
+.bench-actions{display:flex;flex-direction:column;gap:8px}
+.bench-actions .btn{font:13px/1.5 var(--mono);text-align:left;white-space:normal}
+.bench-actions .btn small{display:block;font:12px/1.5 inherit;color:var(--muted)}
+.bench-actions .btn:disabled{opacity:.55}
+.zone{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:12px;background:var(--panel)}
+.zone.pool{border-color:var(--on)}
+.zone h4{margin:0 0 8px;font-size:14px}
+.zone h4 small{font-weight:400;color:var(--muted);margin-left:6px}
+.zone .empty{font-size:13px;color:var(--muted);margin:4px 0}
+.obj{border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin:8px 0;background:var(--bg)}
+.obj .txt{font:14px/1.6 var(--mono);font-weight:700}
+.obj .vars{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.obj .vars span{font:12px/1.4 var(--mono);padding:2px 9px;border-radius:999px;border:1px solid var(--on);background:var(--on-soft)}
+.zone.heap .obj .vars span{border-color:var(--accent);background:var(--accent-soft)}
+.bench-compare{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+.bench-compare select{font:14px var(--mono);padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+#cmp-out{min-height:56px}
+#cmp-out b.ok{color:var(--ok)}
+#cmp-out b.bad{color:var(--bad)}
+#bench-log{min-height:52px}
+
+/* 字节码对照 */
+.bytecode{border-left:3px solid var(--accent)}
+.bytecode-note{font-size:13.5px;color:var(--muted);margin:6px 0 0}
+
+/* 参考资料 */
+.refs ul{padding-left:20px}
+.refs li{margin:0;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}
+.refs li:last-child{border-bottom:0}
+.refs li span{display:block;font-size:13px;color:var(--muted);margin-top:4px}
+.refs h3:not(:first-child){margin-top:24px}
+@media(max-width:700px){.bench-grid{grid-template-columns:1fr}}
+@media(max-width:600px){pre.code{font-size:12px;padding:12px}}
+@media(pointer:coarse){.btn{min-height:44px}}
+</style>
+</head>
+<body data-ep="103" data-store="java-be-read" data-unit="篇">
+<div class="topbar"><a href="index.html">← Java 后端 · 目录</a><span class="muted">第 1 部分 · 对象与类型</span></div>
+<header class="hero">
+  <div class="eyebrow">第 1 部分 · 对象与类型 · 1.3</div>
+  <h1>String：不可变、常量池、== 和 equals</h1>
+  <p class="en">Immutability, the string pool, == and equals</p>
+  <p class="lead">两个内容一模一样的字符串，<code>==</code> 有时说相等，有时说不相等。差别不在内容，而在两个变量指向的是不是同一个对象。这一篇用几段在 JDK 8 上实际运行过的小程序，看清字符串对象从哪里来、常量池登记了什么、String 为什么设计成不可变，以及比较内容时该用谁。</p>
+  <div class="road"><span>先猜</span><i>→</i><span>身份与内容</span><i>→</i><span>字符串工作台</span><i>→</i><span>拼接的两副面孔</span><i>→</i><span>不可变与它的代价</span></div>
+  <p class="note" style="margin-top:16px">本篇以 Java 8 为准。示例只用 JDK，不依赖 Spring、数据库或其他篇的代码；“运行”展示的是预先用 JDK 8 执行并记录的结果。</p>
+</header>
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">先猜：== 看内容吗</a></li>
+  <li><a href="#ch2">== 和 equals</a></li>
+  <li><a href="#ch3">常量池</a></li>
+  <li><a href="#ch4">拼接的两副面孔</a></li>
+  <li><a href="#ch5">不可变</a></li>
+  <li><a href="#ch6">拼接的代价</a></li>
+  <li><a href="#ch7">小结和自测</a></li>
+  <li><a href="#ch8">参考资料</a></li>
+</ol></nav>
+<main>
+<noscript><p class="note">启用 JavaScript 后可先猜后运行、操作字符串工作台；当前仍可阅读代码、输出和讲解。</p></noscript>
+
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div><h2>先猜：内容一样，== 就说相等吗？</h2>
+  <p>下面是一个完整的小程序。它造了三个内容都是 <code>notice</code> 的字符串，又写了一个由两段字面量拼出来的 <code>"no" + "tice"</code>，然后做四次比较。先别运行，凭直觉猜三件事。</p>
+  <pre class="code" data-source="ComparePuzzle.java">public class ComparePuzzle {
+    public static void main(String[] args) {
+        String a = "notice";
+        String b = "notice";
+        String c = new String("notice");
+        System.out.println("a==b=" + (a == b));
+        System.out.println("a==c=" + (a == c));
+        System.out.println("a.equals(c)=" + a.equals(c));
+        System.out.println("fold==a=" + ("no" + "tice" == a));
+    }
+}</pre>
+  <div class="card" id="guesses">
+    <div class="guess" data-a="0">
+      <div class="qt">① 两个字面量：<code>a == b</code> 是 true 还是 false？</div>
+      <div class="opts">
+        <button class="btn opt" type="button">true</button>
+        <button class="btn opt" type="button">false</button>
+      </div>
+      <div class="why"><b>true。</b>内容相同的字面量共用同一个对象，a 和 b 指向它。为什么能共用，第 3 节讲。</div>
+    </div>
+    <div class="guess" data-a="1">
+      <div class="qt">② <code>new</code> 出来的 c：<code>a == c</code> 和 <code>a.equals(c)</code> 各是什么？</div>
+      <div class="opts">
+        <button class="btn opt" type="button">都是 true</button>
+        <button class="btn opt" type="button">== 是 false，equals 是 true</button>
+        <button class="btn opt" type="button">都是 false</button>
+      </div>
+      <div class="why"><b>== 是 false，equals 是 true。</b><code>new String("notice")</code> 创建了一个新对象：内容相同，身份不同。两个比较器问的根本不是同一个问题，第 2 节拆开看。</div>
+    </div>
+    <div class="guess" data-a="0">
+      <div class="qt">③ 拼出来的：<code>"no" + "tice" == a</code> 是 true 还是 false？</div>
+      <div class="opts">
+        <button class="btn opt" type="button">true</button>
+        <button class="btn opt" type="button">false：拼接总会产生新对象</button>
+      </div>
+      <div class="why"><b>true。</b>两段字面量相加，编译器在编译期就把结果算成了 <code>"notice"</code>，根本没有发生运行时的拼接。但把其中一段换成变量，结果就反过来——第 4 节用字节码看这个差别。</div>
+    </div>
+    <p id="guess-score"></p>
+  </div>
+  <pre class="code" data-record="ComparePuzzle">a==b=true
+a==c=false
+a.equals(c)=true
+fold==a=true</pre>
+  <p data-after-run="ComparePuzzle">四行输出对应四个比较。三个字符串内容完全一样，<code>==</code> 却给出了两种答案；而 <code>equals</code> 说它们相等。要解释这个分裂，得先弄清这两个运算符各自在比较什么。</p>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div><h2>== 问身份，equals 问内容</h2>
+  <p>Java 里的字符串不是基本类型，<code>String</code> 是一个类，字符串变量里放的是指向对象的引用——字面量也不例外，语言规范明确说“字符串字面量是 String 类实例的引用”。所以 <code>a == c</code> 比较的不是字符，而是两个引用是否指向<b>同一个对象</b>；规范把这叫对象相等（object equality）。c 是 <code>new</code> 出来的另一个对象，哪怕字符一个不差，<code>==</code> 也是 false。</p>
+  <p><code>equals</code> 问的是另一个问题。String 重写了这个方法，它的契约是：参数不为 null、也是 String、且表示<b>相同的字符序列</b>时才返回 true。它不关心两个对象是不是同一个。所以 <code>a.equals(c)</code> 是 true。</p>
+  <p>如果你写过 JavaScript：那里两个字符串用 <code>===</code> 比较的就是内容；Java 的 <code>==</code> 对对象比较的是身份。这是本节大多数反直觉结果的根源。</p>
+  <div class="callout key">比较两个字符串的内容，用 <code>equals</code>，不用 <code>==</code>。<code>==</code> 偶尔给出 true（比如两个字面量之间），只是碰巧它们共用一个对象，不能依赖。</div>
+  <p>一个常见的配套写法：把确定不为 null 的一方放在前面，<code>"notice".equals(input)</code>。input 是 null 时，equals 的契约保证返回 false；反过来写 <code>input.equals("notice")</code>，input 为 null 就会抛 NullPointerException——沿着空引用调用方法，方法根本没机会执行。</p>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div><h2>常量池：字面量都登记在册</h2>
+  <p>回到第 1 节的 <code>a == b</code> 为什么是 true。语言规范规定：字符串字面量总是指向 String 的<b>同一个实例</b>——字面量，以及更一般的“常量表达式的值”，都会被 intern（登记），以便共享唯一的实例。类加载时，JVM 为遇到的字面量创建 String 对象；如果同样的内容已经登记过，就不再创建。</p>
+  <p>这个登记处叫<b>字符串常量池</b>，由 String 类自己维护，起初是空的。内容相同的字面量在池里只有一个对象，谁写这个字面量，谁的变量就指向它。而 <code>new String("notice")</code> 是明确的“创建新对象”指令：即使内容已在池里，也照样新建一个。这就是 a 和 c 身份不同的原因。</p>
+  <p>运行时拼接也产生新对象：规范说，字符串拼接的结果是新创建的 String，除非整个表达式是常量表达式（第 4 节细说）。所以 <code>part + "tice"</code> 每次执行都造一个新对象。</p>
+  <h3>在工作台里自己造几个字符串</h3>
+  <p>下面的工作台把这几条规则做成了可以动手的实验：点按钮创建变量，看对象出现在哪个区、哪些变量共用它；再任选两个变量，问 <code>==</code> 和 <code>equals</code> 各说什么。先造 a 和 c 比一比，再造出 d 和 e，猜一猜 <code>a == e</code> 是什么。</p>
+  <div class="card" id="bench">
+    <div class="bench-grid">
+      <div class="bench-actions" id="bench-actions" aria-label="创建变量的按钮"></div>
+      <div class="bench-zones">
+        <div class="zone pool"><h4>常量池<small>内容相同的字面量共用一个登记对象</small></h4><div id="pool-objs"><p class="empty">还没有对象。创建第一个字面量试试。</p></div></div>
+        <div class="zone heap"><h4>新建的对象<small>new 和运行时拼接的产物</small></h4><div id="heap-objs"><p class="empty">还没有对象。</p></div></div>
+      </div>
+    </div>
+    <pre class="code" id="bench-log">// 你创建的变量会按顺序记在这里</pre>
+    <div class="bench-compare">
+      <select id="cmp-x" aria-label="第一个变量"></select>
+      <div class="btns"><button class="btn" id="cmp-ee" type="button">==</button><button class="btn" id="cmp-eq" type="button">equals</button></div>
+      <select id="cmp-y" aria-label="第二个变量"></select>
+    </div>
+    <p class="note" id="cmp-out" aria-live="polite">创建至少两个变量后，选两个来比较。</p>
+    <div class="btns"><button class="btn" id="bench-reset" type="button">重新开始</button></div>
+    <p class="note">工作台在浏览器里按 Java 8 的规则模拟，分区是概念示意，不表示对象的物理内存位置。同一组变量在真实 JDK 8 里的运行结果在下面。</p>
+  </div>
+  <p>e 的那一步值得单独说。<code>intern()</code> 的契约是：池里已经有内容相等（按 equals 判断）的字符串，就返回池里那个；<b>没有，就把这个对象本身登记进池，并返回它自己</b>。d 的内容是 notice，池里早有 a 登记的那个，所以 <code>d.intern()</code> 返回的是 a 指向的对象，<code>a == e</code> 是 true，而 d 自己仍指向堆里那个拼接产物。</p>
+  <p>反过来，如果内容从没登记过呢？下面程序的最后两行在运行时拼出内容 blade——它不以字面量形式出现在程序里，池里起初没有它——然后 intern。先猜：<code>fresh.intern() == fresh</code> 是 true 还是 false？</p>
+  <pre class="code" data-source="PoolLab.java">public class PoolLab {
+    public static void main(String[] args) {
+        String a = "notice";
+        String b = "notice";
+        String c = new String("notice");
+        String part = "no";
+        String d = part + "tice";
+        String e = d.intern();
+        System.out.println("a==b=" + (a == b));
+        System.out.println("a==c=" + (a == c));
+        System.out.println("a==d=" + (a == d));
+        System.out.println("a==e=" + (a == e));
+        System.out.println("c==d=" + (c == d));
+        System.out.println("d==e=" + (d == e));
+        System.out.println("a.equals(d)=" + a.equals(d));
+        System.out.println("c.intern()==a=" + (c.intern() == a));
+        String fresh = new StringBuilder("bla").append("de").toString();
+        System.out.println("fresh.intern()==fresh=" + (fresh.intern() == fresh));
+    }
+}</pre>
+  <pre class="code" data-record="PoolLab">a==b=true
+a==c=false
+a==d=false
+a==e=true
+c==d=false
+d==e=false
+a.equals(d)=true
+c.intern()==a=true
+fresh.intern()==fresh=true</pre>
+  <p data-after-run="PoolLab">最后一行是 true：池里没有 blade，intern 把 fresh 自己登记了进去，返回的就是它。所以“intern 返回池里的对象”要补上半句——池里没有时，登记的正是你这个对象。这也是为什么 <code>s.intern() == t.intern()</code> 与 <code>s.equals(t)</code> 永远同真同假：intern 之后，内容相同的字符串必然指向同一个登记对象。</p>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div><h2>拼接：编译期算好的，和运行时才拼的</h2>
+  <p>第 1 节埋了一个反差：<code>"no" + "tice" == a</code> 是 true，<code>part + "tice" == a</code> 是 false。两行看起来做的是同一件事，结果为什么相反？再加一行：把变量声明成 <code>final</code>，结果又会变。先猜第三行。</p>
+  <pre class="code" data-source="FoldLab.java">public class FoldLab {
+    public static void main(String[] args) {
+        String a = "notice";
+        String part = "no";
+        final String fixed = "no";
+        String r1 = "no" + "tice";
+        String r2 = part + "tice";
+        String r3 = fixed + "tice";
+        System.out.println("r1==a=" + (r1 == a));
+        System.out.println("r2==a=" + (r2 == a));
+        System.out.println("r3==a=" + (r3 == a));
+    }
+}</pre>
+  <pre class="code" data-record="FoldLab">r1==a=true
+r2==a=false
+r3==a=true</pre>
+  <p data-after-run="FoldLab">关键在<b>常量表达式</b>这个概念。规范列出了它的组成：字面量、加减等运算符、以及指向“常量变量”的名字——而常量变量是用常量表达式初始化的 final 基本类型或 String 变量。于是：</p>
+  <ul>
+    <li><code>"no" + "tice"</code>：两个字符串字面量相加，是常量表达式。编译器直接算出 <code>"notice"</code>，并且规范规定 String 常量表达式的值同样被 intern——它和 a 指向同一个登记对象。</li>
+    <li><code>part + "tice"</code>：part 不是 final，编译期不知道它的值，整个表达式不是常量表达式。运行时才拼接，产生新对象。</li>
+    <li><code>fixed + "tice"</code>：fixed 是 final 且用字面量初始化，是常量变量，它的名字可以出现在常量表达式里。于是这一行也在编译期算成了 <code>"notice"</code>。</li>
+  </ul>
+  <h3>不信编译器？看它生成的指令</h3>
+  <p>JDK 自带一个反汇编工具 <code>javap</code>，<code>-c</code> 选项把编译好的 .class 文件还原成一条条字节码指令。对 FoldLab 编译产物执行 <code>javap -c FoldLab</code>，main 开头三个赋值对应的指令是（原样摘录，行首数字是指令偏移）：</p>
+  <pre class="code bytecode">       6: ldc           #2                  // String notice
+       8: astore        4
+      10: new           #4                  // class java/lang/StringBuilder
+      13: dup
+      14: invokespecial #5                  // Method java/lang/StringBuilder."&lt;init&gt;":()V
+      17: aload_2
+      18: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      21: ldc           #7                  // String tice
+      23: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      26: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      29: astore        5
+      31: ldc           #2                  // String notice
+      33: astore        6</pre>
+  <p class="bytecode-note">完整反汇编输出保存在实验记录里（javap/FoldLab.txt）。</p>
+  <p><code>ldc</code> 的意思是“从常量池取一个现成的常量”。r1（偏移 6）和 r3（偏移 31）都是直接 <code>ldc</code> 编号 #2 的 <code>"notice"</code>——和 a 的赋值（偏移 0）取的是同一个常量，指令里<b>没有任何拼接动作</b>。r2（偏移 10–29）则是现场 new 一个 StringBuilder，append 两次，再 toString 出一个新 String。编译期折叠与运行时拼接的差别，在指令层面一目了然。</p>
+  <p class="note">顺带说明：规范允许编译器用缓冲类来减少拼接产生的中间对象，JDK 8 的 javac 实际用的是 StringBuilder——上面偏移 10 的指令就是证据。单个表达式里的多次 <code>+</code> 会被这样优化成一次构建，第 6 节会看到循环里的 <code>+=</code> 享受不到这个优化。</p>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div><h2>不可变：方法从不修改原字符串</h2>
+  <p>String 的官方文档第一句就声明：字符串是常量，创建之后值不能改变。看一个容易误会的实验：<code>s.toUpperCase()</code> 和 <code>s.trim()</code> 之后，s 自己变了吗？先猜，再运行。</p>
+  <pre class="code" data-source="ImmutableLab.java">public class ImmutableLab {
+    public static void main(String[] args) {
+        String s = " Notice ";
+        String upper = s.toUpperCase();
+        String trimmed = s.trim();
+        System.out.println("s=[" + s + "]");
+        System.out.println("upper=[" + upper + "]");
+        System.out.println("trimmed=[" + trimmed + "]");
+        System.out.println("upper==s=" + (upper == s));
+        System.out.println("trimmed==s=" + (trimmed == s));
+        String clean = "notice";
+        System.out.println("clean.trim()==clean=" + (clean.trim() == clean));
+        System.out.println("clean.substring(0)==clean=" + (clean.substring(0) == clean));
+        String shout = "NOTICE";
+        System.out.println("shout.toUpperCase()==shout=" + (shout.toUpperCase() == shout));
+        System.out.println("clean.replace('x','y')==clean=" + (clean.replace('x', 'y') == clean));
+    }
+}</pre>
+  <pre class="code" data-record="ImmutableLab">s=[ Notice ]
+upper=[ NOTICE ]
+trimmed=[Notice]
+upper==s=false
+trimmed==s=false
+clean.trim()==clean=true
+clean.substring(0)==clean=true
+shout.toUpperCase()==shout=true
+clean.replace('x','y')==clean=true</pre>
+  <p data-after-run="ImmutableLab">前五行：s 原封不动，还是 <code>" Notice "</code>；大写版和去空白版都是<b>新对象</b>，要用变量接住返回值才能拿到它们。写 <code>s.trim();</code> 然后继续用 s，等于什么都没做。</p>
+  <p>后四行是另一半故事，也是容易记错的地方：“每个方法都返回新对象”并不对。当结果的内容和原来完全一样时，这几个方法会直接返回原对象：没有首尾空白可去的 <code>trim</code>、从头取到尾的 <code>substring(0)</code>、没有小写可转的 <code>toUpperCase</code>、找不到目标字符的 <code>replace</code>。trim 的文档写明了这一点，其余几个可以在 JDK 源码里逐行核对（出处见参考资料）。准确的说法是：<b>原对象绝不改变；方法返回的可能是新对象，也可能是原对象自己</b>。所以别用 <code>==</code> 去判断“方法有没有生效”，该比较内容还是比较内容。</p>
+  <h3>源码里长什么样</h3>
+  <p>JDK 自带源码压缩包 src.zip，里面 <code>java/lang/String.java</code>（Corretto 1.8.0_512）第 114 行是字符串的本体：</p>
+  <pre class="code">    private final char value[];</pre>
+  <p class="src">出处：JDK 8 src.zip 内 java/lang/String.java 第 114 行</p>
+  <p>一个 private 的字符数组，外面拿不到；整个类没有提供修改它内容的方法。本篇核对过的几个“修改”方法，需要改动时都是复制出新数组再包成新 String——比如 concat（第 2026–2034 行）先 <code>Arrays.copyOf</code> 再 <code>new String(buf, true)</code>，replace（第 2066–2091 行）同样新建数组。原对象的数组从不被写入。</p>
+  <h3>不可变换来的一件事：哈希可以缓存</h3>
+  <p>String 还有一个私有字段 <code>hash</code>（第 117 行），默认 0。第一次调用 <code>hashCode()</code> 时按公式算出哈希并存进去，以后直接返回缓存。用反射（运行时读取私有字段的手段，这里只用来观察）可以直接看到这个过程：</p>
+  <pre class="code" data-source="HashLab.java">import java.lang.reflect.Field;
+
+public class HashLab {
+    public static void main(String[] args) throws Exception {
+        String s = new String("notice");
+        Field hashField = String.class.getDeclaredField("hash");
+        hashField.setAccessible(true);
+        System.out.println("hashBefore=" + hashField.getInt(s));
+        System.out.println("hashCode=" + s.hashCode());
+        System.out.println("hashCodeAgain=" + s.hashCode());
+        System.out.println("hashAfter=" + hashField.getInt(s));
+    }
+}</pre>
+  <pre class="code" data-record="HashLab">hashBefore=0
+hashCode=-1039690024
+hashCodeAgain=-1039690024
+hashAfter=-1039690024</pre>
+  <p data-after-run="HashLab">调用前字段是 0，调用后变成了算出的值。这个缓存成立的前提正是不可变：内容永远不变，算一次就够了。哈希公式本身写在 hashCode 的文档里：<code>s[0]*31^(n-1) + s[1]*31^(n-2) + … + s[n-1]</code>。</p>
+  <h3>为什么后端要在意不可变</h3>
+  <p>把前面的事实连起来，不可变不是洁癖，是三件实际事情的前提：</p>
+  <ul>
+    <li><b>共享才安全。</b>常量池让 a、b 共用一个对象；如果字符串能被原地修改，a 调一次 toUpperCase 就会把 b 的值也改掉。文档原话是“因为 String 对象不可变，它们可以被共享”。同理，一个字符串在多个线程之间传递，不需要为它的内容加锁。</li>
+    <li><b>才能放心当 Map 的键。</b>HashMap 按哈希把键分散到桶里来定位；如果键的内容放进 Map 之后还能变，哈希跟着变，就再也找不到当初放的位置。Map 的文档专门警告：可变对象作键时，若对象在作为键期间发生了影响 equals 比较的改变，Map 的行为未定义。String 不可变，加上哈希缓存，做键既安全又快。</li>
+    <li><b>方法签名即承诺。</b>把一个字符串传进任何方法，都不必担心它被悄悄改掉——方法最多返回一个新字符串，接不接由调用方决定。</li>
+  </ul>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div><h2>循环里拼接，别用 +=</h2>
+  <p>不可变有一个直接的代价：每次“修改”都要复制。单个表达式里的 <code>+</code> 已经被编译器优化成一次 StringBuilder 构建（第 4 节看过指令），但循环里的 <code>+=</code> 是另一回事——每一轮都是一次独立的拼接表达式。把 20000 个 x 拼成一个长串，两种写法各花多少时间？先猜差距是百分之几，还是几个数量级。</p>
+  <pre class="code" data-source="ConcatCost.java">public class ConcatCost {
+    public static void main(String[] args) {
+        int n = 20000;
+        long start = System.nanoTime();
+        String s = "";
+        for (int i = 0; i &lt; n; i++) {
+            s += "x";
+        }
+        long plusDone = System.nanoTime();
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i &lt; n; i++) {
+            builder.append("x");
+        }
+        String t = builder.toString();
+        long builderDone = System.nanoTime();
+        System.out.println("sameContent=" + s.equals(t));
+        System.out.println("length=" + s.length());
+        System.out.println("plusMs=" + (plusDone - start) / 1000000);
+        System.out.println("builderMs=" + (builderDone - plusDone) / 1000000);
+    }
+}</pre>
+  <pre class="code" data-record="ConcatCost">sameContent=true
+length=20000
+plusMs=171
+builderMs=0</pre>
+  <p data-after-run="ConcatCost">这是写这一篇的机器上的一次运行：<code>+=</code> 版 171 毫秒，StringBuilder 版不足 1 毫秒（整除后记为 0）。耗时随机器、JIT 预热和运行次数变化，别把数字当常数；但差距的量级来自一个可以推算的事实。</p>
+  <p>看 <code>javap -c ConcatCost</code> 里循环体的指令（偏移 21–46）：<b>每一轮</b>都 new 一个 StringBuilder，把已有的 s 整个 append 进去，再 append 一个 x，toString 出新串。也就是说第 i 轮要复制已有的 i 个字符。20000 轮下来，复制的字符总数是 0+1+2+…+19999 = 199,990,000，约两亿次字符复制——这是按指令行为做的等差数列求和，不是测量值。而 StringBuilder 版全程只有一个可扩容的缓冲区，append 往末尾写，最后 toString 才复制一次。</p>
+  <div class="callout key">循环里拼接字符串，用 <code>StringBuilder</code> 的 <code>append</code>，最后 <code>toString()</code>。单个表达式里的多个 <code>+</code> 不必手动改写，编译器已经优化。</div>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div><h2>小结和自测</h2>
+  <div class="callout key"><span class="t">带走一句话</span>字符串的内容创建后绝不改变。<code>==</code> 问“是不是同一个对象”，<code>equals</code> 问“内容是否相同”。字面量和编译期算得出的拼接共用常量池里的登记对象；<code>new</code> 和运行时拼接产生新对象；<code>intern()</code> 返回登记对象，没有登记就登记自己。</div>
+  <div class="card"><h3>五个问题</h3>
+    <div class="q"><div class="qt">1. <code>String s = "notice"; String t = new String("notice");</code> —— <code>s == t</code>、<code>s.equals(t)</code>、<code>t.intern() == s</code> 各是什么？</div><button class="btn" type="button">看参考答案</button><div class="ans">false、true、true。t 是新对象，身份不同但内容相同；intern 时池里已有字面量 s 登记的 notice，返回的就是 s 指向的那个。</div></div>
+    <div class="q"><div class="qt">2. <code>String x = "no"; String y = x + "tice";</code> —— <code>y == "notice"</code> 是 true 吗？把 x 的声明改成 <code>final String x = "no";</code> 呢？</div><button class="btn" type="button">看参考答案</button><div class="ans">第一种是 false：x 不是 final，拼接在运行时进行，y 是新对象。改成 final 后是 true：用常量表达式初始化的 final String 是常量变量，x + "tice" 成为常量表达式，编译期折叠成 "notice" 并 intern。</div></div>
+    <div class="q"><div class="qt">3. 调用 <code>s.trim()</code> 之后，s 自己变了吗？什么情况下 trim 返回的就是原对象？</div><button class="btn" type="button">看参考答案</button><div class="ans">s 不变。trim 需要去掉首尾空白时返回新字符串；没有首尾空白可去时返回原对象（文档写明）。所以“调了方法没接返回值”等于白调，而“返回的一定是新对象”也不对。</div></div>
+    <div class="q"><div class="qt">4. 为什么 String 适合做 HashMap 的键？文档对可变对象作键说了什么？</div><button class="btn" type="button">看参考答案</button><div class="ans">内容不可变，哈希算一次就缓存，键放进 Map 后定位不会失效。Map 文档警告：可变对象作键时，若它在作为键期间发生了影响 equals 比较的改变，Map 的行为未定义。</div></div>
+    <div class="q"><div class="qt">5. <code>fresh.intern() == fresh</code> 什么时候是 true？本篇的 fresh 为什么是 true？</div><button class="btn" type="button">看参考答案</button><div class="ans">当 fresh 的内容还没在池里登记过时：intern 把 fresh 本身登记进池并返回它。本篇的 fresh 在运行时拼出 blade，这个内容不以字面量出现在程序里，池里起初没有，所以返回的就是 fresh 自己。若内容已有登记（比如程序里写过 "blade" 字面量），返回的则是池里那个，比较为 false。</div></div>
+  </div>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div><h2>参考资料</h2>
+  <p>引用的段落于 2026-11-16 逐条对照原文核对。每条后面写明它支撑文中的哪句话。</p>
+  <div class="card refs">
+    <h3>规范：Java 语言规范（Java SE 8）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.5" target="_blank" rel="noopener">JLS §3.10.5：字符串字面量</a><span>支撑：第 2、3 节：字面量是 String 实例的引用；字面量总是指向同一个实例，字面量与常量表达式的值被 intern 以共享唯一实例。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-12.html#jls-12.5" target="_blank" rel="noopener">JLS §12.5：创建新的类实例</a><span>支撑：第 3 节：new 显式创建新对象；类加载时可能为字面量创建 String 对象，若已 intern 过则不再创建。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.28" target="_blank" rel="noopener">JLS §15.28：常量表达式</a><span>支撑：第 4 节：常量表达式由字面量、加法等运算符、指向常量变量的名字组成；String 常量表达式的值总是被 intern。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.4" target="_blank" rel="noopener">JLS §4.12.4：final 变量与常量变量</a><span>支撑：第 4 节：常量变量是用常量表达式初始化的 final 基本类型或 String 变量。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.18.1" target="_blank" rel="noopener">JLS §15.18.1：字符串拼接运算符 +</a><span>支撑：第 3、4、6 节：拼接结果是新建的 String，除非表达式是常量表达式；允许编译器用 StringBuffer 或类似技术减少中间对象。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.21.3" target="_blank" rel="noopener">JLS §15.21.3：引用相等运算符 == 和 !=</a><span>支撑：第 2 节：两个引用操作数的 == 是对象相等，比较是否指向同一个对象。</span></li>
+    </ul>
+    <h3>官方 API 文档（Java SE 8）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html" target="_blank" rel="noopener">java.lang.String</a><span>支撑：第 5 节：“字符串是常量，创建后值不能改变”“因为不可变所以可以共享”；equals 的契约（非 null、同为 String、字符序列相同）；intern 的契约（池里有则返回池里的，没有则登记自己并返回自己）；hashCode 公式；trim 无首尾空白时返回原对象。</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/util/Map.html" target="_blank" rel="noopener">java.util.Map</a><span>支撑：第 5 节：可变对象作键、且在作为键期间发生影响 equals 比较的改变时，Map 的行为未定义。</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html" target="_blank" rel="noopener">java.util.HashMap</a><span>支撑：第 5 节：基本操作的常数时间性能以哈希把元素妥善分散到桶里为前提。</span></li>
+    </ul>
+    <h3>工具与源码</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/javap.html" target="_blank" rel="noopener">javap 工具文档</a><span>支撑：第 4、6 节：javap 反汇编 class 文件，-c 输出各方法的字节码指令。</span></li>
+      <li>JDK 8 src.zip 内的 <code>java/lang/String.java</code>（Amazon Corretto 1.8.0_512）<span>支撑：第 5 节：value 字段（114 行）、hash 字段（117 行）、hashCode 的缓存逻辑（1465–1476 行）、concat 复制新数组（2026–2034 行）、replace 新建数组（2066–2091 行）、substring(0) 返回 this（1933 行）、trim 返回 this（2878 行）、toUpperCase 无改动返回 this（2748 行）。本机查看：<code>unzip -p "$(/usr/libexec/java_home -v 1.8)/src.zip" java/lang/String.java</code>（macOS、已装 JDK 8）；其他环境解开 JDK 安装目录下的 src.zip 即可。</span></li>
+    </ul>
+  </div>
+  <p class="note">没有实测、按规则推断或示意的地方：字符串工作台是浏览器里按上述规则做的模拟，分区图是概念示意，不表示物理内存位置；第 6 节的耗时是写篇机器上的一次运行，随环境变化；“约两亿次字符复制”是按字节码行为做的等差数列求和，不是测量值。页内“运行”展示预先用 JDK 8（Corretto 1.8.0_512）执行并记录的结果，不是在线编译。本篇示例均为原创教学代码。</p>
+  <button class="btn" id="mark-read" type="button"></button>
+  <div class="pager"><a href="1-2.html"><small>上一篇</small>1.2 引用和内存</a><a class="next off" aria-disabled="true"><small>下一篇（还没写）</small>1.4 类和对象：字段、方法、构造器、封装</a></div>
+  <div class="credit">本篇是原创内容，由 Qoder 写作并实测示例、制作示意图与交互演示，非任何官方教材。示例均以 Amazon Corretto 1.8.0_512 编译运行，语言规则按 Java SE 8 文档核对。<br>本篇随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。</div>
+</section>
+</main>
+</div>
+<script src="../assets/cc.js"></script>
+<script>
+// ---------- 运行按钮：展示预先记录的 JDK 8 输出 ----------
+(() => {
+  document.querySelectorAll('pre[data-record]').forEach((output, index) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn primary';
+    button.textContent = '运行';
+    const controls = document.createElement('div');
+    controls.className = 'btns';
+    const result = document.createElement('div');
+    result.className = 'run-result';
+    result.id = 'result-' + index;
+    result.setAttribute('aria-live', 'polite');
+    result.hidden = true;
+    button.setAttribute('aria-controls', result.id);
+    button.setAttribute('aria-expanded', 'false');
+    const label = document.createElement('p');
+    label.className = 'output-label';
+    label.textContent = '输出';
+    output.before(controls, result);
+    controls.appendChild(button);
+    result.append(label, output);
+    const explanation = document.querySelector('[data-after-run="' + output.dataset.record + '"]');
+    if (explanation) explanation.hidden = true;
+    button.addEventListener('click', () => {
+      result.hidden = false;
+      button.textContent = '已运行';
+      button.disabled = true;
+      button.setAttribute('aria-expanded', 'true');
+      if (explanation) explanation.hidden = false;
+    });
+  });
+})();
+
+// ---------- 第 1 节：先猜三件事 ----------
+(() => {
+  const gs = $$('#guesses .guess');
+  let right = 0, answered = 0;
+  gs.forEach(g => {
+    const a = +g.dataset.a, opts = $$('.opt', g);
+    opts.forEach((b, i) => b.addEventListener('click', () => {
+      if (g.classList.contains('done')) return;
+      g.classList.add('done');
+      answered++;
+      if (i === a) right++;
+      opts[a].classList.add('right');
+      if (i !== a) b.classList.add('wrong');
+      opts.forEach(o => { if (!o.classList.contains('right') && !o.classList.contains('wrong')) o.disabled = true; });
+      if (answered === gs.length) {
+        $('#guess-score').textContent = `猜对 ${right} / ${gs.length}。` + (right === gs.length ? '直觉很准，下面看看依据。' : '猜错的那几个，正是值得往下看的地方。');
+      }
+    }));
+  });
+})();
+
+// ---------- 第 3 节：字符串工作台 ----------
+(() => {
+  const ACTIONS = [
+    { v: 'a',    code: 'String a = "notice";',             hint: '字面量', kind: 'literal', obj: 'P1' },
+    { v: 'b',    code: 'String b = "notice";',             hint: '再写一次同样的字面量', kind: 'literal', obj: 'P1' },
+    { v: 'c',    code: 'String c = new String("notice");', hint: 'new：内容相同也新建', kind: 'new', obj: 'H1' },
+    { v: 'part', code: 'String part = "no";',              hint: '字面量，给拼接用', kind: 'literal', obj: 'P2' },
+    { v: 'd',    code: 'String d = part + "tice";',        hint: '运行时拼接（需要先有 part）', kind: 'concat', obj: 'H2', needs: 'part' },
+    { v: 'e',    code: 'String e = d.intern();',           hint: '去登记处查（需要先有 d）', kind: 'intern', obj: 'P1', needs: 'd' },
+  ];
+  const OBJS = {
+    P1: { zone: 'pool', text: 'notice' },
+    P2: { zone: 'pool', text: 'no' },
+    H1: { zone: 'heap', text: 'notice' },
+    H2: { zone: 'heap', text: 'notice' },
+  };
+  const ORIGIN = {
+    literal: '字面量，登记在常量池里',
+    new: 'new 创建的新对象',
+    concat: '运行时拼接产生的新对象',
+    intern: 'intern() 从池里取回的登记对象',
+  };
+  const made = {};
+  const actionsBox = $('#bench-actions'), log = $('#bench-log');
+  const selX = $('#cmp-x'), selY = $('#cmp-y'), out = $('#cmp-out');
+
+  ACTIONS.forEach(act => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'btn';
+    b.innerHTML = act.code.replace(/</g, '&lt;') + '<small>' + act.hint + '</small>';
+    b.addEventListener('click', () => {
+      made[act.v] = act;
+      log.textContent = ACTIONS.filter(x => made[x.v]).map(x => x.code).join('\n');
+      render();
+    });
+    act.btn = b;
+    actionsBox.appendChild(b);
+  });
+
+  function render() {
+    ACTIONS.forEach(act => {
+      act.btn.disabled = !!made[act.v] || (act.needs && !made[act.needs]);
+    });
+    ['pool', 'heap'].forEach(zone => {
+      const box = $('#' + zone + '-objs');
+      box.innerHTML = '';
+      const ids = Object.keys(OBJS).filter(id => OBJS[id].zone === zone &&
+        ACTIONS.some(act => made[act.v] && made[act.v].obj === id));
+      if (!ids.length) {
+        box.innerHTML = '<p class="empty">' + (zone === 'pool' ? '还没有对象。创建第一个字面量试试。' : '还没有对象。') + '</p>';
+        return;
+      }
+      ids.forEach(id => {
+        const card = document.createElement('div');
+        card.className = 'obj';
+        const vars = ACTIONS.filter(act => made[act.v] && made[act.v].obj === id).map(act => act.v);
+        card.innerHTML = '<div class="txt">"' + OBJS[id].text + '"</div><div class="vars">' +
+          vars.map(v => '<span>' + v + '</span>').join('') + '</div>';
+        box.appendChild(card);
+      });
+    });
+    const names = ACTIONS.filter(act => made[act.v]).map(act => act.v);
+    [selX, selY].forEach(sel => {
+      const keep = sel.value;
+      sel.innerHTML = '<option value="">选变量</option>' + names.map(v => '<option>' + v + '</option>').join('');
+      if (names.includes(keep)) sel.value = keep;
+    });
+    if (names.length < 2) out.textContent = '创建至少两个变量后，选两个来比较。';
+  }
+
+  function compare(op) {
+    const x = selX.value, y = selY.value;
+    if (!x || !y) { out.textContent = '先在两边各选一个变量。'; return; }
+    const ax = made[x], ay = made[y];
+    const same = ax.obj === ay.obj;
+    const tx = OBJS[ax.obj].text, ty = OBJS[ay.obj].text;
+    const eq = tx === ty;
+    const val = op === '==' ? same : eq;
+    let why;
+    if (op === '==') {
+      why = same
+        ? x + ' 和 ' + y + ' 指向同一个对象（' + ORIGIN[ax.kind] + '），所以 == 是 true。'
+        : x + ' 指向' + ORIGIN[ax.kind] + '，' + y + ' 指向' + ORIGIN[ay.kind] + '。这是两个对象，== 只问身份、不看内容，所以是 false。' + (eq ? '它们内容相同，换 equals 就是 true。' : '');
+    } else {
+      why = eq
+        ? '两个对象的字符序列都是 "' + tx + '"。equals 逐字符比较内容，与是不是同一个对象无关，所以是 true。'
+        : '内容是 "' + tx + '" 和 "' + ty + '"，字符序列不同，equals 是 false。';
+    }
+    out.innerHTML = '<b class="' + (val ? 'ok' : 'bad') + '">' + x + (op === '==' ? ' == ' : '.equals(') + y + (op === '==' ? '' : ')') + ' → ' + val + '</b><br>' + why;
+  }
+  $('#cmp-ee').addEventListener('click', () => compare('=='));
+  $('#cmp-eq').addEventListener('click', () => compare('equals'));
+  $('#bench-reset').addEventListener('click', () => {
+    Object.keys(made).forEach(k => delete made[k]);
+    log.textContent = '// 你创建的变量会按顺序记在这里';
+    out.textContent = '创建至少两个变量后，选两个来比较。';
+    render();
+  });
+  render();
+})();
+</script>
+</body>
+</html>

@@ -2,10 +2,12 @@
 
 状态：**方向和篇幅已确认**（2026-11-12）。逐篇写，写一篇确认一篇；具体篇目写的过程中可以合并或拆分。
 
+写作进度（2026-11-16）：0.1–1.3 已写；各篇的独立 Java 8 实验位于 `local/examples/<篇>/`（如 1.1 含数值提升、溢出、浮点误差、BigDecimal 和舍入边界，1.2 含值传递、引用图、浅拷贝、null 与拆箱，1.3 含常量池、常量折叠与 javap 字节码、intern、不可变与 hashCode 缓存、拼接耗时）。1.1、1.2 已按 0.1 的标准审查修订；1.3 待用户审阅。下一篇为 1.4「类和对象」。
+
 ## 一、这门课是什么
 
 - **读者**：会编程的前端开发者。前端知识只在一句话能说清的地方顺带提，不当主线。
-- **终点**：走到后端的核心，并且能上手公司项目（BladeX，Java 8、Spring Boot 2、Spring Cloud、Nacos、MyBatis-Plus、Redis）。
+- **终点**：走到后端的核心，学完能**独立看懂公司后端代码并开发**（用户 2026-11-16 的原话）。公司项目已确认：BladeX 2.7.2.RELEASE、Java 8、Spring Boot 2.2.13、Spring Cloud Hoxton、Nacos、MyBatis-Plus、Redis/Redisson，另有 Flowable、XXL-Job、ES（详见「三、依据 · 2」）。
 - **不求速成**：约 85 篇，每篇是一次能读完的量。篇数是内容决定的，不是目标。
 - **不讲**：人人都会的编程基础只用一篇带过；和后端无关的旧内容（Swing 界面等）不讲。
 
@@ -19,16 +21,18 @@
 | 中层 | 框架替你做的 | Spring、MyBatis-Plus、BladeTool |
 | 底层 | 框架之所以能做到的原因 | 对象和类型、集合、并发、JVM、网络、数据库 |
 
-速成课只讲表层，所以学完会写但不知道为什么。这门课先给一眼表层的全貌，然后从底层往上搭，搭到中层时，框架的每个功能都是“前面已经见过的东西”，最后回到表层和你们的项目。
+课程同时覆盖业务代码、框架机制和底层原理。目录提供从全貌、基础到框架和项目实践的建议顺序；每篇都独立交代理解本篇所需的背景，可以按主题直接阅读。
 
-贯穿全程的四个写法：
+贯穿全程的写法：
 
-1. **每一部分回答一个问题**，这个问题是上一部分留下的。
+1. **每篇独立回答一个问题**。开头直接交代本篇主题、必要背景和实验环境；使用其他篇出现过的项目、术语或代码时，在本篇重新给出必要说明。跨篇链接只作延伸阅读，不以“上一篇讲过”“下一篇再解释”代替本篇必需的解释。同一篇内部的章节可以按实验步骤衔接。
 2. **先亲手造一个小的，再用现成的大的**。计划造的有：`ArrayList`、`HashMap`、HTTP 服务器、Mapper、依赖注入容器。
-3. **一个小项目从第 5 部分起一直长到最后**，每篇给它加一块。
+3. **第 5 部分起可以复用同一个小项目**，但每篇都提供完成本篇实验所需的完整代码或可独立运行的项目版本、配置和数据，不要求读者先做完其他篇。
 4. **代码全部实际运行过**（本机 JDK 8）。
 5. **每篇末尾列参考资料**，写明每条支撑的是文中哪句话；链接和原文逐条打开核对。没有出处、只凭推断的地方在页面上标出来。
 6. **不写空话**：每句话说具体的东西，不编数字，不下笼统的结论。
+7. **以 `java/0-1.html` 为写作标准**（2026-11-16 反馈）：从具体问题出发，让读者操作，再解释变化。代码服务于讲解；原创示例不附作者侧的文件名、行号、“完整源文件”、下载链接和实验文件清单。读者可直接复制代码。验证材料留在仓库，第三方源码出处与官方资料按需引用；只有教学确实需要时才讲本地运行，且不依赖作者电脑上的路径。
+8. **固定收尾顺序**（2026-11-16 反馈）：目录与正文最后两节均为“小结和自测”“参考资料”；完整程序单独放在此前。
 
 ## 三、依据
 
@@ -62,7 +66,38 @@ BladeX 源码不公开，用它的开源版 SpringBlade 代替。取 v3.7.1，�
 - 它是示例规模的代码，业务逻辑很薄，真实项目里异常处理、事务、金额计算会多得多。
 - BladeTool 本身的源码没有统计（下载被中断，没有再下）。
 
-### 2. 各领域公认的经典
+### 2. 实测：公司项目 zhsq-sd（2026-11-16）
+
+用户提供了公司 GitLab 群组的本地克隆 `/Users/wangx/Documents/BST/zhsq-sd`（私有代码，**不引用原文到公开页面**，只用统计数字和写法描述）。四个 BladeX 工程版本一致：**BladeX 2.7.2.RELEASE、Java 8、Spring Boot 2.2.13.RELEASE、Spring Cloud Hoxton.SR9**（Spring Framework 5.2.x）。
+
+| 工程 | 启动类 | 说明 |
+|---|---|---|
+| 物业管理/smart_property_saas/bladex | 17 | BladeX 平台服务（auth、gateway、user、flow、xxljob-admin 等） |
+| 物业管理/smart_property_biz | 22 | 物业业务（sc-property、sc-mall、sc-iot、sc-tollcenter 等 21 个模块） |
+| 社区管理/smart_community_saas/bladex | 17 | 同上，社区版 |
+| 社区管理/smart_community_biz | 16 | 社区业务 |
+
+业务代码统计（两个 biz 工程的 blade-service）：物业 3,242 个 Java 文件 / 384,857 行 / 546 个 Mapper XML；社区 1,781 个 / 199,871 行 / 327 个 XML。
+
+**与开源 SpringBlade 3.7.1 的关键差异**（决定例子怎么讲）：
+
+| 项 | SpringBlade 3.7.1 | 公司项目（物业 biz） |
+|---|---|---|
+| 依赖注入 | 构造器注入为主 | **`@Autowired` 字段注入 1,271 处 > `@AllArgsConstructor` 602 处**，两种都要讲 |
+| Mapper XML | 只有查询 | select 3,241 / insert 98 / update 346 / delete 81，**手写增删改真实存在** |
+| 并发 | 几乎为零 | 线程池 156、`ThreadLocal` 71、`CompletableFuture` 37、`synchronized` 16 |
+| 异常/事务 | try 4 / `@Transactional` 5 | try 1,005 / `@Transactional` 342 |
+| Lambda/Stream | 少 | `::` 2,692、`->` 1,120、`.stream()` 740，**函数式是日常** |
+| BladeTool | `R.` 151 行 | `R.` 7,672、`Func.` 4,790、`Condition.` 1,249、`StringUtil` 1,797 |
+| Swagger | 400+ 行 | `@ApiOperation` 6,846、`@ApiModelProperty` 1,836，另有 Knife4j |
+
+其他确认：Feign 客户端物业 biz 50 个（含 api 模块）、社区 biz 20 个；网关是 Spring Cloud Gateway；Redis 用 `BladeRedis` + `RedisTemplate`，biz-common 里有 **Redisson**；定时任务有 `@Scheduled`（35 处）和 saas 里的 **XXL-Job**；**Flowable 6.4.2** 工作流在 saas 的 blade-flow/blade-flow-design 里真实运行；**Elasticsearch 7.5.1** 在 sc-mall 里用；消息队列在 biz 里几乎没有（仅 sc-supervision 一处），**Kafka 大量用在物联网服务**（iot/bladex/cuiot 下十几个厂商 client）；Dubbo 2.7.8 只有依赖声明，业务代码里未见使用。多环境配置是每服务 application-dev/test/prod.yml + logback-dev/k8s.xml。
+
+blade-tool **2.7.2.RELEASE** 的 jar 已在本地 `~/.m2/repository/org/springblade/`（blade-core-tool、blade-core-boot、blade-starter-mybatis 等），其中 3 个带 sources jar（blade-core-boot、blade-starter-mybatis、blade-starter-tenant），其余可反编译读，不必再下载开源版。
+
+**对主线的影响**：6.3 注入方式两种都讲且以字段注入为常见现状；5.8 手写增删改要讲；第 3 部分并发不是“框架接管所以看不到”，公司代码里真实出现；7.5/7.6 消息队列保持基础深度（biz 几乎不用，Kafka 在 IoT 团队）；ES、Flowable、XXL-Job 作为选修篇或附录。
+
+### 3. 各领域公认的经典
 
 每一部分的取舍对照该领域的经典书目录，保证没有漏掉公认的核心：
 
@@ -75,7 +110,7 @@ BladeX 源码不公开，用它的开源版 SpringBlade 代替。取 v3.7.1，�
 | 缓存、消息、微服务 | 《数据密集型应用系统设计》，《Redis 设计与实现》 |
 | Spring | Spring 官方参考文档 |
 
-### 3. 仓库里的路线图
+### 4. 仓库里的路线图
 
 `docs/java-roadmap.md` 里整理的黑马路线（JavaWeb、MyBatis-Plus、微服务、Redis、Docker）涉及的主题，下面都有对应的篇。
 
@@ -84,8 +119,8 @@ BladeX 源码不公开，用它的开源版 SpringBlade 代替。取 v3.7.1，�
 ### 第 0 部分 · 出发前（3 篇）
 
 - 0.1 一个请求的一生：从点下按钮到数据落库，全景图
-- 0.2 Java 是怎么跑起来的：源码、字节码、JVM；命令行编译运行，再搬进 IDEA
-- 0.3 语法速览：变量、分支、循环、方法、数组在 Java 里怎么写
+- 0.2 Java 是怎么跑起来的；命令行编译运行，再搬进 IDEA
+- 0.3 语法速览：读懂一段 Java 8 代码
 
 依据：读者会编程。黑马上部用约 15 小时讲的基础语法（P17–P73），这里压成 0.3 一篇。
 
@@ -186,7 +221,7 @@ BladeX 源码不公开，用它的开源版 SpringBlade 代替。取 v3.7.1，�
 - 6.12 认证和授权：Session、JWT、OAuth2、密码怎么存
 - 6.13 文件上传、Excel 导入导出、定时任务、异步
 
-依据：路由注解和接口文档注解是出现最多的两类；注入方式以构造器注入为主，所以 6.3 不能只讲 `@Autowired`。
+依据：路由注解和接口文档注解是出现最多的两类。开源版以构造器注入为主，公司项目里 `@Autowired` 字段注入反而更多（1,271 对 602），所以 6.3 三种注入方式都要讲，并说明各自的取舍。
 
 ### 第 7 部分 · 缓存和消息（6 篇）
 
@@ -199,7 +234,7 @@ BladeX 源码不公开，用它的开源版 SpringBlade 代替。取 v3.7.1，�
 - 7.5 消息队列：为什么要异步，基本模型
 - 7.6 消息的可靠性和幂等
 
-依据：Redis 在技术栈里。消息队列在 SpringBlade 里没有出现，讲多深取决于你们项目用没用。
+依据：Redis 在技术栈里（公司项目用 BladeRedis、RedisTemplate、Redisson）。消息队列在公司 biz 代码里几乎没有，Kafka 用在物联网服务，所以 7.5/7.6 保持基础深度；Elasticsearch（sc-mall 在用）可作选修篇。
 
 ### 第 8 部分 · 微服务（9 篇）
 
@@ -245,6 +280,7 @@ BladeX 源码不公开，用它的开源版 SpringBlade 代替。取 v3.7.1，�
 
 ## 五、还没确定的事
 
-- 你们的 BladeX 是哪个版本（已确认是微服务版，有几十个服务）。
-- 你们用不用消息队列、Elasticsearch、工作流，决定第 7 部分的深度和要不要加篇。
+- ~~你们的 BladeX 是哪个版本~~ **已确认**（2026-11-16）：2.7.2.RELEASE，微服务版，四个工程共 72 个启动类，见「三、依据 · 2」。
+- ~~用不用消息队列、Elasticsearch、工作流~~ **已确认**：MQ 在 biz 几乎不用（Kafka 在 IoT）；ES 7.5.1 在 sc-mall；Flowable 6.4.2 在 saas 真实运行；另有 XXL-Job、Redisson。第 7 部分保持基础深度，ES/Flowable/XXL-Job 作选修。
 - 第 1–3 部分和《Head First Java》重合的地方写多细。
+- 公司代码是私有代码：页面上只用统计和写法描述，例子代码仍用开源 SpringBlade 或原创代码（注意公司用的是 Boot 2.2.13 / Hoxton，与 SpringBlade 3.7.1 的 Boot 2.7.18 / 2021.0.8 行为有差异的地方要在页面上说明）。

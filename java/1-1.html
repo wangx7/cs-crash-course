@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.1 数值类型和它的坑 · Java 后端</title>
+<meta name="description" content="用实际运行的 Java 8 程序理解数值提升、整数溢出、二进制浮点误差，以及 BigDecimal 的构造、比较和舍入边界。">
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font-family:var(--mono);font-size:13px;line-height:1.75;background:var(--code);border-radius:10px;padding:14px 16px;overflow-x:auto;white-space:pre;tab-size:4;margin:12px 0}
+.note{font-size:13px;color:var(--muted);overflow-wrap:anywhere;line-height:1.8}
+.numeric-table{width:100%;border-collapse:collapse;font-size:14px;margin:16px 0}
+.numeric-table td,.numeric-table th{border-bottom:1px solid var(--line);padding:10px 12px;text-align:left;vertical-align:top}
+.numeric-table th{font-size:13px;color:var(--muted);font-weight:600}
+.numeric-table code{white-space:nowrap}.numeric-table td:first-child{white-space:nowrap}
+.guess{border-top:4px solid var(--on)}
+.run-experiment{margin:16px 0 20px}
+.run-experiment .btns{margin-top:0}
+.output-label{font-size:12px;color:var(--muted);margin:14px 0 5px;font-family:var(--mono)}
+.demo-result[hidden],[data-after-run][hidden],button[hidden],.quote-controls[hidden]{display:none}
+.demo-result pre.code{margin-top:0;border-left:3px solid var(--ok)}
+.demo-result.is-error pre.code{border-left-color:var(--bad)}
+.quote-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:12px 0}
+.quote-controls label{font-size:14px}
+.quote-controls select{font:inherit;font-size:14px;max-width:100%;min-width:0;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink)}
+@media(pointer:coarse){.run-experiment .btn,.cast-lab .btn,.round-lab .btn,#quote-lab .btn{min-height:44px}.quote-controls select{font-size:16px;min-height:44px}}
+details.proof{margin:18px 0;padding:14px 16px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+details.proof summary{cursor:pointer;color:var(--accent);font-weight:600;font-size:15px}
+details.proof pre.code{font-size:12px}
+.cast-lab{border-color:var(--accent)}
+.cast-lab .btn[aria-pressed="true"],.round-lab .btn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.lab-value{font:700 clamp(22px,5vw,34px)/1.4 var(--mono);margin:16px 0 8px;overflow-wrap:anywhere}
+.lab-path{padding:0 0 0 22px;font-size:15px}.lab-path li{padding:3px 0}
+.limits{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:14px;margin:20px 0;padding:18px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.limits small{display:block;color:var(--muted);font-size:12px}.limits b{font:600 clamp(14px,2vw,19px)/1.8 var(--mono)}
+.limits .wrap-arrow{text-align:center;color:var(--bad);font-size:15px}
+.fraction{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:14px 0}
+.fraction div{border:1px solid var(--line);border-radius:10px;padding:12px;text-align:center;background:var(--panel)}
+.fraction b{display:block;font-family:var(--mono)}.fraction small{display:block;font-size:12px;color:var(--muted)}
+.representation{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin:18px 0}
+.representation div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px}
+.representation b{font-family:var(--mono);font-size:22px;display:block}.representation p{font:14px/1.8 var(--mono);margin:6px 0}.representation small{font-size:13px;color:var(--muted)}
+.scope-line{border-left:3px solid var(--accent);padding:8px 14px;background:var(--bg);margin:12px 0;font-size:15px}
+.refs h3{font-size:17px;margin-top:22px}.refs li{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;overflow-wrap:anywhere}.refs li span{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+.refs li:last-child{border-bottom:0}
+@media(max-width:600px){.numeric-table td,.numeric-table th{padding:8px}.representation{grid-template-columns:1fr}.limits{grid-template-columns:1fr;text-align:center;gap:8px}.limits .wrap-arrow{font-size:14px}.fraction div{padding:10px 4px}pre.code{padding:12px;font-size:12px}}
+</style>
+</head>
+<body data-ep="101" data-store="java-be-read" data-unit="篇">
+<div class="topbar"><a href="index.html">← Java 后端 · 目录</a><span class="muted">第 1 部分 · 对象与类型</span></div>
+<header class="hero">
+  <div class="eyebrow">第 1 部分 · 对象与类型 · 1.1</div>
+  <h1>数值类型和它的坑</h1>
+  <p class="en">Numeric promotion, overflow, floating point and BigDecimal</p>
+  <p class="lead">单价和数量都是正数，乘出来的总额却是负数。把金额改成 BigDecimal，三条明细相加又可能和汇总计算差一分钱。这一篇就围着这笔账转：先猜结果，再点“运行”看它真正输出什么，然后顺着计算过程找出每一步的原因。读完你会知道，钱该用什么类型装、在哪一步舍入。</p>
+  <div class="road"><span>先算一笔账</span><i>→</i><span>整数的边界</span><i>→</i><span>浮点的近似</span><i>→</i><span>十进制与舍入</span></div>
+  <p class="note" style="margin-top:16px">本篇以 Java 8 为准，示例只用 JDK，不依赖任何框架。每段代码都先猜、再运行；“运行”展示的是预先用 JDK 8 跑出来的真实输出。</p>
+</header>
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">先猜：long 接得住吗</a></li>
+  <li><a href="#ch2">把 (long) 放对位置</a></li>
+  <li><a href="#ch3">换成 double 行不行</a></li>
+  <li><a href="#ch4">除法：5 / 2 等于几</a></li>
+  <li><a href="#ch5">0.1 存进去就偏了</a></li>
+  <li><a href="#ch6">BigDecimal 怎么用</a></li>
+  <li><a href="#ch7">一分钱差在哪</a></li>
+  <li><a href="#ch8">写一个报价程序</a></li>
+  <li><a href="#ch9">小结和自测</a></li>
+  <li><a href="#ch10">参考资料</a></li>
+</ol></nav>
+<main>
+<noscript><p class="note">启用 JavaScript 后可以点击运行、切换示例；当前仍可直接阅读代码和输出。</p></noscript>
+
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div><h2>先预测：接收变量是 long，够不够？</h2>
+  <p>先认识两个类型。Java 的整数常用两种：<code>int</code> 占 32 个二进制位，<code>long</code> 占 64 位、能装更大的数。如果你主要来自 JavaScript，这是第一个要适应的地方——JS 只有一种 <code>number</code>，Java 却把整数和小数分成好几种类型，整数还分长短。</p>
+  <p>现在算一笔批量采购的账：单价 50,000 分，数量 50,000，乘积应该是 2,500,000,000 分。这组数字是特意挑的：它已经超过了 int 的上限（约 21.4 亿），却远没到 long 的上限。于是很自然地，把接收结果的变量写成 long：</p>
+  <div class="card guess" id="guess">
+    <h3>先猜一下：这样写，能得到正确的总额吗？</h3>
+    <pre class="code" data-source="PriceOverflow.java">public class PriceOverflow {
+    public static void main(String[] args) {
+        int unitCents = 50_000;
+        int quantity = 50_000;
+        long totalCents = unitCents * quantity;
+        System.out.println(totalCents);
+    }
+}</pre><p>会输出 2500000000、一个负数，还是抛出异常？想好后点运行。</p>
+    <pre class="code" data-record="PriceOverflow">-1794967296</pre>
+    <p data-after-run="PriceOverflow">结果是负数，而且程序正常结束了，没有任何报错。两个乘数都是 int，乘法就先按 int 算，乘积在这一步已经溢出；算完再放进 long，也只能保留这个算错的负数。变量是 long，救不了前面已经算错的乘法。下一节把转换挪个位置再试。</p>
+  </div>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div><h2>把转换放到乘法之前</h2>
+  <p>接收变量已经是 long，再改它没有用。这次只移动 <code>(long)</code> 的位置：放在整个乘积外面，或者放在第一个乘数前面。四种写法用同一组输入，每选一种就点运行，看看哪一种让结果变回了 2500000000。</p>
+  <div class="card cast-lab" id="cast-lab">
+    <h3>把转换放在不同位置</h3>
+    <div class="btns"><button class="btn" type="button" data-cast="assigned" aria-pressed="true">只改接收类型</button><button class="btn" type="button" data-cast="castAfter" aria-pressed="false">算完再转</button><button class="btn" type="button" data-cast="castBefore" aria-pressed="false">乘之前转</button><button class="btn" type="button" data-cast="checkedLong" aria-pressed="false">long 并检查</button></div>
+    <pre class="code" id="cast-code">long assigned = unitCents * quantity;</pre>
+    <div class="btns"><button class="btn primary" id="cast-run" type="button" aria-controls="cast-result" hidden>运行</button></div>
+    <div id="cast-result" class="demo-result" aria-live="polite"><p class="output-label">输出</p><div class="lab-value" id="cast-value">-1794967296</div>
+    <ol class="lab-path" id="cast-path"><li>两个 int 先相乘，乘积超出 int 范围。</li><li>保留低 32 位，结果解释为 −1794967296。</li><li>把这个负整数转换成 long，原值已无法恢复。</li></ol></div>
+    <p>选一种写法，点运行，再换一种比较。</p>
+  </div>
+  <p>两种带括号的写法长得很像，执行顺序却不同。<code>(long) (unitCents * quantity)</code> 先做完 int 乘法，转换时已经溢出；<code>(long) unitCents * quantity</code> 先把一个乘数变成 long，另一个也跟着变成 long，乘法这才在更大的范围里进行。</p>
+  <p>背后的规则叫<b>二元数值提升</b>，名字唬人，意思很简单：Java 做加、减、乘、除之前，先看两个操作数是什么类型，把它们统一到同一个类型再算，<b>接收结果的变量不参与这个决定</b>。统一的方向按下面四条顺序判断，命中一条就停：</p>
+  <ol><li>有 double，就按 double 算。</li><li>否则有 float，就按 float 算。</li><li>否则有 long，就按 long 算。</li><li>否则一律按 int 算——byte、short、char 参与这类运算时，也先升成 int。</li></ol>
+  <p>所以 <code>int * int</code> 得到 int，<code>long * int</code> 得到 long。这也解释了开篇的坑：两个 int 相乘，无论左边接什么，乘法本身都按 int 进行。要让它按 long 算，就得在乘之前把至少一个乘数变成 long。</p>
+  <details class="proof"><summary>把四种写法放在一起对照</summary><pre class="code" data-source="NumberLab.java" data-snippet="promotion">int unitCents = 50_000;
+int quantity = 50_000;
+long assigned = unitCents * quantity;
+long castAfter = (long) (unitCents * quantity);
+long castBefore = (long) unitCents * quantity;
+long checked = Math.multiplyExact((long) unitCents, (long) quantity);
+System.out.println(&quot;assigned=&quot; + assigned);
+System.out.println(&quot;castAfter=&quot; + castAfter);
+System.out.println(&quot;castBefore=&quot; + castBefore);
+System.out.println(&quot;checkedLong=&quot; + checked);</pre><pre class="code" data-record="NumberLab" data-lines="assigned,castAfter,castBefore,checkedLong">assigned=-1794967296
+castAfter=-1794967296
+castBefore=2500000000
+checkedLong=2500000000</pre></details>
+  <h3>溢出为什么偏偏变成负数？</h3>
+  <p>int 用 32 位二进制补码表示有符号整数。乘法溢出时，Java 只保留数学乘积的低 32 位，再把它当成有符号 int 来读。本例可以这样算：<code>2,500,000,000 − 4,294,967,296 = −1,794,967,296</code>，减去的 4,294,967,296 就是 2<sup>32</sup>。换句话说，数轴在 int 的两端是接起来的：上限再加 1，就绕回了下限。</p>
+  <div class="limits" aria-label="int 上限加一后回到下限的示意">
+    <div><small>Integer.MAX_VALUE</small><b>2,147,483,647</b></div><div class="wrap-arrow">加 1 →<br>保留低 32 位</div><div><small>结果成为 int 下限</small><b>−2,147,483,648</b></div>
+  </div>
+  <p>如果不想让越界悄悄发生，可以用 <code>Math.multiplyExact</code>、<code>Math.addExact</code>：结果越界时它们抛 <code>ArithmeticException</code>，而不是给出一个截断值。但要看清调用的是哪个重载——两个 int 实参调用的是检查 int 的版本，两个 long 实参才调用检查 long 的版本。开篇那组数在前者越界，在后者不越界。</p>
+  <pre class="code" data-source="NumberLab.java" data-snippet="overflow">System.out.println(&quot;maxPlusOne=&quot; + (Integer.MAX_VALUE + 1));
+try {
+    Math.multiplyExact(unitCents, quantity);
+} catch (ArithmeticException e) {
+    System.out.println(&quot;checkedInt=&quot; + e.getClass().getSimpleName());
+}
+try {
+    Math.addExact(Long.MAX_VALUE, 1L);
+} catch (ArithmeticException e) {
+    System.out.println(&quot;checkedAdd=&quot; + e.getClass().getSimpleName());
+}</pre><pre class="code" data-record="NumberLab" data-lines="maxPlusOne,checkedInt,checkedAdd">maxPlusOne=-2147483648
+checkedInt=ArithmeticException
+checkedAdd=ArithmeticException</pre>
+  <details class="proof"><summary>顺带一个编译期就拦下的写法</summary>
+    <p>long 变量也不能让一个过大的 int 字面量变合法。下面这段编译失败：字面量的类型在赋值之前就定好了，没写 <code>L</code> 后缀它就是 int，3,000,000,000 超出 int 范围。改成 <code>3_000_000_000L</code> 才是 long 字面量。</p>
+    <pre class="code" data-source="errors/LongLiteral.java">public class LongLiteral {
+    public static void main(String[] args) {
+        long count = 3_000_000_000;
+    }
+}</pre><pre class="code" data-record="errors/LongLiteral.java" data-key="compile_stderr">LongLiteral.java:3: error: integer number too large: 3000000000
+        long count = 3_000_000_000;
+                     ^
+1 error</pre>
+  </details>
+  <div class="callout"><b>换成 long 也不是万事大吉。</b> long 同样有上限。选类型时要一起考虑最大单值、数量和累计次数，并确认运算的中间结果不会越界；需要把越界变成明确失败时，就用检查运算。</div>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div><h2>换成 double：范围更大，就更好吗？</h2>
+  <p>long 解决了这笔总额的范围问题。这时容易冒出一个念头：double 能表示比 long 大得多的数，那干脆都用 double，是不是就不怕溢出了？先别急着下结论，把一个 19 位的整数 id 转成 double 再转回来，看看它还是不是原来那个数。</p>
+  <pre class="code" data-source="NumberLab.java" data-snippet="widening">long id = 9_007_199_254_740_993L;
+double floatingId = id;
+System.out.println(&quot;id=&quot; + id);
+System.out.println(&quot;idRoundTrip=&quot; + (long) floatingId);
+System.out.println(&quot;mixedEquality=&quot; + (id == floatingId));
+System.out.println(&quot;integerEquality=&quot; + (id == (long) floatingId));</pre><pre class="code" data-record="NumberLab" data-lines="id,idRoundTrip,mixedEquality,integerEquality">id=9007199254740993
+idRoundTrip=9007199254740992
+mixedEquality=true
+integerEquality=false</pre>
+  <p>转回来少了 1。9,007,199,254,740,993 是 2<sup>53</sup>+1，它能装进 long，却不能被 double 精确表示——double 在这个量级已经分不清相邻的两个整数，转过去就落到了 9,007,199,254,740,992。这正是“范围”和“精度”两件事：double 范围确实大，代价是大的数不再个个精确。</p>
+  <p><b>那为什么 <code>id == floatingId</code> 还是 true？</b> 因为比较 long 和 double 时，又一次发生了数值提升：左边的 long 也被转成同一个近似 double，两边自然相等。这个 true 只说明“转换后的两个值相等”，不能证明“转换没丢东西”。要看有没有丢，得像 <code>integerEquality</code> 那样转回整数再比。需要精确的整数 ID，就让它一直待在整数或十进制文本里，别途经浮点。</p>
+  <p>到这里可以把三件事分开了：<b>范围</b>（装不装得下）、<b>精度</b>（能不能精确表示）、<b>单位</b>（这个数代表什么）。前两件是类型的事，第三件类型管不了：接口约定金额单位是分，<code>1990</code> 就是 19.90 元；另一个方法若按元理解同一个数，类型检查照样通过。示例用 <code>unitCents</code>、<code>totalCents</code> 这样的名字提醒单位，但这只是命名约定，Java 不会替这个名字强制检查单位。</p>
+  <div class="scroll-x"><table class="numeric-table"><thead><tr><th>类型</th><th>位数</th><th>范围</th><th>精度</th></tr></thead><tbody>
+    <tr><td><code>int</code></td><td>32</td><td>−2,147,483,648 ～ 2,147,483,647</td><td>范围内每个整数都精确</td></tr>
+    <tr><td><code>long</code></td><td>64</td><td>上限 9,223,372,036,854,775,807</td><td>范围内每个整数都精确</td></tr>
+    <tr><td><code>float</code></td><td>32</td><td>带指数，远大于 long</td><td>正常值约 24 个二进制位有效精度</td></tr>
+    <tr><td><code>double</code></td><td>64</td><td>带指数，远大于 long</td><td>正常值约 53 个二进制位有效精度</td></tr>
+  </tbody></table></div>
+  <p class="note">还有 byte（8 位）、short（16 位）、char（16 位）三种更小的整数类型，业务代码里少见，参与运算时都先升成 int；boolean 不属于数值类型。位数说的是数值格式的宽度，不是 Java 对象占用的内存。依据：JLS §4.2。</p>
+  <details class="proof"><summary>int 和 Integer 只差首字母大小写吗？</summary>
+    <p>差得不止大小写。int 是基本类型，不能是 null；Integer 是包装类，可以引用一个整数对象，也可以是 null。参与加法时 Integer 会自动“拆箱”取出 int 值，而对 null 做这一步会抛异常——不能把“没传”自动当成 0。</p>
+    <pre class="code" data-source="NumberLab.java" data-snippet="unboxing">Integer count = null;
+try {
+    int next = count + 1;
+    System.out.println(next);
+} catch (NullPointerException e) {
+    System.out.println(&quot;nullUnboxing=&quot; + e.getClass().getSimpleName());
+}</pre><pre class="code" data-record="NumberLab" data-lines="nullUnboxing">nullUnboxing=NullPointerException</pre>
+    <p>Long/long、Double/double 也有同样的区别。接口里缺一个值时，该拒绝、补默认值还是保留为空，要由字段含义决定。拆箱规则见 JLS §5.1.8。</p>
+  </details>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div><h2>除法：5 / 2 等于几？</h2>
+  <p>转换放在哪一步，不只影响乘法。5 除以 2，先除再转 double，和先转 double 再除，会得到同一个数吗？先猜，再运行，留意中间两行。</p>
+  <pre class="code" data-source="NumberLab.java" data-snippet="division">System.out.println(&quot;intDivision=&quot; + (5 / 2));
+System.out.println(&quot;castQuotient=&quot; + (double) (5 / 2));
+System.out.println(&quot;castOperand=&quot; + ((double) 5 / 2));
+System.out.println(&quot;negativeDivision=&quot; + (-5 / 2));
+System.out.println(&quot;negativeRemainder=&quot; + (-5 % 2));</pre><pre class="code" data-record="NumberLab" data-lines="intDivision,castQuotient,castOperand,negativeDivision,negativeRemainder">intDivision=2
+castQuotient=2.0
+castOperand=2.5
+negativeDivision=-2
+negativeRemainder=-1</pre>
+  <p><code>5 / 2</code> 两边都是 int，按 int 除，小数部分直接丢掉，得 2。<code>(double) (5 / 2)</code> 先得到整数 2 再转成 2.0，丢掉的小数找不回来；<code>(double) 5 / 2</code> 先把 5 转成 double，除法按 double 执行，才得到 2.5。和乘法一样：只在最终结果上补转换，补不回此前丢掉的信息。</p>
+  <p>负数还暴露另一种误判：整数除法是<b>向零截断</b>，不是数学上的向下取整。所以 −5 / 2 是 −2（朝零的方向砍掉小数），而不是 −3；对应余数 −1，满足 <code>−5 = (−2) × 2 + (−1)</code>。</p>
+  <details class="proof"><summary>往小转：强转不检查，toIntExact 检查</summary>
+    <p>把 long 转回 int 是窄化，会丢弃高位，超范围也不报错；想在超范围时拒绝，用 <code>Math.toIntExact</code>。</p>
+    <pre class="code" data-source="NumberLab.java" data-snippet="narrow">long large = 2_500_000_000L;
+System.out.println(&quot;narrowed=&quot; + (int) large);
+try {
+    Math.toIntExact(large);
+} catch (ArithmeticException e) {
+    System.out.println(&quot;checkedNarrow=&quot; + e.getClass().getSimpleName());
+}</pre><pre class="code" data-record="NumberLab" data-lines="narrowed,checkedNarrow">narrowed=-1794967296
+checkedNarrow=ArithmeticException</pre>
+  </details>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div><h2>0.1 存进去时，就已经不是 0.1</h2>
+  <p>大整数可能表示不准，小数也一样。你大概在 JavaScript 里见过 <code>0.1 + 0.2 !== 0.3</code>——Java 的 double 和 JS 的 number 是同一种二进制浮点格式，所以这里一模一样。这次多看一行：单独打印 0.1 看起来很正常，那它到底存的是什么？下面用 JDK 的 <code>BigDecimal</code> 把 double 的实际值完整展开（使用时导入 <code>java.math.BigDecimal</code>）。</p>
+  <pre class="code" data-source="DecimalLab.java" data-snippet="binary">System.out.println(&quot;doubleSum=&quot; + (0.1 + 0.2));
+System.out.println(&quot;doubleEquality=&quot; + (0.1 + 0.2 == 0.3));
+System.out.println(&quot;printedTenth=&quot; + 0.1);
+System.out.println(&quot;exactDoubleTenth=&quot; + new BigDecimal(0.1).toPlainString());</pre><pre class="code" data-record="DecimalLab" data-lines="doubleSum,doubleEquality,printedTenth,exactDoubleTenth">doubleSum=0.30000000000000004
+doubleEquality=false
+printedTenth=0.1
+exactDoubleTenth=0.1000000000000000055511151231257827021181583404541015625</pre>
+  <p>问题出在加法之前。十进制小数的每一位对应 1/10、1/100、1/1000；二进制小数的每一位对应 1/2、1/4、1/8……。有限个二进制小数位加起来，化成分数后分母只能是 2 的幂。</p>
+  <div class="fraction" aria-label="二进制小数的前四位权重示意"><div><b>1/2</b><small>0.5</small></div><div><b>1/4</b><small>0.25</small></div><div><b>1/8</b><small>0.125</small></div><div><b>1/16</b><small>0.0625</small></div></div>
+  <p>所以 0.5 能精确表示，0.1 不能：0.1 = 1/10，最简分母里还有因子 5，写不成有限个二进制位，它的二进制展开是 <code>0.0001100110011…</code> 无限循环。double 精度有限，读到字面量 0.1 时就已经用一个邻近值替代了它——上面那串长长的十进制就是这个邻近值的精确样子。加法再按浮点规则舍入，最终打印 <code>0.30000000000000004</code>。</p>
+  <p><b>那为什么单独打印 0.1 又看不出问题？</b> 默认输出用的是 double 的十进制字符串表示，只给出足以区分相邻值的位数，不会把精确值的所有小数位都列出来。打印成“0.1”和实际存着精确的十分之一，是两件事。</p>
+  <div class="callout">double 适合允许近似的测量和计算；需要按十进制规则精确计算的价格，本篇用 BigDecimal。把所有 <code>==</code> 换成“差值小于 0.000001”也不是通用修复：容差要和量纲、量级、误差要求一起定义，代替不了金额的舍入规则。</div>
+  <details class="proof"><summary>除以零：整数和浮点的失败方式也不同</summary>
+    <pre class="code" data-source="NumberLab.java" data-snippet="special">try {
+    int zero = 0;
+    System.out.println(1 / zero);
+} catch (ArithmeticException e) {
+    System.out.println(&quot;integerZero=&quot; + e.getClass().getSimpleName());
+}
+System.out.println(&quot;floatingZero=&quot; + (1.0 / 0.0));
+System.out.println(&quot;zeroOverZero=&quot; + (0.0 / 0.0));
+double nan = Double.NaN;
+System.out.println(&quot;nanEqualsSelf=&quot; + (nan == nan));
+System.out.println(&quot;isFinite=&quot; + Double.isFinite(1.0 / 0.0));</pre><pre class="code" data-record="NumberLab" data-lines="integerZero,floatingZero,zeroOverZero,nanEqualsSelf,isFinite">integerZero=ArithmeticException
+floatingZero=Infinity
+zeroOverZero=NaN
+nanEqualsSelf=false
+isFinite=false</pre>
+    <p>整数除以零抛异常；浮点 1.0 / 0.0 得到正无穷，0.0 / 0.0 得到 NaN（非数值），NaN 连和自身比较都不相等。若要求一个有限的 double，可用 Java 8 的 <code>Double.isFinite</code> 检查——“没抛异常”不等于计算有效。</p>
+  </details>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div><h2>BigDecimal：从文本进来，别经过 double</h2>
+  <p>既然 double 存 0.1 本身就偏了，那换成 BigDecimal 总该精确了吧？先看输入这一步。下面五个式子都在处理“0.1”或“0.1 + 0.2”，有的传字符串，有的传 double，有的先算加法再转换。先猜哪些能保持 0.1 或 0.3，再运行对照。</p>
+  <pre class="code" data-source="DecimalLab.java" data-snippet="construction">BigDecimal fromText = new BigDecimal(&quot;0.1&quot;);
+BigDecimal fromDouble = new BigDecimal(0.1);
+BigDecimal fromValueOf = BigDecimal.valueOf(0.1);
+BigDecimal fromSum = BigDecimal.valueOf(0.1 + 0.2);
+System.out.println(&quot;text=&quot; + fromText.toPlainString());
+System.out.println(&quot;double=&quot; + fromDouble.toPlainString());
+System.out.println(&quot;valueOf=&quot; + fromValueOf.toPlainString());
+System.out.println(&quot;valueOfSum=&quot; + fromSum.toPlainString());
+System.out.println(&quot;decimalSum=&quot; + fromText.add(new BigDecimal(&quot;0.2&quot;)).toPlainString());</pre><pre class="code" data-record="DecimalLab" data-lines="text,double,valueOf,valueOfSum,decimalSum">text=0.1
+double=0.1000000000000000055511151231257827021181583404541015625
+valueOf=0.1
+valueOfSum=0.30000000000000004
+decimalSum=0.3</pre>
+  <p><code>new BigDecimal("0.1")</code> 从十进制文本准确构造出十分之一；<code>new BigDecimal(0.1)</code> 则准确接收了那个 double 的实际近似值——它没有再算错，只是忠实保留了一个已经偏离的输入。<code>BigDecimal.valueOf(0.1)</code> 走的是 double 的规范字符串表示，所以这次得到 0.1；但 <code>valueOf(0.1 + 0.2)</code> 仍是 0.30000000000000004，因为它无法推断运算前的十进制意图。结论：想做十进制计算，就从十进制输入开始，并一路保持它，别让中途经过 double。</p>
+  <h3>2.0 和 2.00，为什么 equals 说不相等？</h3>
+  <p>算对了金额，比较时还可能遇到意外。下面比较 2.0 和 2.00，先看 equals 和 compareTo 两行，另外两行稍后解释原因。</p>
+  <pre class="code" data-source="DecimalLab.java" data-snippet="scale">BigDecimal a = new BigDecimal(&quot;2.0&quot;);
+BigDecimal b = new BigDecimal(&quot;2.00&quot;);
+System.out.println(&quot;unscaled=&quot; + a.unscaledValue() + &quot;,&quot; + b.unscaledValue());
+System.out.println(&quot;scale=&quot; + a.scale() + &quot;,&quot; + b.scale());
+System.out.println(&quot;equals=&quot; + a.equals(b));
+System.out.println(&quot;compareTo=&quot; + a.compareTo(b));</pre><pre class="code" data-record="DecimalLab" data-lines="unscaled,scale,equals,compareTo">unscaled=20,200
+scale=1,2
+equals=false
+compareTo=0</pre>
+  <p>关键在于 BigDecimal 怎么存一个数：它用一个整数（unscaledValue）配上一个小数位数（scale）来表示，关系是 <b>unscaledValue × 10<sup>−scale</sup></b>。2.0 存成 20 × 10<sup>−1</sup>，2.00 存成 200 × 10<sup>−2</sup>，数值相同，但记录它的整数和 scale 不同：</p>
+  <div class="representation"><div><b>2.0</b><p>20 × 10<sup>−1</sup></p><small>unscaledValue = 20 · scale = 1</small></div><div><b>2.00</b><p>200 × 10<sup>−2</sup></p><small>unscaledValue = 200 · scale = 2</small></div></div>
+  <p><code>equals</code> 同时检查数值和 scale，所以这里返回 false；<code>compareTo</code> 只按数值比，返回 0 表示相等。判断金额大小，按意图写 <code>a.compareTo(b) &gt; 0</code>、<code>== 0</code> 或 <code>&lt; 0</code>（这里和 0 比的是方法返回的 int）。需要“两位小数”时用 <code>setScale(2, 舍入模式)</code> 调整 scale。</p>
+  <h3>加了 0.50，原来的金额变了吗？</h3>
+  <p>下面两次都调用 add，第二次多了一个赋值。先想：两个 println 会不会都打印 10.50？</p>
+  <pre class="code" data-source="DecimalLab.java" data-snippet="immutable">BigDecimal amount = new BigDecimal(&quot;10.00&quot;);
+amount.add(new BigDecimal(&quot;0.50&quot;));
+System.out.println(&quot;ignoredResult=&quot; + amount.toPlainString());
+amount = amount.add(new BigDecimal(&quot;0.50&quot;));
+System.out.println(&quot;assignedResult=&quot; + amount.toPlainString());</pre><pre class="code" data-record="DecimalLab" data-lines="ignoredResult,assignedResult">ignoredResult=10.00
+assignedResult=10.50</pre>
+  <p>BigDecimal 不可变：add 不会改动原对象，而是返回一个新对象，必须接住返回值才有用。subtract、multiply、divide，以及名字像 setter 的 setScale，全都如此。这里第二次把返回值重新赋给 amount，变量才指向计算后的数。</p>
+  <div class="callout">BigDecimal 能精确做这里的有限十进制加法和乘法，不代表任意运算都能精确结束。<b>1 ÷ 3</b> 的十进制也无限循环：要么拒绝，要么明确约定舍入。这就引出下一节。</div>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div><h2>保留两位小数，还要说清在哪一步</h2>
+  <p>先算 1 ÷ 3：第一种写法要求精确结果，第二种允许按指定规则舍入。运行后看程序分别怎样结束。</p>
+  <pre class="code" data-source="DecimalLab.java" data-snippet="division">try {
+    BigDecimal.ONE.divide(new BigDecimal(&quot;3&quot;));
+} catch (ArithmeticException e) {
+    System.out.println(&quot;exactThird=&quot; + e.getClass().getSimpleName());
+}
+System.out.println(&quot;roundedThird=&quot; + BigDecimal.ONE
+        .divide(new BigDecimal(&quot;3&quot;), 2, RoundingMode.HALF_UP).toPlainString());</pre><pre class="code" data-record="DecimalLab" data-lines="exactThird,roundedThird">exactThird=ArithmeticException
+roundedThird=0.33</pre>
+  <p>不带舍入的 divide 要求精确商，1/3 写不成有限十进制，于是抛异常；带上 <code>2, RoundingMode.HALF_UP</code> 才明确要求保留两位、按 HALF_UP 舍入，得到 0.33。RoundingMode 来自 <code>java.math.RoundingMode</code>。</p>
+  <h3>“保留两位”还没说完规则</h3>
+  <p>HALF_UP 就是常说的四舍五入：取最近的值，正好居中时远离零。但“居中时怎么办”还有别的选择，负数尤其能看出差别。把 1.245 和 −1.245 保留两位：</p>
+  <div class="scroll-x"><table class="numeric-table"><thead><tr><th>模式</th><th>规则</th><th>1.245</th><th>−1.245</th></tr></thead><tbody>
+    <tr><td><code>HALF_UP</code></td><td>取最近值，居中时远离零</td><td>1.25</td><td>-1.25</td></tr>
+    <tr><td><code>HALF_EVEN</code></td><td>取最近值，居中时保留末位偶数</td><td>1.24</td><td>-1.24</td></tr>
+    <tr><td><code>DOWN</code></td><td>向零截断</td><td>1.24</td><td>-1.24</td></tr>
+    <tr><td><code>FLOOR</code></td><td>向负无穷</td><td>1.24</td><td>-1.25</td></tr>
+  </tbody></table></div>
+  <p class="note">这里只列与本篇相关的四种。另有 CEILING（向正无穷）和 UNNECESSARY（要求无须舍入，否则抛异常），后者下一节的报价程序会用到。注意 HALF_UP 不能笼统理解成“遇 5 就往数轴右边进一位”：负数居中时是向更负的一侧舍入。</p>
+  <h3>逐条舍入，与最后舍入，不一定相等</h3>
+  <p>再做一笔小额计算：三条明细，每条原价 0.05 元，乘以系数 0.10，得到每条 0.0050 元。两种算法都保留两位、都用 HALF_UP，只改变舍入的时机。总额会一样吗？</p>
+  <div class="card round-lab" id="round-lab">
+    <h3>先舍入每条，还是先求和？</h3>
+    <div class="btns"><button class="btn" type="button" data-scope="roundEach" aria-pressed="true">每条先舍入，再相加</button><button class="btn" type="button" data-scope="roundTotal" aria-pressed="false">未舍入值相加，最后舍入</button></div>
+    <pre class="code" id="scope-code">BigDecimal exactLine = new BigDecimal("0.05").multiply(new BigDecimal("0.10"));
+BigDecimal roundedLine = exactLine.setScale(2, RoundingMode.HALF_UP);
+BigDecimal roundEach = roundedLine.multiply(new BigDecimal("3"));</pre>
+    <div class="btns"><button class="btn primary" id="scope-run" type="button" aria-controls="scope-result" hidden>运行</button></div>
+    <div id="scope-result" class="demo-result" aria-live="polite">
+    <div class="scope-line" id="scope-path">0.0050 → 0.01；三条合计：0.01 × 3</div>
+    <div class="lab-value" id="scope-value">0.03 元</div>
+    <p id="scope-note">每条先舍入成 0.01 元，三条相加得到 0.03 元。</p>
+    </div>
+  </div>
+  <p><b>两边都按各自规则算对了。</b> 差的一分钱来自舍入顺序，不是 BigDecimal 算术失效。要求明细相加等于单据金额时，得先约定明细是否已舍入、单据如何汇总；不能只写一句“统一使用 BigDecimal”就当规则完整。</p>
+  <details class="proof"><summary>把两种算法放在一起</summary><pre class="code" data-source="RoundingLab.java" data-snippet="boundary">BigDecimal exactLine = new BigDecimal(&quot;0.05&quot;).multiply(new BigDecimal(&quot;0.10&quot;));
+BigDecimal roundedLine = exactLine.setScale(2, RoundingMode.HALF_UP);
+BigDecimal roundEach = roundedLine.multiply(new BigDecimal(&quot;3&quot;));
+BigDecimal roundTotal = exactLine.multiply(new BigDecimal(&quot;3&quot;))
+        .setScale(2, RoundingMode.HALF_UP);
+System.out.println(&quot;exactLine=&quot; + exactLine.toPlainString());
+System.out.println(&quot;roundedLine=&quot; + roundedLine.toPlainString());
+System.out.println(&quot;roundEach=&quot; + roundEach.toPlainString());
+System.out.println(&quot;roundTotal=&quot; + roundTotal.toPlainString());</pre><pre class="code" data-record="RoundingLab" data-lines="exactLine,roundedLine,roundEach,roundTotal">exactLine=0.0050
+roundedLine=0.01
+roundEach=0.03
+roundTotal=0.02</pre></details>
+  <p>反过来，0.05 元平分三份，每份舍入成 0.02 元后合计 0.06 元，又超过了原额。若要求每份精确到分且合计不变，可以分成 0.02、0.02、0.01——最后那一分钱给谁，仍需另外约定。这里只是分配方案的示意。</p>
+  <details class="proof"><summary>试一下：五分钱平均分三份</summary><pre class="code" data-source="RoundingLab.java" data-snippet="allocation">BigDecimal each = new BigDecimal(&quot;0.05&quot;)
+        .divide(new BigDecimal(&quot;3&quot;), 2, RoundingMode.HALF_UP);
+System.out.println(&quot;each=&quot; + each.toPlainString());
+System.out.println(&quot;allocated=&quot; + each.multiply(new BigDecimal(&quot;3&quot;)).toPlainString());</pre><pre class="code" data-record="RoundingLab" data-lines="each,allocated">each=0.02
+allocated=0.06</pre></details>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div><h2>写一个报价程序</h2>
+  <p>现在把这些规则放回一个完整程序：接收单价、数量和折扣系数，算出原价与应付金额。为这个例子约定三件事：</p>
+  <ul><li>单价以元输入，非负，必须能精确到分；多出的非零小数位直接拒绝。</li><li>数量必须是 int 范围内的正整数；折扣系数在 0 到 1 之间，例如 0.85 表示收取原价的 85%。</li><li>先算单价 × 数量，再乘折扣系数，<b>只在最终应付金额处</b>保留两位，采用 HALF_UP。</li></ul>
+  <p>单价和折扣系数以十进制文本进入 BigDecimal，计算途中也保持十进制。<code>main</code> 的 <code>args</code> 依次接收这三个字符串。先找到代码里的两次 <code>setScale</code>：第一次检查输入能否精确到分，第二次才是在计算结束时舍入。代码下方可以切换参数，看正常计算和拒绝输入各走到哪里。</p>
+  <pre class="code" data-source="PriceQuote.java">import java.math.BigDecimal;
+import java.math.RoundingMode;
+
+public class PriceQuote {
+    public static void main(String[] args) {
+        if (args.length != 3) {
+            System.err.println(&quot;用法：PriceQuote 单价 数量 折扣系数&quot;);
+            System.exit(2);
+        }
+        try {
+            BigDecimal unitPrice = new BigDecimal(args[0]);
+            int quantity = Integer.parseInt(args[1]);
+            BigDecimal rate = new BigDecimal(args[2]);
+            if (unitPrice.signum() &lt; 0 || quantity &lt;= 0
+                    || rate.compareTo(BigDecimal.ZERO) &lt; 0
+                    || rate.compareTo(BigDecimal.ONE) &gt; 0) {
+                throw new IllegalArgumentException(&quot;单价须非负，数量须为正整数，折扣系数须在 0 到 1 之间&quot;);
+            }
+            unitPrice = unitPrice.setScale(2, RoundingMode.UNNECESSARY);
+            BigDecimal subtotal = unitPrice.multiply(BigDecimal.valueOf(quantity));
+            BigDecimal payable = subtotal.multiply(rate).setScale(2, RoundingMode.HALF_UP);
+            System.out.println(&quot;原价=&quot; + subtotal.toPlainString());
+            System.out.println(&quot;应付=&quot; + payable.toPlainString());
+        } catch (NumberFormatException e) {
+            System.err.println(&quot;输入错误：单价和折扣系数须为十进制数，数量须为 int 范围内的整数&quot;);
+            System.exit(2);
+        } catch (ArithmeticException e) {
+            System.err.println(&quot;输入错误：单价必须能精确到分&quot;);
+            System.exit(2);
+        } catch (IllegalArgumentException e) {
+            System.err.println(&quot;输入错误：&quot; + e.getMessage());
+            System.exit(2);
+        }
+    }
+}</pre><p>程序只用 JDK 内置的类：<code>parseInt</code> 解析整数，<code>signum()</code> 返回负、零、正对应的 −1、0、1，<code>compareTo</code> 检查折扣范围。输入错误时输出到标准错误并以退出码 2 结束；三个 catch 分别处理格式、单价精度、数值范围三类问题。</p>
+  <div class="card" id="quote-lab">
+    <h3>换一组输入，再运行</h3>
+    <div class="quote-controls" id="quote-controls" hidden>
+      <label for="quote-case">示例参数</label>
+      <select id="quote-case">
+        <option value="PriceQuote">单价 19.90 · 数量 3 · 系数 0.85</option>
+        <option value="PriceQuote-extra-zero">单价 19.900 · 数量 3 · 系数 0.85</option>
+        <option value="PriceQuote-fraction">单价 19.901 · 数量 3 · 系数 0.85</option>
+        <option value="PriceQuote-small">单价 0.05 · 数量 3 · 系数 0.10</option>
+        <option value="PriceQuote-rate">单价 19.90 · 数量 3 · 系数 1.01</option>
+        <option value="PriceQuote-quantity">单价 19.90 · 数量 0 · 系数 0.85</option>
+      </select>
+    </div>
+    <p class="note" id="quote-input">输入：单价 19.90 元 · 数量 3 · 折扣系数 0.85</p>
+    <div class="btns"><button class="btn primary" id="quote-run" type="button" aria-controls="quote-result" hidden>运行</button></div>
+    <div class="demo-result" id="quote-result" aria-live="polite">
+      <p class="output-label" id="quote-status">输出</p>
+      <pre class="code" id="quote-output">原价=59.70
+应付=50.75</pre>
+      <p id="quote-note">19.90 × 3 = 59.70，再乘 0.85 得到 50.7450，最后舍入为 50.75。</p>
+    </div>
+    <p class="note">试着比较 19.900 和 19.901：多一位小数，都会被拒绝吗？</p>
+  </div>
+  <p><code>toPlainString()</code> 把结果写成普通十进制，避免科学计数法。至于单价里多余的小数位，<code>UNNECESSARY</code> 检查的是“去掉它是否改变数值”：19.900 能精确变成 19.90，19.901 不行。如果还要求输入文本最多两位小数，那要另外检查格式。</p>
+  <p>这个例子把注意力放在金额表示和舍入上。接入实际业务时，还要补上金额与数量的上限，并明确币种、税费和尾差如何处理。</p>
+</section>
+
+<section class="ch" id="ch9">
+  <div class="ch-num">第 9 节</div><h2>小结和自测</h2>
+  <div class="callout key"><span class="t">带走一句话</span>结果交给 long，不会让前面的 int 乘法变成 long；结果交给 BigDecimal，也补不回 double 已经丢掉的精度。要沿着输入、运算、转换一步步检查，再把舍入发生的位置写清楚。</div>
+  <div class="scroll-x"><table class="numeric-table"><thead><tr><th>看到的现象</th><th>应该检查什么</th></tr></thead><tbody>
+    <tr><td>long 接到一个负总额</td><td>乘法是否先按 int 执行？把转换放到操作数上。</td></tr>
+    <tr><td>结果是 2.0 而非 2.5</td><td>是否先做了整数除法，再转换成 double？</td></tr>
+    <tr><td>大整数转回来少了 1</td><td>是否经过不能精确表示它的浮点类型？</td></tr>
+    <tr><td>BigDecimal 仍有一长串小数</td><td>输入是否已经经过 double 运算？</td></tr>
+    <tr><td>明细与汇总差一分钱</td><td>是否在不同位置做了舍入？</td></tr>
+  </tbody></table></div>
+  <div class="card"><h3>四个问题</h3>
+    <div class="q"><div class="qt">1. Math.multiplyExact(unitCents, quantity) 的返回值交给 long，会避开本例的异常吗？</div><button class="btn" type="button">看答案</button><div class="ans">不会。两个实参都是 int，调用 int 版本，计算先因超过 int 上限而抛 ArithmeticException。把至少一个实参改为 long，才能选择 long 版本；检查范围取决于方法参数及重载，接收变量来不及改变它。</div></div>
+    <div class="q"><div class="qt">2. id == floatingId 是 true，可以证明 long 转 double 没有丢数据吗？</div><button class="btn" type="button">看答案</button><div class="ans">不能。比较时 long 也提升为 double，可能两边都变成同一近似值。本篇的 idRoundTrip 已显示返回 long 后少了 1，而 mixedEquality 仍是 true。</div></div>
+    <div class="q"><div class="qt">3. new BigDecimal("2.0").equals(new BigDecimal("2.00")) 为什么不适合直接回答“金额一样吗”？</div><button class="btn" type="button">看答案</button><div class="ans">它还比较 scale，因此返回 false。如果问题只要求比较数值，compareTo 返回 0 才表示数值相等。若业务还关心表示精度，是否保留 scale 就是另一个问题。</div></div>
+    <div class="q"><div class="qt">4. 将 PriceQuote 的参数换成 0.05 3 0.10，应付是多少？能改成“每件先舍入”而不影响结果吗？</div><button class="btn" type="button">看答案</button><div class="ans">按该程序约定应付 0.02。若改成每件先算 0.005 并舍入到 0.01，再乘 3，结果是 0.03。两种算法的区别就在于舍入发生的位置；改之前要先确定想实现哪种业务口径。</div></div>
+  </div>
+</section>
+
+<section class="ch" id="ch10">
+  <div class="ch-num">第 10 节</div><h2>参考资料</h2>
+  <p>下面的资料支撑文中的类型规则和计算结果，版本均为 Java SE 8。每条后面注明它对应的内容，相关条款于 2026-11-16 核对。</p>
+  <div class="card refs">
+    <h3>Java 语言规范</h3><ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10.1" target="_blank" rel="noopener">JLS §3.10.1：整数字面量</a><span>支撑：第 2 节：十进制 long 字面量使用 L 后缀；接收变量不会改变字面量本身的类型。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.2" target="_blank" rel="noopener">JLS §4.2：基本数值类型与运算</a><span>支撑：第 3、5 节：整数范围、补码、二进制浮点有效精度、无穷及 NaN；范围与精度不能等同。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.6.2" target="_blank" rel="noopener">JLS §5.6.2：二元数值提升</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.1.2" target="_blank" rel="noopener">§5.1.2–§5.1.3：宽化与窄化</a><span>支撑：第 2、3、4 节：操作数决定运算类型；long 转 double 可能损失精度；整数窄化丢弃高位；混合数值比较也会提升。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.1.8" target="_blank" rel="noopener">JLS §5.1.8：拆箱</a><span>支撑：第 3 节：Integer 参与数值运算时转为 int，对 null 拆箱抛 NullPointerException。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.17.1" target="_blank" rel="noopener">JLS §15.17.1–§15.17.3：乘法、除法、余数</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.18.2" target="_blank" rel="noopener">§15.18.2：数值加法</a><span>支撑：第 2、4 节：整数乘加溢出取低位、整数除法向零截断、余数关系。</span></li>
+    </ul>
+    <h3>官方 API 文档</h3><ul>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html#multiplyExact-long-long-" target="_blank" rel="noopener">Math：multiplyExact、addExact、toIntExact</a><span>支撑：第 2、4 节：Java 8 提供的检查运算，超出对应目标整数类型的范围时抛 ArithmeticException。</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html#toString-double-" target="_blank" rel="noopener">Double：toString、isFinite</a><span>支撑：第 5 节：浮点值的十进制字符串表示与有限值检查；显示位数不等于底层精确值的所有十进制位数。</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html" target="_blank" rel="noopener">BigDecimal：类说明、构造器、valueOf、比较与运算</a><span>支撑：第 6、7 节：未缩放整数与 scale 的模型、不可变、double/String 构造差别、equals/compareTo、非终止除法、setScale 和 toPlainString。</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/math/RoundingMode.html" target="_blank" rel="noopener">RoundingMode：舍入模式</a><span>支撑：第 7、8 节：HALF_UP、HALF_EVEN、DOWN、FLOOR、CEILING 的正负数行为，以及 UNNECESSARY 在需要舍入时拒绝计算。</span></li>
+    </ul>
+    <h3>前端对照</h3><ul>
+      <li><a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Data_structures#number_类型" target="_blank" rel="noopener">MDN：JavaScript 数据结构 · Number 类型</a><span>支撑：第 1、5 节：JavaScript 只有一种 number，它是基于 IEEE 754 的双精度 64 位二进制格式，与 Java 的 double 同格式，所以 0.1 + 0.2 的误差两边一致。</span></li>
+    </ul>
+  </div>
+  <p class="note">页内“运行”展示预先用 JDK 8 执行的结果，并非在线编译。报价规则、舍入时机与尾差方案是本篇为说明问题设定的例子。</p>
+  <button class="btn" id="mark-read" type="button"></button>
+  <div class="pager"><a href="0-3.html"><small>上一篇</small>0.3 语法速览</a><a class="next" href="1-2.html"><small>下一篇</small>1.2 引用和内存</a></div>
+  <div class="credit">本篇是原创内容，示例代码由 Codex（OpenAI）编写并以 Amazon Corretto 1.8.0_512 实测，讲解由 Qoder 按问题驱动的方式重写并制作示意与交互，非任何官方教材。语言语义和 API 按 Java SE 8 文档核对。<br>本篇随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。</div>
+</section>
+</main>
+</div><script src="../assets/cc.js"></script>
+<script id="experiment-records" type="application/json">{"jdk": "openjdk version \"1.8.0_512\"\nOpenJDK Runtime Environment Corretto-8.512.09.1 (build 1.8.0_512-b09)\nOpenJDK 64-Bit Server VM Corretto-8.512.09.1 (build 25.512-b09, mixed mode)\n", "cases": {"DecimalLab.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": ""}, "DecimalLab": {"source": "DecimalLab.java", "args": [], "run_exit": 0, "run_stdout": "doubleSum=0.30000000000000004\ndoubleEquality=false\nprintedTenth=0.1\nexactDoubleTenth=0.1000000000000000055511151231257827021181583404541015625\ntext=0.1\ndouble=0.1000000000000000055511151231257827021181583404541015625\nvalueOf=0.1\nvalueOfSum=0.30000000000000004\ndecimalSum=0.3\nunscaled=20,200\nscale=1,2\nprecision=2,3\nequals=false\ncompareTo=0\nignoredResult=10.00\nassignedResult=10.50\nexactThird=ArithmeticException\nroundedThird=0.33\n", "run_stderr": ""}, "NumberLab.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": ""}, "NumberLab": {"source": "NumberLab.java", "args": [], "run_exit": 0, "run_stdout": "assigned=-1794967296\ncastAfter=-1794967296\ncastBefore=2500000000\ncheckedLong=2500000000\nintDivision=2\ncastQuotient=2.0\ncastOperand=2.5\nnegativeDivision=-2\nnegativeRemainder=-1\nmaxPlusOne=-2147483648\ncheckedInt=ArithmeticException\ncheckedAdd=ArithmeticException\nnarrowed=-1794967296\ncheckedNarrow=ArithmeticException\ncompoundByte=-128\nid=9007199254740993\nidRoundTrip=9007199254740992\nmixedEquality=true\nintegerEquality=false\nintegerZero=ArithmeticException\nfloatingZero=Infinity\nzeroOverZero=NaN\nnanEqualsSelf=false\nisFinite=false\nnullUnboxing=NullPointerException\n", "run_stderr": ""}, "PriceOverflow.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": ""}, "PriceOverflow": {"source": "PriceOverflow.java", "args": [], "run_exit": 0, "run_stdout": "-1794967296\n", "run_stderr": ""}, "PriceQuote.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": ""}, "PriceQuote": {"source": "PriceQuote.java", "args": ["19.90", "3", "0.85"], "run_exit": 0, "run_stdout": "原价=59.70\n应付=50.75\n", "run_stderr": ""}, "PriceQuote-small": {"source": "PriceQuote.java", "args": ["0.05", "3", "0.10"], "run_exit": 0, "run_stdout": "原价=0.15\n应付=0.02\n", "run_stderr": ""}, "PriceQuote-extra-zero": {"source": "PriceQuote.java", "args": ["19.900", "3", "0.85"], "run_exit": 0, "run_stdout": "原价=59.70\n应付=50.75\n", "run_stderr": ""}, "PriceQuote-fraction": {"source": "PriceQuote.java", "args": ["19.901", "3", "0.85"], "run_exit": 2, "run_stdout": "", "run_stderr": "输入错误：单价必须能精确到分\n"}, "PriceQuote-rate": {"source": "PriceQuote.java", "args": ["19.90", "3", "1.01"], "run_exit": 2, "run_stdout": "", "run_stderr": "输入错误：单价须非负，数量须为正整数，折扣系数须在 0 到 1 之间\n"}, "PriceQuote-quantity": {"source": "PriceQuote.java", "args": ["19.90", "0", "0.85"], "run_exit": 2, "run_stdout": "", "run_stderr": "输入错误：单价须非负，数量须为正整数，折扣系数须在 0 到 1 之间\n"}, "PriceQuote-nan": {"source": "PriceQuote.java", "args": ["NaN", "3", "0.85"], "run_exit": 2, "run_stdout": "", "run_stderr": "输入错误：单价和折扣系数须为十进制数，数量须为 int 范围内的整数\n"}, "PriceQuote-large-count": {"source": "PriceQuote.java", "args": ["19.90", "2147483648", "0.85"], "run_exit": 2, "run_stdout": "", "run_stderr": "输入错误：单价和折扣系数须为十进制数，数量须为 int 范围内的整数\n"}, "PriceQuote-usage": {"source": "PriceQuote.java", "args": [], "run_exit": 2, "run_stdout": "", "run_stderr": "用法：PriceQuote 单价 数量 折扣系数\n"}, "RoundingLab.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": ""}, "RoundingLab": {"source": "RoundingLab.java", "args": [], "run_exit": 0, "run_stdout": "HALF_UP=1.25,-1.25\nHALF_EVEN=1.24,-1.24\nDOWN=1.24,-1.24\nFLOOR=1.24,-1.25\nCEILING=1.25,-1.24\nUNNECESSARY=ArithmeticException\nexactLine=0.0050\nroundedLine=0.01\nroundEach=0.03\nroundTotal=0.02\neach=0.02\nallocated=0.06\n", "run_stderr": ""}, "errors/ByteSum.java": {"compile_exit": 1, "compile_stdout": "", "compile_stderr": "ByteSum.java:5: error: incompatible types: possible lossy conversion from int to byte\n        byte sum = a + b;\n                     ^\n1 error\n"}, "errors/LongLiteral.java": {"compile_exit": 1, "compile_stdout": "", "compile_stderr": "LongLiteral.java:3: error: integer number too large: 3000000000\n        long count = 3_000_000_000;\n                     ^\n1 error\n"}}}</script>
+<script>
+(function () {
+  var records = JSON.parse(document.getElementById('experiment-records').textContent).cases;
+  function value(caseName, key) {
+    var prefix = key + '=';
+    return records[caseName].run_stdout.split('\n').find(function (line) {
+      return line.indexOf(prefix) === 0;
+    }).slice(prefix.length);
+  }
+  function prepare(button, panel) {
+    button.hidden = false;
+    button.disabled = false;
+    button.textContent = '运行';
+    button.setAttribute('aria-expanded', 'false');
+    panel.hidden = true;
+  }
+  function reveal(button, panel) {
+    panel.hidden = false;
+    button.disabled = true;
+    button.textContent = '已运行';
+    button.setAttribute('aria-expanded', 'true');
+  }
+
+  // Fixed Java examples, with verified output embedded in this static page.
+  // Source and output remain readable when JavaScript is unavailable.
+  document.querySelectorAll('pre[data-record]').forEach(function (output, index) {
+    var record = records[output.dataset.record];
+    var key = output.dataset.key || 'run_stdout';
+    var text = record[key];
+    if (output.dataset.lines) {
+      var lines = text.trimEnd().split('\n');
+      text = output.dataset.lines.split(',').map(function (name) {
+        return lines.find(function (line) { return line.indexOf(name + '=') === 0; });
+      }).join('\n');
+    }
+    output.textContent = text.trimEnd();
+    var wrapper = document.createElement('div');
+    wrapper.className = 'run-experiment';
+    var controls = document.createElement('div');
+    controls.className = 'btns';
+    var button = document.createElement('button');
+    button.className = 'btn primary';
+    button.type = 'button';
+    var panel = document.createElement('div');
+    panel.className = 'demo-result' + (key === 'compile_stderr' ? ' is-error' : '');
+    panel.id = 'run-output-' + index;
+    panel.setAttribute('aria-live', 'polite');
+    button.setAttribute('aria-controls', panel.id);
+    var label = document.createElement('p');
+    label.className = 'output-label';
+    label.textContent = key === 'compile_stderr' ? '编译失败' : '输出';
+    output.parentNode.insertBefore(wrapper, output);
+    controls.appendChild(button);
+    wrapper.appendChild(controls);
+    wrapper.appendChild(panel);
+    panel.appendChild(label);
+    panel.appendChild(output);
+    var explanation = document.querySelector('[data-after-run="' + output.dataset.record + '"]');
+    if (explanation) explanation.hidden = true;
+    prepare(button, panel);
+    button.addEventListener('click', function () {
+      reveal(button, panel);
+      if (explanation) explanation.hidden = false;
+    });
+  });
+
+  var casts = {
+    assigned: {code: 'long assigned = unitCents * quantity;', steps: ['两个 int 先相乘，乘积超出 int 范围。', '保留低 32 位，结果解释为 −1794967296。', '把这个负整数转换成 long，原值已无法恢复。']},
+    castAfter: {code: 'long castAfter = (long) (unitCents * quantity);', steps: ['括号内仍是 int × int，先发生溢出。', '外层的 (long) 转换的是已经溢出的 int。', '转换没有恢复数学上的乘积，仍是同一个负数。']},
+    castBefore: {code: 'long castBefore = (long) unitCents * quantity;', steps: ['先把 unitCents 转为 long，值仍是 50000。', 'quantity 随数值提升转为 long，再做 long 乘法。', '2500000000 在 long 范围内，能准确保留。']},
+    checkedLong: {code: 'long checked = Math.multiplyExact((long) unitCents, (long) quantity);', steps: ['两个实参转为 long，调用 multiplyExact(long, long)。', '方法检查数学乘积是否超出 long 范围。', '本例没有越界，返回 2500000000；越界则抛异常。']}
+  };
+  var selectedCast = 'assigned';
+  var castRun = document.getElementById('cast-run');
+  var castResult = document.getElementById('cast-result');
+  prepare(castRun, castResult);
+  document.querySelectorAll('[data-cast]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      selectedCast = button.dataset.cast;
+      document.getElementById('cast-code').textContent = casts[selectedCast].code;
+      document.querySelectorAll('[data-cast]').forEach(function (other) {
+        other.setAttribute('aria-pressed', String(other === button));
+      });
+      prepare(castRun, castResult);
+    });
+  });
+  castRun.addEventListener('click', function () {
+    document.getElementById('cast-value').textContent = value('NumberLab', selectedCast);
+    var path = document.getElementById('cast-path');
+    path.textContent = '';
+    casts[selectedCast].steps.forEach(function (step) {
+      var li = document.createElement('li'); li.textContent = step; path.appendChild(li);
+    });
+    reveal(castRun, castResult);
+  });
+
+  var selectedScope = 'roundEach';
+  var scopeRun = document.getElementById('scope-run');
+  var scopeResult = document.getElementById('scope-result');
+  var lineCode = 'BigDecimal exactLine = new BigDecimal("0.05").multiply(new BigDecimal("0.10"));\n';
+  var scopeCode = {
+    roundEach: lineCode + 'BigDecimal roundedLine = exactLine.setScale(2, RoundingMode.HALF_UP);\nBigDecimal roundEach = roundedLine.multiply(new BigDecimal("3"));',
+    roundTotal: lineCode + 'BigDecimal roundTotal = exactLine.multiply(new BigDecimal("3"))\n        .setScale(2, RoundingMode.HALF_UP);'
+  };
+  document.getElementById('scope-code').textContent = scopeCode[selectedScope];
+  prepare(scopeRun, scopeResult);
+  document.querySelectorAll('[data-scope]').forEach(function (button) {
+    button.addEventListener('click', function () {
+      selectedScope = button.dataset.scope;
+      document.getElementById('scope-code').textContent = scopeCode[selectedScope];
+      document.querySelectorAll('[data-scope]').forEach(function (other) {
+        other.setAttribute('aria-pressed', String(other === button));
+      });
+      prepare(scopeRun, scopeResult);
+    });
+  });
+  scopeRun.addEventListener('click', function () {
+    var each = selectedScope === 'roundEach';
+    document.getElementById('scope-path').textContent = each
+      ? '0.0050 → 0.01；三条合计：0.01 × 3'
+      : '三条未舍入值：0.0050 × 3 = 0.0150 → 0.02';
+    document.getElementById('scope-value').textContent = value('RoundingLab', selectedScope) + ' 元';
+    document.getElementById('scope-note').textContent = each
+      ? '每条先舍入成 0.01 元，三条相加得到 0.03 元。'
+      : '先把未舍入的值加起来，最后只舍入一次，得到 0.02 元。';
+    reveal(scopeRun, scopeResult);
+  });
+
+  var quoteSelect = document.getElementById('quote-case');
+  var quoteRun = document.getElementById('quote-run');
+  var quoteResult = document.getElementById('quote-result');
+  var quoteNotes = {
+    'PriceQuote': '19.90 × 3 = 59.70，再乘 0.85 得到 50.7450，最后舍入为 50.75。',
+    'PriceQuote-extra-zero': '接受。19.900 去掉末尾的 0 不改变数值，可以精确写成 19.90。',
+    'PriceQuote-fraction': '拒绝。19.901 变成两位小数必须舍入，而 UNNECESSARY 要求这个步骤不能损失精度。',
+    'PriceQuote-small': '三件先合计为 0.15，再乘 0.10 得到 0.0150，最后舍入为 0.02；若每件先舍入，合计就会变成 0.03。',
+    'PriceQuote-rate': '拒绝。我们约定系数在 0 到 1 之间，1.01 超过上限，在计算之前就被拦住。',
+    'PriceQuote-quantity': '拒绝。数量必须大于 0，这个判断在计算之前完成。'
+  };
+  document.getElementById('quote-controls').hidden = false;
+  prepare(quoteRun, quoteResult);
+  quoteSelect.addEventListener('change', function () {
+    var args = records[quoteSelect.value].args;
+    document.getElementById('quote-input').textContent = '输入：单价 ' + args[0] + ' 元 · 数量 ' + args[1] + ' · 折扣系数 ' + args[2];
+    prepare(quoteRun, quoteResult);
+  });
+  quoteRun.addEventListener('click', function () {
+    var record = records[quoteSelect.value];
+    document.getElementById('quote-output').textContent = (record.run_stdout + record.run_stderr).trimEnd();
+    document.getElementById('quote-status').textContent = record.run_exit === 0 ? '输出' : '输入被拒绝 · 退出码 ' + record.run_exit;
+    document.getElementById('quote-note').textContent = quoteNotes[quoteSelect.value];
+    quoteResult.classList.toggle('is-error', record.run_exit !== 0);
+    reveal(quoteRun, quoteResult);
+  });
+})();
+</script>
+</body>
+</html>

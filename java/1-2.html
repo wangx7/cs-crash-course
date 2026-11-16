@@ -1,0 +1,495 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>1.2 引用和内存 · Java 后端</title>
+<meta name="description" content="从工单对象的修改与替换出发，用 Java 8 实验和逐步引用图理解值传递、栈帧与堆、浅拷贝、null 和对象的可达性。">
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font:13px/1.75 var(--mono);background:var(--code);border-radius:10px;padding:14px 16px;overflow-x:auto;white-space:pre;tab-size:4;margin:14px 0}
+.note{font-size:13px;line-height:1.8;color:var(--muted);overflow-wrap:anywhere}
+.guess{border-top:4px solid var(--on)}
+.output-label{font:12px/1.6 var(--mono);color:var(--muted);margin:14px 0 5px}
+.run-result pre{border-left:3px solid var(--ok);margin-top:0}
+.run-result.is-error pre{border-left-color:var(--bad)}
+[hidden]{display:none!important}
+.run-result{margin-bottom:16px}
+.btn:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--on);outline-offset:3px}
+.trace{border:1px solid var(--line);border-radius:14px;background:var(--panel);margin:24px 0;overflow:hidden}
+.trace-head{padding:18px 20px 14px;border-bottom:1px solid var(--line)}
+.trace-head h3{margin:0}.trace-head p{margin:4px 0 0}
+.trace-code{margin:0;padding:14px 20px;list-style:none;background:var(--code);font:13px/1.9 var(--mono);overflow-x:auto}
+.trace-code li{padding:3px 10px;white-space:pre;border-left:3px solid transparent}
+.trace-code li.current{background:var(--on-soft);border-left-color:var(--on)}
+.trace-view{padding:12px 14px;background-image:radial-gradient(var(--line) 1px,transparent 1px);background-size:18px 18px}
+.trace .scroll-x{margin:0;padding:0}.trace .scroll-x svg{min-width:570px}
+.trace-footer{padding:0 20px 20px}.trace-footer .step-text{min-height:80px;margin-top:12px}
+.step-count{font:13px/1.6 var(--mono);color:var(--muted);align-self:center;margin-left:auto}
+.frame{fill:var(--panel);stroke:var(--line);stroke-width:1.5}.object-a{fill:var(--on-soft);stroke:var(--on);stroke-width:2}.object-b{fill:var(--accent-soft);stroke:var(--accent);stroke-width:2}
+.ref-arrow{fill:none;stroke:var(--on);stroke-width:2.5}.ref-arrow.b{stroke:var(--accent)}
+.inactive{opacity:.3}.diagram text{font-family:var(--mono)}.diagram .plain{font-family:inherit}
+.object-pair{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:20px 0}
+.object-pair>div{padding:16px 18px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.object-pair b{display:block;font-size:15px}.object-pair p{margin:6px 0;font:14px/1.8 var(--mono)}
+.object-pair small{font-size:13px;color:var(--muted)}
+.ref-table{border-collapse:collapse;width:100%;font-size:14px;margin:18px 0}
+.ref-table th,.ref-table td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.ref-table th{font-size:13px;color:var(--muted)}
+details.code-fold{margin:18px 0;border:1px solid var(--line);border-radius:10px;padding:14px 16px;background:var(--panel)}
+details.code-fold summary{font-size:15px;font-weight:600;color:var(--accent);cursor:pointer}
+.copy-map{margin:20px 0;padding:18px;border-left:3px solid var(--on);background:var(--panel)}
+.copy-map p{font:14px/1.9 var(--mono);margin:5px 0}.copy-map .note{font:13px/1.8 inherit;color:var(--muted)}
+.refs ul{padding-left:20px}.refs li{margin:0;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}.refs li:last-child{border-bottom:0}.refs li span{display:block;font-size:13px;color:var(--muted);margin-top:4px}.refs h3:not(:first-child){margin-top:24px}
+@media(max-width:600px){pre.code{font-size:12px;padding:12px}.object-pair{grid-template-columns:1fr;gap:10px}.trace-head,.trace-footer{padding-left:14px;padding-right:14px}.trace-code{padding:12px 4px;font-size:12px}.ref-table th,.ref-table td{padding:8px}.step-count{width:100%;margin-left:0}}
+@media(pointer:coarse){.btn{min-height:44px}}
+</style>
+</head>
+<body data-ep="102" data-store="java-be-read" data-unit="篇">
+<div class="topbar"><a href="index.html">← Java 后端 · 目录</a><span class="muted">第 1 部分 · 对象与类型</span></div>
+<header class="hero">
+  <div class="eyebrow">第 1 部分 · 对象与类型 · 1.2</div>
+  <h1>引用和内存</h1>
+  <p class="en">References, pass by value, stack frames and the heap</p>
+  <p class="lead">把一张工单交给方法处理：方法先修改它的状态，又把参数换成一张新工单。回到调用处，手里拿到的究竟是哪一张？沿着变量与对象之间的箭头走一遍，就能分清“修改对象”和“替换引用”，也能看懂复制、返回值与空指针为什么会出现这些结果。</p>
+  <div class="road"><span>一张工单，两种修改</span><i>→</i><span>画出引用</span><i>→</i><span>跟进方法调用</span><i>→</i><span>复制与空值</span></div>
+  <p class="note" style="margin-top:16px">本篇以 Java 8 为准。示例只用 JDK，不依赖 Spring、数据库或其他篇的代码。</p>
+</header>
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">方法到底改了什么</a></li>
+  <li><a href="#ch2">变量里放的是引用</a></li>
+  <li><a href="#ch3">参数怎样进入方法</a></li>
+  <li><a href="#ch4">栈帧结束，对象还在吗</a></li>
+  <li><a href="#ch5">复制后为何还会互相影响</a></li>
+  <li><a href="#ch6">null 在哪一步出错</a></li>
+  <li><a href="#ch7">返回一张独立的工单</a></li>
+  <li><a href="#ch8">小结和自测</a></li>
+  <li><a href="#ch9">参考资料</a></li>
+</ol></nav>
+<main>
+<noscript><p class="note">启用 JavaScript 后可点击运行、逐步查看引用图；当前仍可阅读代码、输出和图解。</p></noscript>
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div><h2>方法到底改了什么？</h2>
+  <p>先用一个很小的类表示工单：<code>WorkOrder</code> 只有一个整数状态 <code>status</code>。本篇约定 0 表示待受理，1 表示已受理，9 表示已归档；这些数字只是实验数据。<code>new WorkOrder(0)</code> 创建一张状态为 0 的工单。</p>
+  <p>下面是一段完整程序。<code>main</code> 创建工单，然后调用 <code>process</code>。先别运行，看看最后两行会打印什么：<b>status 是 0、1 还是 9？attempts 是 0 还是 1？</b></p>
+  <div class="card guess">
+    <h3>三次赋值，哪些能影响调用方？</h3>
+    <pre class="code" data-source="ReferencePuzzle.java">public class ReferencePuzzle {
+    static class WorkOrder {
+        int status;
+
+        WorkOrder(int status) {
+            this.status = status;
+        }
+    }
+
+    static void process(WorkOrder order, int attempts) {
+        order.status = 1;
+        order = new WorkOrder(9);
+        attempts++;
+    }
+
+    public static void main(String[] args) {
+        WorkOrder order = new WorkOrder(0);
+        int attempts = 0;
+        process(order, attempts);
+        System.out.println("status=" + order.status);
+        System.out.println("attempts=" + attempts);
+    }
+}</pre>
+    <pre class="code" data-record="ReferencePuzzle">status=1
+attempts=0</pre>
+    <p data-after-run="ReferencePuzzle">调用方看见了状态 1，却没拿到状态 9 的新工单，尝试次数也仍是 0。三个赋值都执行过，区别在于它们各自改的是对象里的字段，还是方法自己的参数变量。</p>
+  </div>
+  <p>代码中的 <code>static class WorkOrder</code> 是放在实验程序里的一个小类；这样可以把示例写在一起。它的构造器 <code>WorkOrder(int status)</code> 在创建对象时接收初始状态，<code>this.status = status</code> 把参数写进这个对象的字段。读这个实验时，只需认出“创建工单”和“修改状态”两件事。</p>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div><h2>变量里放的是引用</h2>
+  <p>先把方法调用拿开，只看一次赋值。<code>WorkOrder first = new WorkOrder(0)</code> 创建了对象，也声明了一个变量。对象保存 <code>status</code>，变量 <code>first</code> 保存的是<b>指向该对象的引用值</b>。为了画图，把这个对象叫作 A；A 只是我们取的图中编号，不是程序读出的内存地址。</p>
+  <p>接着写 <code>WorkOrder second = first</code>，复制的是 first 里那个引用值。没有再次执行 <code>new</code>，也没有复制工单的字段。现在有两个变量，都能找到同一张工单。</p>
+  <div class="object-pair" aria-label="两个变量指向同一对象的示意">
+    <div><b>两个变量</b><p>first → A<br>second → A</p><small>每个变量各自保存一份引用值。</small></div>
+    <div><b>一个对象</b><p>A : WorkOrder<br>status = 0</p><small>状态只有一份，由两个变量共同访问。</small></div>
+  </div>
+  <p>试着顺着 <code>second</code> 修改状态，再把 second 改指向另一张工单。运行前判断：哪一步之后，first 和 second 不再指向同一个对象？以下片段放在 <code>main</code> 中，使用开篇相同的 WorkOrder 定义。</p>
+  <pre class="code" data-source="AssignmentLab.java" data-snippet="main">WorkOrder first = new WorkOrder(0);
+WorkOrder second = first;
+System.out.println("sameBefore=" + (first == second));
+second.status = 1;
+System.out.println("firstStatus=" + first.status);
+second = new WorkOrder(9);
+System.out.println("sameAfter=" + (first == second));
+System.out.println("secondStatus=" + second.status);</pre>
+  <pre class="code" data-record="AssignmentLab">sameBefore=true
+firstStatus=1
+sameAfter=false
+secondStatus=9</pre>
+  <p><code>second.status = 1</code> 先沿着 second 找到 A，再改 A 的字段。first 仍指向 A，因此它读到的也是 1。<code>second = new WorkOrder(9)</code> 则先创建对象 B，再把 second 保存的引用换成 B 的引用；这一步没有给 first 赋值，first 仍指向 A。</p>
+  <p>对这里两个 WorkOrder 引用使用 <code>==</code>，比较的是是否指向同一个对象。两个对象即使字段完全相同，也不会因此成为同一个对象；这是<b>对象身份</b>与<b>字段内容</b>的区别。两个 null 引用也会比较为 true，但 null 不对应任何对象。</p>
+  <div class="callout key">读赋值时先看左边：<code>second.status = …</code> 写入对象的字段；<code>second = …</code> 写入变量本身。沿箭头修改对象，和改画一条箭头，是两个动作。</div>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div><h2>参数怎样进入方法？</h2>
+  <p>回到开篇的 <code>process(order, attempts)</code>。调用时，Java 先求出实参的值，再用这些值初始化这次调用的新参数变量。对 int 而言，复制的是整数 0；对 WorkOrder 而言，复制的是指向 A 的引用值。</p>
+  <p>调用处的 <code>order</code> 与方法参数 <code>order</code> 恰好同名，但它们是两个变量。你可以把方法里的那个改名为 <code>incoming</code>，行为不变。下面逐步执行这次调用，重点观察：<b>A 的状态何时改变？哪一条箭头改指向了 B？</b></p>
+  <div class="trace" id="reference-trace">
+    <div class="trace-head"><h3>跟着一次调用走</h3><p class="note">引用关系示意。省略与本例无关的参数及 JVM 内部数据，不表示物理地址。</p></div>
+    <ol class="trace-code" aria-label="本次调用的执行步骤">
+      <li data-step="0" class="current">// main：order → A，attempts = 0</li>
+      <li data-step="1">process(order, attempts); // 复制实参值</li>
+      <li data-step="2">    order.status = 1;</li>
+      <li data-step="3">    order = new WorkOrder(9);</li>
+      <li data-step="4">    attempts++;</li>
+      <li data-step="5">// process 返回，继续 main</li>
+    </ol>
+    <div class="trace-view"><div class="scroll-x">
+      <svg class="diagram" viewBox="0 0 680 340" role="img" aria-labelledby="trace-title trace-desc">
+        <title id="trace-title">main 与 process 的变量和工单对象</title>
+        <desc id="trace-desc">初始时，main 的 order 指向状态为 0 的工单 A，attempts 为 0。process 尚未调用。</desc>
+        <defs><marker id="arrow-a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="var(--on)"/></marker><marker id="arrow-b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10Z" fill="var(--accent)"/></marker></defs>
+        <text x="20" y="24" class="t-sub plain">当前线程的方法调用</text><text x="438" y="24" class="t-sub plain">堆中的对象（逻辑模型）</text>
+        <rect x="20" y="40" width="258" height="116" rx="10" class="frame"/>
+        <text x="38" y="66" class="t-main">main</text><text x="38" y="104" class="t-mono">order → A</text><text x="38" y="134" class="t-mono">attempts = 0</text>
+        <path d="M220 99C335 99 340 104 438 104" class="ref-arrow" marker-end="url(#arrow-a)"/>
+        <g id="process-frame" class="inactive"><rect x="20" y="181" width="258" height="124" rx="10" class="frame"/><text x="38" y="207" class="t-main">process</text><text x="38" y="245" class="t-mono" id="process-ref">尚未调用</text><text x="38" y="278" class="t-mono" id="process-attempts"></text></g>
+        <path id="process-arrow" d="M220 240C345 240 336 129 438 129" class="ref-arrow" marker-end="url(#arrow-a)" visibility="hidden"/>
+        <rect x="446" y="67" width="213" height="91" rx="10" class="object-a"/><text x="463" y="97" class="t-main">A : WorkOrder</text><text x="463" y="132" class="t-mono" id="object-a-status">status = 0</text>
+        <g id="object-b" visibility="hidden"><rect x="446" y="198" width="213" height="91" rx="10" class="object-b"/><text x="463" y="228" class="t-main">B : WorkOrder</text><text x="463" y="263" class="t-mono">status = 9</text></g>
+        <text x="446" y="320" class="t-sub plain" id="object-b-note"></text>
+      </svg>
+    </div></div>
+    <div class="trace-footer">
+      <div class="btns" id="trace-controls" hidden><button class="btn" id="trace-prev" type="button" disabled>上一步</button><button class="btn primary" id="trace-next" type="button">执行下一步</button><button class="btn" id="trace-reset" type="button">重新开始</button><span class="step-count" id="trace-count">0 / 5</span></div>
+      <p class="step-text" id="trace-explanation" aria-live="polite">main 已创建工单 A，状态为 0。现在准备调用 process，main 的 attempts 也是 0。</p>
+    </div>
+  </div>
+  <p>进入方法时，两个 order 都指向 A。所以第一句 <code>order.status = 1</code> 修改了共同可见的工单。第二句给参数 order 赋了新值：参数改指向 B，main 的 order 仍指向 A。第三句只增加参数 attempts，main 的 attempts 仍是自己的 0。方法返回时，main 因而读到 <code>status=1</code> 和 <code>attempts=0</code>。</p>
+  <p>这就是 Java 的<b>值传递</b>。引用值也属于“值”，它让两个变量能访问同一对象；它不让被调用方法直接改写调用方的局部变量。只记“对象传进去能改”，容易漏掉重新赋值这一步的差别。</p>
+  <div class="callout">判断一次调用会不会改变已有对象，要去看方法做了什么。参数类型是 WorkOrder，只说明它能接收这种引用；单凭类型，无法知道方法会修改字段、创建新对象，还是只读取数据。</div>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div><h2>栈帧结束，对象还在吗？</h2>
+  <p>刚才图左边的两块区域，就是理解方法调用用的<b>栈帧</b>模型。说得直白些：每次方法调用，JVM 都给这次调用单独开一块“草稿区”，参数和方法里的局部变量放在里面；方法返回，这块草稿区就收走。每个线程有自己独立的一摞草稿区（术语叫虚拟机栈），所以两个线程同时调用同一个方法，各自的参数互不相干。规范里这块草稿区叫<b>帧</b>，除了局部变量，还放一些计算的中间结果。</p>
+  <p>图右边是<b>堆</b>，对象住的地方。所有线程共用这一个堆，<code>new</code> 出来的对象和数组都从这里分配。这里有个容易混的点：工单的 <code>status</code> 虽然是 int，但它是对象的字段，跟着对象住在堆上，而不是住在某个栈帧里。所以“基本类型都在栈上、引用类型都在堆上”这句话不对——它把变量的类型和变量所在的位置混为一谈了。变量里放的是引用还是整数，跟这个变量本身住在哪，是两回事。</p>
+  <div class="object-pair">
+    <div><b>按一次方法调用来观察</b><p>局部变量 order：引用值<br>局部变量 attempts：整数</p><small>引用和整数都可以是局部变量。</small></div>
+    <div><b>按一个对象来观察</b><p>对象的 status：整数<br>对象也可以有引用类型字段</p><small>字段的类型不决定它是否属于对象。</small></div>
+  </div>
+  <p class="note">这里画的是规范层面的逻辑关系，不是内存快照。JVMS 允许不同实现采用不同布局，甚至允许帧在堆上分配；实际执行还可能优化掉分配。不能凭这张图推算地址、大小，或断言每个 new 最终都有一块独立的物理内存。</p>
+  <h3>返回的是引用，对象不随局部变量消失</h3>
+  <p>如果方法结束就必须销毁它创建的对象，那工厂方法便无法工作。看下面的 <code>create</code>：它创建工单，再把引用返回。调用方接住这个引用后，仍然能访问那张工单。方法内的变量结束了，对象依然能被后续代码使用。</p>
+  <pre class="code" data-source="ReturnLab.java" data-snippet="methods">static WorkOrder create() {
+    WorkOrder order = new WorkOrder(0);
+    return order;
+}
+
+static WorkOrder replace(WorkOrder order) {
+    order = new WorkOrder(9);
+    return order;
+}</pre>
+  <p><code>replace</code> 也返回了一个新对象。比较以下两种调用：第一次忽略返回值；第二次把返回值赋给调用方的 order。使用相同的 WorkOrder 定义，在 main 中运行：</p>
+  <pre class="code" data-source="ReturnLab.java" data-snippet="return">WorkOrder order = create();
+replace(order);
+System.out.println("ignored=" + order.status);
+order = replace(order);
+System.out.println("received=" + order.status);</pre>
+  <pre class="code" data-record="ReturnLab" data-lines="ignored,received">ignored=0
+received=9</pre>
+  <p>第二次之所以拿到新工单，是因为调用方执行了 <code>order = …</code>。赋值右边的方法调用先完成，返回新工单的引用，再把这个引用写进调用方的变量。方法内部的参数赋值和调用方的接收赋值，各自发生在自己的变量上。</p>
+  <h3>对象什么时候才有机会被回收？</h3>
+  <p>看的是对象还能否被程序的后续计算访问，而不只是“创建它的方法结束了吗”。从还在使用的变量、静态字段等出发，沿着对象字段、数组元素中的引用，可能继续找到其他对象。只要对象还通过这样的路径被保留，就不能仅因某个局部变量消失而认定它可以回收。</p>
+  <p>在这里的简化模型中，如果所有通往某个对象的路径都断了，它就可能成为垃圾回收的对象。两个对象互相引用，也不意味着一定能存活：如果运行中的程序已经无法到达它们，这个环本身不会把它们保留下来。反过来，把对象放进一个长期可访问的集合，哪怕业务上早已不用它，只要引用还留着，它仍可能被保留。</p>
+  <p>“不再可达”和“已释放内存”不是同一个时刻。图中 process 返回后不再画出通向 B 的箭头，只是在说明本例的引用关系；图没有观测垃圾回收，也没有证明 B 当时已被回收。我们无需主动销毁对象，但要留意长期对象是否还持有不需要的引用。</p>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div><h2>复制了数组，为什么工单还会一起变？</h2>
+  <p>现在有一个工单数组，想复制一份再调整其中的状态。数组自身也是对象；<code>WorkOrder[]</code> 的每个元素保存一个工单引用。调用数组的 <code>clone()</code> 会创建新数组，并复制各个元素的值。</p>
+  <p>先预测下面的两次修改：<code>copy[0].status = 1</code> 与 <code>copy[0] = new WorkOrder(9)</code>，哪一次会影响通过 original 读到的工单状态？这里仍使用开篇的 WorkOrder。</p>
+  <pre class="code" data-source="ArrayCopyLab.java" data-snippet="main">WorkOrder[] original = { new WorkOrder(0) };
+WorkOrder[] copy = original.clone();
+System.out.println("sameArray=" + (original == copy));
+System.out.println("sameElement=" + (original[0] == copy[0]));
+copy[0].status = 1;
+System.out.println("originalStatus=" + original[0].status);
+copy[0] = new WorkOrder(9);
+System.out.println("originalAfterReplace=" + original[0].status);
+System.out.println("copyStatus=" + copy[0].status);</pre>
+  <pre class="code" data-record="ArrayCopyLab">sameArray=false
+sameElement=true
+originalStatus=1
+originalAfterReplace=1
+copyStatus=9</pre>
+  <div class="copy-map" aria-label="克隆数组后元素引用仍共享的示意">
+    <p>original → 数组 X → [0] → 工单 A</p>
+    <p>copy&nbsp;&nbsp;&nbsp;&nbsp; → 数组 Y → [0] → 工单 A</p>
+    <p class="note">clone 刚完成时的示意：X 与 Y 是两个数组，里面的第 0 个元素却指向同一张工单。</p>
+  </div>
+  <p><code>sameArray=false</code> 证明数组本身已经分开；<code>sameElement=true</code> 则说明工单没有分开。沿着 copy[0] 改状态，改的是共同的 A，所以 original[0] 也能读到 1。随后给 copy[0] 赋值，改的是数组 Y 的那个元素；数组 X 的元素没变，它仍指向 A。</p>
+  <p>这种只复制一层、嵌套对象仍共享的复制叫<b>浅拷贝</b>。要让这份示例中的工单独立，需要再创建 WorkOrder，并把状态值复制进去。如果工单还包含可变的联系人、明细列表等对象，就要继续判断哪些也应该复制。<b>深拷贝的关键是需要独立的对象是否真的分开了</b>，不能只数外面写了几次 new。</p>
+  <div class="callout">读到 DTO 转换或 Bean 复制工具时，也用这个问题检查它：复制了字段值以后，引用类型字段还指向原对象吗？具体要查所用工具及该字段的处理逻辑；不能仅凭方法名里有 copy 就认定它做了深拷贝。</div>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div><h2>null 在哪一步出错？</h2>
+  <p><code>null</code> 是一种引用值，表示它没有指向任何对象。它不是空白工单，也不会自动创建一个对象。给变量赋 null、把 null 传入方法，或者与 null 比较，本身都不要求访问某个对象；真正沿着它访问实例字段、调用实例方法时，才会遇到空指针问题。</p>
+  <p>先试一个容易混淆的操作。在第 4 节运行完的 main 中，order 指向状态为 9 的工单。把这份引用赋给 alias，再清空 order。alias 还能访问工单吗？</p>
+  <pre class="code" data-source="ReturnLab.java" data-snippet="null">WorkOrder alias = order;
+order = null;
+System.out.println("aliasStatus=" + alias.status);
+System.out.println("orderIsNull=" + (order == null));</pre>
+  <pre class="code" data-record="ReturnLab" data-lines="aliasStatus,orderIsNull">aliasStatus=9
+orderIsNull=true</pre>
+  <p>能。<code>order = null</code> 只清空 order 自己的引用，没有给 alias 赋值，也没有销毁它们原来共同指向的对象。对某个变量赋 null，不等于把所有别名一并清空。</p>
+  <h3>字段有默认值，局部变量仍需先赋值</h3>
+  <p>再给工单加一个派单人编号。<code>Integer</code> 是 int 对应的包装类，是引用类型；它可以表达一个整数，也可以为 null。本例把 null 约定为“尚未派单”，这层业务含义由我们规定，Java 只负责表示空引用。</p>
+  <pre class="code" data-source="NullLab.java" data-snippet="model">static class WorkOrder {
+    int status;
+    Integer assigneeId;
+}</pre>
+  <p>这个类没有显式写构造器，可以用自动提供的无参构造器创建对象。先读两个字段，再创建两个长度为 1 的数组：</p>
+  <pre class="code" data-source="NullLab.java" data-snippet="defaults">WorkOrder order = new WorkOrder();
+System.out.println("statusDefault=" + order.status);
+System.out.println("assigneeDefault=" + order.assigneeId);
+
+int[] counts = new int[1];
+WorkOrder[] orders = new WorkOrder[1];
+System.out.println("countElement=" + counts[0]);
+System.out.println("orderElement=" + orders[0]);</pre>
+  <pre class="code" data-record="NullLab" data-lines="statusDefault,assigneeDefault,countElement,orderElement">statusDefault=0
+assigneeDefault=null
+countElement=0
+orderElement=null</pre>
+  <p>新对象的 int 字段默认是 0，引用类型字段默认是 null；新数组的元素也按类型取默认值。<code>new WorkOrder[1]</code> 只创建了数组，没有创建里面的工单，所以直接访问 <code>orders[0].status</code> 会遇到 null。</p>
+  <p>这个默认初始化规则不意味着可以读取未赋值的局部变量。方法里声明 <code>Object order;</code> 后直接读取 order，会在编译阶段被拒绝：编译器必须能确定，读取前该局部变量已经赋过值。“没有赋值”和“已经赋值为 null”是两回事。</p>
+  <details class="code-fold"><summary>看编译器怎样拒绝它</summary>
+    <pre class="code" data-source="errors/UnassignedReference.java">public class UnassignedReference {
+    public static void main(String[] args) {
+        Object order;
+        System.out.println(order);
+    }
+}</pre>
+    <pre class="code" data-record="errors/UnassignedReference.java" data-key="compile_stderr">UnassignedReference.java:5: error: variable order might not have been initialized
+        System.out.println(order);
+                           ^
+1 error</pre>
+    <p class="note">字段和数组元素有默认值，局部变量没有：读它之前必须亲手赋过值，否则编译就过不去。</p>
+  </details>
+  <h3>一行没写点号的代码，也可能需要对象</h3>
+  <p>拿上面的 order 继续运行。<code>int id = order.assigneeId</code> 看起来只是赋值；但左边需要 int，右边是 Integer，Java 需要把包装对象<b>拆箱</b>为整数。assigneeId 为 null 时，没有对象能提供这个整数，于是抛出 <code>NullPointerException</code>。</p>
+  <pre class="code" data-source="NullLab.java" data-snippet="failures">try {
+    int id = order.assigneeId;
+    System.out.println(id);
+} catch (NullPointerException e) {
+    System.out.println("unbox=" + e.getClass().getSimpleName());
+}
+
+WorkOrder missing = null;
+try {
+    System.out.println(missing.status);
+} catch (NullPointerException e) {
+    System.out.println("field=" + e.getClass().getSimpleName());
+}</pre>
+  <pre class="code" data-record="NullLab" data-lines="unbox,field">unbox=NullPointerException
+field=NullPointerException</pre>
+  <p>这里用 <code>try/catch</code> 把两次失败的异常名称打印出来，便于继续实验。第一处，工单对象存在，空的是它的 assigneeId 字段；第二处，missing 本身就是空引用，读取实例字段便失败。排查时要逐步看表达式访问了哪个对象，而不只看整行里有没有一个变量非空。</p>
+  <p>如果“没有工单”或“尚未派单”本来就是允许的状态，应在使用字段之前处理这个分支。反之，如果方法要求必须有工单，就在入口明确拒绝 null。把缺失值随手改为 0，虽然可能避开拆箱异常，却也可能把“尚未派单”改成了“派给编号 0”；是否能这样做，要由业务约定决定。</p>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div><h2>返回一张独立的工单</h2>
+  <p>把这些规则用到一个明确的小需求里：给一张工单指定派单人，<b>保留输入工单的原有内容，返回修改后的新工单</b>。本例只保留状态和派单人编号两个字段，允许原工单尚未派单；如果工单本身不存在，就抛出带说明的 <code>IllegalArgumentException</code>。</p>
+  <p>先找三个位置：在哪里创建新对象，在哪里写入派单人，在哪里接住返回值。也可以先判断：运行后原工单的派单人是 null 还是 7？</p>
+  <pre class="code" data-source="ReassignOrder.java">public class ReassignOrder {
+    static class WorkOrder {
+        int status;
+        Integer assigneeId;
+
+        WorkOrder(int status, Integer assigneeId) {
+            this.status = status;
+            this.assigneeId = assigneeId;
+        }
+    }
+
+    static WorkOrder assignCopy(WorkOrder source, int assigneeId) {
+        if (source == null) {
+            throw new IllegalArgumentException("工单不存在");
+        }
+        WorkOrder copy = new WorkOrder(source.status, source.assigneeId);
+        copy.assigneeId = assigneeId;
+        return copy;
+    }
+
+    public static void main(String[] args) {
+        WorkOrder source = new WorkOrder(0, null);
+        WorkOrder assigned = assignCopy(source, 7);
+        System.out.println("sameObject=" + (source == assigned));
+        System.out.println("sourceAssignee=" + source.assigneeId);
+        System.out.println("assignedAssignee=" + assigned.assigneeId);
+        try {
+            assignCopy(null, 7);
+        } catch (IllegalArgumentException e) {
+            System.out.println("rejected=" + e.getMessage());
+        }
+    }
+}</pre>
+  <pre class="code" data-record="ReassignOrder">sameObject=false
+sourceAssignee=null
+assignedAssignee=7
+rejected=工单不存在</pre>
+  <p>这次 <code>copy.assigneeId = assigneeId</code> 修改的是刚创建的对象，source 指向的原对象没有被修改。方法把新对象的引用返回，main 把它接在 assigned 中。于是两张工单身份不同，派单人也可以不同。</p>
+  <p>复制构造时，status 复制整数值，assigneeId 复制 Integer 引用值。这里共享 Integer 不会让一个编号对象被原地改写，因为 Integer 的整数值不可变；后面的赋值是在替换新工单的字段。如果字段换成可变的联系人或数组，就需要重新检查共享范围，不能照搬“复制两个字段便完成”的结论。</p>
+  <p class="note">这是对象关系实验，工单状态、编号与空值含义均为本篇设定。程序没有连接数据库；内存中修改对象，不代表任何数据库记录已被更新。</p>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div><h2>小结和自测</h2>
+  <div class="callout key"><span class="t">带走一句话</span>赋值和传参会复制值；值若是引用，两个变量便能找到同一个对象。沿引用改字段会改变这个对象，给变量重新赋值只会改变该变量保存的引用。</div>
+  <div class="scroll-x"><table class="ref-table"><thead><tr><th>代码中的动作</th><th>追踪哪一处变化</th></tr></thead><tbody>
+    <tr><td><code>other = order</code></td><td>复制引用，尚未复制工单。</td></tr>
+    <tr><td><code>other.status = 1</code></td><td>沿 other 找到工单，再写入它的字段。</td></tr>
+    <tr><td><code>other = new WorkOrder(9)</code></td><td>创建新工单，并替换 other 的引用。</td></tr>
+    <tr><td><code>order = replace(order)</code></td><td>方法先返回引用，调用方再把它赋给 order。</td></tr>
+    <tr><td><code>other = null</code></td><td>清空 other，不会清空别名或立即销毁对象。</td></tr>
+  </tbody></table></div>
+  <div class="card"><h3>试着在心里画出箭头</h3>
+    <div class="q"><div class="qt">1. 把开篇 process 里的两句调换：先给参数 order 赋一张新工单，再修改它的 status。调用方原工单的状态还会变吗？</div><button class="btn" type="button" aria-expanded="false" aria-controls="answer-1">看参考答案</button><div class="ans" id="answer-1">不会，仍是 0。参数先改指向新对象，后续字段修改便落在新对象上。main 的 order 从始至终指向原对象 A。这说明不能只看方法里“有没有改字段”，还要追踪改字段时参数指向谁。</div></div>
+    <div class="q"><div class="qt">2. 数组 clone 后，给 copy[0] 赋 null，original[0] 会不会也变成 null？</div><button class="btn" type="button" aria-expanded="false" aria-controls="answer-2">看参考答案</button><div class="ans" id="answer-2">不会。两个数组是不同对象，各自拥有独立的第 0 个元素。赋 null 只改变 copy 数组中的元素。浅拷贝共享的是元素原来指向的工单，不是两个数组的元素位置。</div></div>
+    <div class="q"><div class="qt">3. 方法创建了工单并返回引用。方法栈帧结束后，调用方为什么还能使用工单？</div><button class="btn" type="button" aria-expanded="false" aria-controls="answer-3">看参考答案</button><div class="ans" id="answer-3">栈帧里结束的是这次调用的局部变量等数据。调用方已经接住返回的引用，对象仍可被后续代码访问；局部变量的生命周期不能直接当成对象的生命周期。</div></div>
+    <div class="q"><div class="qt">4. 已确认 order != null，能保证 int id = order.assigneeId 不抛空指针异常吗？</div><button class="btn" type="button" aria-expanded="false" aria-controls="answer-4">看参考答案</button><div class="ans" id="answer-4">不能。order 存在只保证能读取它的字段；Integer 字段 assigneeId 仍可能为 null。赋给 int 时发生拆箱，null 无法拆成整数。</div></div>
+    <div class="q"><div class="qt">5. 两个工单互相引用，但程序已经无法从其他仍可访问的位置找到它们。仅凭这两条相互引用，能阻止垃圾回收吗？</div><button class="btn" type="button" aria-expanded="false" aria-controls="answer-5">看参考答案</button><div class="ans" id="answer-5">不能。互相引用并不等于程序还能到达它们。在本篇讨论的普通引用模型中，如果这个环已不可达，它可以被回收；至于何时实际回收，不能凭引用图确定。</div></div>
+  </div>
+</section>
+
+<section class="ch" id="ch9">
+  <div class="ch-num">第 9 节</div><h2>参考资料</h2>
+  <p>语言与虚拟机规则按 Java SE 8 文档核对，核对日期为 2026-11-16。下面分别列出引用的依据与它支撑的结论。</p>
+  <div class="card refs">
+    <h3>Java 语言规范（Java SE 8）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.4.1" target="_blank" rel="noopener">JLS §8.4.1：形式参数</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.3" target="_blank" rel="noopener">§4.12.3：变量的种类</a><span>支撑：第 3 节：调用时用实参的值初始化新建的参数变量（值传递）；每次调用都新建参数变量，方法体执行结束它就不再存在。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.3.1" target="_blank" rel="noopener">JLS §4.3.1：对象</a><span>支撑：第 2、6 节：引用是指向对象的指针，null 是不指向任何对象的特殊引用。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.5" target="_blank" rel="noopener">JLS §4.12.5：变量的初始值</a><span>支撑：第 6 节：int 字段与数组元素默认 0，引用类型默认 null；局部变量使用前必须显式赋值。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.21.3" target="_blank" rel="noopener">JLS §15.21.3：引用相等运算符 == 和 !=</a><span>支撑：第 2 节：== 比较是否指向同一个对象，两个 null 也比较为 true。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.11.1" target="_blank" rel="noopener">JLS §15.11.1：用主表达式访问字段</a><span>支撑：第 6 节：沿值为 null 的引用读取实例字段，抛 NullPointerException。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html#jls-5.1.8" target="_blank" rel="noopener">JLS §5.1.8：拆箱转换</a><span>支撑：第 6 节：对 null 做拆箱抛 NullPointerException。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html#jls-10.7" target="_blank" rel="noopener">JLS §10.7：数组的成员</a><span>支撑：第 5 节：数组的 clone 返回同类型的新数组；多维数组的克隆是浅的，子数组被共享。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-16.html#jls-16" target="_blank" rel="noopener">JLS §16：明确赋值</a><span>支撑：第 6 节：局部变量在被读取前必须已明确赋值，否则编译报错。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-12.html#jls-12.6.1" target="_blank" rel="noopener">JLS §12.6.1：实现终结</a><span>支撑：第 4 节：互相引用的一组对象若整体变得不可达，它们的存储可以被回收。</span></li>
+    </ul>
+    <h3>Java 虚拟机规范（Java SE 8）</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5.2" target="_blank" rel="noopener">JVMS §2.5.2：虚拟机栈</a>；<a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.6" target="_blank" rel="noopener">§2.6：帧</a><span>支撑：第 4 节：每个线程有自己的私有栈，方法调用压入帧，帧存放局部变量和部分结果；规范也允许帧在堆上分配。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html#jvms-2.5.3" target="_blank" rel="noopener">JVMS §2.5.3：堆</a><span>支撑：第 4 节：堆由所有线程共享，类实例和数组的内存从堆分配，由垃圾回收器自动回收。</span></li>
+    </ul>
+    <h3>官方 API 文档</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html#clone--" target="_blank" rel="noopener">Object：clone()</a><span>支撑：第 5 节：逐字段“如同赋值”地复制，字段内容本身不再克隆，因此是浅拷贝；所有数组都视为实现 Cloneable。</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html" target="_blank" rel="noopener">Integer</a><span>支撑：第 7 节：Integer 只包装一个 int 值，提供的方法都是读取、转换和比较，没有改写这个值的办法。</span></li>
+    </ul>
+  </div>
+  <p class="note">页内“运行”展示预先用 JDK 8 执行的结果，并非在线编译。引用图是依据语言语义绘制的示意，没有测量对象地址、物理布局或回收时机。工单业务规则是原创教学设定；本篇未据此推断任何实际项目的实现行为。</p>
+  <button class="btn" id="mark-read" type="button"></button>
+  <div class="pager"><a href="1-1.html"><small>上一篇</small>1.1 数值类型和它的坑</a><a class="next" href="1-3.html"><small>下一篇</small>1.3 String：不可变、常量池、== 和 equals</a></div>
+  <div class="credit">本篇是原创内容，由 Codex（OpenAI）写作初稿并实测示例，Qoder 补全实验代码与参考资料、修订讲解并制作示意图与交互，非任何官方教材。示例均以 Amazon Corretto 1.8.0_512 编译运行，语言与虚拟机规则按 Java SE 8 文档核对。<br>本篇随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。</div>
+</section>
+</main>
+</div>
+<script src="../assets/cc.js"></script>
+<script>
+(function () {
+  // Outputs are recorded Java 8 executions; hiding is progressive enhancement.
+  document.querySelectorAll('pre[data-record]').forEach(function (output, index) {
+    var button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'btn primary';
+    button.textContent = '运行';
+    var controls = document.createElement('div');
+    controls.className = 'btns';
+    var result = document.createElement('div');
+    result.className = 'run-result';
+    result.id = 'result-' + index;
+    result.setAttribute('aria-live', 'polite');
+    result.hidden = true;
+    button.setAttribute('aria-controls', result.id);
+    button.setAttribute('aria-expanded', 'false');
+    var label = document.createElement('p');
+    label.className = 'output-label';
+    var failed = output.dataset.key === 'compile_stderr';
+    label.textContent = failed ? '编译失败' : '输出';
+    if (failed) result.classList.add('is-error');
+    output.before(controls, result);
+    controls.appendChild(button);
+    result.append(label, output);
+    var explanation = document.querySelector('[data-after-run="' + output.dataset.record + '"]');
+    if (explanation) explanation.hidden = true;
+    button.addEventListener('click', function () {
+      result.hidden = false;
+      button.textContent = '已运行';
+      button.disabled = true;
+      button.setAttribute('aria-expanded', 'true');
+      if (explanation) explanation.hidden = false;
+    });
+  });
+
+  var steps = [
+    'main 已创建工单 A，状态为 0。现在准备调用 process，main 的 attempts 也是 0。',
+    '调用产生新的参数变量。process 的 order 得到指向 A 的引用值，attempts 得到整数 0；main 的两个变量保持原值。',
+    '沿 process.order 找到 A，将 A.status 改成 1。main.order 也指向 A，因此随后能读到这个变化。',
+    '创建状态为 9 的工单 B，只把 process.order 改指向 B。main.order 仍指向 A，A 的状态仍是 1。',
+    'process 的 attempts 从 0 增加到 1。它是自己的参数变量；main 的 attempts 仍为 0。',
+    'process 返回，这次调用的帧结束。main 继续读到 status=1、attempts=0。图中 B 已没有引用路径；这里没有观测或执行垃圾回收。'
+  ];
+  var step = 0;
+  var prev = document.getElementById('trace-prev');
+  var next = document.getElementById('trace-next');
+  function paint() {
+    var active = step > 0 && step < 5;
+    var rebound = step >= 3;
+    document.querySelectorAll('[data-step]').forEach(function (line) {
+      var current = Number(line.dataset.step) === step;
+      line.classList.toggle('current', current);
+      if (current) line.setAttribute('aria-current', 'step');
+      else line.removeAttribute('aria-current');
+    });
+    document.getElementById('process-frame').classList.toggle('inactive', !active);
+    document.getElementById('process-ref').textContent = active ? 'order → ' + (rebound ? 'B' : 'A') : (step === 0 ? '尚未调用' : '本次调用已结束');
+    document.getElementById('process-attempts').textContent = active ? 'attempts = ' + (step === 4 ? '1' : '0') : '';
+    document.getElementById('object-a-status').textContent = 'status = ' + (step >= 2 ? '1' : '0');
+    document.getElementById('object-b').setAttribute('visibility', rebound ? 'visible' : 'hidden');
+    document.getElementById('object-b').classList.toggle('inactive', step === 5);
+    document.getElementById('object-b-note').textContent = step === 5 ? '无图中引用 ≠ 已回收' : '';
+    var arrow = document.getElementById('process-arrow');
+    arrow.setAttribute('visibility', active ? 'visible' : 'hidden');
+    arrow.setAttribute('d', rebound ? 'M220 240C335 240 340 240 438 240' : 'M220 240C345 240 336 129 438 129');
+    arrow.classList.toggle('b', rebound);
+    arrow.setAttribute('marker-end', rebound ? 'url(#arrow-b)' : 'url(#arrow-a)');
+    document.getElementById('trace-explanation').textContent = steps[step];
+    document.getElementById('trace-desc').textContent = steps[step];
+    document.getElementById('trace-count').textContent = step + ' / 5';
+    prev.disabled = step === 0;
+    next.disabled = step === 5;
+    next.textContent = step === 5 ? '已返回 main' : '执行下一步';
+  }
+  document.getElementById('trace-controls').hidden = false;
+  prev.addEventListener('click', function () { if (step > 0) step--; paint(); });
+  next.addEventListener('click', function () { if (step < 5) step++; paint(); });
+  document.getElementById('trace-reset').addEventListener('click', function () { step = 0; paint(); });
+  paint();
+
+  // Shared cc.js opens answers; reflect that state for keyboard/screen-reader users.
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('.q').forEach(function (question) {
+      var button = question.querySelector('button');
+      button.addEventListener('click', function () {
+        button.setAttribute('aria-expanded', String(question.classList.contains('open')));
+      });
+    });
+  });
+})();
+</script>
+</body>
+</html>

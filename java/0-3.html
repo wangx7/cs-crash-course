@@ -1,0 +1,590 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>0.3 语法速览：读懂一段 Java 8 代码 · Java 后端</title>
+<link rel="stylesheet" href="../assets/cc.css">
+<style>
+pre.code{font-family:var(--mono);font-size:13.5px;line-height:1.7;background:var(--code);border-radius:10px;padding:14px 16px;margin:12px 0;overflow-x:auto;white-space:pre;tab-size:4}
+.note{font-size:13px;color:var(--muted);overflow-wrap:anywhere}
+.run-experiment{margin:16px 0 20px}
+.run-experiment .btns{margin-top:0}
+.output-label{font-size:12px;color:var(--muted);margin:14px 0 5px}
+.demo-result[hidden],.check-result[hidden],button[hidden]{display:none}
+.demo-result pre.code{margin-top:0;border-left:3px solid var(--ok)}
+.demo-result.is-error pre.code{border-left-color:var(--bad)}
+.checks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:20px 0}
+.check{margin:0;min-width:0;padding:18px}
+.check h3{font-size:16px;margin:0 0 8px}
+.check .btns{margin:10px 0}
+.check pre.code{font-size:12.5px}
+.check .feedback{font-size:14px;min-height:1.6em;margin:8px 0}
+.check .feedback:empty{display:none}
+.check button.right{border-color:var(--ok);background:var(--ok-soft)}
+.check button.wrong{border-color:var(--bad);background:var(--bad-soft)}
+.proof{margin:12px 0;font-size:14px}
+.proof summary{cursor:pointer;color:var(--accent);font-weight:600}
+.proof pre.code{font-size:12px}
+.proof p{margin-bottom:0}
+.map{width:100%;border-collapse:collapse;font-size:14.5px;margin:14px 0}
+.map th,.map td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+.map th{font-size:13px;color:var(--muted);font-weight:600}
+.map code{white-space:nowrap}
+.method-parts{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.method-parts div{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel)}
+.method-parts small{display:block;color:var(--muted);font-size:12px;margin-top:5px}
+.slots{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:18px 0}
+.slot{border:1px solid var(--line);border-radius:12px;text-align:center;padding:10px;background:var(--bg)}
+.slot small{display:block;color:var(--muted);font-family:var(--mono);font-size:12px}
+.slot b{display:block;font-family:var(--mono);font-size:28px;color:var(--ink);margin:4px 0}
+.slot.changed{border-color:var(--accent);background:var(--accent-soft)}
+#loop-result{min-height:3.6em;margin:14px 0 0}
+.loop-btn[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.refs li{padding:10px 0;border-bottom:1px solid var(--line);font-size:14px;overflow-wrap:anywhere}
+.refs li:last-child{border-bottom:none}
+.refs li span{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+.refs h3{font-size:16px}
+@media(pointer:coarse){.btn{min-height:44px}}
+@media(max-width:680px){.checks{grid-template-columns:minmax(0,1fr)}.map th,.map td{padding:8px}.method-parts div{padding:8px 10px}pre.code{font-size:12.5px;padding:12px}.check{padding:16px}}
+</style>
+</head>
+<body data-ep="3" data-store="java-be-read" data-unit="篇">
+<div class="topbar">
+  <a href="index.html">← Java 后端 · 目录</a>
+  <span class="muted">第 0 部分 · 出发前</span>
+</div>
+<header class="hero">
+  <div class="eyebrow">第 0 部分 · 出发前 · 0.3</div>
+  <h1>语法速览：读懂一段 Java 8 代码</h1>
+  <p class="en">Declarations, conditions, methods and arrays</p>
+  <p class="lead">五种文具，各有一个库存数。我们想给它们标出“正常”“缺货”或“需补货”，再算出可用库存的合计。这段程序的逻辑不难，但换成 Java，有些熟悉的写法会通不过编译，有些能运行却改不到原来的数据。这一篇从这些意外开始，读懂一个完整的库存程序。</p>
+  <div class="road"><span>先判断</span><i>→</i><span>读完整程序</span><i>→</i><span>类型与条件</span><i>→</i><span>方法</span><i>→</i><span>数组与循环</span></div>
+  <p class="note" style="margin-top:16px">代码以 Java 8 为准。先猜结果，再点“运行”看输出；理解这些例子不需要框架或数据库。</p>
+</header>
+<div class="layout">
+<nav class="toc"><ol>
+  <li><a href="#ch1">先判断四段代码</a></li>
+  <li><a href="#ch2">一个完整的小程序</a></li>
+  <li><a href="#ch3">类型写在名字前</a></li>
+  <li><a href="#ch4">条件必须说清楚</a></li>
+  <li><a href="#ch5">读懂方法声明</a></li>
+  <li><a href="#ch6">数组和两种 for</a></li>
+  <li><a href="#ch7">循环和分支在哪里结束</a></li>
+  <li><a href="#ch8">小结和自测</a></li>
+  <li><a href="#ch9">参考资料</a></li>
+</ol></nav>
+<main>
+<section class="ch" id="ch1">
+  <div class="ch-num">第 1 节</div>
+  <h2>先判断四段代码</h2>
+  <p>先看四段很短的代码。它们都放在 Java 程序的入口方法 <code>main</code> 中；<code>System.out.println</code> 会打印括号里的值。凭直觉选一个答案，看看哪些习惯可以直接带过来，哪些需要调整。</p>
+  <div class="checks">
+    <article class="card check" data-correct="0">
+      <h3>① 数字能直接当条件吗？</h3>
+      <pre class="code">int stock = 3;
+if (stock) {
+    System.out.println("有库存");
+}</pre>
+      <div class="btns"><button type="button" class="btn" data-choice="0">不能编译</button><button type="button" class="btn" data-choice="1">能编译</button></div>
+      <p class="feedback" role="status"></p>
+      <div class="check-result">
+        <pre class="code" data-record="errors/Condition.java" data-record-key="compile_stderr">Condition.java:4: error: incompatible types: int cannot be converted to boolean
+        if (stock) {
+            ^
+1 error</pre>
+        <p>编译失败。<code>stock</code> 是 <code>int</code>，不会因为非零就被当成 <code>true</code>。这里可以写 <code>if (stock &gt; 0)</code>。</p>
+      </div>
+    </article>
+    <article class="card check" data-correct="1">
+      <h3>② int 没赋值，会自动是 0 吗？</h3>
+      <pre class="code">int count;
+System.out.println(count);</pre>
+      <div class="btns"><button type="button" class="btn" data-choice="0">能编译</button><button type="button" class="btn" data-choice="1">不能编译</button></div>
+      <p class="feedback" role="status"></p>
+      <div class="check-result">
+        <pre class="code" data-record="errors/Unassigned.java" data-record-key="compile_stderr">Unassigned.java:4: error: variable count might not have been initialized
+        System.out.println(count);
+                           ^
+1 error</pre>
+        <p>编译失败。这是方法里的<b>局部变量</b>，使用前必须明确赋过值。“整数默认为 0”适用于字段和数组元素，不能直接套在这里。</p>
+      </div>
+    </article>
+    <article class="card check" data-correct="1">
+      <h3>③ 单引号和双引号一样吗？</h3>
+      <pre class="code">String grade = 'A';</pre>
+      <div class="btns"><button type="button" class="btn" data-choice="0">能编译</button><button type="button" class="btn" data-choice="1">不能编译</button></div>
+      <p class="feedback" role="status"></p>
+      <div class="check-result">
+        <pre class="code" data-record="errors/Quote.java" data-record-key="compile_stderr">Quote.java:3: error: incompatible types: char cannot be converted to String
+        String grade = &#x27;A&#x27;;
+                       ^
+1 error</pre>
+        <p>编译失败。<code>'A'</code> 是 <code>char</code>，<code>"A"</code> 才是字符串。可以改成 <code>String grade = "A";</code>，或者保留单引号，把变量类型改成 <code>char</code>。</p>
+      </div>
+    </article>
+    <article class="card check" data-correct="0">
+      <h3>④ 接收变量是 double，结果是多少？</h3>
+      <pre class="code">double average = 5 / 2;
+System.out.println(average);</pre>
+      <div class="btns"><button type="button" class="btn" data-choice="0">2.0</button><button type="button" class="btn" data-choice="1">2.5</button></div>
+      <p class="feedback" role="status"></p>
+      <div class="check-result">
+        <pre class="code" data-record="Division.java" data-record-key="run_stdout">2.0</pre>
+        <p><code>5</code> 和 <code>2</code> 都是整数，先做整数除法得到 <code>2</code>，再转换成 <code>double</code> 的 <code>2.0</code>。左边的类型不会让已经丢掉的小数回来。</p>
+      </div>
+    </article>
+  </div>
+  <noscript><p>启用 JavaScript 后可以先选答案、再看解释；当前仍可直接阅读代码和结果。</p></noscript>
+</section>
+
+<section class="ch" id="ch2">
+  <div class="ch-num">第 2 节</div>
+  <h2>把语法放回一个完整程序</h2>
+  <p>假设要检查五种文具的库存：负数标为“数据异常”，零标为“缺货”，大于零但少于 5 件标为“需补货”，其余标为“正常”。最后只把正数库存加起来。下面的名称、库存和阈值都是为本篇构造的示例数据。</p>
+  <p>先不用逐行读。找到 <code>names</code> 和 <code>stocks</code> 两个数组：同一个下标放的是同一件文具的名称和库存。按上面的规则，先判断库存为 −2 的尺子和库存为 3 的文件夹会显示什么，再点代码下面的“运行”。</p>
+  <pre class="code" data-source="InventoryReport.java">public class InventoryReport {
+    public static void main(String[] args) {
+        String[] names = {&quot;钢笔&quot;, &quot;笔记本&quot;, &quot;尺子&quot;, &quot;文件夹&quot;, &quot;橡皮&quot;};
+        int[] stocks = {8, 0, -2, 3, 12};
+        final int threshold = 5;
+
+        for (int i = 0; i &lt; stocks.length; i++) {
+            String status = statusOf(stocks[i], threshold);
+            System.out.println(names[i] + &quot;：&quot; + status);
+        }
+        System.out.println(&quot;可用库存合计：&quot; + totalAvailable(stocks));
+    }
+
+    static String statusOf(int stock, int threshold) {
+        if (stock &lt; 0) {
+            return &quot;数据异常&quot;;
+        }
+        if (stock == 0) {
+            return &quot;缺货&quot;;
+        }
+        return stock &lt; threshold ? &quot;需补货&quot; : &quot;正常&quot;;
+    }
+
+    static int totalAvailable(int[] stocks) {
+        int total = 0;
+        for (int stock : stocks) {
+            if (stock &lt;= 0) {
+                continue;
+            }
+            total += stock;
+        }
+        return total;
+    }
+}</pre>
+
+  <pre class="code" data-record="InventoryReport.java" data-record-key="run_stdout">钢笔：正常
+笔记本：缺货
+尺子：数据异常
+文件夹：需补货
+橡皮：正常
+可用库存合计：23</pre>
+  <p>尺子被标为“数据异常”，没有计入合计；文件夹显示“需补货”，但它的 3 件仍然算在可用库存里。这是两个不同的判断，代码也把它们分给了两个方法：<code>statusOf</code> 选状态，<code>totalAvailable</code> 算合计。</p>
+  <p>再看程序的外形：最外面的 <code>class InventoryReport</code> 声明一个类，<code>main</code> 是程序入口，另外两个方法由它调用。三个方法都写在类的大括号内，彼此并列。现在只要能找到这三块，就可以接着往下读。</p>
+  <p><code>main</code> 的 <code>String[] args</code> 接收命令行参数，本例没有使用。其余代码承担两件具体的事：为每个库存数选一个状态，以及累计有效库存。下面逐块读这段程序。</p>
+</section>
+
+<section class="ch" id="ch3">
+  <div class="ch-num">第 3 节</div>
+  <h2>类型写在名字前，检查发生在编译时</h2>
+  <p><code>int total = 0;</code> 从左往右是“类型、变量名、初始值”。Java 8 的普通局部变量声明要写出类型；后面再赋值时，编译器仍然按这个类型检查。<code>total</code> 不能一会儿装整数，一会儿又装字符串。</p>
+  <div class="scroll-x"><table class="map">
+    <thead><tr><th>类型</th><th>在这里先怎么读</th><th>声明例子</th></tr></thead>
+    <tbody>
+      <tr><td><code>byte / short / int / long</code></td><td>四种范围不同的整数类型；本篇库存用 int。</td><td><code>int count = 3;</code></td></tr>
+      <tr><td><code>float / double</code></td><td>两种浮点数类型。</td><td><code>double rate = 0.5;</code></td></tr>
+      <tr><td><code>boolean</code></td><td>只有 true 和 false 两个值。</td><td><code>boolean enabled = count &gt; 0;</code></td></tr>
+      <tr><td><code>char</code></td><td>一个 UTF-16 代码单元；这里用普通字母 A 举例。</td><td><code>char grade = 'A';</code></td></tr>
+      <tr><td><code>String</code></td><td>字符串，是类类型。</td><td><code>String title = "A";</code></td></tr>
+      <tr><td><code>int[] / String[]</code></td><td>数组类型，方括号写在元素类型后面。</td><td><code>int[] stocks = {8, 0, 3};</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>前四行合起来正好是 Java 的八种基本类型。<code>String</code> 和数组属于引用类型。本篇先记住声明的写法；也不要把 <code>char</code> 理解成“任意一个肉眼看到的字”，有些字符需要两个 UTF-16 代码单元。</p>
+  <p>字面量本身也有类型。较大的整数后面常见 <code>L</code>，表示 <code>long</code> 字面量；小数默认是 <code>double</code>，需要 <code>float</code> 字面量时写 <code>F</code>。看下面的声明，留意类型名、引号和数字后缀的位置：</p>
+  <pre class="code" data-source="SyntaxLab.java" data-lines="7-13">int count = 3;
+long id = 9007199254740993L;
+float ratio = 0.5F;
+double rate = 0.5;
+boolean enabled = count &gt; 0;
+char grade = &#x27;A&#x27;;
+String title = &quot;A&quot;;</pre>
+  <h3>同样交给 double，为什么结果不同？</h3>
+  <p>回到开头的除法。把除数从 <code>2</code> 改成 <code>2.0</code>，其余不动，先猜两个输出。</p>
+  <pre class="code" data-source="SyntaxLab.java" data-lines="17-19">double a = 5 / 2;
+double b = 5 / 2.0;
+System.out.println(&quot;division=&quot; + a + &quot;,&quot; + b);</pre>
+  <pre class="code" data-evidence="SyntaxLab.java">division=2.0,2.5</pre>
+  <p>第一行先做整数除法；第二行的 <code>2.0</code> 使运算采用 <code>double</code>，所以保留了小数。你要改变的是<b>参与运算的值的类型</b>。整数除法更准确的规则是向零截断，因此负数情形也不能笼统理解成“向下取整”。</p>
+  <h3>“默认值”要看变量放在哪里</h3>
+  <p>方法里的 <code>int count;</code> 可以先声明，但必须在每条可能读到它的执行路径上先赋值，编译器才允许读取。字段和新建数组的元素则有默认值。这里的 <code>fieldCount</code> 声明在类的大括号内、所有方法之外：<code>static int fieldCount;</code>。再创建两个数组，一起打印，看看哪些位置会自动得到初始值：</p>
+  <pre class="code" data-source="SyntaxLab.java" data-lines="21-24">int[] numbers = new int[3];
+String[] names = new String[2];
+System.out.println(&quot;defaults=&quot; + fieldCount + &quot;,&quot;
+        + Arrays.toString(numbers) + &quot;,&quot; + Arrays.toString(names));</pre>
+  <pre class="code" data-evidence="SyntaxLab.java">defaults=0,[0, 0, 0],[null, null]</pre>
+  <p><code>new int[3]</code> 创建三个整数元素，初始都是 0；<code>new String[2]</code> 创建两个字符串引用，初始都是 <code>null</code>。这里的 <code>Arrays.toString</code> 是把数组元素格式化成便于查看的文字，需要文件开头的 <code>import java.util.Arrays;</code>。</p>
+</section>
+
+<section class="ch" id="ch4">
+  <div class="ch-num">第 4 节</div>
+  <h2>条件必须给出布尔结果</h2>
+  <p>库存程序里写的是 <code>if (stock &lt; 0)</code>，而不是 <code>if (stock)</code>。条件要表达具体判断：库存小于零、等于零，或小于阈值。数字和字符串不能直接按“真假值”使用。</p>
+  <p class="note">规范允许 if 条件的类型为 boolean 或 Boolean；Boolean 会先自动拆箱。本篇使用的比较表达式直接产生 boolean。</p>
+  <div class="scroll-x"><table class="map">
+    <thead><tr><th>本篇出现的写法</th><th>结果或用途</th></tr></thead>
+    <tbody>
+      <tr><td><code>stock == 0</code></td><td>比较两个整数是否相等，结果是 boolean；<code>=</code> 是赋值。</td></tr>
+      <tr><td><code>stock &gt; 0 &amp;&amp; stock &lt; 5</code></td><td>两项都满足。左边为 false 时，右边不求值。</td></tr>
+      <tr><td><code>stock &lt; 0 || stock == 0</code></td><td>至少一项满足。左边为 true 时，右边不求值。</td></tr>
+      <tr><td><code>!name.isEmpty()</code></td><td>把 isEmpty 的布尔结果取反。</td></tr>
+      <tr><td><code>stock &lt; threshold ? "需补货" : "正常"</code></td><td>按条件从两个字符串中选择一个，得到一个值。</td></tr>
+    </tbody>
+  </table></div>
+  <h3>这里会调用 null 上的方法吗？</h3>
+  <p>如果商品名称缺失，<code>name</code> 的值是 <code>null</code>。下面同时检查“不是 null”和“不是空字符串”。先判断：它会输出 false，还是调用方法时抛异常？</p>
+  <pre class="code" data-source="SyntaxLab.java" data-lines="26-28">String name = null;
+boolean hasName = name != null &amp;&amp; !name.isEmpty();
+System.out.println(&quot;shortCircuit=&quot; + hasName);</pre>
+  <pre class="code" data-evidence="SyntaxLab.java">shortCircuit=false</pre>
+  <p><code>name</code> 是 <code>null</code>，所以 <code>name != null</code> 为 false，后面的 <code>name.isEmpty()</code> 没有执行。这一行安全结束，并不是 <code>null</code> 能调用方法。把检查顺序反过来，就失去了这层保护。</p>
+  <p><code>&amp;&amp;</code>、<code>||</code> 的短路行为是语言规则。单个 <code>&amp;</code> 和 <code>|</code> 也可以用于布尔运算，但会求值两边，不能在这个例子中随手替换。</p>
+</section>
+
+<section class="ch" id="ch5">
+  <div class="ch-num">第 5 节</div>
+  <h2>方法声明里，输入和输出都写明白</h2>
+  <p>库存程序用 <code>statusOf(stocks[i], threshold)</code> 取得一个状态。找到方法声明后，可以把它拆成四块：</p>
+  <div class="method-parts" aria-label="statusOf 方法声明的四个部分">
+    <div><code>static</code><small>类方法</small></div>
+    <div><code>String</code><small>返回值类型</small></div>
+    <div><code>statusOf</code><small>方法名</small></div>
+    <div><code>(int stock, int threshold)</code><small>参数类型和参数名</small></div>
+  </div>
+  <p><code>static</code> 表示这个方法属于类，可以在这里直接调用，无须先创建一个 <code>InventoryReport</code> 对象。参数各有类型；调用时传入的值必须符合相应参数的类型要求。返回类型 <code>String</code> 则约束了每个 <code>return</code> 交出去的值。</p>
+  <pre class="code" data-source="InventoryReport.java" data-lines="14-22">static String statusOf(int stock, int threshold) {
+    if (stock &lt; 0) {
+        return &quot;数据异常&quot;;
+    }
+    if (stock == 0) {
+        return &quot;缺货&quot;;
+    }
+    return stock &lt; threshold ? &quot;需补货&quot; : &quot;正常&quot;;
+}</pre>
+  <p>负数在第一个 <code>return</code> 就结束方法；零走到第二个；正数走到最后一行，在“需补货”和“正常”之间选一个。调用者得到返回的字符串，再把它和商品名拼起来。<b>return 结束的是当前这一次方法调用。</b></p>
+  <p><code>main</code> 的返回类型是 <code>void</code>，表示不返回一个值；<code>totalAvailable</code> 的返回类型是 <code>int</code>，因此最后返回累计值。不要省略这些返回类型。</p>
+  <details class="proof">
+    <summary>如果有一条路径没有 return，编译器会怎样？</summary>
+    <pre class="code" data-source="errors/MissingReturn.java">public class MissingReturn {
+    static String statusOf(int stock) {
+        if (stock &gt; 0) {
+            return &quot;正常&quot;;
+        }
+    }
+}</pre>
+    <pre class="code" data-record="errors/MissingReturn.java" data-record-key="compile_stderr">MissingReturn.java:6: error: missing return statement
+    }
+    ^
+1 error</pre>
+    <p>当 stock 不大于零时，方法可以走到右大括号，却没有返回 String，因此编译失败。这个例子可以在 if 后补一个返回值。准确的规则是：声明了返回值类型的方法体不能正常走到末尾；抛异常、一直不结束等情况另有规则。</p>
+  </details>
+  <div class="callout">
+    <span class="t">把输入、输出和执行路径一起读</span>
+    看到一个方法，先找参数类型和返回类型，再沿每个分支找它从哪里结束。方法名可以提示用途，类型和 return 给出的是编译器会检查的约束。
+  </div>
+</section>
+
+<section class="ch" id="ch6">
+  <div class="ch-num">第 6 节</div>
+  <h2>数组固定长度，两种 for 操作的地方不同</h2>
+  <p><code>int[] stocks = {8, 0, 3};</code> 创建了一个有三个元素的数组。<code>stocks.length</code> 是长度，后面没有括号；下标范围是 0 到 2。数组一旦创建，长度就不变，不能靠给 <code>stocks[3]</code> 赋值来追加元素；越界访问会抛出 <code>ArrayIndexOutOfBoundsException</code>。</p>
+  <p>假设现在要把这三个库存都清零。下面两种循环都能编译；区别只在于赋值给 <code>stock</code>，还是赋值给 <code>stocks[i]</code>。先选一种运行，再换另一种，看看数组有没有改变。</p>
+  <div class="card" id="loop-lab">
+    <h3>从同一个数组出发：{8, 0, 3}</h3>
+    <div class="btns">
+      <button type="button" class="btn loop-btn" data-mode="foreach" aria-pressed="true">增强 for</button>
+      <button type="button" class="btn loop-btn" data-mode="index" aria-pressed="false">下标 for</button>
+    </div>
+    <pre class="code" id="loop-code">int[] stocks = {8, 0, 3};
+for (int stock : stocks) {
+    stock = 0;
+}
+System.out.println(Arrays.toString(stocks));</pre>
+    <div class="btns"><button type="button" class="btn primary" id="loop-run" aria-controls="loop-output" hidden>运行</button></div>
+    <div class="demo-result" id="loop-output" aria-live="polite">
+      <div class="slots" aria-label="运行后的数组元素">
+        <div class="slot"><small>stocks[0]</small><b>8</b></div>
+        <div class="slot"><small>stocks[1]</small><b>0</b></div>
+        <div class="slot"><small>stocks[2]</small><b>3</b></div>
+      </div>
+      <p id="loop-result">数组仍是 [8, 0, 3]。stock = 0 改的是本轮的局部变量，没有给数组元素赋值。</p>
+    </div>
+  </div>
+  <p><code>for (int stock : stocks)</code> 每轮取出一个整数值，赋给本轮的局部变量 <code>stock</code>；给它赋 0，不会写回数组。下标循环里写的是 <code>stocks[i] = 0</code>，赋值目标才是数组中的元素。</p>
+  <p>这也解释了库存程序为什么用了两种 for：打印状态时，要同时取出 <code>names[i]</code> 和 <code>stocks[i]</code>，下标把它们对应起来；累计库存时只需要逐个取值，就可以用增强 for。</p>
+  <div class="callout">
+    <span class="t">这个实验讨论的是 int 数组</span>
+    增强 for 并不意味着“循环体永远改不了原数据”。如果元素是对象引用，通过它调用方法可以改变对象的状态；本例之所以不变，关键是 stock 是接收整数值的局部变量。
+  </div>
+  <h3>final 固定的是哪个东西？</h3>
+  <p>库存阈值用了 <code>final</code>，赋值后不能再改。把它放到数组变量前，会不会连数组元素也一起固定？先运行下面这段。</p>
+  <pre class="code" data-source="SyntaxLab.java" data-lines="40-42">final int[] fixed = {8, 0};
+fixed[0] = 9;
+System.out.println(&quot;finalArray=&quot; + Arrays.toString(fixed));</pre>
+  <pre class="code" data-evidence="SyntaxLab.java">finalArray=[9, 0]</pre>
+  <p>这段代码能编译运行。<code>final</code> 使 <code>fixed</code> 在赋值后不能再指向另一个数组，数组里的元素仍可改变。对照开头的 <code>final int threshold = 5;</code>：它保存的就是整数值 5，后面不能改成 6。</p>
+</section>
+
+<section class="ch" id="ch7">
+  <div class="ch-num">第 7 节</div>
+  <h2>循环和分支在哪里结束</h2>
+  <p>库存汇总时遇到 0，应该跳过它，还是连后面的库存也不再检查？这取决于写的是 <code>continue</code> 还是 <code>break</code>。读到跳转语句时，先找它结束的是哪一段。</p>
+  <p>库存汇总方法用了 <code>continue</code>：库存小于等于零时跳过本轮加法，接着检查后面的元素。要找第一个有货的位置，则可以在找到后 <code>break</code>：</p>
+  <pre class="code" data-source="SyntaxLab.java" data-lines="50-58">int first = -1;
+int[] quantities = {0, 3, 8};
+for (int i = 0; i &lt; quantities.length; i++) {
+    if (quantities[i] &gt; 0) {
+        first = i;
+        break;
+    }
+}
+System.out.println(&quot;firstAvailableIndex=&quot; + first);</pre>
+  <pre class="code" data-evidence="SyntaxLab.java">firstAvailableIndex=1</pre>
+  <div class="scroll-x"><table class="map">
+    <thead><tr><th>在本篇代码里</th><th>执行后去哪里</th></tr></thead>
+    <tbody>
+      <tr><td><code>continue;</code></td><td>跳过本轮剩余部分。普通 for 仍先执行更新表达式，再检查条件。</td></tr>
+      <tr><td><code>break;</code></td><td>离开最近一层包围它的循环或 switch。本例跳出 for 后，继续打印找到的下标 1。</td></tr>
+      <tr><td><code>return value;</code></td><td>结束当前方法调用，把值交回调用处。</td></tr>
+    </tbody>
+  </table></div>
+  <p class="note">表中讨论不带标签的 break、continue，以及没有 try/finally 干预的这些示例。</p>
+  <details class="proof"><summary>while 的条件和更新写在哪里？</summary>
+    <p>while 的条件同样必须得到布尔结果。下面每轮在循环体中更新 attempt；当它变成 2，下一次判断为 false，循环结束。</p>
+    <pre class="code" data-source="SyntaxLab.java" data-lines="44-48">int attempt = 0;
+while (attempt &lt; 2) {
+    attempt++;
+}
+System.out.println("while=" + attempt);</pre>
+    <pre class="code" data-evidence="SyntaxLab.java">while=2</pre>
+  </details>
+  <h3>Java 8 的 switch 在哪里停下？</h3>
+  <p>同一个变量要和几个离散值匹配时，可以写 <code>switch</code>。Java 8 支持用 String 匹配 case；下面选择 <code>"DRAFT"</code>，输出“草稿”后由 <code>break</code> 离开整个 switch：</p>
+  <pre class="code" data-source="SyntaxLab.java" data-lines="60-71">String status = &quot;DRAFT&quot;;
+switch (status) {
+    case &quot;DRAFT&quot;:
+        System.out.println(&quot;switch=草稿&quot;);
+        break;
+    case &quot;LIVE&quot;:
+        System.out.println(&quot;switch=已上架&quot;);
+        break;
+    default:
+        System.out.println(&quot;switch=未知状态&quot;);
+}
+</pre>
+  <pre class="code" data-evidence="SyntaxLab.java">switch=草稿</pre>
+  <details class="proof">
+    <summary>删掉第一个 break，会不会只输出“草稿”？</summary>
+    <pre class="code" data-source="SyntaxLab.java" data-lines="72-80">switch (status) {
+    case &quot;DRAFT&quot;:
+        System.out.println(&quot;fallThrough=草稿&quot;);
+    case &quot;LIVE&quot;:
+        System.out.println(&quot;fallThrough=已上架&quot;);
+        break;
+    default:
+        System.out.println(&quot;fallThrough=未知状态&quot;);
+}</pre>
+    <pre class="code" data-evidence="SyntaxLab.java">fallThrough=草稿
+fallThrough=已上架</pre>
+    <p>会继续执行后一个 case 下的语句，直到遇到 break。它不会因为走到新的 case 标签就重新做一次匹配。这里正好连续输出两行。</p>
+  </details>
+</section>
+
+<section class="ch" id="ch8">
+  <div class="ch-num">第 8 节</div>
+  <h2>小结和自测</h2>
+  <div class="callout key">
+    <span class="t">带走一句话</span>
+    读这段库存程序，要看清值的类型、赋值改的是谁，以及分支从哪里结束。int 不会自动当条件，给循环变量赋值不会改到数组，continue 和 break 也会算出不同的合计。
+  </div>
+  <div class="scroll-x"><table class="map">
+    <thead><tr><th>遇到的写法</th><th>本篇可以核对的事实</th></tr></thead>
+    <tbody>
+      <tr><td><code>int count;</code></td><td>局部变量不能在明确赋值前读取。</td></tr>
+      <tr><td><code>'A'</code>、<code>"A"</code></td><td>前者是 char，后者是 String。</td></tr>
+      <tr><td><code>5 / 2</code></td><td>先做整数除法；赋给 double 后是 2.0。</td></tr>
+      <tr><td><code>if (stock)</code></td><td>stock 是 int 时编译失败，要写出具体判断。</td></tr>
+      <tr><td><code>static String statusOf(int stock, int threshold)</code></td><td>类方法，两个 int 参数，返回 String。</td></tr>
+      <tr><td><code>for (int stock : stocks)</code></td><td>stock 是循环变量；给它赋 0 不会把 int 数组清零。</td></tr>
+      <tr><td><code>final int[] fixed</code></td><td>不能再给变量赋另一个数组，仍能改当前数组的元素。</td></tr>
+    </tbody>
+  </table></div>
+  <div class="card">
+    <h3>三个问题</h3>
+    <div class="q">
+      <div class="qt">1. 把完整程序的 threshold 从 5 改成 3，哪些输出会改变？</div>
+      <button type="button" class="btn">看参考答案</button>
+      <div class="ans">只有“文件夹：需补货”会变成“文件夹：正常”。它的库存是 3，判断用的是 stock &lt; threshold，等于阈值不满足。总库存仍是 23，因为汇总方法不接收 threshold，也没有用它过滤数据。</div>
+    </div>
+    <div class="q">
+      <div class="qt">2. 在 totalAvailable 中，把 continue 改成 break，总数会是多少？</div>
+      <button type="button" class="btn">看参考答案</button>
+      <div class="ans">按执行路径推导是 8：第一个库存 8 加进去，遇到第二个库存 0 时离开整个循环，后面的 -2、3、12 都不再检查。原来的 continue 只跳过本轮，后面的 3 和 12 仍会累计。</div>
+    </div>
+    <div class="q">
+      <div class="qt">3. 只想输出“有货”或“无货”，请把 statusOf 的规则改成 stock &gt; 0 时“有货”，其余“无货”。返回类型需要改吗？</div>
+      <button type="button" class="btn">看参考答案</button>
+      <div class="ans">仍是 String。可以把方法体改成 return stock &gt; 0 ? "有货" : "无货";。调用处依然接收一个字符串；threshold 参数不再使用，可以连同调用时的第二个实参一起删除。仅改方法声明或仅改调用的一边，会产生参数不匹配的编译错误。</div>
+    </div>
+  </div>
+</section>
+
+<section class="ch" id="ch9">
+  <div class="ch-num">第 9 节</div>
+  <h2>参考资料</h2>
+  <p>下面的资料均为 Java SE 8 版本，每条注明它支撑的是文中哪一部分。相关条款于 2026-11-16 核对。</p>
+  <div class="card refs">
+    <h3>Java 语言规范</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html#jls-3.10" target="_blank" rel="noopener">JLS §3.10：字面量</a><span>支撑：第 1、3 节：L、F 后缀；单引号是字符字面量，双引号是字符串字面量；char 与 UTF-16 代码单元。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.2" target="_blank" rel="noopener">JLS §4.2：基本类型</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.3" target="_blank" rel="noopener">§4.3：引用类型</a><span>支撑：第 3 节的八种基本类型及 String、数组的分类。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.5" target="_blank" rel="noopener">JLS §4.12.5：变量初始值</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-16.html" target="_blank" rel="noopener">第 16 章：明确赋值</a><span>支撑：第 1、3 节：字段和数组元素有默认值；局部变量必须在读取前明确赋值。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.17.2" target="_blank" rel="noopener">JLS §15.17.2：除法</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.23" target="_blank" rel="noopener">§15.23</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html#jls-15.24" target="_blank" rel="noopener">§15.24：短路运算</a><span>支撑：5 / 2 先得到整数 2；整数除法向零截断；第 4 节 &amp;&amp;、|| 与 &amp;、| 的求值区别。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.9" target="_blank" rel="noopener">JLS §14.9：if</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.11" target="_blank" rel="noopener">§14.11：switch</a><span>支撑：第 4 节的条件类型要求；第 7 节 String 匹配及缺少 break 时的继续执行。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html#jls-8.4" target="_blank" rel="noopener">JLS §8.4：方法声明</a>，尤其 §8.4.3.2、§8.4.5、§8.4.7<span>支撑：第 5 节：static 类方法、返回类型、void，以及有返回值的方法不能正常走到末尾的规则。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html" target="_blank" rel="noopener">JLS 第 10 章：数组</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html#jls-4.12.4" target="_blank" rel="noopener">§4.12.4：final 变量</a><span>支撑：第 6 节：固定长度、length、下标边界；final 数组变量所引用数组的元素仍可变化。</span></li>
+      <li><a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.14.2" target="_blank" rel="noopener">JLS §14.14.2：增强 for</a>；<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.15" target="_blank" rel="noopener">§14.15</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.16" target="_blank" rel="noopener">§14.16</a>、<a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.17" target="_blank" rel="noopener">§14.17：跳转语句</a><span>支撑：第 6 节每轮创建循环变量并取得元素值；第 7 节 break、continue、return 的目标。</span></li>
+    </ul>
+    <h3>官方工具与 API 文档</h3>
+    <ul>
+      <li><a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/javac.html" target="_blank" rel="noopener">JDK 8 javac</a> · <a href="https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html" target="_blank" rel="noopener">JDK 8 java</a><span>支撑：第 2 节完整程序的类名与 main 入口形式。</span></li>
+      <li><a href="https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html#toString-int:A-" target="_blank" rel="noopener">Arrays.toString(int[])</a> · <a href="https://docs.oracle.com/javase/8/docs/api/java/lang/String.html#isEmpty--" target="_blank" rel="noopener">String.isEmpty()</a><span>支撑：第 3、6 节的数组格式化输出；第 4 节字符串判空方法的含义。</span></li>
+    </ul>
+  </div>
+  <p class="note">页内“运行”展示预先用 JDK 8 执行的结果，并非在线编译。库存数据和补货规则是本篇设定的例子；自测答案按展示的代码推导。</p>
+  <button class="btn" id="mark-read" type="button"></button>
+  <div class="pager">
+    <a href="0-2.html"><small>上一篇</small>0.2 Java 是怎么跑起来的</a>
+    <a class="next" href="1-1.html"><small>下一篇</small>1.1 数值类型和它的坑</a>
+  </div>
+  <div class="credit">
+    本篇是原创内容，由 Codex（OpenAI）写作并制作交互演示，非任何官方教材。示例代码和终端输出使用 Amazon Corretto 1.8.0_512 编译运行；Java 语义依据 Java SE 8 语言规范及 JDK 8 官方文档核对。<br>
+    本篇随本仓库以 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh-hans" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a> 发布。
+  </div>
+</section>
+</main>
+</div>
+<script src="../assets/cc.js"></script>
+<script id="experiment-records" type="application/json">{"jdk": "openjdk version \"1.8.0_512\"\nOpenJDK Runtime Environment Corretto-8.512.09.1 (build 1.8.0_512-b09)\nOpenJDK 64-Bit Server VM Corretto-8.512.09.1 (build 25.512-b09, mixed mode)\n", "cases": {"Division.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": "", "run_stdout": "2.0\n", "run_stderr": ""}, "ForEachCopy.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": "", "run_stdout": "[8, 0, 3]\n", "run_stderr": ""}, "InventoryReport.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": "", "run_stdout": "钢笔：正常\n笔记本：缺货\n尺子：数据异常\n文件夹：需补货\n橡皮：正常\n可用库存合计：23\n", "run_stderr": ""}, "SyntaxLab.java": {"compile_exit": 0, "compile_stdout": "", "compile_stderr": "", "run_stdout": "types=3,9007199254740993,0.5,0.5,true,A,A\ndivision=2.0,2.5\ndefaults=0,[0, 0, 0],[null, null]\nshortCircuit=false\nafterForEach=[8, 0, 3]\nafterIndex=[0, 0, 0]\nfinalArray=[9, 0]\nwhile=2\nfirstAvailableIndex=1\nswitch=草稿\nfallThrough=草稿\nfallThrough=已上架\n", "run_stderr": ""}, "errors/Condition.java": {"compile_exit": 1, "compile_stdout": "", "compile_stderr": "Condition.java:4: error: incompatible types: int cannot be converted to boolean\n        if (stock) {\n            ^\n1 error\n"}, "errors/MissingReturn.java": {"compile_exit": 1, "compile_stdout": "", "compile_stderr": "MissingReturn.java:6: error: missing return statement\n    }\n    ^\n1 error\n"}, "errors/Quote.java": {"compile_exit": 1, "compile_stdout": "", "compile_stderr": "Quote.java:3: error: incompatible types: char cannot be converted to String\n        String grade = 'A';\n                       ^\n1 error\n"}, "errors/Unassigned.java": {"compile_exit": 1, "compile_stdout": "", "compile_stderr": "Unassigned.java:4: error: variable count might not have been initialized\n        System.out.println(count);\n                           ^\n1 error\n"}}}</script>
+<script>
+(function () {
+  var records = JSON.parse(document.getElementById('experiment-records').textContent).cases;
+  function prepare(button, panel) {
+    button.hidden = false;
+    button.disabled = false;
+    button.textContent = '运行';
+    button.setAttribute('aria-expanded', 'false');
+    panel.hidden = true;
+  }
+  function reveal(button, panel) {
+    panel.hidden = false;
+    button.disabled = true;
+    button.textContent = '已运行';
+    button.setAttribute('aria-expanded', 'true');
+  }
+  document.querySelectorAll('.check').forEach(function (card, index) {
+    var panel = card.querySelector('.check-result');
+    panel.id = 'guess-result-' + index;
+    panel.hidden = true;
+    card.querySelectorAll('[data-choice]').forEach(function (button) {
+      button.setAttribute('aria-controls', panel.id);
+      button.setAttribute('aria-expanded', 'false');
+      button.addEventListener('click', function () {
+        var correct = button.dataset.choice === card.dataset.correct;
+        card.querySelectorAll('[data-choice]').forEach(function (other) {
+          other.classList.toggle('right', other.dataset.choice === card.dataset.correct);
+          other.classList.toggle('wrong', other === button && !correct);
+          other.disabled = true;
+          other.setAttribute('aria-expanded', 'true');
+        });
+        card.querySelector('.feedback').textContent = correct ? '猜对了。看看为什么。' : '结果有些不同，看看原因。';
+        panel.hidden = false;
+      });
+    });
+  });
+  // Source and output stay readable without JavaScript.
+  document.querySelectorAll('pre[data-record], pre[data-evidence]').forEach(function (output, index) {
+    if (output.closest('.check')) return;
+    var key = output.dataset.recordKey || 'run_stdout';
+    var record = records[output.dataset.record || output.dataset.evidence];
+    var text = record[key].trimEnd();
+    if (output.dataset.evidence) {
+      var prefix = output.textContent.split('=')[0] + '=';
+      text = text.split('\n').filter(function (line) { return line.indexOf(prefix) === 0; }).join('\n');
+    }
+    output.textContent = text;
+    var wrapper = document.createElement('div');
+    wrapper.className = 'run-experiment';
+    var controls = document.createElement('div');
+    controls.className = 'btns';
+    var button = document.createElement('button');
+    button.className = 'btn primary';
+    button.type = 'button';
+    var panel = document.createElement('div');
+    panel.className = 'demo-result' + (key === 'compile_stderr' ? ' is-error' : '');
+    panel.id = 'run-output-' + index;
+    panel.setAttribute('aria-live', 'polite');
+    button.setAttribute('aria-controls', panel.id);
+    var label = document.createElement('p');
+    label.className = 'output-label';
+    label.textContent = key === 'compile_stderr' ? '编译失败' : '输出';
+    output.parentNode.insertBefore(wrapper, output);
+    controls.appendChild(button);
+    wrapper.appendChild(controls);
+    wrapper.appendChild(panel);
+    panel.appendChild(label);
+    panel.appendChild(output);
+    prepare(button, panel);
+    button.addEventListener('click', function () { reveal(button, panel); });
+  });
+  var loopCode = {
+    foreach: 'int[] stocks = {8, 0, 3};\nfor (int stock : stocks) {\n    stock = 0;\n}\nSystem.out.println(Arrays.toString(stocks));',
+    index: 'int[] stocks = {8, 0, 3};\nfor (int i = 0; i < stocks.length; i++) {\n    stocks[i] = 0;\n}\nSystem.out.println(Arrays.toString(stocks));'
+  };
+  var descriptions = {
+    foreach: '数组仍是 [8, 0, 3]。stock = 0 改的是本轮的局部变量，没有给数组元素赋值。',
+    index: '数组变成 [0, 0, 0]。stocks[i] = 0 直接写入下标 i 对应的数组元素。'
+  };
+  var mode = 'foreach';
+  var run = document.getElementById('loop-run');
+  var result = document.getElementById('loop-output');
+  prepare(run, result);
+  document.querySelectorAll('.loop-btn').forEach(function (button) {
+    button.addEventListener('click', function () {
+      mode = button.dataset.mode;
+      document.getElementById('loop-code').textContent = loopCode[mode];
+      document.querySelectorAll('.loop-btn').forEach(function (other) {
+        other.setAttribute('aria-pressed', String(other === button));
+      });
+      prepare(run, result);
+    });
+  });
+  run.addEventListener('click', function () {
+    var prefix = mode === 'foreach' ? 'afterForEach=' : 'afterIndex=';
+    var line = records['SyntaxLab.java'].run_stdout.split('\n').find(function (item) { return item.indexOf(prefix) === 0; });
+    var values = JSON.parse(line.slice(prefix.length));
+    document.querySelectorAll('#loop-lab .slot').forEach(function (slot, index) {
+      slot.querySelector('b').textContent = values[index];
+      slot.classList.toggle('changed', values[index] !== [8, 0, 3][index]);
+    });
+    document.getElementById('loop-result').textContent = descriptions[mode];
+    reveal(run, result);
+  });
+})();
+</script>
+</body>
+</html>

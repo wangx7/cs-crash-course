@@ -1,0 +1,107 @@
+Compiled from "ConcatCost.java"
+public class ConcatCost {
+  public ConcatCost();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: sipush        20000
+       3: istore_1
+       4: invokestatic  #2                  // Method java/lang/System.nanoTime:()J
+       7: lstore_2
+       8: ldc           #3                  // String
+      10: astore        4
+      12: iconst_0
+      13: istore        5
+      15: iload         5
+      17: iload_1
+      18: if_icmpge     49
+      21: new           #4                  // class java/lang/StringBuilder
+      24: dup
+      25: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+      28: aload         4
+      30: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      33: ldc           #7                  // String x
+      35: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      38: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      41: astore        4
+      43: iinc          5, 1
+      46: goto          15
+      49: invokestatic  #2                  // Method java/lang/System.nanoTime:()J
+      52: lstore        5
+      54: new           #4                  // class java/lang/StringBuilder
+      57: dup
+      58: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+      61: astore        7
+      63: iconst_0
+      64: istore        8
+      66: iload         8
+      68: iload_1
+      69: if_icmpge     86
+      72: aload         7
+      74: ldc           #7                  // String x
+      76: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      79: pop
+      80: iinc          8, 1
+      83: goto          66
+      86: aload         7
+      88: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      91: astore        8
+      93: invokestatic  #2                  // Method java/lang/System.nanoTime:()J
+      96: lstore        9
+      98: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+     101: new           #4                  // class java/lang/StringBuilder
+     104: dup
+     105: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+     108: ldc           #10                 // String sameContent=
+     110: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     113: aload         4
+     115: aload         8
+     117: invokevirtual #11                 // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+     120: invokevirtual #12                 // Method java/lang/StringBuilder.append:(Z)Ljava/lang/StringBuilder;
+     123: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     126: invokevirtual #13                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+     129: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+     132: new           #4                  // class java/lang/StringBuilder
+     135: dup
+     136: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+     139: ldc           #14                 // String length=
+     141: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     144: aload         4
+     146: invokevirtual #15                 // Method java/lang/String.length:()I
+     149: invokevirtual #16                 // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;
+     152: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     155: invokevirtual #13                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+     158: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+     161: new           #4                  // class java/lang/StringBuilder
+     164: dup
+     165: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+     168: ldc           #17                 // String plusMs=
+     170: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     173: lload         5
+     175: lload_2
+     176: lsub
+     177: ldc2_w        #18                 // long 1000000l
+     180: ldiv
+     181: invokevirtual #20                 // Method java/lang/StringBuilder.append:(J)Ljava/lang/StringBuilder;
+     184: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     187: invokevirtual #13                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+     190: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+     193: new           #4                  // class java/lang/StringBuilder
+     196: dup
+     197: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+     200: ldc           #21                 // String builderMs=
+     202: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     205: lload         9
+     207: lload         5
+     209: lsub
+     210: ldc2_w        #18                 // long 1000000l
+     213: ldiv
+     214: invokevirtual #20                 // Method java/lang/StringBuilder.append:(J)Ljava/lang/StringBuilder;
+     217: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     220: invokevirtual #13                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+     223: return
+}

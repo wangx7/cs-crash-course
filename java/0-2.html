@@ -91,7 +91,7 @@ table.map td:first-child{width:34%}
   <div class="eyebrow">第 0 部分 · 出发前 · 0.2</div>
   <h1>Java 是怎么跑起来的</h1>
   <p class="en">From .java to a running JVM</p>
-  <p class="lead">0.1 里的 blade-desk 服务，在服务器上是由它 Dockerfile 最后一行的 <code>java -jar app.jar</code> 启动的。从一个 <code>.java</code> 源文件到这条命令，中间要经过编译、加载、打包。这一篇在命令行里把这几步亲手做一遍，打开编译出来的文件看里面存了什么，再故意弄坏几次，看错误出在哪一步。最后把每条命令对应到 IDEA 的菜单和设置。</p>
+  <p class="lead">一份 <code>.java</code> 源码如何变成正在运行的程序？本篇从一个只打印一行字的小程序开始，在命令行里完成编译、运行和打包，打开生成的 <code>.class</code> 文件看里面存了什么，再故意弄坏几次，看错误出在哪一步。最后把这些操作对应到 IDEA 的菜单和设置。</p>
   <div class="road"><span>编译和运行</span><i>→</i><span>打开 .class</span><i>→</i><span>故意弄坏</span><i>→</i><span>版本号</span><i>→</i><span>打包</span><i>→</i><span>IDEA</span></div>
   <p class="note" style="margin-top:16px">页面上所有终端输出都是实际执行后贴进来的。环境：macOS（Apple 芯片）；JDK 8 是 Amazon Corretto 1.8.0_512，JDK 25 是 OpenJDK 25.0.2。很长的调用栈删去了一部分，删的地方写着“省略”。</p>
 </header>
@@ -110,6 +110,7 @@ table.map td:first-child{width:34%}
 </ol></nav>
 
 <main>
+<noscript><p class="note">本页的交互（四个终端、字节浏览器）需要 JavaScript。禁用 JS 时这些区域不显示，但正文、代码、对照表和参考资料仍可正常阅读。</p></noscript>
 
 <section class="ch" id="ch1">
   <div class="ch-num">第 1 节</div>
@@ -206,7 +207,7 @@ table.map td:first-child{width:34%}
     <li><b>常量例外。</b><code>static final</code> 且用常量初始化的字段，语言规范要求编译器把值直接写进用它的类，不留引用。所以改了它，用到它的类必须重新编译。</li>
     <li><b>编译器只能检查编译那一刻它看得见的东西。</b>两边一起编译时，参数不对立刻报错；分开编译，错误就推迟到运行时。</li>
   </ul>
-  <p>这和后端项目的关系：在 Maven 工程里，你的代码是对着某个版本的 jar 编译的，运行时 classpath 上放的却可能是另一个版本。依赖树里同一个库出现了几个版本时，Maven 只留下一个（规则见参考资料里的 Maven 文档）。留下的那个如果少了你调用的方法，表现就和上面第三次改动一模一样：启动正常，执行到那一行才报 <code>NoSuchMethodError</code>。依赖管理在 4.1 篇讲。</p>
+  <p>这和后端项目的关系：在 Maven 工程里，你的代码是对着某个版本的 jar 编译的，运行时 classpath 上放的却可能是另一个版本。依赖树里同一个库出现了几个版本时，Maven 只留下一个（规则见参考资料里的 Maven 文档）。留下的那个如果少了你调用的方法，表现就和上面第三次改动一模一样：启动正常，执行到那一行才报 <code>NoSuchMethodError</code>。</p>
 </section>
 
 <section class="ch" id="ch5">
@@ -215,7 +216,7 @@ table.map td:first-child{width:34%}
   <p>第 2 节的字节浏览器里，魔数后面紧跟着版本号 <code>00 34</code>，也就是 52。每个 JDK 版本的编译器默认产出自己那一版的格式，JVM 只认得不比自己新的格式：</p>
   <div class="ver"><span>Java 8 → <b>52</b></span><span>Java 11 → <b>55</b></span><span>Java 17 → <b>61</b></span><span>Java 21 → <b>65</b></span><span>Java 25 → <b>69</b></span></div>
   <p class="note">规律是 44 加上版本号。52 和 69 是下面实测出来的，其余三个按 Java 虚拟机规范 Java SE 25 版第 4.1 节的表。</p>
-  <p>这件事和你直接相关。这台 Mac 上装的 JDK 只有 25；SpringBlade 的服务在容器里跑的是 Java 8：</p>
+  <p>开发机和服务器可能使用不同版本的 Java。以开源后端项目 <code>SpringBlade v3.7.1</code> 为例，其中 <code>blade-desk</code> 服务的 Dockerfile（构建容器镜像的配置文件）指定了 Java 8 运行环境，并用 <code>java -jar app.jar</code> 启动程序：</p>
 <pre class="code">FROM anapsix/alpine-java:8_server-jre_unlimited
 …
 ADD ./target/blade-desk.jar ./app.jar
@@ -237,7 +238,7 @@ ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"
     <tr><td><code>javac -source 8 -target 8</code></td><td>52</td><td>能加载，执行到 <code>isBlank</code> 才报 <code>NoSuchMethodError</code>；在你的 Mac 上测试则一切正常</td></tr>
     <tr><td><code>javac --release 8</code></td><td>—</td><td>编译时就报错：Java 8 的 <code>String</code> 没有这个方法</td></tr>
   </table></div>
-  <p>第二种最危险，因为它在本机测不出来。而 SpringBlade 的 <code>pom.xml</code> 第 136–137 行写的正是 <code>&lt;source&gt;</code> 和 <code>&lt;target&gt;</code>（值为 1.8），没有用 <code>release</code>。也就是说，用 JDK 25 来构建这样的工程，就落在第二种情况里。最省事的做法是让构建用的 JDK 本身就是 8，第 7 节说在 IDEA 里改哪里。你们 BladeX 的 <code>pom.xml</code> 怎么写的，要打开自己的文件看。</p>
+  <p>第二种最危险，因为它在本机测不出来。而 SpringBlade 的 <code>pom.xml</code> 第 136–137 行写的正是 <code>&lt;source&gt;</code> 和 <code>&lt;target&gt;</code>（值为 1.8），没有用 <code>release</code>。也就是说，用 JDK 25 来构建这样的工程，就落在第二种情况里。最省事的做法是让构建用的 JDK 本身就是 8，第 7 节说在 IDEA 里改哪里。这一点已经对着你们公司在用的工程核对过：几个 BladeX 工程的 <code>pom.xml</code> 和 SpringBlade 一样，只配置了 <code>&lt;source&gt;</code>/<code>&lt;target&gt;</code>（1.8），没有用 <code>release</code>。所以第二行那种“本机一切正常、部署到 Java 8 才出错”的情况，对你们的项目同样成立。</p>
 </section>
 
 <section class="ch" id="ch6">
@@ -308,7 +309,7 @@ $ java -jar shop.jar
     <div class="q">
       <div class="qt">2. SpringBlade 的 <code>pom.xml</code> 第 140 行给编译器加了一个参数 <code>-parameters</code>。它改变了 class 文件里的什么？谁需要它？</div>
       <button class="btn">看参考答案</button>
-      <div class="ans">默认情况下，javac 不把方法的参数名写进 class 文件（实测：对 <code>list(String title, int size)</code> 用 <code>javap -v</code> 查看，找不到 <code>title</code> 和 <code>size</code>）。加上 <code>-parameters</code> 后，class 文件里多了一个 <code>MethodParameters</code> 属性，记着这两个名字。Spring 需要它：参数名和请求参数同名时，<code>@PathVariable</code>、<code>@RequestParam</code> 可以不写名字，Spring 就是从这里读到参数名的（Spring 文档的原话是需要调试信息或者 <code>-parameters</code>）。“框架怎么读到 class 文件里的信息”是 3.10 篇的内容。</div>
+      <div class="ans">默认情况下，javac 不把方法的参数名写进 class 文件（实测：对 <code>list(String title, int size)</code> 用 <code>javap -v</code> 查看，找不到 <code>title</code> 和 <code>size</code>）。加上 <code>-parameters</code> 后，class 文件里多了一个 <code>MethodParameters</code> 属性，记着这两个名字。Spring 需要它：参数名和请求参数同名时，<code>@PathVariable</code>、<code>@RequestParam</code> 可以不写名字，Spring 就是从这里读到参数名的（Spring 文档的原话是需要调试信息或者 <code>-parameters</code>）。</div>
     </div>
     <div class="q">
       <div class="qt">3. 你的代码编译时依赖某个库的 2.0 版，调用了 2.0 才有的方法 <code>X</code>。运行时 classpath 上实际是 1.0 版。程序会在什么时候出错、报什么？</div>
@@ -361,7 +362,7 @@ $ java -jar shop.jar
 
   <div class="pager">
     <a href="0-1.html"><small>上一篇</small>0.1 一个请求的一生</a>
-    <a class="next off"><small>下一篇（还没写）</small>0.3 语法速览</a>
+    <a class="next" href="0-3.html"><small>下一篇</small>0.3 语法速览</a>
   </div>
 
   <div class="credit">
@@ -444,7 +445,7 @@ term($('#t1'), '~/hello', [
     note: '<code>java</code> 启动一个 JVM，JVM 在当前目录里找名叫 <code>Hello</code> 的类，也就是 <code>Hello.class</code> 这个文件，把它读进内存，然后执行它的 <code>main</code> 方法。' },
   { v: '8', cmd: 'java Hello.java', out: '错误: 找不到或无法加载主类 Hello.java',
     ask: { q: '跳过 javac，直接把源文件交给 java 呢？', opts: ['能运行', '报错'], a: 1,
-      why: '在 JDK 8 上报错。从 JDK 11 起，<code>java</code> 可以直接运行单个源文件（在内存里先编译，不留下 .class），你 Mac 上的 JDK 25 执行这一行会打印“你好，JVM”。项目的服务器是 Java 8，而且真实项目有成百上千个文件，所以还是要先 <code>javac</code> 再 <code>java</code>。' } },
+      why: '在 JDK 8 上报错。从 JDK 11 起，<code>java</code> 可以直接运行单个源文件（在内存里先编译，不留下 .class），在 JDK 25 上执行这一行会打印“你好，JVM”。本篇以 JDK 8 为基础，演示先用 <code>javac</code> 编译、再用 <code>java</code> 启动的过程。' } },
 ]);
 
 // ---------- 第 2 节：字节浏览器 ----------

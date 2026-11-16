@@ -1,0 +1,74 @@
+Compiled from "FoldLab.java"
+public class FoldLab {
+  public FoldLab();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: return
+
+  public static void main(java.lang.String[]);
+    Code:
+       0: ldc           #2                  // String notice
+       2: astore_1
+       3: ldc           #3                  // String no
+       5: astore_2
+       6: ldc           #2                  // String notice
+       8: astore        4
+      10: new           #4                  // class java/lang/StringBuilder
+      13: dup
+      14: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+      17: aload_2
+      18: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      21: ldc           #7                  // String tice
+      23: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      26: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      29: astore        5
+      31: ldc           #2                  // String notice
+      33: astore        6
+      35: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      38: new           #4                  // class java/lang/StringBuilder
+      41: dup
+      42: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+      45: ldc           #10                 // String r1==a=
+      47: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      50: aload         4
+      52: aload_1
+      53: if_acmpne     60
+      56: iconst_1
+      57: goto          61
+      60: iconst_0
+      61: invokevirtual #11                 // Method java/lang/StringBuilder.append:(Z)Ljava/lang/StringBuilder;
+      64: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      67: invokevirtual #12                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+      70: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+      73: new           #4                  // class java/lang/StringBuilder
+      76: dup
+      77: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+      80: ldc           #13                 // String r2==a=
+      82: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      85: aload         5
+      87: aload_1
+      88: if_acmpne     95
+      91: iconst_1
+      92: goto          96
+      95: iconst_0
+      96: invokevirtual #11                 // Method java/lang/StringBuilder.append:(Z)Ljava/lang/StringBuilder;
+      99: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     102: invokevirtual #12                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+     105: getstatic     #9                  // Field java/lang/System.out:Ljava/io/PrintStream;
+     108: new           #4                  // class java/lang/StringBuilder
+     111: dup
+     112: invokespecial #5                  // Method java/lang/StringBuilder."<init>":()V
+     115: ldc           #14                 // String r3==a=
+     117: invokevirtual #6                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     120: aload         6
+     122: aload_1
+     123: if_acmpne     130
+     126: iconst_1
+     127: goto          131
+     130: iconst_0
+     131: invokevirtual #11                 // Method java/lang/StringBuilder.append:(Z)Ljava/lang/StringBuilder;
+     134: invokevirtual #8                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     137: invokevirtual #12                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V
+     140: return
+}

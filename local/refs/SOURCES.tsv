@@ -2,10 +2,10 @@
 jvms4	https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html	0.2 class 文件格式、版本号
 jvms5	https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-5.html	0.2 加载、链接、方法解析
 jvms25_4	https://docs.oracle.com/javase/specs/jvms/se25/html/jvms-4.html	0.2 Java 25 的版本号范围
-jls8	https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html	0.2 默认构造器
-jls12	https://docs.oracle.com/javase/specs/jls/se8/html/jls-12.html	执行过程（备用）
+jls8	https://docs.oracle.com/javase/specs/jls/se8/html/jls-8.html	0.2 默认构造器；0.3 方法声明、static、返回类型
+jls12	https://docs.oracle.com/javase/specs/jls/se8/html/jls-12.html	1.2 可达性与对象生命周期；1.3 new 创建新对象、字面量入池
 jls13	https://docs.oracle.com/javase/specs/jls/se8/html/jls-13.html	0.2 常量内联、二进制兼容
-jls15	https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html	0.2 常量表达式
+jls15	https://docs.oracle.com/javase/specs/jls/se8/html/jls-15.html	0.2 常量表达式；0.3 整数除法、短路运算；1.2 传参、引用相等、字段访问；1.3 常量表达式、字符串拼接、==
 java8tool	https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html	0.2 java 命令
 javac8tool	https://docs.oracle.com/javase/8/docs/technotes/tools/unix/javac.html	0.2 javac 命令
 jep182	https://openjdk.org/jeps/182	javac 淘汰旧 -source/-target 的策略（备用）
@@ -18,3 +18,22 @@ mvn_dep	https://maven.apache.org/guides/introduction/introduction-to-dependency-
 superpom	https://maven.apache.org/ref/3.9.9/maven-model-builder/super-pom.html	0.2 target/classes
 ij_compile	https://www.jetbrains.com/help/idea/compiling-applications.html	0.2 IDEA 编译输出目录
 ij_sdk	https://www.jetbrains.com/help/idea/sdk.html	IDEA SDK（备用）
+jls3	https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html	0.3 字面量、字符和字符串、L/F 后缀；1.1 整数字面量；1.3 字符串字面量与 intern
+jls4	https://docs.oracle.com/javase/specs/jls/se8/html/jls-4.html	0.3 基本类型、引用类型、默认值、final；1.1 数值范围与浮点精度；1.2 引用、默认值；1.3 常量变量
+jls10	https://docs.oracle.com/javase/specs/jls/se8/html/jls-10.html	0.3 数组长度、初始化、下标边界；1.2 数组浅复制
+jls14	https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html	0.3 条件、循环、switch、跳转语句
+jls16	https://docs.oracle.com/javase/specs/jls/se8/html/jls-16.html	0.3 局部变量明确赋值
+api8_arrays	https://docs.oracle.com/javase/8/docs/api/java/util/Arrays.html	0.3 Arrays.toString
+api8_string	https://docs.oracle.com/javase/8/docs/api/java/lang/String.html	0.3 String.isEmpty；1.3 不可变、equals、intern、hashCode、trim
+jls5	https://docs.oracle.com/javase/specs/jls/se8/html/jls-5.html	1.1 数值提升、宽化、窄化、拆箱；1.2 null 拆箱
+api_bigdecimal	https://docs.oracle.com/javase/8/docs/api/java/math/BigDecimal.html	1.1 构造、scale、precision、比较、不可变、舍入
+api_math	https://docs.oracle.com/javase/8/docs/api/java/lang/Math.html	1.1 addExact、multiplyExact、toIntExact
+api8_double	https://docs.oracle.com/javase/8/docs/api/java/lang/Double.html	1.1 toString、isFinite
+api8_rounding	https://docs.oracle.com/javase/8/docs/api/java/math/RoundingMode.html	1.1 正负数舍入与 UNNECESSARY
+jvms2	https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-2.html	1.2 JVM 栈、栈帧、局部变量、堆、返回值与实现边界
+api8_object	https://docs.oracle.com/javase/8/docs/api/java/lang/Object.html	1.2 clone 浅复制与数组的 Cloneable 行为
+api8_integer	https://docs.oracle.com/javase/8/docs/api/java/lang/Integer.html	1.2 Integer 只包装一个 int、无改写值的方法
+mdn_js_types	https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Data_structures	1.1 JS number 即 IEEE 754 双精度，与 Java double 同格式
+javap8tool	https://docs.oracle.com/javase/8/docs/technotes/tools/unix/javap.html	1.3 javap -c 反汇编查看字节码
+api8_hashmap	https://docs.oracle.com/javase/8/docs/api/java/util/HashMap.html	1.3 可变对象作 Map 键的警告
+api8_map	https://docs.oracle.com/javase/8/docs/api/java/util/Map.html	1.3 可变对象作 Map 键的警告

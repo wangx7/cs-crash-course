@@ -1,0 +1,163 @@
+{
+  "jdk": "openjdk version \"1.8.0_512\"\nOpenJDK Runtime Environment Corretto-8.512.09.1 (build 1.8.0_512-b09)\nOpenJDK 64-Bit Server VM Corretto-8.512.09.1 (build 25.512-b09, mixed mode)\n",
+  "cases": {
+    "DecimalLab.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": ""
+    },
+    "DecimalLab": {
+      "source": "DecimalLab.java",
+      "args": [],
+      "run_exit": 0,
+      "run_stdout": "doubleSum=0.30000000000000004\ndoubleEquality=false\nprintedTenth=0.1\nexactDoubleTenth=0.1000000000000000055511151231257827021181583404541015625\ntext=0.1\ndouble=0.1000000000000000055511151231257827021181583404541015625\nvalueOf=0.1\nvalueOfSum=0.30000000000000004\ndecimalSum=0.3\nunscaled=20,200\nscale=1,2\nprecision=2,3\nequals=false\ncompareTo=0\nignoredResult=10.00\nassignedResult=10.50\nexactThird=ArithmeticException\nroundedThird=0.33\n",
+      "run_stderr": ""
+    },
+    "NumberLab.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": ""
+    },
+    "NumberLab": {
+      "source": "NumberLab.java",
+      "args": [],
+      "run_exit": 0,
+      "run_stdout": "assigned=-1794967296\ncastAfter=-1794967296\ncastBefore=2500000000\ncheckedLong=2500000000\nintDivision=2\ncastQuotient=2.0\ncastOperand=2.5\nnegativeDivision=-2\nnegativeRemainder=-1\nmaxPlusOne=-2147483648\ncheckedInt=ArithmeticException\ncheckedAdd=ArithmeticException\nnarrowed=-1794967296\ncheckedNarrow=ArithmeticException\ncompoundByte=-128\nid=9007199254740993\nidRoundTrip=9007199254740992\nmixedEquality=true\nintegerEquality=false\nintegerZero=ArithmeticException\nfloatingZero=Infinity\nzeroOverZero=NaN\nnanEqualsSelf=false\nisFinite=false\nnullUnboxing=NullPointerException\n",
+      "run_stderr": ""
+    },
+    "PriceOverflow.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": ""
+    },
+    "PriceOverflow": {
+      "source": "PriceOverflow.java",
+      "args": [],
+      "run_exit": 0,
+      "run_stdout": "-1794967296\n",
+      "run_stderr": ""
+    },
+    "PriceQuote.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": ""
+    },
+    "PriceQuote": {
+      "source": "PriceQuote.java",
+      "args": [
+        "19.90",
+        "3",
+        "0.85"
+      ],
+      "run_exit": 0,
+      "run_stdout": "原价=59.70\n应付=50.75\n",
+      "run_stderr": ""
+    },
+    "PriceQuote-small": {
+      "source": "PriceQuote.java",
+      "args": [
+        "0.05",
+        "3",
+        "0.10"
+      ],
+      "run_exit": 0,
+      "run_stdout": "原价=0.15\n应付=0.02\n",
+      "run_stderr": ""
+    },
+    "PriceQuote-extra-zero": {
+      "source": "PriceQuote.java",
+      "args": [
+        "19.900",
+        "3",
+        "0.85"
+      ],
+      "run_exit": 0,
+      "run_stdout": "原价=59.70\n应付=50.75\n",
+      "run_stderr": ""
+    },
+    "PriceQuote-fraction": {
+      "source": "PriceQuote.java",
+      "args": [
+        "19.901",
+        "3",
+        "0.85"
+      ],
+      "run_exit": 2,
+      "run_stdout": "",
+      "run_stderr": "输入错误：单价必须能精确到分\n"
+    },
+    "PriceQuote-rate": {
+      "source": "PriceQuote.java",
+      "args": [
+        "19.90",
+        "3",
+        "1.01"
+      ],
+      "run_exit": 2,
+      "run_stdout": "",
+      "run_stderr": "输入错误：单价须非负，数量须为正整数，折扣系数须在 0 到 1 之间\n"
+    },
+    "PriceQuote-quantity": {
+      "source": "PriceQuote.java",
+      "args": [
+        "19.90",
+        "0",
+        "0.85"
+      ],
+      "run_exit": 2,
+      "run_stdout": "",
+      "run_stderr": "输入错误：单价须非负，数量须为正整数，折扣系数须在 0 到 1 之间\n"
+    },
+    "PriceQuote-nan": {
+      "source": "PriceQuote.java",
+      "args": [
+        "NaN",
+        "3",
+        "0.85"
+      ],
+      "run_exit": 2,
+      "run_stdout": "",
+      "run_stderr": "输入错误：单价和折扣系数须为十进制数，数量须为 int 范围内的整数\n"
+    },
+    "PriceQuote-large-count": {
+      "source": "PriceQuote.java",
+      "args": [
+        "19.90",
+        "2147483648",
+        "0.85"
+      ],
+      "run_exit": 2,
+      "run_stdout": "",
+      "run_stderr": "输入错误：单价和折扣系数须为十进制数，数量须为 int 范围内的整数\n"
+    },
+    "PriceQuote-usage": {
+      "source": "PriceQuote.java",
+      "args": [],
+      "run_exit": 2,
+      "run_stdout": "",
+      "run_stderr": "用法：PriceQuote 单价 数量 折扣系数\n"
+    },
+    "RoundingLab.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": ""
+    },
+    "RoundingLab": {
+      "source": "RoundingLab.java",
+      "args": [],
+      "run_exit": 0,
+      "run_stdout": "HALF_UP=1.25,-1.25\nHALF_EVEN=1.24,-1.24\nDOWN=1.24,-1.24\nFLOOR=1.24,-1.25\nCEILING=1.25,-1.24\nUNNECESSARY=ArithmeticException\nexactLine=0.0050\nroundedLine=0.01\nroundEach=0.03\nroundTotal=0.02\neach=0.02\nallocated=0.06\n",
+      "run_stderr": ""
+    },
+    "errors/ByteSum.java": {
+      "compile_exit": 1,
+      "compile_stdout": "",
+      "compile_stderr": "ByteSum.java:5: error: incompatible types: possible lossy conversion from int to byte\n        byte sum = a + b;\n                     ^\n1 error\n"
+    },
+    "errors/LongLiteral.java": {
+      "compile_exit": 1,
+      "compile_stdout": "",
+      "compile_stderr": "LongLiteral.java:3: error: integer number too large: 3000000000\n        long count = 3_000_000_000;\n                     ^\n1 error\n"
+    }
+  }
+}

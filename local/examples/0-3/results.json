@@ -1,0 +1,53 @@
+{
+  "jdk": "openjdk version \"1.8.0_512\"\nOpenJDK Runtime Environment Corretto-8.512.09.1 (build 1.8.0_512-b09)\nOpenJDK 64-Bit Server VM Corretto-8.512.09.1 (build 25.512-b09, mixed mode)\n",
+  "cases": {
+    "Division.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "run_stdout": "2.0\n",
+      "run_stderr": ""
+    },
+    "ForEachCopy.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "run_stdout": "[8, 0, 3]\n",
+      "run_stderr": ""
+    },
+    "InventoryReport.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "run_stdout": "钢笔：正常\n笔记本：缺货\n尺子：数据异常\n文件夹：需补货\n橡皮：正常\n可用库存合计：23\n",
+      "run_stderr": ""
+    },
+    "SyntaxLab.java": {
+      "compile_exit": 0,
+      "compile_stdout": "",
+      "compile_stderr": "",
+      "run_stdout": "types=3,9007199254740993,0.5,0.5,true,A,A\ndivision=2.0,2.5\ndefaults=0,[0, 0, 0],[null, null]\nshortCircuit=false\nafterForEach=[8, 0, 3]\nafterIndex=[0, 0, 0]\nfinalArray=[9, 0]\nwhile=2\nfirstAvailableIndex=1\nswitch=草稿\nfallThrough=草稿\nfallThrough=已上架\n",
+      "run_stderr": ""
+    },
+    "errors/Condition.java": {
+      "compile_exit": 1,
+      "compile_stdout": "",
+      "compile_stderr": "Condition.java:4: error: incompatible types: int cannot be converted to boolean\n        if (stock) {\n            ^\n1 error\n"
+    },
+    "errors/MissingReturn.java": {
+      "compile_exit": 1,
+      "compile_stdout": "",
+      "compile_stderr": "MissingReturn.java:6: error: missing return statement\n    }\n    ^\n1 error\n"
+    },
+    "errors/Quote.java": {
+      "compile_exit": 1,
+      "compile_stdout": "",
+      "compile_stderr": "Quote.java:3: error: incompatible types: char cannot be converted to String\n        String grade = 'A';\n                       ^\n1 error\n"
+    },
+    "errors/Unassigned.java": {
+      "compile_exit": 1,
+      "compile_stdout": "",
+      "compile_stderr": "Unassigned.java:4: error: variable count might not have been initialized\n        System.out.println(count);\n                           ^\n1 error\n"
+    }
+  }
+}
