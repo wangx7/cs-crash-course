@@ -19,7 +19,10 @@ def main():
         raise SystemExit("These experiments require JDK 8.")
     results = {"jdk": version, "cases": {}}
     with tempfile.TemporaryDirectory(prefix="java-0-3-") as output:
-        for source in sorted(root.glob("*.java")) + sorted((root / "errors").glob("*.java")):
+        sources = (sorted(root.glob("*.java"))
+                   + sorted((root / "errors").glob("*.java"))
+                   + sorted(root.glob("break*/*.java")))
+        for source in sources:
             relative = source.relative_to(root).as_posix()
             compile_result = subprocess.run(
                 [str(jdk / "bin/javac"), "-J-Duser.language=en", "-J-Duser.country=US",

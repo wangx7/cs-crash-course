@@ -74,7 +74,7 @@ details.proof pre.code{font-size:12px}
 
 <section class="ch" id="ch1">
   <div class="ch-num">第 1 节</div><h2>先预测：接收变量是 long，够不够？</h2>
-  <p>先认识两个类型。Java 的整数常用两种：<code>int</code> 占 32 个二进制位，<code>long</code> 占 64 位、能装更大的数。如果你主要来自 JavaScript，这是第一个要适应的地方——JS 只有一种 <code>number</code>，Java 却把整数和小数分成好几种类型，整数还分长短。</p>
+  <p>算账之前，先给数字挑个类型。Java 的整数常用两种：<code>int</code> 占 32 个二进制位，<code>long</code> 占 64 位、能装更大的数。如果你主要来自 JavaScript，这是第一个要适应的地方——JS 只有一种 <code>number</code>，Java 却把整数和小数分成好几种类型，整数还分长短。</p>
   <p>现在算一笔批量采购的账：单价 50,000 分，数量 50,000，乘积应该是 2,500,000,000 分。这组数字是特意挑的：它已经超过了 int 的上限（约 21.4 亿），却远没到 long 的上限。于是很自然地，把接收结果的变量写成 long：</p>
   <div class="card guess" id="guess">
     <h3>先猜一下：这样写，能得到正确的总额吗？</h3>
@@ -150,7 +150,7 @@ checkedAdd=ArithmeticException</pre>
                      ^
 1 error</pre>
   </details>
-  <div class="callout"><b>换成 long 也不是万事大吉。</b> long 同样有上限。选类型时要一起考虑最大单值、数量和累计次数，并确认运算的中间结果不会越界；需要把越界变成明确失败时，就用检查运算。</div>
+  <div class="callout"><b>换成 long 也不是万事大吉：</b>long 同样有上限，只是远一些。选类型时把最大单值、数量、累计次数放在一起看，确认中间结果不会越界；想让越界当场失败、而不是悄悄绕回，就用检查运算。</div>
 </section>
 
 <section class="ch" id="ch3">
@@ -174,7 +174,7 @@ integerEquality=false</pre>
     <tr><td><code>float</code></td><td>32</td><td>带指数，远大于 long</td><td>正常值约 24 个二进制位有效精度</td></tr>
     <tr><td><code>double</code></td><td>64</td><td>带指数，远大于 long</td><td>正常值约 53 个二进制位有效精度</td></tr>
   </tbody></table></div>
-  <p class="note">还有 byte（8 位）、short（16 位）、char（16 位）三种更小的整数类型，业务代码里少见，参与运算时都先升成 int；boolean 不属于数值类型。位数说的是数值格式的宽度，不是 Java 对象占用的内存。依据：JLS §4.2。</p>
+  <p class="note">还有 byte（8 位）、short（16 位）、char（16 位）三种更小的整数类型，业务代码里少见，参与运算时都先升成 int；boolean 不属于数值类型。位数说的是数值格式的宽度，不是 Java 对象占用的内存。</p>
   <details class="proof"><summary>int 和 Integer 只差首字母大小写吗？</summary>
     <p>差得不止大小写。int 是基本类型，不能是 null；Integer 是包装类，可以引用一个整数对象，也可以是 null。参与加法时 Integer 会自动“拆箱”取出 int 值，而对 null 做这一步会抛异常——不能把“没传”自动当成 0。</p>
     <pre class="code" data-source="NumberLab.java" data-snippet="unboxing">Integer count = null;
@@ -184,7 +184,7 @@ try {
 } catch (NullPointerException e) {
     System.out.println(&quot;nullUnboxing=&quot; + e.getClass().getSimpleName());
 }</pre><pre class="code" data-record="NumberLab" data-lines="nullUnboxing">nullUnboxing=NullPointerException</pre>
-    <p>Long/long、Double/double 也有同样的区别。接口里缺一个值时，该拒绝、补默认值还是保留为空，要由字段含义决定。拆箱规则见 JLS §5.1.8。</p>
+    <p>Long/long、Double/double 也有同样的区别。接口里缺一个值时，该拒绝、补默认值还是保留为空，要由字段含义决定——不能把“没传”自动当成 0。</p>
   </details>
 </section>
 
@@ -213,6 +213,7 @@ try {
 }</pre><pre class="code" data-record="NumberLab" data-lines="narrowed,checkedNarrow">narrowed=-1794967296
 checkedNarrow=ArithmeticException</pre>
   </details>
+  <div class="callout">前四节可以收拢成两句话：<b>运算按什么类型进行，由操作数决定</b>，接收变量救不了已经算错的结果；<b>范围和精度是两件事</b>，double 范围大，代价是大数不再个个精确。接下来换到小数，这两句话还会以新的形式出现。</div>
 </section>
 
 <section class="ch" id="ch5">
